@@ -1,17 +1,43 @@
+import time
 import glfw
 import OpenGL.GL as gl
 
-class My_glfw_gl:
+class GLFW_logger:
+    _glfw_log = []
+
+    @classmethod
+    def log(cls, v):
+        cls._glfw_log.append(v)
+
+class _global_glfw(type):
+
+    def __getattr__(cls, item):
+
+        """
+        Redirector directing to global <glfw> methods.
+        :param item:
+        :return:
+        """
+        if hasattr(glfw, item):
+            return_val = glfw.__dict__[item]
+            if False:   # initially logging set at __init__ using **kwargs
+                GLFW_logger.log((time.time(), '', item, str(return_val)))
+            return return_val
+        else:
+            raise AttributeError(f"<glfw> has such attribute '{item}'")
+
+class My_glfw(metaclass=_global_glfw):
     """Class for launching GLFW context and testing GL behavior on it."""
-    gl_object_shareness = {} # whether shared glfw contexts actually share gl objects
-    gl_VAO_children_binding = {} # whether vao binding binds object bounded to VAO ex) ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER
 
-    gl_version = None
-    gl_renderer = None
-    gl_vendor = None
-    glfw_version = None
+    _gl_object_shareness = {} # whether shared glfw contexts actually share gl objects
+    _gl_VAO_children_binding = {} # whether vao binding binds object bounded to VAO ex) ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER
 
-    is_glfw_inited = False
+    _gl_version = None
+    _gl_renderer = None
+    _gl_vendor = None
+    _glfw_version = None
+
+    _is_glfw_inited = False
 
     @classmethod
     def spec_check(cls):
@@ -28,7 +54,7 @@ class My_glfw_gl:
         result_strings = ['GLFW context specification result:',]
 
         if glfw.init():
-            cls.is_glfw_inited = True
+            cls._is_glfw_inited = True
         else:
             raise Exception('Can not initiate glfw')
 
@@ -37,6 +63,7 @@ class My_glfw_gl:
         # two windows needed for testing shareness properties
         window1 = glfw.create_window(1,1,'first', monitor=None, share=None)
         window2 = glfw.create_window(1,1,'first', monitor=None, share=window1)
+        glfw.window_hint(glfw.VISIBLE, glfw.TRUE)
 
         # check object shareness
         result_strings.append('\n    GL object shareness :')
@@ -57,37 +84,63 @@ class My_glfw_gl:
         # logic is simple : if window2 object's index is 2 not 1
         # means window2 shared object with window1
         for key, val in opengl_objects[0].items():
-            cls.gl_object_shareness[key] = True
+            cls._gl_object_shareness[key] = True
             if val == opengl_objects[1][key]:
-                cls.gl_object_shareness[key] = False
+                cls._gl_object_shareness[key] = False
             front_blank = " "*(len(result_strings[1]) - len(key) - 3)
-            result_strings.append(f'{front_blank}{key} : {"SHARED" if cls.gl_object_shareness[key] else "NOT SHARED"}')
+            result_strings.append(f'{front_blank}{key} : {"SHARED" if cls._gl_object_shareness[key] else "NOT SHARED"}')
 
         # store some info
-        cls.glfw_version = glfw.get_version_string()
-        cls.gl_version = gl.glGetString(gl.GL_VERSION)
-        cls.gl_version = gl.glGetString(gl.GL_RENDERER)
-        cls.gl_version = gl.glGetString(gl.GL_VENDOR)
+        cls._glfw_version = glfw.get_version_string()
+        cls._gl_version = gl.glGetString(gl.GL_VERSION)
+        cls._gl_renderer = gl.glGetString(gl.GL_RENDERER)
+        cls._gl_vendor = gl.glGetString(gl.GL_VENDOR)
         result_strings.append('\n    Some basic info :')
-        result_strings.append(f'       glfw_version : {cls.glfw_version}')
-        result_strings.append(f'         gl_version : {cls.gl_version}')
-        result_strings.append(f'        gl_renderer : {cls.gl_renderer}')
-        result_strings.append(f'          gl_vendor : {cls.gl_vendor}')
+        result_strings.append(f'       glfw_version : {cls._glfw_version}')
+        result_strings.append(f'         gl_version : {cls._gl_version}')
+        result_strings.append(f'        gl_renderer : {cls._gl_renderer}')
+        result_strings.append(f'          gl_vendor : {cls._gl_vendor}')
 
         result_strings.append('\n    VAO children binding :')
         # TODO actual testing needed
-        cls.gl_VAO_children_binding['array_buffer'] = True
-        cls.gl_VAO_children_binding['element_array_buffer'] = False
-        for key, val in cls.gl_VAO_children_binding.items():
+        cls._gl_VAO_children_binding['array_buffer'] = True
+        cls._gl_VAO_children_binding['element_array_buffer'] = False
+        for key, val in cls._gl_VAO_children_binding.items():
             result_strings.append(f'{" "*(24-len(key))}{key} : {val}')
 
         for win in window1, window2: glfw.destroy_window(win)
-        result_strings.append('\nGLFW context specification check done')
+        result_strings.append('\nGLFW context specification check DONE')
 
         # print resuts:
         for row in result_strings:
             print(row)
         print()
 
+    @classmethod
+    def is_glfw_initiated(cls):
+        return cls._is_glfw_inited
+
+    def __getattr__(self, item):
+        """
+        Redirector to <glfw> module.
+        :param item:
+        :return:
+        """
+        if hasattr(glfw, item):
+            return_val = glfw.__dict__[item]
+            if self._logging:   # initially logging set at __init__ using **kwargs
+                GLFW_logger.log((time.time(), str(self), item, str(return_val)))
+            return return_val
+        else:
+            raise AttributeError(f"Neither <My_glfw_gl> nor <glfw> has such attribute '{item}'")
+
+
+    def __init__(self, **kwargs):   # kwargs for some setting non default options
+        if not self.is_glfw_initiated():
+            self.spec_check()
+
+        self._logging = True if 'logging' in kwargs else False
+
 if __name__ == '__main__':
-    My_glfw_gl.spec_check()
+    print(My_glfw.aaa)
+    print(type(My_glfw()))
