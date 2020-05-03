@@ -1,7 +1,6 @@
 import threading
 import time
-from .context import My_glfw
-
+from .context import GLFW_GL_Context
 
 class Windows:
     """
@@ -40,10 +39,9 @@ class Windows:
             window._render_thread.start()
         # main thread. all function calls that has to work in full speed should be here
         while cls._windows:
-            My_glfw.poll_events()
+            GLFW_GL_Context.glfw.poll_events()
 
-        My_glfw.terminate() # no window alive means end of opengl functionality
-
+        GLFW_GL_Context.glfw.terminate() # no window alive means end of opengl functionality
 
 class Window:
     """
@@ -52,12 +50,12 @@ class Window:
     """
     def __init__(self, windows, width, height, name, monitor=None, shared=None, **kwargs):
         self._windows = windows
-        self._context = My_glfw(**kwargs)
+        self._context = GLFW_GL_Context(**kwargs)
         if isinstance(shared, Window):
             shared = shared._glfw_window
-        self._glfw_window = self._context.create_window(width, height, name, monitor, shared)
+        self._glfw_window = self._context.glfw.create_window(width, height, name, monitor, shared)
 
-        self._context.set_window_close_callback(self._glfw_window, self._close_window)
+        self._context.glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
         self._timer = Timer(30)
         self._render_thread = threading.Thread(target=self._run)
@@ -67,9 +65,9 @@ class Window:
         Rendering thread incuding operations per-frame
         :return:
         """
-        while not self._context.window_should_close(self._glfw_window):
+        while not self._context.glfw.window_should_close(self._glfw_window):
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
-                self._context.swap_buffers(self._glfw_window)
+                self._context.glfw.swap_buffers(self._glfw_window)
 
 
     def _close_window(self, window):
@@ -79,7 +77,17 @@ class Window:
         # this can cause 'noticable stall' when fps is very low
         self._render_thread.join()
         self._windows._windows.remove(self)
-        self._context.destroy_window(window)
+        self._context.glfw.destroy_window(window)
+
+    def __enter__(self):
+        # syntax for recording basic rendering
+        # TODO: make batch rendering. Currently direct drawing
+        self._context.glfw.make_context_current(self._glfw_window)   # set context to draw things
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # exit rendering recording
+        pass
 
 
 class Timer:
