@@ -3,10 +3,13 @@ import time
 import glfw
 import OpenGL.GL as gl
 
+
 class Logger:
+    """
+    Container for logging.
+    """
     def __init__(self, size=1000, do_log=True):
         """
-        Container for logging.
         :param size: max length of logging record. Infinite if given -1.
         :param do_log: Switch for logging.
         """
@@ -15,6 +18,11 @@ class Logger:
         self._record = deque()
 
     def log(self, message):
+        """
+        Log message
+        :param message:
+        :return:
+        """
         if len(self._record) == self._size:
             self._record.popleft()
         self._record.append(message)
@@ -29,12 +37,15 @@ class Logger:
         self._is_logging = v
 
 
-class GL_controller:
-    def __init__(self, root, logger):
+class GL_gate:
+    """
+    Access point into OpenGL module.
+    Calling 'gate' as it records, overrides OpenGL functions acting like an access point.
+    """
+    def __init__(self, logger, root=None):
         """
-        Access gate into GL functions for logging and overriding.
-        :param root: Unique context holding this instance.
         :param logger: Logging message container.
+        :param root: Unique context holding this instance.
         """
         self._root = root
         self._logger = logger
@@ -55,17 +66,24 @@ class GL_controller:
             raise AttributeError(f'No such GL attribute <{item}>')
 
     @property
+    def gl(self):
+        return gl
+
+    @property
     def log(self):
         return self._logger
 
 
-class GLFW_controller:
+class GLFW_gate:
+    """
+    Access point into GLFW module.
+    Calling 'gate' as it records, overrides GLFW functions acting like an access point.
+    """
 
     def __init__(self, logger, root=None):
         """
-        Access gate into GLFW functions for logging and overriding.
-        :param root: Unique context holding this instance.
         :param logger: Logging message container.
+        :param root: Unique context holding this instance.
         """
         self._root = root
         self._logger = logger
@@ -90,6 +108,10 @@ class GLFW_controller:
         return self._logger
     @property
     def global_log(self):
+        """
+        GLFW global function calls are recorded separately.
+        :return:
+        """
         return self._root._global_glfw._logger
 
 
@@ -106,7 +128,7 @@ class _global_glfw(type):
 class GLFW_GL_Context(metaclass=_global_glfw):
     """Class for launching GLFW context and testing GL behavior on it."""
 
-    _global_glfw = GLFW_controller(Logger(size=100))    # for recording global glfw
+    _global_glfw = GLFW_gate(Logger(size=100))    # for recording global glfw
 
     _gl_object_shareness = {} # whether shared glfw contexts actually share gl objects
     _gl_VAO_children_binding = {} # whether vao binding binds object bounded to VAO ex) ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER
@@ -219,8 +241,8 @@ class GLFW_GL_Context(metaclass=_global_glfw):
             self.spec_check()
 
         self._logger = Logger()
-        self._gl = GL_controller(logger=self._logger, root=self)
-        self._glfw = GLFW_controller(logger=self._logger, root=self)
+        self._gl = GL_gate(logger=self._logger, root=self)
+        self._glfw = GLFW_gate(logger=self._logger, root=self)
         self._logger.is_logging = True
         if 'logging' in kwargs:
             self._logger.is_logging = kwargs['logging']
@@ -228,16 +250,10 @@ class GLFW_GL_Context(metaclass=_global_glfw):
     @property
     def gl(self):
         return self._gl
-    @gl.setter
-    def gl(self, v):
-        raise AttributeError('this is subordinate property')
 
     @property
     def glfw(self):
         return self._glfw
-    @glfw.setter
-    def glfw(self, v):
-        raise AttributeError('this is subordinate property')
 
 
 if __name__ == '__main__':

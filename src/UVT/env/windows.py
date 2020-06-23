@@ -1,6 +1,8 @@
 import threading
 import time
 from .context import GLFW_GL_Context
+import glfw
+
 
 class Windows:
     """
@@ -29,19 +31,38 @@ class Windows:
 
     @classmethod
     def run(cls):
+
         """
         Main loop for operating, drawing a windows
         :return:
         """
         # to insist window drawing only after this function is called
-        # thread start is moved from WIndow().__init__ to here
+        # thread start is moved from Window().__init__ to here
         for window in cls._windows:
             window._render_thread.start()
         # main thread. all function calls that has to work in full speed should be here
         while cls._windows:
+
             GLFW_GL_Context.glfw.poll_events()
 
         GLFW_GL_Context.glfw.terminate() # no window alive means end of opengl functionality
+
+    @classmethod
+    def get_current(cls):
+        # find bound window from window list
+        current_context = glfw.get_current_context()
+        try:
+            current_context.contents
+        except:
+            # when 'ValueError : NULL pointer access'
+            raise Exception('No context is current')
+
+        # find window
+        for window in cls._windows:
+            if window._glfw_window.contents.__reduce__() == current_context.contents.__reduce__():
+                return window
+        raise Exception("Window untrackable")
+
 
 class Window:
     """
@@ -59,6 +80,10 @@ class Window:
 
         self._timer = Timer(30)
         self._render_thread = threading.Thread(target=self._run)
+        self._pipelines = []
+
+    def append_pipeline(self, pipeline):
+        self._pipelines.append(pipeline)
 
     def _run(self):
         """
@@ -67,6 +92,9 @@ class Window:
         """
         while not self._context.glfw.window_should_close(self._glfw_window):
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
+                with self:
+                    for pipeline in self._pipelines:
+                        pipeline.calc()
                 self._context.glfw.swap_buffers(self._glfw_window)
 
 
@@ -86,8 +114,29 @@ class Window:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self._context.glfw.make_context_current(None)
         # exit rendering recording
         pass
+
+    @property
+    def is_current(self):
+        return self == self._windows.get_current()
+
+    @property
+    def gl(self):
+        """
+        Purly part of UI.
+        :return:
+        """
+        return self._context.gl
+
+    @property
+    def glfw(self):
+        """
+        Purly part of UI.
+        :return:
+        """
+        return self._context.glfw
 
 
 class Timer:
