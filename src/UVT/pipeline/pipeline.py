@@ -40,7 +40,7 @@ class Pipeline:
 
     built by components and relationships between them
     """
-    render_window = comp.Input('render_window')
+    render_window = comp.Input('render_window', None)
 
     def __init__(self, render_window=None):
         if render_window is not None:

@@ -1,9 +1,4 @@
-from UVT import Window
 from pipeline import Pipeline, comp
-
-import glfw
-import numpy as np
-
 
 pipeline = Pipeline()
 a = comp.Integer(10)

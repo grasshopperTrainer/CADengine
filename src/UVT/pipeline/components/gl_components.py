@@ -29,7 +29,8 @@ class OpenglDataComponent(OpenglComponent):
     """
     Parent for data components using numpy array
     """
-    value = Output('value')
+    value = Output('value', None)
+
     def __init__(self, data):
         if isinstance(data, (tuple, list)):
             self.value = np.array(data, dtype=self._dtype)
@@ -64,7 +65,7 @@ class UnsignedIntVector(OpenglDataComponent):
 
 
 class Window(OpenglComponent):
-    window = Output('window')
+    window = Output('window', None)
     def __init__(self, w):
         self.window = w
 
@@ -125,9 +126,10 @@ class BufferComponent(OpenglComponent):
 
 
 class VertexArray(BufferComponent):
-    window = Input('window')
-    vbo = Input('vbo')
-    ibo = Input('ibo')
+    window = Input('window', None)
+    vbo = Input('vbo', None)
+    ibo = Input('ibo', None)
+    vao = Output('vao', None)
 
     def __init__(self):
         self._kind = opengl.GL_VERTEX_ARRAY
@@ -159,8 +161,8 @@ class VertexArray(BufferComponent):
 class VertexBuffer(BufferComponent):
 
     window = WindowInput()
-    data = Input('data')
-    vbo = Output('vbo')
+    data = Input('data', None)
+    vbo = Output('vbo', None)
 
     def __init__(self):
         self._kind = opengl.GL_ARRAY_BUFFER
