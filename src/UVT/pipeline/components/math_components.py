@@ -14,10 +14,10 @@ class Add(MathComponents):
     """
     a = Input('a', 0)
     b = Input('b', 0)
-    r = Output('r', 0)
+    vlaue_out = Output('value_out', 0)
 
     def __init__(self):
         pass
 
     def operate(self):
-        self.r = self.a + self.b
+        self.vlaue_out = self.a + self.b

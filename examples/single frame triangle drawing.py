@@ -4,7 +4,6 @@ import glfw
 import numpy as np
 
 window1 = Window.new_window(200,200, 'f', monitor=None, shared=None)
-# window2 = Window.new_window(1000,1000, 's', monitor=None, shared=window1)
 
 with window1 as w:
     pipeline = comp.ComplexComponent()
@@ -31,4 +30,4 @@ with window1 as w:
 
     pipeline.operate()
 
-Window.run()
+Window.run(1)

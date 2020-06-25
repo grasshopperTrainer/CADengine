@@ -30,7 +30,7 @@ class Windows:
         return window
 
     @classmethod
-    def run(cls):
+    def run(cls, frame_count=None):
 
         """
         Main loop for operating, drawing a windows
@@ -39,6 +39,7 @@ class Windows:
         # to insist window drawing only after this function is called
         # thread start is moved from Window().__init__ to here
         for window in cls._windows:
+            window.set_frame_to_render(frame_count)
             window._render_thread.start()
         # main thread. all function calls that has to work in full speed should be here
         while cls._windows:
@@ -82,6 +83,9 @@ class Window:
         self._render_thread = threading.Thread(target=self._run)
         self._pipelines = []
 
+        self._frame_to_render = None
+        self._frame_count = 0
+
     def append_pipeline(self, pipeline):
         self._pipelines.append(pipeline)
 
@@ -91,11 +95,16 @@ class Window:
         :return:
         """
         while not self._context.glfw.window_should_close(self._glfw_window):
+            if self._frame_count == self._frame_to_render:
+                break   # if number of drawn frame is targeted number of frame drawn
+
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
                 with self:
                     for pipeline in self._pipelines:
-                        pipeline.calc()
+                        pipeline.operate()
                 self._context.glfw.swap_buffers(self._glfw_window)
+
+            self._frame_count += 1
 
 
     def _close_window(self, window):
@@ -117,6 +126,9 @@ class Window:
         self._context.glfw.make_context_current(None)
         # exit rendering recording
         pass
+
+    def set_frame_to_render(self, v):
+        self._frame_to_render = v
 
     @property
     def is_current(self):
