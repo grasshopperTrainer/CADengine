@@ -8,7 +8,7 @@ window1 = Window.new_window(200,200, 'f', monitor=None, shared=None)
 
 with window1 as w:
     pipeline = comp.ComplexComponent()
-    pipeline.add_interface(comp.WindowInput(w))
+    # pipeline.add_interface(comp.WindowInput(w))
 
     vertex = [[-1, -1, 0], [1, -1, 0], [0, 1, 0]]
     vrtx_attr = comp.ConSingleVertexAttribute('coord', vertex, 'f')
