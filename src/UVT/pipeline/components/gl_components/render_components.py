@@ -29,18 +29,21 @@ class DrawTriangle(DrawArrayComponent):
     glDrawArrays(GL_TRIANGLES, ...)
     """
 
-    vrtx_arry = Input(name='vrtx_arry', def_val=None)
-    idx_bound = Input(name='idx_bound', def_val=Bound(0, 3))
+    vrtx_arry = Input(def_val=None)
+    idx_bound = Input(def_val=Bound(0, 3))
+    render_attempt = Output(None)
+
     _kind = opengl.GL_TRIANGLES
 
     def __init__(self, window=None, vao=None, idx_bound=None):
-        self.window = window
+        super().__init__(window)
         self.vrtx_arry = vao
         if idx_bound is not None:
             self.idx_bound = idx_bound
 
     def operate(self):
         self.render()
+        self.render_attempt = True
 
     # @log_execution
     def render(self):

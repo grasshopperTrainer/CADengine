@@ -11,8 +11,8 @@ class ConVertexArray(VertexArrayComponent):
     """
     Contructs vertex array object
     """
-    window = Input('window', None)
-    vrtx_arry = Output('vrtx_arry', None)
+    window = Input(None)
+    vrtx_arry = Output(None)
     _kind = opengl.GL_VERTEX_ARRAY
 
     def operate(self):
@@ -28,10 +28,10 @@ class ConSingleVertexAttribute(VertexArrayComponent):
     :param dtype: data type
     :param vattro: vertex attribute object
     """
-    attr_name = Input('attr_name', None)
-    value = Input('value', None)
-    dtype = Input('dtype', None)
-    vrtx_attr = Output('vrtx_attr', None)
+    attr_name = Input(None)
+    value = Input(None)
+    dtype = Input(None)
+    vrtx_attr = Output(None)
 
     def __init__(self, attr_name, value, dtype):
         self.attr_name = attr_name
@@ -47,8 +47,8 @@ class ConSingleVertexAttribute(VertexArrayComponent):
             size = 1
 
         # define data type
-        if isinstance(self.dtype, str):
-            dtype = np.dtype([(self.attr_name, self.dtype, size)])
+        if self.dtype.isinstance(str):
+            dtype = np.dtype([(self.attr_name.r, self.dtype.r, size)])
         else:
             raise NotImplementedError
 
@@ -63,9 +63,9 @@ class EnableVertexAttribute(VertexArrayComponent):
     """
     Push vertex attribute properties into vertex array
     """
-    vrtx_attr = Input('vrtx_attr', None)
-    vrtx_arry = Input('vrtx_arry', None)
-    vrtx_arry_out = Output('vrtx_arry', None)
+    vrtx_attr = Input(None)
+    vrtx_arry = Input(None)
+    vrtx_arry_out = Output(None)
 
     def operate(self):
         """
@@ -92,10 +92,11 @@ class JoinVrtxArryVrtxBffr(VertexArrayComponent):
     Make vertex array know vertex buffer
     """
 
-    vrtx_arry = Input('vrtx_arry', None)
-    vrtx_bffr = Input('vrtx_bffr', None)
-    vrtx_arry_out = Output('vrtx_brrf_out', None)
+    vrtx_arry = Input(None)
+    vrtx_bffr = Input(None)
+    vrtx_arry_out = Output(None)
 
     def operate(self):
         self.gl.glBindVertexArray(self.vrtx_arry.id)
         self.gl.glBindBuffer(self.vrtx_bffr.kind, self.vrtx_bffr.id)
+        self.vrtx_arry_out = self.vrtx_arry

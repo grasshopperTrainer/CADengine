@@ -12,9 +12,9 @@ class Add(MathComponents):
     """
     Basic two number addition
     """
-    a = Input('a', 0)
-    b = Input('b', 0)
-    vlaue_out = Output('value_out', 0)
+    a = Input(0)
+    b = Input(0)
+    vlaue_out = Output(0)
 
     def __init__(self):
         pass

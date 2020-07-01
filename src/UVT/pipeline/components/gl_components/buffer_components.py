@@ -27,8 +27,8 @@ class BufferComponent(OpenglComponent):
 
 
 class ConVertexBuffer(BufferComponent):
-    data = Input('data', None)
-    vrtx_bffr = Output('vrtx_bffr', None)
+    data = Input(None)
+    vrtx_bffr = Output(None)
     _kind = opengl.GL_ARRAY_BUFFER
 
     def operate(self):
@@ -39,10 +39,10 @@ class PushBufferData(BufferComponent):
     """
     Push value into a buffer using properties assigned in vertex attribute object
     """
-    vrtx_attr = Input('vrtx_attr', None)
-    vrtx_bffr = Input('vrtx_bffr', None)
-    vrtx_attr_out = Output('vrtx_attr_out', None)
-    vrtx_bffr_out = Output('vrtx_bffr_out', None)
+    vrtx_attr = Input(None)
+    vrtx_bffr = Input(None)
+    vrtx_attr_out = Output(None)
+    vrtx_bffr_out = Output(None)
 
     def operate(self):
         print(self.vrtx_bffr, self.vrtx_attr)

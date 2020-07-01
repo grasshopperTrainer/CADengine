@@ -6,7 +6,7 @@ class ConDataComponent(OpenglComponent):
     """
     Parent for data components using numpy array
     """
-    val_out = Output('val_out', None)
+    val_out = Output(None)
 
     def __init__(self, data):
         if isinstance(data, (tuple, list)):
@@ -30,7 +30,7 @@ class ConUnsignedIntVector(ConDataComponent):
 
 
 class Window(OpenglComponent):
-    window = Output('window', None)
+    window = Output(None)
 
     def __init__(self, w):
         self.window = w
