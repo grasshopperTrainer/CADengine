@@ -11,12 +11,13 @@ import heapq
 from collections import namedtuple, deque
 from collections.abc import Iterable
 import weakref as wr
-from ..data_types import *
 import inspect
 import warnings
+if __name__ != '__main__':
+    from ..data_types import *
 
 
-class NodeSpvr:
+class CompSpvr:
     """
     Supervisor of nodes
 
@@ -54,14 +55,14 @@ class NodeSpvr:
         :return:
         """
 
-        l_supv, r_supv = out.intf_holder._node_spvr, inp.intf_holder._node_spvr
+        l_supv, r_supv = out.intf_holder._comp_spvr, inp.intf_holder._comp_spvr
         # two graphs are islands so need to be merged beforehand
         is_merged = False
         if l_supv != r_supv:
             # simply update dict and assign new supervisor to instances(nodes)
             l_supv._graph.update(r_supv._graph)
             for node in r_supv._graph:
-                node._node_spvr = l_supv
+                node._comp_spvr = l_supv
             is_merged = True
 
         # check distance and update if needed
@@ -380,14 +381,28 @@ class IntfDescriptor:
 
     To control setting value
     """
+    SIBLING_POSTFIX = 'sib'
 
-    def __init__(self, def_val=None, multiple=False):
+    def __init__(self, def_val=None, has_siblings=False):
         # parse initing code line identify name
         c = inspect.getframeinfo(inspect.currentframe().f_back).code_context[0]
         self._name = c.split(self.__class__.__name__)[0].strip().split('=')[0].strip()
-        self._record_name = f'_{self.__class__.__name__}_{self._name}'
+
+        self._has_siblings = has_siblings
+        self._siblings = {}
+
+        if self._has_siblings:
+            self._record_name = f'_{self.__class__.__name__}_{self._name}_{self.SIBLING_POSTFIX}_0'
+        else:
+            self._record_name = f"_{self.__class__.__name__}_{self._name}"
+
         self._def_val = def_val
-        self._multiple = True
+
+
+
+    @property
+    def has_siblings(self):
+        return self._has_siblings
 
     def __set__(self, instance, value):
         """
@@ -412,7 +427,7 @@ class IntfDescriptor:
         :return:
         """
         self._check_init(instance)
-        instance._node_spvr.update_tomake_updated(instance)
+        instance._comp_spvr.update_tomake_updated(instance)
         return getattr(instance, self._record_name)
 
     def __delete__(self, instance):
@@ -426,7 +441,7 @@ class IntfDescriptor:
         :return:
         """
         self._check_init(instance)
-        instance._node_spvr.disconnect(instance, getattr(instance, self._record_name))
+        instance._comp_spvr.disconnect(instance, getattr(instance, self._record_name))
         intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
         setattr(instance, self._record_name, intf_obj)
 
@@ -440,17 +455,20 @@ class IntfDescriptor:
         :param instance:
         :return:
         """
-        # add attriute
+        # add attribute
         if not hasattr(instance, self._record_name):
             # 1 use default value if there isn't one
             intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
             setattr(instance, self._record_name, intf_obj)
+
             # 2 collect instance attr_name, then set with sign
-            inst_dict = instance.__dict__.setdefault('_intfs', {})
-            inst_dict.setdefault(type(self).__name__, set()).add(self._record_name)
+            typ_dict = instance.__dict__.setdefault('_intfs', {})
+            intf_dict = typ_dict.setdefault(type(self).__name__, {})
+            sib_list = intf_dict.setdefault(self._name, [])
+
         # 3 add node grapher if there isn't
-        if not hasattr(instance, '_node_spvr'):
-            setattr(instance, '_node_spvr', NodeSpvr(instance))
+        if not hasattr(instance, '_comp_spvr'):
+            setattr(instance, '_comp_spvr', CompSpvr(instance))
 
     def _set_intf_val(self, instance, value):
         # type check
@@ -485,13 +503,50 @@ class Input(IntfDescriptor):
             if value.intf_sign == Input: # if connecting input -> input interfaces
                 raise AttributeError("direction should be (output) -> (input)")
             # disconnect as relating is in default monopoly
-            instance._node_spvr.disconnect(instance, intf)
-            instance._node_spvr.build_rel(value, intf)
+            instance._comp_spvr.disconnect(instance, intf)
+            instance._comp_spvr.build_rel(value, intf)
 
         else:  # if putting raw value
-            instance._node_spvr.disconnect(instance, intf)
+            instance._comp_spvr.disconnect(instance, intf)
 
         self._set_intf_val(instance, value)
+
+    def add_sibling(self, instance, owner):
+        """
+        Add sibling input
+
+        There might be cases where number of inputs is not identified initially.
+        To address this kind of situation, it is possible to add input siblings.
+        Sibling inputs a list of interfaces, which is understood to have same characteristics.
+        Builder of a component can address to this interface while writing (def) operate via
+        (attr) self._intfs.
+
+        :param owner: Owner class of intf that has siblings
+        :return:
+        """
+        if self._has_siblings:
+            new_intf = self.__class__(def_val=self._def_val, has_siblings=False)
+            idx = 1
+            while idx in self._siblings:
+                idx += 1
+            new_intf._name = f"{self._name}_{self.SIBLING_POSTFIX}_{idx}"
+            new_intf._record_name = f"_{self.__class__.__name__}_{new_intf._name}"
+            setattr(owner, new_intf._name, new_intf)
+            self._siblings[idx] = new_intf._name
+
+            # registering
+            if isinstance(self, Input):
+                if self._name in instance.inputs:
+                    instance.inputs[self._name].append(new_intf._name)
+                else:
+                    raise
+            elif isinstance(self, Output):
+                raise NotImplementedError
+            else:
+                raise TypeError
+            return new_intf._name
+        else:
+            raise AttributeError(f"The interface does not have any siblings")
 
 
 class Output(IntfDescriptor):
@@ -508,7 +563,7 @@ class Output(IntfDescriptor):
         Only one case is accepted :
         Instance's internal operation trying to set value to the output
         else, output value of node is not allowed to be set as it's always the result of the node's (def) operate.
-        And as (def) operate will only be run by (obj) _node_spvr, there is no need to set rightward to be updated.
+        And as (def) operate will only be run by (obj) _comp_spvr, there is no need to set rightward to be updated.
 
         :param instance: Node
         :param value:
@@ -530,7 +585,7 @@ class Output(IntfDescriptor):
                     # if node's output is updated, right of it has to have values in and set to update
                     # pushing is needed for the case (def) operate is executed explicitly?
                     # or can't it be executed that way? -> it can't i suppose
-                    # instance._node_spvr.push_rightward_update_que(instance, getattr(instance, self._record_name))
+                    # instance._comp_spvr.push_rightward_update_que(instance, getattr(instance, self._record_name))
                     return
         raise AttributeError("Output can't be set explicitly")
 
@@ -568,28 +623,61 @@ class Component:
         """
         NotImplementedError
 
-class Relationship:
-    """
-    Relationship between two components
-    """
-    def __init__(self, left, out, inp, right):
-        if not (isinstance(out, str) and isinstance(inp, str)):
-            raise TypeError
-        self._left = left
-        self._out = out
-        self._inp = inp
-        self._right = right
+    def add_sibling_interface(self, intf: IntfObj):
+        owner, desc = self._get_desc(intf.intf_name)
+        desc.add_sibling(self, owner)
 
-    def push_rightward(self):
-        """
-        Push left's output into right's input
-        :return:
-        """
-        setattr(self._right, self._inp, getattr(self._left, self._out))
+    def _get_desc(self, intf_name):
+        for cls in self.__class__.__mro__:
+            if intf_name in cls.__dict__:
+                return cls, cls.__dict__[intf_name]
+
+        raise AttributeError(f"The component has no such interface '{intf_name}'")
+
+    def siblings_of(self, intf):
+        n = intf.intf_name
+        if n in self.inputs:
+            return list(self.inputs[n])
+        elif n in self.outputs:
+            return list(self.outputs[n])
+        else:
+            raise AttributeError(f"no such interface '{n}'")
 
     @property
-    def right(self):
-        return self._right
+    def inputs(self):
+        return self.interface.get('Input', {})
+
     @property
-    def left(self):
-        return self._left
+    def outputs(self):
+        return self.interface.get('Output', {})
+
+    @property
+    def interface(self):
+        return self.__dict__.get('_intfs', {})
+
+
+if __name__ == '__main__':
+
+    class A(Component):
+        a = Input(def_val=0, has_siblings=True)
+        o = Output()
+
+        def operate(self):
+            print(self.siblings_of(self.a))
+            self.o = self.a + 10
+
+a = A()
+# a.a = 10
+print(a.o)
+# print(type(a.a))
+# print(a.__dict__)
+# print()
+a.add_sibling_interface(a.a)
+# a.a_sib_1 = 30
+print(a.siblings_of(a.a))
+# print(a.__dict__)
+# print()
+# print(a.__dict__)
+# print(a.a_sib_1)
+# # a.operate()
+# print(a.o)

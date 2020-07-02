@@ -43,14 +43,14 @@ class NodeSpvr:
         :return:
         """
 
-        l_supv, r_supv = out.intf_holder._node_spvr, inp.intf_holder._node_spvr
+        l_supv, r_supv = out.intf_holder._comp_spvr, inp.intf_holder._comp_spvr
         # two graphs are islands so need to be merged beforehand
         is_merged = False
         if l_supv != r_supv:
             # simply update dict and assign new supervisor to instances(nodes)
             l_supv._graph.update(r_supv._graph)
             for node in r_supv._graph:
-                node._node_spvr = l_supv
+                node._comp_spvr = l_supv
             is_merged = True
 
         # check distance and update if needed
@@ -356,7 +356,7 @@ class IntfDescriptor:
         :return:
         """
         self._check_init(instance)
-        instance._node_spvr.update_tomake_updated(instance)
+        instance._comp_spvr.update_tomake_updated(instance)
         return getattr(instance, self._record_name)
 
     def __delete__(self, instance):
@@ -370,7 +370,7 @@ class IntfDescriptor:
         :return:
         """
         self._check_init(instance)
-        instance._node_spvr.disconnect(instance, getattr(instance, self._record_name))
+        instance._comp_spvr.disconnect(instance, getattr(instance, self._record_name))
         intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
         setattr(instance, self._record_name, intf_obj)
 
@@ -393,8 +393,8 @@ class IntfDescriptor:
             inst_dict = instance.__dict__.setdefault('_intfs', {})
             inst_dict.setdefault(self, set()).add(self._record_name)
         # 3 add node grapher if there isn't
-        if not hasattr(instance, '_node_spvr'):
-            setattr(instance, '_node_spvr', NodeSpvr(instance))
+        if not hasattr(instance, '_comp_spvr'):
+            setattr(instance, '_comp_spvr', NodeSpvr(instance))
 
 
 class Input(IntfDescriptor):
@@ -416,8 +416,8 @@ class Input(IntfDescriptor):
             if value.intf_sign == Input: # if connecting input -> input interfaces
                 raise AttributeError("direction should be (output) -> (input)")
 
-            instance._node_spvr.disconnect(instance, getattr(instance, self._record_name))
-            instance._node_spvr.build_rel(value, getattr(instance, self._record_name))
+            instance._comp_spvr.disconnect(instance, getattr(instance, self._record_name))
+            instance._comp_spvr.build_rel(value, getattr(instance, self._record_name))
 
         else:  # if putting raw value
             self.__delete__(instance)   # existing connection has to be removed as this is explicit __set__
@@ -438,7 +438,7 @@ class Output(IntfDescriptor):
         Only one case is accepted :
         Instance's internal operation trying to set value to the output
         else, output value of node is not allowed to be set as it's always the result of the node's (def) operate.
-        And as (def) operate will only be run by (obj) _node_spvr, there is no need to set rightward to be updated.
+        And as (def) operate will only be run by (obj) _comp_spvr, there is no need to set rightward to be updated.
 
         :param instance: Node
         :param value:
@@ -461,7 +461,7 @@ class Output(IntfDescriptor):
                     # if node's output is updated, right of it has to have values in and set to update
                     # pushing is needed for the case (def) operate is executed explicitly?
                     # or can't it be executed that way? -> it can't i suppose
-                    # instance._node_spvr.push_rightward_update_que(instance, getattr(instance, self._record_name))
+                    # instance._comp_spvr.push_rightward_update_que(instance, getattr(instance, self._record_name))
                     return
         raise AttributeError("Output can't be set explicitly")
 
@@ -529,7 +529,7 @@ if __name__ == '__main__':
         print(node1.o)
         print()
         node2.first_in = node1.o
-        print(node2._node_spvr._needto_update)
+        print(node2._comp_spvr._needto_update)
         node2.second_in = node1.o
         print('inputing two values done')
         print()
@@ -562,10 +562,10 @@ if __name__ == '__main__':
         print(j.i1, j.i2)
         print(u.o)
         print(j.o)
-        print(j._node_spvr._needto_update)
+        print(j._comp_spvr._needto_update)
         print(j.o)
         u.i = 'ddddd'
-        for i in j._node_spvr._node_full_rels(u):
+        for i in j._comp_spvr._node_full_rels(u):
             print(i)
         print(u.o)
         j.i1 = j.i2 = u.o
