@@ -11,6 +11,10 @@ class BufferObject:
     Handles deletion of OpenGL object.
     """
 
+    def __init__(self, id, kind):
+        self._id = id
+        self._kind = kind
+
     @property
     def id(self):
         return self._id
@@ -18,11 +22,14 @@ class BufferObject:
     def kind(self):
         return self._kind
 
-class VertexBufferObject(BufferObject):
-    _kind = opengl.GL_ARRAY_BUFFER
 
+class VertexBufferObject(BufferObject):
     def __init__(self, id):
-        self._id = id
+        super().__init__(id, opengl.GL_ARRAY_BUFFER)
+
+class IndexBufferObject(BufferObject):
+    def __init__(self, id):
+        super().__init__(id, opengl.GL_ELEMENT_ARRAY_BUFFER)
 
 
 class VertexArrayObject:
@@ -34,26 +41,26 @@ class VertexArrayObject:
         return self._id
 
 
-class VertexAttribObject:
+class NamedData:
     """
     Numpy array value to be used pushed into buffer and used as vertex attribute
     """
-    def __init__(self, value):
-        if not isinstance(value, np.ndarray):
+    def __init__(self, data):
+        if not isinstance(data, np.ndarray):
             raise TypeError
 
-        self._value = value
+        self._data = data
 
     @property
     def bytesize(self):
-        return self._value.size * self._value.itemsize
+        return self._data.size * self._data.itemsize
 
     @property
     def properties(self):
-        nt = namedtuple('vao_properties', ('name', 'size', 'type', 'stride', 'offset'))
+        nt = namedtuple('named_data', ('name', 'size', 'type', 'stride', 'offset'))
         nts = []
-        stride = self._value.itemsize
-        for k, v in self._value.dtype.fields.items():
+        stride = self._data.itemsize
+        for k, v in self._data.dtype.fields.items():
             dtype, offset = v
             subdtype, size = dtype.subdtype
             size = size[0]
@@ -61,5 +68,25 @@ class VertexAttribObject:
         return nts
 
     @property
-    def value(self):
-        return self._value
+    def data(self):
+        return self._data
+
+
+class DataBufferObject(VertexBufferObject, NamedData):
+    """
+    Buffer storing vertex attribute data
+    """
+    def __init__(self, bffr, attr):
+        if hasattr(bffr, 'isinstance') and hasattr(attr, 'isinstance'):
+            if not (bffr.isinstance(BufferObject) and attr.isinstance(NamedData)):
+                raise TypeError
+        else:
+            if not (isinstance(bffr, BufferObject) and isinstance(attr, NamedData)):
+                raise TypeError
+
+        self._bffr = bffr
+        self._attr = attr
+
+        self._id = self._bffr.id
+        self._kind = self._bffr.kind
+        self._value = self._attr.data

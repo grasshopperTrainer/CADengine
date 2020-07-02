@@ -35,25 +35,37 @@ class ConVertexBuffer(BufferComponent):
         self.vrtx_bffr = VertexBufferObject(self.gl.glGenBuffers(1))
 
 
+class ConIndexBuffer(BufferComponent):
+    data = Input(None)
+    indx_bffr = Output(None)
+    _kind = opengl.GL_ELEMENT_ARRAY_BUFFER
+
+    def operate(self):
+        self.indx_bffr = IndexBufferObject(self.gl.glGenBuffers(1))
+
+
 class PushBufferData(BufferComponent):
     """
     Push value into a buffer using properties assigned in vertex attribute object
     """
-    vrtx_attr = Input(None)
-    vrtx_bffr = Input(None)
-    vrtx_attr_out = Output(None)
-    vrtx_bffr_out = Output(None)
+    vrtx_attr = Input()
+    vrtx_bffr = Input()
+    data_bffr = Output()
+
+    def __init__(self, window, vrtx_bffr=None, vrtx_attr=None):
+        self.vrtx_bffr = vrtx_bffr
+        self.vrtx_attr = vrtx_attr
+        super().__init__(window)
 
     def operate(self):
-        print(self.vrtx_bffr, self.vrtx_attr)
         self.gl.glBindBuffer(self.vrtx_bffr.kind, self.vrtx_bffr.id)
         self.gl.glBufferData(self.vrtx_bffr.kind,
                              self.vrtx_attr.bytesize,
-                             self.vrtx_attr.value,
+                             self.vrtx_attr.data,
                              self.gl.GL_STATIC_DRAW)
 
-        self.vrtx_attr_out = self.vrtx_attr
-        self.vrtx_bffr_out = self.vrtx_bffr
+        self.data_bffr = DataBufferObject(self.vrtx_bffr, self.vrtx_attr)
+
 
 # class ConIndexBuffer(ConVertexBuffer):
 #     def __init__(self, window: Window):

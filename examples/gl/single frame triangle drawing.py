@@ -6,23 +6,24 @@ import numpy as np
 window1 = Window.new_window(200,200, 'f', monitor=None, shared=None)
 
 with window1 as w:
-    vertex = [[-1, -1, 0], [1, -1, 0], [0, 1, 0]]
-    va = comp.ConSingleVertexAttribute('coord', vertex, 'f')
+    vertex = [[-1, -1, 0], [1, -1, 0], [0, 1, 0], [1,1,0]]
+    va = comp.ConOpenglData('coord', vertex, 'f')
     vbo = comp.ConVertexBuffer(w)
     vao = comp.ConVertexArray(w)
     #
     buffer_pusher = comp.PushBufferData(w)
     enabler = comp.EnableVertexAttribute(w)
 
-    buffer_pusher.vrtx_attr = va.vrtx_attr
+    buffer_pusher.vrtx_attr = va.gl_data
     buffer_pusher.vrtx_bffr = vbo.vrtx_bffr
     enabler.vrtx_arry = vao.vrtx_arry
-    enabler.vrtx_attr = va.vrtx_attr
+    enabler.vrtx_attr = va.gl_data
     #
     joiner = comp.JoinVrtxArryVrtxBffr(w)
     joiner.vrtx_arry = vao.vrtx_arry
     joiner.vrtx_bffr = vbo.vrtx_bffr
-    tri_drawer = comp.DrawTriangle(w, joiner.vrtx_arry_out)
+
+    tri_drawer = comp.DrawTriangle(w, joiner.vrtx_arry_out, comp.Bound(1,4))
 
     # tri_drawer.vrtx_arry = joiner.vrtx_arry_out
 

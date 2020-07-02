@@ -11,7 +11,7 @@ with window1 as w:
     # pipeline.add_interface(comp.WindowInput(w))
 
     vertex = [[-1, -1, 0], [1, -1, 0], [0, 1, 0]]
-    vrtx_attr = comp.ConSingleVertexAttribute('coord', vertex, 'f')
+    vrtx_attr = comp.ConOpenglData('coord', vertex, 'f')
     vbo = comp.ConVertexBuffer()
     vao = comp.ConVertexArray()
 

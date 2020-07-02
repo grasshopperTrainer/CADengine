@@ -359,6 +359,14 @@ class IntfObj:
             return self._intf_obj.__mul__(other._intf_obj)
         return self._intf_obj.__mul__(other)
 
+
+    def __iter__(self):
+        return self.r.__iter__()
+
+
+    def __next__(self):
+        return self.r.__next__()
+
     def __getitem__(self, item):
         return self._intf_obj.__getitem__(item)
 
@@ -373,12 +381,13 @@ class IntfDescriptor:
     To control setting value
     """
 
-    def __init__(self, def_val):
+    def __init__(self, def_val=None, multiple=False):
         # parse initing code line identify name
         c = inspect.getframeinfo(inspect.currentframe().f_back).code_context[0]
         self._name = c.split(self.__class__.__name__)[0].strip().split('=')[0].strip()
         self._record_name = f'_{self.__class__.__name__}_{self._name}'
         self._def_val = def_val
+        self._multiple = True
 
     def __set__(self, instance, value):
         """
@@ -438,7 +447,7 @@ class IntfDescriptor:
             setattr(instance, self._record_name, intf_obj)
             # 2 collect instance attr_name, then set with sign
             inst_dict = instance.__dict__.setdefault('_intfs', {})
-            inst_dict.setdefault(self, set()).add(self._record_name)
+            inst_dict.setdefault(type(self).__name__, set()).add(self._record_name)
         # 3 add node grapher if there isn't
         if not hasattr(instance, '_node_spvr'):
             setattr(instance, '_node_spvr', NodeSpvr(instance))
