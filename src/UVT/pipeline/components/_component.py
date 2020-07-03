@@ -383,7 +383,7 @@ class IntfDescriptor:
     """
     SIBLING_POSTFIX = 'sib'
 
-    def __init__(self, def_val=None, has_siblings=False):
+    def __init__(self, def_val=None, has_siblings=False, typs=()):
         # parse initing code line identify name
         c = inspect.getframeinfo(inspect.currentframe().f_back).code_context[0]
         self._name = c.split(self.__class__.__name__)[0].strip().split('=')[0].strip()
@@ -391,14 +391,14 @@ class IntfDescriptor:
         self._has_siblings = has_siblings
         self._siblings = {}
 
+        self._accepted_typs = typs
+
         if self._has_siblings:
             self._record_name = f'_{self.__class__.__name__}_{self._name}_{self.SIBLING_POSTFIX}_0'
         else:
             self._record_name = f"_{self.__class__.__name__}_{self._name}"
 
         self._def_val = def_val
-
-
 
     @property
     def has_siblings(self):
@@ -483,6 +483,15 @@ class IntfDescriptor:
             intf_obj = IntfObj(instance, self._name, type(self), value)
             setattr(instance, self._record_name, intf_obj)
 
+    def _typecheck(self, v):
+        if not self._accepted_typs:
+            return True
+        else:
+            if isinstance(v, self._accepted_typs):
+                return True
+            else:
+                raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
+
 
 class Input(IntfDescriptor):
     """
@@ -497,6 +506,7 @@ class Input(IntfDescriptor):
         :param value:
         :return:
         """
+        self._typecheck(value)
         self._check_init(instance)
         intf = getattr(instance, self._record_name)
         if isinstance(value, IntfObj):  # if connecting node to node
@@ -569,6 +579,7 @@ class Output(IntfDescriptor):
         :param value:
         :return:
         """
+        self._typecheck(value)
         self._check_init(instance)
         # guess if assigning value is called inside the node
         calling_frame = inspect.currentframe().f_back
@@ -659,25 +670,27 @@ class Component:
 if __name__ == '__main__':
 
     class A(Component):
-        a = Input(def_val=0, has_siblings=True)
+        a = Input(def_val=0, has_siblings=True, typs=(int, float))
         o = Output()
 
         def operate(self):
             print(self.siblings_of(self.a))
             self.o = self.a + 10
 
-a = A()
-# a.a = 10
-print(a.o)
-# print(type(a.a))
-# print(a.__dict__)
-# print()
-a.add_sibling_interface(a.a)
-# a.a_sib_1 = 30
-print(a.siblings_of(a.a))
-# print(a.__dict__)
-# print()
-# print(a.__dict__)
-# print(a.a_sib_1)
-# # a.operate()
-# print(a.o)
+    a = A()
+    # a.a = 10
+    print(a.o)
+    # print(type(a.a))
+    # print(a.__dict__)
+    # print()
+    a.add_sibling_interface(a.a)
+    # a.a_sib_1 = 30
+    print(a.siblings_of(a.a))
+    a.a = 20.2
+    print(a.o)
+    # print(a.__dict__)
+    # print()
+    # print(a.__dict__)
+    # print(a.a_sib_1)
+    # # a.operate()
+    # print(a.o)
