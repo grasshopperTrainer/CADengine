@@ -8,7 +8,7 @@ Conventions:
 
 import numpy as np
 import heapq
-from collections import namedtuple, deque
+from collections import namedtuple, deque, OrderedDict
 from collections.abc import Iterable
 import weakref as wr
 import inspect
@@ -109,7 +109,6 @@ class CompSpvr:
         # it doesn't violate hierarchy but could be cleaned to maintain dist understandable?
         # TODO: algorithm for maintaining nodes' (attr) dist relatively close
         if intf.intf_sign == Input:
-            print('disconnection', instance, intf)
             for node, dist_rels in self._graph.items():
                 for out, rights in dist_rels['rels'].items():
                     for right, inps in rights.items():
@@ -161,7 +160,7 @@ class CompSpvr:
         """
         return self._graph[node]['rels']
 
-    def update_tomake_updated(self, target_node=None):
+    def update_tomake_updated(self, side, target_node=None):
         """
         Build update graph then push values consequently
 
@@ -176,14 +175,24 @@ class CompSpvr:
             # all nodes before end_node can be calculated even if it doesn't affect end_node's value
             if self.dist(nxt_node) > self.dist(target_node):
                 break
+
+            # if asking for input:
+            # 1. leave it as needing to update
+            # 2. don't try to generate output
+            if nxt_node == target_node and side == Input:
+                break
+
             if nxt_node in self._needto_update: # reset que
                 self._needto_update.remove(nxt_node)
+
             nxt_node.operate()  # run to update outputs
             # push outputs to next node
             for out, inp, r_node in self._node_full_rels(nxt_node):
                 inp._intf_obj = out._intf_obj
 
-            if nxt_node == target_node:
+            # if asking for output:
+            # 1. terminate after (def) operate run to generate fresh outputs
+            if nxt_node == target_node and side == Output:
                 # push next of nxt_node needto update and stop updating
                 for out, inp, r_node in self._node_full_rels(nxt_node):
                     self._needto_update.add(r_node)
@@ -427,7 +436,7 @@ class IntfDescriptor:
         :return:
         """
         self._check_init(instance)
-        instance._comp_spvr.update_tomake_updated(instance)
+        instance._comp_spvr.update_tomake_updated(type(self), instance)
         return getattr(instance, self._record_name)
 
     def __delete__(self, instance):
@@ -462,9 +471,9 @@ class IntfDescriptor:
             setattr(instance, self._record_name, intf_obj)
 
             # 2 collect instance attr_name, then set with sign
-            typ_dict = instance.__dict__.setdefault('_intfs', {})
-            intf_dict = typ_dict.setdefault(type(self).__name__, {})
-            sib_list = intf_dict.setdefault(self._name, [])
+            typ_dict = instance.__dict__.setdefault('_intfs', OrderedDict())
+            intf_dict = typ_dict.setdefault(type(self).__name__, OrderedDict())
+            sib_list = intf_dict.setdefault(self._name, []) # make sibling list ahead
 
         # 3 add node grapher if there isn't
         if not hasattr(instance, '_comp_spvr'):
@@ -537,6 +546,8 @@ class Input(IntfDescriptor):
             # registering
             if isinstance(self, Input):
                 if self._name in instance.inputs:
+                    # both as a sibling and input
+                    instance.inputs[new_intf._name] = []
                     instance.inputs[self._name].append(new_intf._name)
                 else:
                     raise
@@ -645,14 +656,27 @@ class Component:
 
     @property
     def inputs(self):
-        return self.interface.get('Input', {})
+        if not hasattr(self, 'inputs_defaulted'):
+            # defaulting
+            for cls in reversed(type(self).__mro__):
+                if hasattr(cls, '__dict__'):
+                    for k, v in cls.__dict__.items():
+                        if isinstance(v, Input):
+                            getattr(self, k)
+
+        return self.interfaces.get('Input', {})
+
+    def set_inputs(self, *value):
+        for intf_name, v in zip(self.inputs, value):
+            setattr(self, intf_name, v)
+
 
     @property
     def outputs(self):
-        return self.interface.get('Output', {})
+        return self.interfaces.get('Output', {})
 
     @property
-    def interface(self):
+    def interfaces(self):
         return self.__dict__.get('_intfs', {})
 
 
@@ -666,18 +690,18 @@ if __name__ == '__main__':
             print(self.siblings_of(self.a))
             self.o = self.a + 10
 
-a = A()
-# a.a = 10
-print(a.o)
-# print(type(a.a))
-# print(a.__dict__)
-# print()
-a.add_sibling_interface(a.a)
-# a.a_sib_1 = 30
-print(a.siblings_of(a.a))
-# print(a.__dict__)
-# print()
-# print(a.__dict__)
-# print(a.a_sib_1)
-# # a.operate()
-# print(a.o)
+    a = A()
+    # a.a = 10
+    print(a.o)
+    # print(type(a.a))
+    # print(a.__dict__)
+    # print()
+    a.add_sibling_interface(a.a)
+    # a.a_sib_1 = 30
+    print(a.siblings_of(a.a))
+    # print(a.__dict__)
+    # print()
+    # print(a.__dict__)
+    # print(a.a_sib_1)
+    # # a.operate()
+    # print(a.o)

@@ -1,6 +1,5 @@
 from .._component import *
 from .gl_component import OpenglComponent
-from ..mess_toolbox import np_gl_type_convert
 import OpenGL.GL as opengl
 from collections.abc import Iterable
 
@@ -70,20 +69,18 @@ class EnhanceVertexArray(VertexArrayComponent):
     """
     Make bond between vertex array, vertex buffer
     """
-    vrtx_arry = Input()
-    bffred_attr = Input(multiple=True)
-    elem_arry_bffr = Input()
+    in0_vrtx_arry = Input()
+    in1_vrtx_data_bffr = Input(has_siblings=True)
+    in2_indx_data_bffr = Input()
+    out0_vrtx_arry = Output()
 
     def operate(self):
-        self.gl.glBindVertexArray(self.vrtx_arry.id)
+        self.gl.glBindVertexArray(self.in0_vrtx_arry.id)
         idx = 0
         # bind all given attribute data in given order
-        for bffred_attr in range(self.bffred_attr):
+        for bffred_attr in (self.in1_vrtx_data_bffr, *self.siblings_of(self.in1_vrtx_data_bffr)):
             self.gl.glBindBuffer(self.gl.GL_ARRAY_BUFFER, bffred_attr.id)
             for name, size, dtype, stride, offset in bffred_attr.properties:
-                dtype = np_gl_type_convert(dtype)             # convert into OpenGL type
-                offset = None if offset == 0 else offset    # None acts like 'void int'?
-
                 self.gl.glEnableVertexAttribArray(idx)
                 self.gl.glVertexAttribPointer(
                     index=idx,
@@ -94,6 +91,24 @@ class EnhanceVertexArray(VertexArrayComponent):
                     pointer=offset
                 )
                 idx += 1
+        if self.in2_indx_data_bffr.r is not None:
+            self.gl.glBindBuffer(self.gl.GL_ELEMENT_ARRAY_BUFFER, self.in2_indx_data_bffr.id)
+            # print('dddddddddddddddddddddd')
+            # self.gl.glEnableVertexAttribArray(0)
+            # for name, size, dtype, stride, offset in self.in2_indx_data_bffr.properties:
+            #     print(dtype, type(dtype))
+            #     print(name, size, dtype, stride, offset)
+            #     self.gl.glVertexAttribPointer(
+            #         index=0,
+            #         size=size,
+            #         type=dtype,
+            #         normalized=False,
+            #         stride=stride,
+            #         pointer=offset
+            #     )
+        self.gl.glBindVertexArray(0)
+
+        self.out0_vrtx_arry = self.in0_vrtx_arry
 
 
 class EnableVertexAttribute(VertexArrayComponent):

@@ -48,23 +48,23 @@ class PushBufferData(BufferComponent):
     """
     Push value into a buffer using properties assigned in vertex attribute object
     """
-    vrtx_attr = Input()
-    vrtx_bffr = Input()
-    data_bffr = Output()
+    in0_bffr = Input()
+    in1_data = Input()
+    out0_data_bffr = Output()
 
     def __init__(self, window, vrtx_bffr=None, vrtx_attr=None):
-        self.vrtx_bffr = vrtx_bffr
-        self.vrtx_attr = vrtx_attr
+        self.in0_bffr = vrtx_bffr
+        self.in1_data = vrtx_attr
         super().__init__(window)
 
     def operate(self):
-        self.gl.glBindBuffer(self.vrtx_bffr.kind, self.vrtx_bffr.id)
-        self.gl.glBufferData(self.vrtx_bffr.kind,
-                             self.vrtx_attr.bytesize,
-                             self.vrtx_attr.data,
+        self.gl.glBindBuffer(self.in0_bffr.kind, self.in0_bffr.id)
+        self.gl.glBufferData(self.in0_bffr.kind,
+                             self.in1_data.bytesize,
+                             self.in1_data.data,
                              self.gl.GL_STATIC_DRAW)
 
-        self.data_bffr = DataBufferObject(self.vrtx_bffr, self.vrtx_attr)
+        self.out0_data_bffr = DataBufferObject(self.in0_bffr, self.in1_data)
 
 
 # class ConIndexBuffer(ConVertexBuffer):

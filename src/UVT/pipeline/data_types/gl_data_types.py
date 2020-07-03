@@ -1,7 +1,7 @@
 import numpy as np
 from collections import namedtuple
 import OpenGL.GL as opengl
-
+from ..components.mess_toolbox import np_gl_type_convert
 
 class BufferObject:
     """
@@ -62,9 +62,11 @@ class NamedData:
         stride = self._data.itemsize
         for k, v in self._data.dtype.fields.items():
             dtype, offset = v
-            subdtype, size = dtype.subdtype
+            dtype, size = dtype.subdtype
+            dtype = np_gl_type_convert(dtype)             # convert into OpenGL type
             size = size[0]
-            nts.append(nt(k, size, subdtype, stride, offset))
+            offset = None if offset == 0 else offset
+            nts.append(nt(k, size, dtype, stride, offset))
         return nts
 
     @property
@@ -89,4 +91,4 @@ class DataBufferObject(VertexBufferObject, NamedData):
 
         self._id = self._bffr.id
         self._kind = self._bffr.kind
-        self._value = self._attr.data
+        self._data = self._attr.data
