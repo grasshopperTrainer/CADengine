@@ -356,7 +356,7 @@ class IntfDescriptor:
         :return:
         """
         self._check_init(instance)
-        instance._comp_spvr.update_tomake_updated(instance)
+        instance._comp_spvr.update_tomake_updated(type(self), instance)
         return getattr(instance, self._record_name)
 
     def __delete__(self, instance):
