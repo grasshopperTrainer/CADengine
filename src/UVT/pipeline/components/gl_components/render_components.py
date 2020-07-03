@@ -3,6 +3,7 @@ from .._component import *
 from ..mess_toolbox import np_gl_type_convert
 import OpenGL.GL as opengl
 
+
 class RenderComponent(OpenglComponent):
     """
     Renderable components
@@ -24,25 +25,43 @@ class DrawArrayComponent(RenderComponent):
     """
     _kind = None
 
+
 class DrawElement(RenderComponent):
     """
     Render components of glDrawElement()
     """
-    vrtx_arry = Input()
-    indx_bffr = Input()
-    mode = Input()
-    count = Input()
+    in0_vrtx_arry = Input()
+    in1_indx_bffr = Input()
+    in2_mode = Input()
+    # in3_count = Input()
+    out0_render_result = Output()
 
-    def __init__(self, window, vrtx_arry=None, indx_bffr=None, mode=None, count=None):
+    def __init__(self, window, vrtx_arry=None, indx_bffr=None, mode=None):
         super().__init__(window)
-        self.vrtx_arry = vrtx_arry
-        self.mode = mode
-        self.count = count
+        self.in0_vrtx_arry = vrtx_arry
+        self.in1_indx_bffr = indx_bffr
+        self.in2_mode = mode
+        # self.in3_count = count
 
     def operate(self):
-        self.w.gl.glBindVertexArray(self.vrtx_arry.id)
-        dtype = np_gl_type_convert(self.indx_bffr.dtype)
-        self.w.gl.glDrawElement(self.mode, self.indx_bffr.len(), dtype, None)
+        try:
+            self.render()
+            self.out0_render_result = True
+        except Exception as e:
+            warnings.warn(str(e))
+            self.out0_render_result = False
+
+    def render(self):
+        self.target_win.gl.glBindVertexArray(self.in0_vrtx_arry.id)
+        name, size, dtype, stride, offset = self.in1_indx_bffr.ndat.properties[0]
+        self.target_win.gl.glDrawElements(
+            self.in2_mode.r,
+            size,
+            dtype,
+            None)
+        self.target_win.gl.glBindVertexArray(0)
+
+
 
 
 # class DrawElemTriStrip(DrawElementComponent):
@@ -82,4 +101,3 @@ class DrawTriangle(DrawArrayComponent):
     def render(self):
         self.gl.glBindVertexArray(self.vrtx_arry.id)
         self.gl.glDrawArrays(self._kind, self.idx_bound.start, self.idx_bound.len)
-

@@ -1,7 +1,7 @@
 import numpy as np
 from collections import namedtuple
 import OpenGL.GL as opengl
-
+from ..components.mess_toolbox import np_gl_type_convert
 
 class BufferObject:
     """
@@ -62,9 +62,11 @@ class NamedData:
         stride = self._data.itemsize
         for k, v in self._data.dtype.fields.items():
             dtype, offset = v
-            subdtype, size = dtype.subdtype
+            dtype, size = dtype.subdtype
+            dtype = np_gl_type_convert(dtype)             # convert into OpenGL type
             size = size[0]
-            nts.append(nt(k, size, subdtype, stride, offset))
+            offset = None if offset == 0 else offset
+            nts.append(nt(k, size, dtype, stride, offset))
         return nts
 
     @property
@@ -76,17 +78,21 @@ class DataBufferObject(VertexBufferObject, NamedData):
     """
     Buffer storing vertex attribute data
     """
-    def __init__(self, bffr, attr):
-        if hasattr(bffr, 'isinstance') and hasattr(attr, 'isinstance'):
-            if not (bffr.isinstance(BufferObject) and attr.isinstance(NamedData)):
+    def __init__(self, bffr, name_data):
+        if hasattr(bffr, 'isinstance') and hasattr(name_data, 'isinstance'):
+            if not (bffr.isinstance(BufferObject) and name_data.isinstance(NamedData)):
                 raise TypeError
         else:
-            if not (isinstance(bffr, BufferObject) and isinstance(attr, NamedData)):
+            if not (isinstance(bffr, BufferObject) and isinstance(name_data, NamedData)):
                 raise TypeError
 
         self._bffr = bffr
-        self._attr = attr
+        self._ndat = name_data
 
-        self._id = self._bffr.id
-        self._kind = self._bffr.kind
-        self._value = self._attr.data
+    @property
+    def bffr(self):
+        return self._bffr
+
+    @property
+    def ndat(self):
+        return self._ndat
