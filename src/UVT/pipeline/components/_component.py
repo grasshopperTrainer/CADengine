@@ -112,6 +112,8 @@ class CompSpvr:
             for node, dist_rels in self._graph.items():
                 for out, rights in dist_rels['rels'].items():
                     for right, inps in rights.items():
+                        if right != instance:
+                            continue
                         if intf.intf_name in inps:
                             inps.remove(intf.intf_name)
                             if not inps:
@@ -168,14 +170,16 @@ class CompSpvr:
         then for each execute (def) operate and push outputs rightward
         :return:
         """
-        # TODO: differentiate 'return updated input' and 'operate to get update output'
+
         # adding i for dist(n) being the same
         # !Q is _update_que node that has run (def) operate or that has to run operate?
         for nxt_node in self._node_rightward(self._needto_update):
+            # print('of', target_node)
+            # print('     ', nxt_node, target_node, self.dist(nxt_node), self.dist(target_node))
             # if asking for input:
             # 1. leave it as needing to update
             # 2. don't try to generate output
-            if nxt_node == target_node and side == Input:
+            if nxt_node == target_node and side in (Input, Inout):
                 break
 
             # all nodes before end_node can be calculated even if it doesn't affect end_node's value
@@ -457,6 +461,7 @@ class IntfDescriptor:
         :param instance:
         :return:
         """
+        print('DELETING', instance, self._name)
         self._check_init(instance)
         instance._comp_spvr.disconnect(instance, getattr(instance, self._record_name))
         intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
@@ -487,18 +492,21 @@ class IntfDescriptor:
         if not hasattr(instance, '_comp_spvr'):
             setattr(instance, '_comp_spvr', CompSpvr(instance))
 
-    def _set_intf_val(self, instance, value):
-        # type check
-        intf = getattr(instance, self._record_name)
-        if isinstance(intf, type(value)):   # shared type
-            if type(value) == type(intf):   # new value is intf
-                intf._intf_obj = value._intf_obj
-            else:   # new value is a raw value
-                intf._intf_obj = value
-        else:   # type differs
-            delattr(instance, self._record_name)
-            intf_obj = IntfObj(instance, self._name, type(self), value)
-            setattr(instance, self._record_name, intf_obj)
+    def _update_intfobj(self, instance, value):
+        """
+        Sets value into IntfObj
+
+        by differenciating raw and IntfObj value.
+        :param instance:
+        :param value:
+        :return:
+        """
+        intf_to_update = getattr(instance, self._record_name)
+
+        if isinstance(value, IntfObj):   # new value is passed by another intf
+            intf_to_update._intf_obj = value._intf_obj
+        else:   # new value is a raw value
+            intf_to_update._intf_obj = value
 
     def _typecheck(self, v):
         if not self._accepted_typs:
@@ -535,14 +543,14 @@ class Input(IntfDescriptor):
         if isinstance(value, IntfObj):  # if connecting node to node
             if value.intf_sign == Input: # if connecting input -> input interfaces
                 raise AttributeError("direction should be (output) -> (input)")
-            # disconnect as relating is in default monopoly
+            # rebuild relationship as relating is in default monopoly
             instance._comp_spvr.disconnect(instance, intf)
             instance._comp_spvr.build_rel(value, intf)
 
         else:  # if putting raw value
             instance._comp_spvr.disconnect(instance, intf)
 
-        self._set_intf_val(instance, value)
+        self._update_intfobj(instance, value)
 
     def add_sibling(self, instance, owner):
         """
@@ -617,7 +625,7 @@ class Output(IntfDescriptor):
         if hasattr(instance, frameinfo.function):
             if inspect.ismethod(getattr(instance, frameinfo.function)):
                 if 'self' in local_attr and local_attr['self'] == instance:
-                    self._set_intf_val(instance, value)
+                    self._update_intfobj(instance, value)
                     # if node's output is updated, right of it has to have values in and set to update
                     # pushing is needed for the case (def) operate is executed explicitly?
                     # or can't it be executed that way? -> it can't i suppose
@@ -751,8 +759,6 @@ if __name__ == '__main__':
             # self.join.b = self.up.o
 
         def operate(self):
-            print('     operate compound')
-            print('     ',self._comp_spvr._needto_update)
             self.join.a = self.a
             self.up.a = self.a
             self.join.b = self.up.o
@@ -776,17 +782,33 @@ if __name__ == '__main__':
     # o.a = 'jjk'
     a.i = 'key'
     print('----------------------------')
-    print(a._comp_spvr._needto_update)
     o.a = 'hii'
-    # for k, v in a._comp_spvr._graph.items():
-    #     print(k, v)
-    print(o.o)
-    a.i = 'ddd'
-    o.a = a.o
-    print(o.o)
-    print(a._comp_spvr._needto_update)
-    print(o.o)
-    print(a._comp_spvr._needto_update)
 
-    # o.a = 'bii'
-    # print(o.o)
+    #
+    print(o.o)
+    # #
+    o.a = a.o
+    a.i = 'ddd'
+    for k, v in a._comp_spvr._graph.items():
+        print(k, v)
+    #
+    # print(a._comp_spvr._needto_update)
+    print('++++++++++++++++++++++++++++')
+
+    print(o.o)
+    for k, v in a._comp_spvr._graph.items():
+        print(k, v)
+
+    a.i = 'err'
+
+    print(o.o)
+    a.i = 'eee'
+    print(o.join.o)
+    a.i = 'ike'
+    o.a = 'eee'
+    print(o.o)
+    print(a.o)
+    a.i = 'efj'
+    print(a.o)
+    print(o.o)
+    print(o.up.o)
