@@ -14,10 +14,10 @@ with window1 as w:
     buffer_pusher = comp.PushBufferData(w)
     enabler = comp.EnableVertexAttribute(w)
 
-    buffer_pusher.in1_data = va.gl_data
+    buffer_pusher.in1_data = va.out0_gl_data
     buffer_pusher.in0_bffr = vbo.vrtx_bffr
     enabler.vrtx_arry = vao.vrtx_arry
-    enabler.vrtx_attr = va.gl_data
+    enabler.vrtx_attr = va.out0_gl_data
     #
     joiner = comp.JoinVrtxArryVrtxBffr(w)
     joiner.vrtx_arry = vao.vrtx_arry

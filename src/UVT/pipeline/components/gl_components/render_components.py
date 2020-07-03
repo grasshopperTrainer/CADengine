@@ -44,22 +44,24 @@ class DrawElement(RenderComponent):
         # self.in3_count = count
 
     def operate(self):
-        # try:
-        self.render()
-        self.out0_render_result = True
-        # except Exception as e:
-        #     warnings.warn(str(e))
-        #     self.out0_render_result = False
+        try:
+            self.render()
+            self.out0_render_result = True
+        except Exception as e:
+            warnings.warn(str(e))
+            self.out0_render_result = False
 
     def render(self):
         self.target_win.gl.glBindVertexArray(self.in0_vrtx_arry.id)
-        self.target_win.gl.glBindBuffer(self.target_win.gl.GL_ELEMENT_ARRAY_BUFFER, self.in1_indx_bffr.id)
-        name, size, dtype, stride, offset = self.in1_indx_bffr.properties[0]
+        name, size, dtype, stride, offset = self.in1_indx_bffr.ndat.properties[0]
         self.target_win.gl.glDrawElements(
             self.in2_mode.r,
             size,
             dtype,
             None)
+        self.target_win.gl.glBindVertexArray(0)
+
+
 
 
 # class DrawElemTriStrip(DrawElementComponent):

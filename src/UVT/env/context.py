@@ -203,9 +203,17 @@ class GLFW_GL_Context(metaclass=_global_glfw):
         result_strings.append(f'          gl_vendor : {cls._gl_vendor}')
 
         result_strings.append('\n    VAO children binding :')
-        # TODO actual testing needed
+
         cls._gl_VAO_children_binding['array_buffer'] = True
-        cls._gl_VAO_children_binding['element_array_buffer'] = False
+        # ibo visibility test
+        gl.glBindVertexArray(opengl_objects[0]['vertex_array'])
+        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, opengl_objects[0]['buffer'])
+        gl.glBindVertexArray(0)
+        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(opengl_objects[0]['vertex_array'])
+        vao_ibo_binding = gl.glGetInteger(gl.GL_ELEMENT_ARRAY_BUFFER_BINDING) == opengl_objects[0]['buffer']
+        cls._gl_VAO_children_binding['element_array_buffer'] = vao_ibo_binding
+
         for key, val in cls._gl_VAO_children_binding.items():
             result_strings.append(f'{" "*(24-len(key))}{key} : {val}')
 

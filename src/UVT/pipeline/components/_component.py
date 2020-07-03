@@ -188,7 +188,7 @@ class CompSpvr:
             nxt_node.operate()  # run to update outputs
             # push outputs to next node
             for out, inp, r_node in self._node_full_rels(nxt_node):
-                inp._intf_obj = out._intf_obj
+                getattr(r_node, inp)._intf_obj = getattr(nxt_node, out)._intf_obj
 
             # if asking for output:
             # 1. terminate after (def) operate run to generate fresh outputs
