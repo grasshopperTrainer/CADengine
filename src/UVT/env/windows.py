@@ -1,6 +1,8 @@
 import threading
 import time
 from .context import GLFW_GL_Context
+from .windowing.window_properties import *
+from .MVC import View
 import glfw
 
 
@@ -65,7 +67,7 @@ class Windows:
         raise Exception("Window untrackable")
 
 
-class Window:
+class Window(View):
     """
     Class for baking exact instance that's on screen
 
@@ -86,6 +88,18 @@ class Window:
         self._frame_to_render = None
         self._frame_count = 0
 
+        self._render_registry = RenderRegistry(self)
+
+    @property
+    def viws(self):
+        return self._render_registry._views
+    @property
+    def cams(self):
+        return self._render_registry._views
+    @property
+    def lyrs(self):
+        return self._render_registry._layers
+
     def append_pipeline(self, pipeline):
         self._pipelines.append(pipeline)
 
@@ -100,9 +114,10 @@ class Window:
 
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
                 with self:
-                    for pipeline in self._pipelines:
-                        pipeline.operate()
-                self._context.glfw.swap_buffers(self._glfw_window)
+                    self.gl.glClearColor(0.3, 1, 0.3, 1.0)
+                    self.gl.glClear(self.gl.GL_COLOR_BUFFER_BIT)
+                    self._render_registry._render()
+                    self._context.glfw.swap_buffers(self._glfw_window)
 
             self._frame_count += 1
 
@@ -149,6 +164,10 @@ class Window:
         :return:
         """
         return self._context.glfw
+
+    @property
+    def render(self):
+        return self._render_registry._register
 
 
 class Timer:

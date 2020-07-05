@@ -5,7 +5,9 @@ import numpy as np
 
 window1 = Window.new_window(200, 200, 'f', monitor=None, shared=None)
 
-with window1 as w:
+@window1.render()
+def a():
+    w = window1
     # raw data
     vertex = [[-0.8, -0.8, 0], [0.8, -0.8, 0], [-0.8, 0.8, 0], [0.8, 0.8, 0]]
     vertex = comp.ConOpenglData('coord', vertex, 'f')
@@ -31,6 +33,6 @@ with window1 as w:
 
     # draw
     de = comp.DrawElement(w, enhancer.out0_vrtx_arry, data_ibo, w.gl.GL_TRIANGLE_STRIP)
-    print(de.out0_render_result)
+    de.out0_render_result
 
-Window.run(1)
+Window.run()
