@@ -108,10 +108,12 @@ class CompSpvr:
         # !Q does disconnection affect dist of nodes?
         # it doesn't violate hierarchy but could be cleaned to maintain dist understandable?
         # TODO: algorithm for maintaining nodes' (attr) dist relatively close
-        if intf.intf_sign == Input:
+        if intf.intf_sign in (Input, Inout):
             for node, dist_rels in self._graph.items():
                 for out, rights in dist_rels['rels'].items():
                     for right, inps in rights.items():
+                        if right != instance:
+                            continue
                         if intf.intf_name in inps:
                             inps.remove(intf.intf_name)
                             if not inps:
@@ -128,7 +130,7 @@ class CompSpvr:
                             delattr(right, inp)
                 del d[intf]
         else:
-            NotImplementedError
+            raise NotImplementedError
         self.push_needto_update(instance)
 
     def push_needto_update(self, instance):
@@ -168,18 +170,20 @@ class CompSpvr:
         then for each execute (def) operate and push outputs rightward
         :return:
         """
-        # TODO: differentiate 'return updated input' and 'operate to get update output'
+
         # adding i for dist(n) being the same
         # !Q is _update_que node that has run (def) operate or that has to run operate?
         for nxt_node in self._node_rightward(self._needto_update):
-            # all nodes before end_node can be calculated even if it doesn't affect end_node's value
-            if self.dist(nxt_node) > self.dist(target_node):
-                break
-
+            # print('of', target_node)
+            # print('     ', nxt_node, target_node, self.dist(nxt_node), self.dist(target_node))
             # if asking for input:
             # 1. leave it as needing to update
             # 2. don't try to generate output
-            if nxt_node == target_node and side == Input:
+            if nxt_node == target_node and side in (Input, Inout):
+                break
+
+            # all nodes before end_node can be calculated even if it doesn't affect end_node's value
+            if self.dist(nxt_node) > self.dist(target_node):
                 break
 
             if nxt_node in self._needto_update: # reset que
@@ -195,6 +199,9 @@ class CompSpvr:
             if nxt_node == target_node and side == Output:
                 # push next of nxt_node needto update and stop updating
                 for out, inp, r_node in self._node_full_rels(nxt_node):
+                    # if rights connected to inout
+                    if getattr(nxt_node, out).intf_sign == Inout:
+                        continue
                     self._needto_update.add(r_node)
                 break
 
@@ -215,7 +222,7 @@ class CompSpvr:
 
     def _node_full_rels(self, node):
         """
-        Generator of relationships of given node
+        Generator relationships of given node
 
         :param node: relationship of
         :return: Generator('node_full_rels', ('output', 'input', 'right_node'))
@@ -344,6 +351,11 @@ class IntfObj:
         """
         return isinstance(self._intf_obj, typ)
 
+    def __radd__(self, other):
+        if isinstance(other, IntfObj):
+            return self.real_value.__radd__(other._intf_obj)
+        return self.real_value.__radd__(other)
+
     def __add__(self, other):
         if isinstance(other, IntfObj):
             return self._intf_obj.__add__(other._intf_obj)
@@ -449,6 +461,7 @@ class IntfDescriptor:
         :param instance:
         :return:
         """
+        print('DELETING', instance, self._name)
         self._check_init(instance)
         instance._comp_spvr.disconnect(instance, getattr(instance, self._record_name))
         intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
@@ -479,27 +492,36 @@ class IntfDescriptor:
         if not hasattr(instance, '_comp_spvr'):
             setattr(instance, '_comp_spvr', CompSpvr(instance))
 
-    def _set_intf_val(self, instance, value):
-        # type check
-        intf = getattr(instance, self._record_name)
-        if isinstance(intf, type(value)):   # shared type
-            if type(value) == type(intf):   # new value is intf
-                intf._intf_obj = value._intf_obj
-            else:   # new value is a raw value
-                intf._intf_obj = value
-        else:   # type differs
-            delattr(instance, self._record_name)
-            intf_obj = IntfObj(instance, self._name, type(self), value)
-            setattr(instance, self._record_name, intf_obj)
+    def _update_intfobj(self, instance, value):
+        """
+        Sets value into IntfObj
+
+        by differenciating raw and IntfObj value.
+        :param instance:
+        :param value:
+        :return:
+        """
+        intf_to_update = getattr(instance, self._record_name)
+
+        if isinstance(value, IntfObj):   # new value is passed by another intf
+            intf_to_update._intf_obj = value._intf_obj
+        else:   # new value is a raw value
+            intf_to_update._intf_obj = value
 
     def _typecheck(self, v):
         if not self._accepted_typs:
             return True
         else:
-            if isinstance(v, self._accepted_typs):
-                return True
+            if isinstance(v, IntfObj):
+                if isinstance(v.r, self._accepted_typs):
+                    return True
+                else:
+                    raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
             else:
-                raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
+                if isinstance(v, self._accepted_typs):
+                    return True
+                else:
+                    raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
 
 
 class Input(IntfDescriptor):
@@ -521,14 +543,14 @@ class Input(IntfDescriptor):
         if isinstance(value, IntfObj):  # if connecting node to node
             if value.intf_sign == Input: # if connecting input -> input interfaces
                 raise AttributeError("direction should be (output) -> (input)")
-            # disconnect as relating is in default monopoly
+            # rebuild relationship as relating is in default monopoly
             instance._comp_spvr.disconnect(instance, intf)
             instance._comp_spvr.build_rel(value, intf)
 
         else:  # if putting raw value
             instance._comp_spvr.disconnect(instance, intf)
 
-        self._set_intf_val(instance, value)
+        self._update_intfobj(instance, value)
 
     def add_sibling(self, instance, owner):
         """
@@ -603,7 +625,7 @@ class Output(IntfDescriptor):
         if hasattr(instance, frameinfo.function):
             if inspect.ismethod(getattr(instance, frameinfo.function)):
                 if 'self' in local_attr and local_attr['self'] == instance:
-                    self._set_intf_val(instance, value)
+                    self._update_intfobj(instance, value)
                     # if node's output is updated, right of it has to have values in and set to update
                     # pushing is needed for the case (def) operate is executed explicitly?
                     # or can't it be executed that way? -> it can't i suppose
@@ -611,6 +633,12 @@ class Output(IntfDescriptor):
                     return
         raise AttributeError("Output can't be set explicitly")
 
+
+class Inout(Input):
+    """
+    Special interface to handle connecting compound component's input to its internal component.
+    """
+    pass
 
 
 def log_execution(func):
@@ -690,30 +718,97 @@ class Component:
     def interfaces(self):
         return self.__dict__.get('_intfs', {})
 
+    def __str__(self):
+        return f"< Comp '{type(self).__name__}' >"
+
 
 if __name__ == '__main__':
-
-    class A(Component):
-        a = Input(def_val=0, has_siblings=True, typs=(int, float))
-        o = Output()
+    class Adder(Component):
+        i = Input('')
+        o = Output('')
 
         def operate(self):
-            print(self.siblings_of(self.a))
-            self.o = self.a + 10
+            self.o = '_' + self.i.r + '_'
 
-    a = A()
-    # a.a = 10
+
+    class Join(Component):
+        a = Input('')
+        b = Input('')
+        o = Output('')
+
+        def operate(self):
+            print('operate join')
+            self.o = self.a + self.b
+
+    class Up(Component):
+        a = Input('')
+        o = Output('')
+
+        def operate(self):
+            print('operate up')
+            self.o = self.a.r.upper()
+
+    class Operator(Component):
+        a = Inout(def_val='', has_siblings=False, typs=str)
+        o = Output()
+        def __init__(self):
+            self.join = Join()
+            self.up = Up()
+
+            # self.join.a = self.a
+            # self.join.b = self.up.o
+
+        def operate(self):
+            self.join.a = self.a
+            self.up.a = self.a
+            self.join.b = self.up.o
+
+            self.o = self.join.o
+
+    a = Adder()
+    a.i = 'hey'
+    o = Operator()
+
+    o.a = a.o
+    # o.a = 'ddd'
+    # print(o.join.a, o.join.b, o.join.o)
+    print(o.o)
+    print()
+    # o.a = 'kkk'
+    print(o.o)
+    print(o._comp_spvr._needto_update)
+    print(o.up.o)
+    print(o.o)
+    # o.a = 'jjk'
+    a.i = 'key'
+    print('----------------------------')
+    o.a = 'hii'
+
+    #
+    print(o.o)
+    # #
+    o.a = a.o
+    a.i = 'ddd'
+    for k, v in a._comp_spvr._graph.items():
+        print(k, v)
+    #
+    # print(a._comp_spvr._needto_update)
+    print('++++++++++++++++++++++++++++')
+
+    print(o.o)
+    for k, v in a._comp_spvr._graph.items():
+        print(k, v)
+
+    a.i = 'err'
+
+    print(o.o)
+    a.i = 'eee'
+    print(o.join.o)
+    a.i = 'ike'
+    o.a = 'eee'
+    print(o.o)
     print(a.o)
-    # print(type(a.a))
-    # print(a.__dict__)
-    # print()
-    a.add_sibling_interface(a.a)
-    # a.a_sib_1 = 30
-    print(a.siblings_of(a.a))
-    a.a = 20.2
-    print(a.o)# print(a.__dict__)
-    # print()
-    # print(a.__dict__)
-    # print(a.a_sib_1)
-    # # a.operate()
-    # print(a.o)
+    a.i = 'efj'
+    print(a.o)
+    print(o.o)
+    print(o.up.o)
