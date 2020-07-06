@@ -154,11 +154,6 @@ class GLFW_GL_Context(metaclass=_global_glfw):
         """
         result_strings = ['GLFW context specification result:',]
 
-        if glfw.init():
-            cls._is_glfw_inited = True
-        else:
-            raise Exception('Can not initiate glfw')
-
         # not to display and window while going through multiple tests
         glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
         # two windows needed for testing shareness properties
@@ -226,6 +221,14 @@ class GLFW_GL_Context(metaclass=_global_glfw):
         print()
 
     @classmethod
+    def init_setting(cls):
+        """
+        Initial setting of GLFW, openGL
+        :return:
+        """
+        pass
+
+    @classmethod
     def is_glfw_initiated(cls):
         return cls._is_glfw_inited
 
@@ -246,7 +249,11 @@ class GLFW_GL_Context(metaclass=_global_glfw):
 
     def __init__(self, **kwargs):   # kwargs for some setting non default options
         if not self.is_glfw_initiated():
+            if not glfw.init():
+                raise Exception('Can not initiate glfw')
+            self.__class__._is_glfw_inited = True
             self.spec_check()
+            self.init_setting()
 
         self._logger = Logger()
         self._gl = GL_gate(logger=self._logger, root=self)

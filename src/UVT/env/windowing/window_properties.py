@@ -9,16 +9,24 @@ class _RenderTarget:
         return f"< {type(self).__name__} : {self.properties} >"
 
 class _TargetView(_RenderTarget, View):
-    def __init__(self, x, y, w, h, mother):
-        super().__init__(mother)
-        self._x = x
-        self._y = y
-        self._w = w
-        self._h = h
+    """
+    Viewport to render on
+    """
 
     @property
     def properties(self):
-        return namedtuple('target_view', ('x', 'y', 'w', 'h'))(self._x, self._y, self._w, self._h)
+        return namedtuple('target_view', ('x', 'y', 'w', 'h'))(self.x, self.y, self.w, self.h)
+
+    def __lt__(self, other):
+        """
+        No order in viewports
+        :param other:
+        :return:
+        """
+        if not isinstance(other, _TargetView):
+            raise TypeError
+        return True
+
 
 class _TargetCamera(_RenderTarget):
     pass
@@ -30,11 +38,6 @@ class _TargetCamera(_RenderTarget):
 class _TargetLayer(_RenderTarget):
     def __init__(self, idx):
         self._idx = idx
-
-    def __gt__(self, other):
-        if not isinstance(other, _TargetLayer):
-            raise TypeError
-        return self._idx < other._idx
 
     @property
     def properties(self):
@@ -113,31 +116,54 @@ class RenderRegistry:
     def __init__(self, window):
         self._window = wr.ref(window)
 
+        self._layers = _Layers(window)
         self._views = _Views(window)
         self._cameras = _Cameras(window)
-        self._layers = _Layers(window)
 
         self._render_que = {}
 
     def _register(self, lyr=None, viw=None, cam=None):
+        """
+        Register render function call
+        :param lyr: layer to draw on
+        :param viw: view to draw on
+        :param cam: camera to draw with
+        :return:
+        """
+        # value, type check
         lyr = self._layers[0] if lyr is None else lyr
         viw = self._views[0] if viw is None else viw
         cam = self._cameras[0] if cam is None else cam
-        for i in (lyr, viw, cam):
-            if not isinstance(i, _RenderTarget):
-                raise TypeError
+        for v, t in zip((lyr, viw, cam), (_TargetLayer, _TargetView, _TargetCamera)):
+            if not isinstance(v, t):
+                raise TypeError(v, t)
 
+        # wrapper for decoration
         def _wrapper(fnc):
-            # register in order
+            # register in assigned order
             self._render_que.setdefault(lyr, {}).setdefault(viw, {}).setdefault(cam, []).append(fnc)
         return _wrapper
 
+    @property
+    def win(self):
+        return self._window()
+
     def _render(self):
+        self.win.gl.glEnable(self.win.gl.GL_SCISSOR_TEST)
+
+        self.win.gl.glClear(self.win.gl.GL_COLOR_BUFFER_BIT)
         for lyr in self._layers:
             views = self._render_que.get(lyr, {})
+
             for viw in self._views:
                 cameras = views.get(viw, {})
+                if cameras:
+                    self.win.gl.glViewport(*viw.properties)
+                    self.win.gl.glScissor(*viw.properties)
+
                 for cam in self._cameras:
                     for fnc in cameras.get(cam, []):
                         fnc()
+
+        self.win.gl.glDisable(self.win.gl.GL_SCISSOR_TEST)
 

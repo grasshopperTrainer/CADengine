@@ -412,7 +412,7 @@ class IntfDescriptor:
         self._has_siblings = has_siblings
         self._siblings = {}
 
-        self._accepted_typs = typs
+        self._accepted_typs = typs if isinstance(typs, (tuple, list)) else (typs, )
 
         if self._has_siblings:
             self._record_name = f'_{self.__class__.__name__}_{self._name}_{self.SIBLING_POSTFIX}_0'
@@ -509,19 +509,23 @@ class IntfDescriptor:
             intf_to_update._intf_obj = value
 
     def _typecheck(self, v):
-        if not self._accepted_typs:
+        """
+        Type check before setting value
+        :param v:
+        :return:
+        """
+        if not self._accepted_typs: # if not given, all type accepted
             return True
         else:
-            if isinstance(v, IntfObj):
-                if isinstance(v.r, self._accepted_typs):
+            v = v.r if isinstance(v, IntfObj) else v
+            if callable in self._accepted_typs:
+                if callable(v) :
                     return True
-                else:
-                    raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
-            else:
-                if isinstance(v, self._accepted_typs):
+                elif isinstance(v, tuple(t for t in self._accepted_typs if t != callable)):
                     return True
-                else:
-                    raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
+            elif isinstance(v, self._accepted_typs):
+                return True
+            raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
 
 
 class Input(IntfDescriptor):
