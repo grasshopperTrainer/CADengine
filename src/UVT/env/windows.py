@@ -78,6 +78,11 @@ class Window(View):
         if isinstance(shared, Window):
             shared = shared._glfw_window
         self._glfw_window = self._context.glfw.create_window(width, height, name, monitor, shared)
+        self._per_window_init_setting()
+
+
+        # make view object
+        super().__init__(0, 0, w=width, h=height, mother=None)
 
         self._context.glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
@@ -90,15 +95,26 @@ class Window(View):
 
         self._render_registry = RenderRegistry(self)
 
+    def _per_window_init_setting(self):
+        """
+        Initial settings per window(context)
+        :return:
+        """
+        self.glfw.make_context_current(self._glfw_window)
+
+        self.gl.glEnable(self.gl.GL_SCISSOR_TEST)
+
+        self.glfw.make_context_current(None)
+
+    @property
+    def lyrs(self):
+        return self._render_registry._layers
     @property
     def viws(self):
         return self._render_registry._views
     @property
     def cams(self):
-        return self._render_registry._views
-    @property
-    def lyrs(self):
-        return self._render_registry._layers
+        return self._render_registry._cameras
 
     def append_pipeline(self, pipeline):
         self._pipelines.append(pipeline)

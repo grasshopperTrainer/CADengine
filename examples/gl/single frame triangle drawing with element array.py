@@ -5,7 +5,9 @@ import numpy as np
 
 window1 = Window.new_window(200, 200, 'f', monitor=None, shared=None)
 
-@window1.render()
+window1.viws.append(0.25,0.25,0.5,0.5)
+
+@window1.render(lyr = window1.lyrs[0], viw=window1.viws[1], cam=window1.cams[0])
 def a():
     w = window1
     # raw data
