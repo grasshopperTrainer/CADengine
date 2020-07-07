@@ -2,11 +2,13 @@ import threading
 import time
 from .context import GLFW_GL_Context
 from .windowing.window_properties import *
+from ..patterns import SingletonClass, ParentChildren
 from .MVC import View
+
 import glfw
 
 
-class Windows:
+class Windows(SingletonClass):
     """
     Class for organizing multiple window insatnces.
 
@@ -14,22 +16,42 @@ class Windows:
     and some global operation among window instances like creating a new window.
     """
     _windows = []
-
+    #
+    # @classmethod
+    # def new_window(cls, width, height, name, monitor=None, shared=None, **kwargs):
+    #     """
+    #     Returns window instance
+    #     :param width:
+    #     :param height:
+    #     :param name:
+    #     :param monitor:
+    #     :param shared:
+    #     :param kwargs:
+    #     :return:
+    #     """
+    #     window = Window(cls, width, height, name, monitor, shared, **kwargs)
+    #     cls._windows.append(window)
+    #     return window
     @classmethod
-    def new_window(cls, width, height, name, monitor=None, shared=None, **kwargs):
+    def reg_window(cls, window):
         """
-        Returns window instance
-        :param width:
-        :param height:
-        :param name:
-        :param monitor:
-        :param shared:
-        :param kwargs:
+        Register window object
+        :param window:
         :return:
         """
-        window = Window(cls, width, height, name, monitor, shared, **kwargs)
+        if not isinstance(window, Window):
+            raise TypeError
         cls._windows.append(window)
-        return window
+    @classmethod
+    def dereg_window(cls, window):
+        """
+        Exclude window object from list
+
+        Make main thread loose track of window object
+        :param window:
+        :return:
+        """
+        cls._windows.remove(window)
 
     @classmethod
     def run(cls, frame_count=None):
@@ -40,6 +62,7 @@ class Windows:
         """
         # to insist window drawing only after this function is called
         # thread start is moved from Window().__init__ to here
+
         for window in cls._windows:
             window.set_frame_to_render(frame_count)
             window._render_thread.start()
@@ -67,13 +90,14 @@ class Windows:
         raise Exception("Window untrackable")
 
 
-class Window(View):
+class Window(View, ParentChildren):
     """
     Class for baking exact instance that's on screen
 
     """
-    def __init__(self, windows, width, height, name, monitor=None, shared=None, **kwargs):
-        self._windows = windows
+    def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):
+        Windows.reg_window(self)
+
         self._context = GLFW_GL_Context(**kwargs)
         if isinstance(shared, Window):
             shared = shared._glfw_window
@@ -130,9 +154,7 @@ class Window(View):
 
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
                 with self:
-                    self.gl.glClearColor(0.3, 1, 0.3, 1.0)
-                    self.gl.glClear(self.gl.GL_COLOR_BUFFER_BIT)
-                    self._render_registry._render()
+                    self.draw()
                     self._context.glfw.swap_buffers(self._glfw_window)
 
             self._frame_count += 1
@@ -144,7 +166,7 @@ class Window(View):
         # when draw waiting is over - meaning destruction only takes place after a frame
         # this can cause 'noticable stall' when fps is very low
         self._render_thread.join()
-        self._windows._windows.remove(self)
+        Windows.dereg_window(self)
         self._context.glfw.destroy_window(window)
 
     def __enter__(self):
@@ -181,10 +203,23 @@ class Window(View):
         """
         return self._context.glfw
 
-    @property
-    def render(self):
-        return self._render_registry._register
+    # @property
+    # def render(self):
+    #     return self._render_registry._register
 
+    def run(self, frame_count=None):
+        Windows().run(frame_count)
+
+    def draw(self):
+        """
+        Method to be called before every frame swapping
+
+        Method to be overridden by a user to write down thing to draw.
+        To use parenting, call super().draw() before or after your code of your preference
+        :return:
+        """
+        for c in self.children_iter():
+            c.draw()
 
 class Timer:
     """
