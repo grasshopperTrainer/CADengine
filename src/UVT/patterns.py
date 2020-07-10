@@ -28,25 +28,25 @@ class NotRelatableError(TypeError):
         return f"< {self.inst.__class__.__name__} not a subclass of <ParentChildren> >"
 
 
-class ParentChildren:
+class FamilyTree:
     _PC_prefix = '_PC'
 
-    def parent_set(self, parent_obj):
+    def ftree_set_parent(self, parent_obj):
         """
         Set parent
         :param parent_obj:
         :return:
         """
 
-        if not isinstance(parent_obj, ParentChildren):
+        if not isinstance(parent_obj, FamilyTree):
             raise NotRelatableError(parent_obj)
         # set parent
         attr_n = f"{self._PC_prefix}_parent"
         setattr(self, attr_n, wr.ref(parent_obj))
         # push self to parent obj
-        parent_obj.children_append(self)
+        parent_obj.ftree_append_children(self)
 
-    def parent_get(self):
+    def ftree_get_parent(self):
         """
         Get parent
         :return:
@@ -57,7 +57,17 @@ class ParentChildren:
             return getattr(self, attr_n)()
         return None
 
-    def children_append(self, *child_obj):
+    def ftree_get_root(self):
+        """
+        Get root of family tree
+        :return:
+        """
+        if self.ftree_get_parent() is None:
+            return self
+        else:
+            return self.ftree_get_parent().ftree_get_root()
+
+    def ftree_append_children(self, *child_obj):
         """
         Append multiple children
         :param child_obj:
@@ -78,16 +88,16 @@ class ParentChildren:
         for c in child_obj:
             if isinstance(c, (list, tuple)):
                 raise TypeError("function accepts variadic parameter")
-            elif not isinstance(c, ParentChildren):
-                raise NotRelatableError(ParentChildren)
+            elif not isinstance(c, FamilyTree):
+                raise NotRelatableError(FamilyTree)
 
             if c not in s:
                 # bidirectional relating
                 l.append(wr.ref(c))
                 s.add(c)
-                c.parent_set(self)
+                c.ftree_set_parent(self)
 
-    def children_get(self, *idx):
+    def ftree_get_children(self, *idx):
         """
         Returns list of children
         :param idx: index of desired children
@@ -110,7 +120,7 @@ class ParentChildren:
         else:
             return None
 
-    def children_iter(self):
+    def ftree_iter_children(self):
         """
         Returns generator of children
         :return:

@@ -1,22 +1,22 @@
-from UVT import Window
-import UVT.pipeline as comp
-import glfw
-import numpy as np
+from UVT import Window, DrawBit
 
-# window1 = Window.new_window(200, 200, 'f', monitor=None, shared=None)
-# window1.viws.append(0.25,0.25,0.5,0.5)
 
-# class W(Window):
-#     def __init__(self):
-#         super().__init__(200, 200, 'window1', None, None)
-from UVT.patterns import ParentChildren
-
-class C(ParentChildren):
+class C(DrawBit):
     def draw(self):
-        print('this is me')
+        print('i am a child')
+        super().draw()
+
+
+class CC(DrawBit):
+    def draw(self):
+        print('i am a child of child')
+
 
 w = Window(200, 200, 'window1', None, None)
+
 c = C()
-w.children_append(c)
+w.ftree_append_children(c)
+cc = CC()
+cc.ftree_set_parent(c)
 
 w.run()

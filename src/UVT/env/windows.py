@@ -2,7 +2,8 @@ import threading
 import time
 from .context import GLFW_GL_Context
 from .windowing.window_properties import *
-from ..patterns import SingletonClass, ParentChildren
+from ..patterns import SingletonClass
+from .draw_bit import DrawBit
 from .MVC import View
 
 import glfw
@@ -90,7 +91,7 @@ class Windows(SingletonClass):
         raise Exception("Window untrackable")
 
 
-class Window(View, ParentChildren):
+class Window(View, DrawBit):
     """
     Class for baking exact instance that's on screen
 
@@ -185,7 +186,11 @@ class Window(View, ParentChildren):
 
     @property
     def is_current(self):
-        return self == self._windows.get_current()
+        return self == Windows().get_current()
+
+    @property
+    def current_window(self):
+        return Windows().get_current()
 
     @property
     def gl(self):
@@ -210,16 +215,6 @@ class Window(View, ParentChildren):
     def run(self, frame_count=None):
         Windows().run(frame_count)
 
-    def draw(self):
-        """
-        Method to be called before every frame swapping
-
-        Method to be overridden by a user to write down thing to draw.
-        To use parenting, call super().draw() before or after your code of your preference
-        :return:
-        """
-        for c in self.children_iter():
-            c.draw()
 
 class Timer:
     """
