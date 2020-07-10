@@ -6,9 +6,10 @@ import OpenGL.GL as gl
 
 class Logger:
     """
-    Container for logging.
+    Log container.
     """
-    def __init__(self, size=1000, do_log=True):
+
+    def __init__(self, size=1000, do_log=True, prefix='', sufix=''):
         """
         :param size: max length of logging record. Infinite if given -1.
         :param do_log: Switch for logging.
@@ -16,6 +17,8 @@ class Logger:
         self._is_logging = do_log
         self._size = size
         self._record = deque()
+        self._prefix = prefix
+        self._sufix = sufix
 
     def log(self, message):
         """
@@ -25,7 +28,7 @@ class Logger:
         """
         if len(self._record) == self._size:
             self._record.popleft()
-        self._record.append(message)
+        self._record.append(f"{self._prefix}{message}{self._sufix}")
 
     @property
     def is_logging(self):
@@ -37,98 +40,8 @@ class Logger:
         self._is_logging = v
 
 
-class GL_gate:
-    """
-    Access point into OpenGL module.
-    Calling 'gate' as it records, overrides OpenGL functions acting like an access point.
-    """
-    def __init__(self, logger, root=None):
-        """
-        :param logger: Logging message container.
-        :param root: Unique context holding this instance.
-        """
-        self._root = root
-        self._logger = logger
-
-    def __getattribute__(self, item):
-        """
-        Priorly For logging, controlling automated behaviour
-        :param item:
-        :return:
-        """
-        if hasattr(gl, item):
-            # log
-            object.__getattribute__(self, '_logger').log(f'GL <{item}> called')
-            return gl.__dict__[item]
-        try:
-            return object.__getattribute__(self, item)
-        except:
-            raise AttributeError(f'No such GL attribute <{item}>')
-
-    @property
-    def gl(self):
-        return gl
-
-    @property
-    def log(self):
-        return self._logger
-
-
-class GLFW_gate:
-    """
-    Access point into GLFW module.
-    Calling 'gate' as it records, overrides GLFW functions acting like an access point.
-    """
-
-    def __init__(self, logger, root=None):
-        """
-        :param logger: Logging message container.
-        :param root: Unique context holding this instance.
-        """
-        self._root = root
-        self._logger = logger
-
-    def __getattribute__(self, item):
-        """
-        Priorly For logging, controlling automated behaviour
-        :param item:
-        :return:
-        """
-        if hasattr(glfw, item):
-            # log
-            object.__getattribute__(self, '_logger').log(f'GLFW <{item}> called')
-            return glfw.__dict__[item]
-        try:
-            return object.__getattribute__(self, item)
-        except:
-            raise AttributeError(f'No such GLFW attribute <{item}>')
-
-    @property
-    def log(self):
-        return self._logger
-    @property
-    def global_log(self):
-        """
-        GLFW global function calls are recorded separately.
-        :return:
-        """
-        return self._root._global_glfw._logger
-
-
-class _global_glfw(type):
-    """
-    Metaclass for building view on class attributes.
-    """
-
-    @property
-    def glfw(cls):
-        return cls._global_glfw
-
-
-class GLFW_GL_Context(metaclass=_global_glfw):
+class ContextManager:
     """Class for launching GLFW context and testing GL behavior on it."""
-
-    _global_glfw = GLFW_gate(Logger(size=100))    # for recording global glfw
 
     _gl_object_shareness = {} # whether shared glfw contexts actually share gl objects
     _gl_VAO_children_binding = {} # whether vao binding binds object bounded to VAO ex) ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER
@@ -232,21 +145,6 @@ class GLFW_GL_Context(metaclass=_global_glfw):
     def is_glfw_initiated(cls):
         return cls._is_glfw_inited
 
-    # def __getattr__(self, item):
-    #     """
-    #     Redirector to <glfw> module.
-    #     :param item:
-    #     :return:
-    #     """
-    #     if hasattr(glfw, item):
-    #         return_val = glfw.__dict__[item]
-    #         if self._logging:   # initially logging set at __init__ using **kwargs
-    #             Logger.log((time.time(), str(self), item, str(return_val)))
-    #         return return_val
-    #     else:
-    #         raise AttributeError(f"Neither <My_glfw_gl> nor <glfw> has such attribute '{item}'")
-
-
     def __init__(self, **kwargs):   # kwargs for some setting non default options
         if not self.is_glfw_initiated():
             if not glfw.init():
@@ -255,22 +153,16 @@ class GLFW_GL_Context(metaclass=_global_glfw):
             self.spec_check()
             self.init_setting()
 
-        self._logger = Logger()
-        self._gl = GL_gate(logger=self._logger, root=self)
-        self._glfw = GLFW_gate(logger=self._logger, root=self)
-        self._logger.is_logging = True
-        if 'logging' in kwargs:
-            self._logger.is_logging = kwargs['logging']
+        self._gl_logger = Logger(size=1000, do_log=True, prefix='OpenGL_', sufix='')
+        self._glfw_logger = Logger(size=1000, do_log=True, prefix='GLFW_', sufix='')
 
-    @property
-    def gl(self):
-        return self._gl
+    def log_gl(self, mesg):
+        self._gl_logger.log(mesg)
 
-    @property
-    def glfw(self):
-        return self._glfw
+    def log_glfw(self, mesg):
+        self._glfw_logger.log(mesg)
 
 
 if __name__ == '__main__':
-    print(GLFW_GL_Context.aaa)
-    print(type(GLFW_GL_Context()))
+    print(ContextManager.aaa)
+    print(type(ContextManager()))
