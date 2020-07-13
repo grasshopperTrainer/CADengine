@@ -1,5 +1,5 @@
 import weakref as wr
-from ...pipeline.components.window_components import ViewNode
+from ...pipeline.nodes.window_components import ViewNode
 
 
 class View:

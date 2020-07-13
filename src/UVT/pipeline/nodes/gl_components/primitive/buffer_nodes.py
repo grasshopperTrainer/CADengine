@@ -1,15 +1,16 @@
-from .._component import *
-from .gl_component import OpenglComponent
+from ..._node import *
+from ..opengl_node import OpenglNode
+from UVT.hooked import gl, glfw
+
 import inspect
 import numpy as np
-import OpenGL.GL as opengl
 import glfw
 
 
 
 
 
-class BufferComponent(OpenglComponent):
+class BufferComponent(OpenglNode):
     """
     Buffer for Buffer component.
 
@@ -28,20 +29,20 @@ class BufferComponent(OpenglComponent):
 
 class ConVertexBuffer(BufferComponent):
     data = Input(None)
-    vrtx_bffr = Output(None)
+    out0_vrtx_bffr = Output(None)
     _kind = opengl.GL_ARRAY_BUFFER
 
-    def operate(self):
-        self.vrtx_bffr = VertexBufferObject(self.gl.glGenBuffers(1))
+    def calculate(self):
+        self.out0_vrtx_bffr = VertexBufferObject(gl.glGenBuffers(1))
 
 
 class ConIndexBuffer(BufferComponent):
     data = Input(None)
-    indx_bffr = Output(None)
+    out0_indx_bffr = Output(None)
     _kind = opengl.GL_ELEMENT_ARRAY_BUFFER
 
-    def operate(self):
-        self.indx_bffr = IndexBufferObject(self.gl.glGenBuffers(1))
+    def calculate(self):
+        self.out0_indx_bffr = IndexBufferObject(gl.glGenBuffers(1))
 
 
 class PushBufferData(BufferComponent):
@@ -52,18 +53,17 @@ class PushBufferData(BufferComponent):
     in1_data = Input()
     out0_data_bffr = Output()
 
-    def __init__(self, window, vrtx_bffr=None, vrtx_attr=None):
+    def __init__(self, vrtx_bffr=None, vrtx_attr=None):
+        super().__init__()
         self.in0_bffr = vrtx_bffr
         self.in1_data = vrtx_attr
-        super().__init__(window)
 
-    def operate(self):
-        self.gl.glBindBuffer(self.in0_bffr.kind, self.in0_bffr.id)
-        self.gl.glBufferData(self.in0_bffr.kind,
-                             self.in1_data.bytesize,
-                             self.in1_data.data,
-                             self.gl.GL_STATIC_DRAW)
-
+    def calculate(self):
+        gl.glBindBuffer(self.in0_bffr.kind, self.in0_bffr.id)
+        gl.glBufferData(self.in0_bffr.kind,
+                        self.in1_data.bytesize,
+                        self.in1_data.data,
+                        gl.GL_STATIC_DRAW)
         self.out0_data_bffr = DataBufferObject(self.in0_bffr, self.in1_data)
 
 

@@ -15,15 +15,15 @@ with window1 as w:
     enabler = comp.EnableVertexAttribute(w)
 
     buffer_pusher.in1_data = va.out0_gl_data
-    buffer_pusher.in0_bffr = vbo.vrtx_bffr
-    enabler.vrtx_arry = vao.vrtx_arry
+    buffer_pusher.in0_bffr = vbo.out0_vrtx_bffr
+    enabler.in0_vrtx_arry = vao.vrtx_arry
     enabler.vrtx_attr = va.out0_gl_data
     #
     joiner = comp.JoinVrtxArryVrtxBffr(w)
-    joiner.vrtx_arry = vao.vrtx_arry
-    joiner.vrtx_bffr = vbo.vrtx_bffr
+    joiner.in0_vrtx_arry = vao.vrtx_arry
+    joiner.out0_vrtx_bffr = vbo.out0_vrtx_bffr
 
-    tri_drawer = comp.DrawTriangle(w, joiner.vrtx_arry_out, comp.Bound(1,4))
+    tri_drawer = comp.RenderArray(w, joiner.vrtx_arry_out, comp.Bound(1, 4))
 
     # tri_drawer.vrtx_arry = joiner.vrtx_arry_out
 

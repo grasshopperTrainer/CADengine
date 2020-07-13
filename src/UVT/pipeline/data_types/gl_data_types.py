@@ -1,23 +1,30 @@
 import numpy as np
 from collections import namedtuple
 import OpenGL.GL as opengl
-from ..components.mess_toolbox import np_gl_type_convert
+from ..nodes.mess_toolbox import np_gl_type_convert
 
-class BufferObject:
+class OpenglObject:
+    """
+    Something that has id.
+    """
+    def __init__(self, id):
+        self._id = id
+
+    @property
+    def id(self):
+        return self._id
+
+class BufferObject(OpenglObject):
     """
     Object holding OpenGL object id and other properties of bound data
 
     To store buffer properties such as size, stride of data.
     Handles deletion of OpenGL object.
     """
-
     def __init__(self, id, kind):
-        self._id = id
+        super().__init__(id)
         self._kind = kind
 
-    @property
-    def id(self):
-        return self._id
     @property
     def kind(self):
         return self._kind
@@ -39,6 +46,25 @@ class VertexArrayObject:
     @property
     def id(self):
         return self._id
+
+
+class PrgrmObj(OpenglObject):
+    pass
+class _ShdrObj(OpenglObject):
+    _kind = None
+    def __init__(self, id):
+        super().__init__(id)
+
+    @property
+    def kind(self):
+        return self._kind
+
+class VrtxShdrObj(_ShdrObj):
+    pass
+
+class FrgmtShdrObj(_ShdrObj):
+    pass
+
 
 
 class NamedData:
@@ -87,12 +113,12 @@ class DataBufferObject(VertexBufferObject, NamedData):
                 raise TypeError
 
         self._bffr = bffr
-        self._ndat = name_data
+        self._data = name_data
 
     @property
     def bffr(self):
         return self._bffr
 
     @property
-    def ndat(self):
-        return self._ndat
+    def data(self):
+        return self._data

@@ -7,5 +7,5 @@ addition = comp.Add()
 pipeline.relate(a, a.value_out, addition.a, addition)
 pipeline.relate(b, b.value_out, addition.b, addition)
 
-pipeline.operate()
+pipeline.calculate()
 print(addition.vlaue_out)

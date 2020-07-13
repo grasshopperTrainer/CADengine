@@ -10,6 +10,32 @@ from ..hooked import openglHooked as gl
 from ..hooked import glfwHooked as glfw
 
 
+class Timer:
+    """
+    Time recorder for maintaining given fps
+    """
+    def __init__(self, target_fps):
+        self._marked_time = 0
+        self._tfps = target_fps     # target frame per second
+        self._dtpf = 1 / target_fps # delay time per frame
+
+    def __enter__(self):
+        self._marked_time = time.time()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        loop_duration = time.time() - self._marked_time
+        wait = self._dtpf - loop_duration
+        if wait >= 0:
+            time.sleep(wait)
+    @property
+    def tfps(self):
+        return self._tfps
+    @tfps.setter
+    def tfps(self, v):
+        self._tfps = v
+        self._dtpf = 1 / self._tfps
+
+
 class Window(View, DrawBit):
     """
     Class for baking exact instance that's on screen
@@ -32,14 +58,13 @@ class Window(View, DrawBit):
 
         glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
-        self._timer = Timer(30)
         self._render_thread = threading.Thread(target=self._run)
         self._pipelines = []
 
+        self._frame_rate = 30
+        self._timer = Timer(self._frame_rate)
         self._frame_to_render = None
         self._frame_count = 0
-
-        self._render_registry = RenderRegistry(self)
 
     def _per_window_init_setting(self):
         """
@@ -70,15 +95,16 @@ class Window(View, DrawBit):
         Rendering thread incuding operations per-frame
         :return:
         """
+        # bind and as this is a rendering happends in dedicated thread no need to unbind
+        glfw.make_context_current(self._glfw_window)
+
         while not glfw.window_should_close(self._glfw_window):
             if self._frame_count == self._frame_to_render:
                 break   # if number of drawn frame is targeted number of frame drawn
 
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
-                with self:
-                    self.draw()
-                    glfw.swap_buffers(self._glfw_window)
-
+                self.draw()
+                glfw.swap_buffers(self._glfw_window)
             self._frame_count += 1
 
 
@@ -98,7 +124,7 @@ class Window(View, DrawBit):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        glfw.make_context_current(None)
+        # glfw.make_context_current(None)
         # exit rendering recording
         pass
 
@@ -121,6 +147,14 @@ class Window(View, DrawBit):
     def run(self, frame_count=None):
         Windows().run(frame_count)
 
+    @property
+    def framerate(self):
+        return self._frame_rate
+    @framerate.setter
+    def framerate(self, v):
+        self._frame_rate = v
+        self._timer.tfps = v
+
 
 class Windows(SingletonClass):
     """
@@ -130,6 +164,7 @@ class Windows(SingletonClass):
     and some global operation among window instances like creating a new window.
     """
     _windows = []
+    _timer = Timer(60)
 
     @classmethod
     def reg_window(cls, window):
@@ -168,9 +203,8 @@ class Windows(SingletonClass):
             window._render_thread.start()
         # main thread. all function calls that has to work in full speed should be here
         while cls._windows:
-
-            glfw.poll_events()
-
+            with cls._timer:
+                glfw.poll_events()
         glfw.terminate() # no window alive means end of opengl functionality
 
     @classmethod
@@ -189,25 +223,6 @@ class Windows(SingletonClass):
             if window._glfw_window.contents.__reduce__() == current_context.contents.__reduce__():
                 return window
         raise Exception("Window untrackable")
-
-
-class Timer:
-    """
-    Time recorder for maintaining given fps
-    """
-    def __init__(self, target_fps):
-        self._marked_time = 0
-        self._target_fps = target_fps
-        self._tpf = 1/target_fps    # time per frame
-
-    def __enter__(self):
-        self._marked_time = time.time()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        loop_duration = time.time() - self._marked_time
-        wait = self._tpf - loop_duration
-        if wait >= 0:
-            time.sleep(wait)
 
 
 if __name__ == '__main__':

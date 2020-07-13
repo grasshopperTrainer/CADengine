@@ -1,9 +1,9 @@
-from ._component import *
+from ._node import *
 
 
-class MathComponents(Component):
+class MathComponents(Node):
     """
-    Math operation components
+    Math operation nodes
     """
     pass
 
@@ -19,5 +19,5 @@ class Add(MathComponents):
     def __init__(self):
         pass
 
-    def operate(self):
+    def calculate(self):
         self.vlaue_out = self.a + self.b

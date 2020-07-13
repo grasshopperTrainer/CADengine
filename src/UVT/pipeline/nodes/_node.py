@@ -17,7 +17,7 @@ if __name__ != '__main__':
     from ..data_types import *
 
 
-class CompSpvr:
+class NodeSpvr:
     """
     Supervisor of nodes
 
@@ -55,14 +55,15 @@ class CompSpvr:
         :return:
         """
 
-        l_supv, r_supv = out.intf_holder._comp_spvr, inp.intf_holder._comp_spvr
+        l_supv, r_supv = out.intf_holder._node_spvr, inp.intf_holder._node_spvr
         # two graphs are islands so need to be merged beforehand
         is_merged = False
+
         if l_supv != r_supv:
             # simply update dict and assign new supervisor to instances(nodes)
             l_supv._graph.update(r_supv._graph)
             for node in r_supv._graph:
-                node._comp_spvr = l_supv
+                node._node_spvr = l_supv
             is_merged = True
 
         # check distance and update if needed
@@ -83,7 +84,7 @@ class CompSpvr:
         # write relationship and calculate distance,
         # push value, push r_node to update que as new value has been just pushed
         supv._relate(l_node, out.intf_name, inp.intf_name, r_node)
-        supv._graph[r_node]['dist'] = supv.dist(l_node) + 1
+        supv._graph[r_node]['dist'] = max((self.dist(r_node), supv.dist(l_node) + 1))
         supv.push_needto_update(r_node)
 
         # update distance of all r_node's rightward
@@ -189,10 +190,10 @@ class CompSpvr:
             if nxt_node in self._needto_update: # reset que
                 self._needto_update.remove(nxt_node)
 
-            nxt_node.operate()  # run to update outputs
+            nxt_node.calculate()  # run to update outputs
             # push outputs to next node
             for out, inp, r_node in self._node_full_rels(nxt_node):
-                getattr(r_node, inp)._intf_obj = getattr(nxt_node, out)._intf_obj
+                self.push_value(nxt_node, out, inp, r_node)
 
             # if asking for output:
             # 1. terminate after (def) operate run to generate fresh outputs
@@ -204,6 +205,19 @@ class CompSpvr:
                         continue
                     self._needto_update.add(r_node)
                 break
+
+    def push_value(self,push_from, out, inp, push_into):
+        """
+        Passing intf value to next intf
+
+        ! don't mix interface value setting and interface value pushing
+        :param push_from:
+        :param out:
+        :param inp:
+        :param push_into:
+        :return:
+        """
+        getattr(push_into, inp)._intf_obj = getattr(push_from, out)._intf_obj
 
     def _graph_full_rels(self):
         """
@@ -302,7 +316,7 @@ class IntfObj:
         :param value:
         :return:
         """
-        self._intf_holder = wr.ref(instance)
+        self._intf_holder = instance
         self._intf_is_deleted = False
         self._intf_name = name
         self._intf_sign = sign
@@ -317,10 +331,11 @@ class IntfObj:
 
     @property
     def intf_holder(self):
-        ins = self._intf_holder()
-        if ins is None:
-            raise NotImplementedError
-        return ins
+        return self._intf_holder
+        # ins = self._intf_holder()
+        # if ins is None:
+        #     raise NotImplementedError
+        # return ins
 
     @property
     def intf_sign(self):
@@ -448,7 +463,7 @@ class IntfDescriptor:
         :return:
         """
         self._check_init(instance)
-        instance._comp_spvr.update_tomake_updated(type(self), instance)
+        instance._node_spvr.update_tomake_updated(type(self), instance)
         return getattr(instance, self._record_name)
 
     def __delete__(self, instance):
@@ -463,42 +478,44 @@ class IntfDescriptor:
         """
         print('DELETING', instance, self._name)
         self._check_init(instance)
-        instance._comp_spvr.disconnect(instance, getattr(instance, self._record_name))
+        instance._node_spvr.disconnect(instance, getattr(instance, self._record_name))
         intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
         setattr(instance, self._record_name, intf_obj)
 
     def _check_init(self, instance):
-        """
-        Initiate interface
+        # moved into (class) Node's (def) __new__
+        pass
+        # """
+        # Initiate interface
+        #
+        # 1. add attribute into the instance
+        # 2. add signature's attribute set, e.g. _inputs, into the instance
+        # 3. add node grapher to the instance
+        # :param instance:
+        # :return:
+        # """
+        # # add attribute
+        # if not hasattr(instance, self._record_name):
+        #     # 1 use default value if there isn't one
+        #     intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
+        #     setattr(instance, self._record_name, intf_obj)
+        #
+        #     # 2 collect instance attr_name, then set with sign
+        #     typ_dict = instance.__dict__.setdefault('_intfs', OrderedDict())
+        #     intf_dict = typ_dict.setdefault(type(self).__name__, OrderedDict())
+        #     sib_list = intf_dict.setdefault(self._name, []) # make sibling list ahead
+        #
+        # # 3 add node grapher if there isn't
+        # if not hasattr(instance, '_node_spvr'):
+        #     setattr(instance, '_node_spvr', NodeSpvr(instance))
 
-        1. add attribute into the instance
-        2. add signature's attribute set, e.g. _inputs, into the instance
-        3. add node grapher to the instance
-        :param instance:
-        :return:
-        """
-        # add attribute
-        if not hasattr(instance, self._record_name):
-            # 1 use default value if there isn't one
-            intf_obj = IntfObj(instance, self._name, type(self), self._def_val)
-            setattr(instance, self._record_name, intf_obj)
-
-            # 2 collect instance attr_name, then set with sign
-            typ_dict = instance.__dict__.setdefault('_intfs', OrderedDict())
-            intf_dict = typ_dict.setdefault(type(self).__name__, OrderedDict())
-            sib_list = intf_dict.setdefault(self._name, []) # make sibling list ahead
-
-        # 3 add node grapher if there isn't
-        if not hasattr(instance, '_comp_spvr'):
-            setattr(instance, '_comp_spvr', CompSpvr(instance))
-
-    def _update_intfobj(self, instance, value):
+    def _set_intfobj(self, instance, value):
         """
         Sets value into IntfObj
 
         by differenciating raw and IntfObj value.
-        :param instance:
-        :param value:
+        :param instance: instance that holds interface pushing value into
+        :param value: value to push
         :return:
         """
         intf_to_update = getattr(instance, self._record_name)
@@ -542,19 +559,21 @@ class Input(IntfDescriptor):
         :return:
         """
         self._typecheck(value)
-        self._check_init(instance)
         intf = getattr(instance, self._record_name)
-        if isinstance(value, IntfObj):  # if connecting node to node
+        if isinstance(value, IntfObj):
             if value.intf_sign == Input: # if connecting input -> input interfaces
                 raise AttributeError("direction should be (output) -> (input)")
-            # rebuild relationship as relating is in default monopoly
-            instance._comp_spvr.disconnect(instance, intf)
-            instance._comp_spvr.build_rel(value, intf)
-
-        else:  # if putting raw value
-            instance._comp_spvr.disconnect(instance, intf)
-
-        self._update_intfobj(instance, value)
+            elif value.intf_sign == Output: # correct connection
+                # rebuild relationship as relating is in default monopoly
+                instance._node_spvr.disconnect(instance, intf)
+                instance._node_spvr.build_rel(value, intf)
+            elif value.intf_sign == Inout:
+                instance._node_spvr.disconnect(instance, intf)
+        else:
+            # using inout node or putting raw value
+            pass
+        instance._node_spvr.push_needto_update(instance)
+        self._set_intfobj(instance, value)
 
     def add_sibling(self, instance, owner):
         """
@@ -610,7 +629,7 @@ class Output(IntfDescriptor):
         Only one case is accepted :
         Instance's internal operation trying to set value to the output
         else, output value of node is not allowed to be set as it's always the result of the node's (def) operate.
-        And as (def) operate will only be run by (obj) _comp_spvr, there is no need to set rightward to be updated.
+        And as (def) operate will only be run by (obj) _node_spvr, there is no need to set rightward to be updated.
 
         :param instance: Node
         :param value:
@@ -629,11 +648,11 @@ class Output(IntfDescriptor):
         if hasattr(instance, frameinfo.function):
             if inspect.ismethod(getattr(instance, frameinfo.function)):
                 if 'self' in local_attr and local_attr['self'] == instance:
-                    self._update_intfobj(instance, value)
+                    self._set_intfobj(instance, value)
                     # if node's output is updated, right of it has to have values in and set to update
                     # pushing is needed for the case (def) operate is executed explicitly?
                     # or can't it be executed that way? -> it can't i suppose
-                    # instance._comp_spvr.push_rightward_update_que(instance, getattr(instance, self._record_name))
+                    # instance._node_spvr.push_rightward_update_que(instance, getattr(instance, self._record_name))
                     return
         raise AttributeError("Output can't be set explicitly")
 
@@ -660,14 +679,46 @@ def log_execution(func):
             self._execution_log[func.__name__] = f'bad execution : {e}'
     return wrapper
 
-class Component:
+
+class Node:
     """
     Component type
 
     """
+    
+    def __new__(cls, *args, **kwargs):
+        """
+        Initiate interface
+
+        1. add node grapher to the instance
+        2. add attribute into the instance
+        3. add signature's attribute set, e.g. _inputs, into the instance
+        :param args:
+        :param kwargs:
+        """
+
+        ins = super().__new__(cls)
+
+        # 1 add node grapher
+        ins._node_spvr = NodeSpvr(ins)
+
+        # 2 add interface attribute looking mro backward to correctly override
+        for c in reversed(cls.__mro__):
+            if hasattr(c, '__dict__'):
+                for k, v in c.__dict__.items():
+                    if isinstance(v, (Input, Output, Inout)):
+                        intf_obj = IntfObj(ins, v._name, type(v), v._def_val)
+                        setattr(ins, v._record_name, intf_obj)
+
+                        # 2 collect instance attr_name, then set with sign
+                        typ_dict = ins.__dict__.setdefault('_intfs', OrderedDict())
+                        intf_dict = typ_dict.setdefault(type(v).__name__, OrderedDict())
+                        sib_list = intf_dict.setdefault(k, []) # make sibling list ahead
+
+        return ins
 
     @log_execution
-    def operate(self):
+    def calculate(self):
         """
         Execution of the component
 
@@ -675,7 +726,22 @@ class Component:
         add two numeric inputs and cache it into output interface.
         :return:
         """
-        NotImplementedError
+        raise NotImplementedError
+
+    def refresh(self):
+        """
+        Forces recalculation by calling outputs
+        :return:
+        """
+        self._node_spvr.push_needto_update(self)
+        self._node_spvr.update_tomake_updated(side=Output, target_node=self)
+
+    def refresh_all(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
 
     def add_sibling_interface(self, intf: IntfObj):
         owner, desc = self._get_desc(intf.intf_name)
@@ -725,9 +791,11 @@ class Component:
     def __str__(self):
         return f"< Comp '{type(self).__name__}' >"
 
+    def __repr__(self):
+        return self.__str__()
 
 if __name__ == '__main__':
-    class Adder(Component):
+    class Adder(Node):
         i = Input('')
         o = Output('')
 
@@ -735,7 +803,7 @@ if __name__ == '__main__':
             self.o = '_' + self.i.r + '_'
 
 
-    class Join(Component):
+    class Join(Node):
         a = Input('')
         b = Input('')
         o = Output('')
@@ -744,7 +812,7 @@ if __name__ == '__main__':
             print('operate join')
             self.o = self.a + self.b
 
-    class Up(Component):
+    class Up(Node):
         a = Input('')
         o = Output('')
 
@@ -752,7 +820,7 @@ if __name__ == '__main__':
             print('operate up')
             self.o = self.a.r.upper()
 
-    class Operator(Component):
+    class Operator(Node):
         a = Inout(def_val='', has_siblings=False, typs=str)
         o = Output()
         def __init__(self):
@@ -780,7 +848,7 @@ if __name__ == '__main__':
     print()
     # o.a = 'kkk'
     print(o.o)
-    print(o._comp_spvr._needto_update)
+    print(o._node_spvr._needto_update)
     print(o.up.o)
     print(o.o)
     # o.a = 'jjk'
@@ -793,14 +861,14 @@ if __name__ == '__main__':
     # #
     o.a = a.o
     a.i = 'ddd'
-    for k, v in a._comp_spvr._graph.items():
+    for k, v in a._node_spvr._graph.items():
         print(k, v)
     #
-    # print(a._comp_spvr._needto_update)
+    # print(a._node_spvr._needto_update)
     print('++++++++++++++++++++++++++++')
 
     print(o.o)
-    for k, v in a._comp_spvr._graph.items():
+    for k, v in a._node_spvr._graph.items():
         print(k, v)
 
     a.i = 'err'

@@ -21,9 +21,9 @@ def a():
     ibo = comp.ConIndexBuffer(w)
 
     # push raw data into buffers
-    vertex_pusher = comp.PushBufferData(w, vbo.vrtx_bffr, vertex.out0_gl_data)
+    vertex_pusher = comp.PushBufferData(w, vbo.out0_vrtx_bffr, vertex.out0_gl_data)
     data_vbo = vertex_pusher.out0_data_bffr
-    data_ibo = comp.PushBufferData(w, ibo.indx_bffr, index.out0_gl_data).out0_data_bffr
+    data_ibo = comp.PushBufferData(w, ibo.out0_indx_bffr, index.out0_gl_data).out0_data_bffr
 
     # make vertex attribut buffers(VABO?) and index buffer(IBO) known to VAO
     enhancer = comp.EnhanceVertexArray(w)
@@ -34,7 +34,7 @@ def a():
     vertex_pusher.in1_data = comp.ConOpenglData('coord', new_vertex, 'f').out0_gl_data
 
     # draw
-    de = comp.DrawElement(w, enhancer.out0_vrtx_arry, data_ibo, w.gl.GL_TRIANGLE_STRIP)
+    de = comp.RenderElement(w, enhancer.out0_vrtx_arry, data_ibo, w.gl.GL_TRIANGLE_STRIP)
     de.out0_render_result
 
 Window.run()

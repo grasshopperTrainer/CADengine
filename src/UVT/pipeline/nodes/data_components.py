@@ -1,12 +1,12 @@
-from ._component import Component, Input, Output
+from ._node import Node, Input, Output
 from ..data_types import Bound
 
 
-class DataComponent(Component):
+class DataNode(Node):
     pass
 
 
-class ConBound(DataComponent):
+class ConBound(DataNode):
     start = Input(0)
     end = Input(1)
     value_out = Output(Bound())

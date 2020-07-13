@@ -1,15 +1,21 @@
 from UVT import Window, gl
+from UVT.doodle import *
+import UVT.pipeline.nodes as node
 
 class W(Window):
     def __init__(self):
         super().__init__(200, 200, 'window1')
 
+    def setup(self):
+        print('setting up')
+        self._inited = False
+        self.framerate = 4
+        self.count = 0
+
     def draw(self):
-        # print(self.current_window._context)
-        print(gl.glGenBuffers(1))
-        pass
+        super().draw()
+        triangle((0,0,0), (1,0,0), (0,1,0))
+        triangle((0,0,0), (-1,0,0), (0,-1,0))
 
 w = W()
-w.run(1)
-print(w._context_manager._gl_logger._record)
-print(w._context_manager._glfw_logger._record)
+w.run()
