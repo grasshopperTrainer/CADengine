@@ -1,7 +1,7 @@
-from ..patterns import FamilyTree
+from ..patterns import FamilyMember
 
 
-class DrawBit(FamilyTree):
+class DrawBit(FamilyMember):
 
     def draw(self):
         """

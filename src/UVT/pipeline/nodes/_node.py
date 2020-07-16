@@ -13,290 +13,291 @@ from collections.abc import Iterable
 import weakref as wr
 import inspect
 import warnings
+from UVT.patterns import FamilyMember
 if __name__ != '__main__':
     from ..data_types import *
 
-
-class NodeSpvr:
-    """
-    Supervisor of nodes
-
-    Stores relationship and hierarchy between nodes
-    Only cares relationship between
-    """
-
-    def __init__(self, inst):
-        self._graph = {}
-        self._needto_update = wr.WeakSet()
-
-        self._graph[inst] = {'dist':0, 'rels':{}}
-        self._needto_update.add(inst)
-
-    def _relate(self, this_node, out_name, inp_name, right_node):
-        """
-        Write down relationship
-
-        Literally imagine two nodes connected by a line,
-        of which two ends from left to right are the output and the input of two nodes.
-        :param this_node: node pushing data to right
-        :param out_name: attribute name of left node's output interface
-        :param inp_name: attribute name of right node's input interface
-        :param right_node: node accepting data from left
-        :return:
-        """
-        self.rels(this_node).setdefault(out_name, {}).setdefault(right_node, set()).add(inp_name)
-
-    def build_rel(self, out, inp):
-        """
-        Build relationship between two nods via interfaces
-
-        :param out:
-        :param inp:
-        :return:
-        """
-
-        l_supv, r_supv = out.intf_holder._node_spvr, inp.intf_holder._node_spvr
-        # two graphs are islands so need to be merged beforehand
-        is_merged = False
-
-        if l_supv != r_supv:
-            # simply update dict and assign new supervisor to instances(nodes)
-            l_supv._graph.update(r_supv._graph)
-            for node in r_supv._graph:
-                node._node_spvr = l_supv
-            is_merged = True
-
-        # check distance and update if needed
-        supv = l_supv
-        l_node, r_node = out.intf_holder, inp.intf_holder
-
-        # loop check ?
-        # check only relationships is being built within an island
-        # and right is before left
-        if not is_merged:
-            for nxt_node in supv._node_rightward(r_node):
-                if nxt_node == l_node:
-                    warnings.warn("Trying to make a look. Connection not accepted")
-                    return
-                if supv.dist(nxt_node) > supv.dist(l_node):
-                    break
-
-        # write relationship and calculate distance,
-        # push value, push r_node to update que as new value has been just pushed
-        supv._relate(l_node, out.intf_name, inp.intf_name, r_node)
-        supv._graph[r_node]['dist'] = max((self.dist(r_node), supv.dist(l_node) + 1))
-        supv.push_needto_update(r_node)
-
-        # update distance of all r_node's rightward
-        # no need to align nodes. just que
-        que = deque([r_node])
-
-        while que:
-            node = que.popleft()
-            this_dist = supv.dist(node)
-            for o, i, r_node in supv._node_full_rels(node):
-                if this_dist >= supv.dist(r_node):
-                    supv._graph[r_node]['dist'] = this_dist + 1
-                    que.append(r_node)
-
-    def disconnect(self, instance, intf):
-        """
-        Remove all connections of which one end is given interface
-        :param instance:
-        :param intf:
-        :return:
-        """
-        # !Q does disconnection affect dist of nodes?
-        # it doesn't violate hierarchy but could be cleaned to maintain dist understandable?
-        # TODO: algorithm for maintaining nodes' (attr) dist relatively close
-        if intf.intf_sign in (Input, Inout):
-            for node, dist_rels in self._graph.items():
-                for out, rights in dist_rels['rels'].items():
-                    for right, inps in rights.items():
-                        if right != instance:
-                            continue
-                        if intf.intf_name in inps:
-                            inps.remove(intf.intf_name)
-                            if not inps:
-                                del rights[right]
-                            break
-
-        elif intf.intf_sign == Output:
-            d = self.rels(instance)
-            if intf.intf_name in d:
-                for inp, rights in d.items():
-                    for right, inps in rights.items():
-                        for inp in inps:
-                            # reset r_node's input into default value
-                            delattr(right, inp)
-                del d[intf]
-        else:
-            raise NotImplementedError
-        self.push_needto_update(instance)
-
-    def push_needto_update(self, instance):
-        """
-        Push into need to upadate que
-
-        Needing to update means node's (def) operate has to executed to update output value.
-        :param instance:
-        :return:
-        """
-        self._needto_update.add(instance)
-
-    def dist(self, node):
-        """
-        Hierarchial identifier
-
-        Closer to 0 means it has to be calculated beforehand.
-        Higher means it has to be calculated later.
-        :param node:
-        :return:
-        """
-        return self._graph[node]['dist']
-
-    def rels(self, node):
-        """
-        Return info dict describing rightward nodes of this node
-        :param node:
-        :return:
-        """
-        return self._graph[node]['rels']
-
-    def update_tomake_updated(self, side, target_node=None):
-        """
-        Build update graph then push values consequently
-
-        From update_que, find all nodes needing update in rightward order
-        then for each execute (def) operate and push outputs rightward
-        :return:
-        """
-
-        # adding i for dist(n) being the same
-        # !Q is _update_que node that has run (def) operate or that has to run operate?
-        for nxt_node in self._node_rightward(self._needto_update):
-            # print('of', target_node)
-            # print('     ', nxt_node, target_node, self.dist(nxt_node), self.dist(target_node))
-            # if asking for input:
-            # 1. leave it as needing to update
-            # 2. don't try to generate output
-            if nxt_node == target_node and side in (Input, Inout):
-                break
-
-            # all nodes before end_node can be calculated even if it doesn't affect end_node's value
-            if self.dist(nxt_node) > self.dist(target_node):
-                break
-
-            if nxt_node in self._needto_update: # reset que
-                self._needto_update.remove(nxt_node)
-
-            nxt_node.calculate()  # run to update outputs
-            # push outputs to next node
-            for out, inp, r_node in self._node_full_rels(nxt_node):
-                self.push_value(nxt_node, out, inp, r_node)
-
-            # if asking for output:
-            # 1. terminate after (def) operate run to generate fresh outputs
-            if nxt_node == target_node and side == Output:
-                # push next of nxt_node needto update and stop updating
-                for out, inp, r_node in self._node_full_rels(nxt_node):
-                    # if rights connected to inout
-                    if getattr(nxt_node, out).intf_sign == Inout:
-                        continue
-                    self._needto_update.add(r_node)
-                break
-
-    def push_value(self,push_from, out, inp, push_into):
-        """
-        Passing intf value to next intf
-
-        ! don't mix interface value setting and interface value pushing
-        :param push_from:
-        :param out:
-        :param inp:
-        :param push_into:
-        :return:
-        """
-        getattr(push_into, inp)._intf_obj = getattr(push_from, out)._intf_obj
-
-    def _graph_full_rels(self):
-        """
-        Generator of all relationships
-
-        :param node: relationship of
-        :return: Generator('full_rel_info', ('output', 'input', 'right_node'))
-        """
-        np = namedtuple('graph_full_rels', ('dist', 'node', 'output', 'input', 'right_node'))
-        for node, dist_rels in self._graph.items():
-            for dist, rels in dist_rels.items():
-                for out, rights in rels.items():
-                    for right, inps in rights.items():
-                        for inp in inps:
-                            yield np(dist, node, out, inp, right)
-
-    def _node_full_rels(self, node):
-        """
-        Generator relationships of given node
-
-        :param node: relationship of
-        :return: Generator('node_full_rels', ('output', 'input', 'right_node'))
-        """
-        np = namedtuple('node_full_rels', ('output', 'input', 'right_node'))
-        for out, rights in self._graph[node]['rels'].items():
-            for right, inps in rights.items():
-                for inp in inps:
-                    yield np(out, inp, right)
-
-    def _node_rightward(self, roots):
-        """
-        Generator of rightward nodes
-
-        Returns rightwards nodes of given roots in hierarchical order
-        :param roots: Nodes tracking from. Multiple nodes can be given.
-        :return: Generator
-        """
-
-        if isinstance(roots, Iterable):
-            heap = list([(self.dist(n), i, n) for i, n in enumerate(roots)])
-            entry = len(roots)
-            visited = set(roots)
-        else:
-            heap = [(self.dist(roots), 0, roots)]
-            entry = 1
-            visited = {roots}
-
-        heapq.heapify(heap)
-        while heap:
-            dist, _, node = heapq.heappop(heap)
-            yield node
-            for out, rights in self.rels(node).items():
-                for right, ins in rights.items():
-                    if right not in visited:
-                        heapq.heappush(heap, (self.dist(right), entry, right))
-                        visited.add(right)
-                        entry += 1
-
-    def __len__(self):
-        return len(self._graph)
-
-# This approach failed as initializing superclass without knowing what it is impossible
-# class IntfObj:
-#     _wrapper_classes = {}
-#     def __new__(cls, instance, name, sign, value):
-#         if type(value) in cls._wrapper_classes:
-#             typ = cls._wrapper_classes[type(value)]
-#         else:
-#             if value is None:
-#                 clsname = f"intf_{type(value).__name__}"
-#                 typ = type(clsname, (_IntfObj, ), {})
-#             else:
-#                 clsname = f"intf_{type(value).__name__}"
-#                 typ = type(clsname, (_IntfObj, type(value)), {})
-#             cls._wrapper_classes[value] = typ
-#         print(typ, typ.__mro__)
 #
-#         inst = typ(instance, name, sign, value)
-#         return inst
+# class NodeSpvr:
+#     """
+#     Supervisor of nodes
+#
+#     Stores relationship and hierarchy between nodes
+#     Only cares relationship between
+#     """
+#
+#     def __init__(self, inst):
+#         self._graph = {}
+#         self._needto_update = wr.WeakSet()
+#
+#         self._graph[inst] = {'dist':0, 'rels':{}}
+#         self._needto_update.add(inst)
+#
+#     def _relate(self, this_node, out_name, inp_name, right_node):
+#         """
+#         Write down relationship
+#
+#         Literally imagine two nodes connected by a line,
+#         of which two ends from left to right are the output and the input of two nodes.
+#         :param this_node: node pushing data to right
+#         :param out_name: attribute name of left node's output interface
+#         :param inp_name: attribute name of right node's input interface
+#         :param right_node: node accepting data from left
+#         :return:
+#         """
+#         self.rels(this_node).setdefault(out_name, {}).setdefault(right_node, set()).add(inp_name)
+#
+#     def build_rel(self, out, inp):
+#         """
+#         Build relationship between two nods via interfaces
+#
+#         :param out:
+#         :param inp:
+#         :return:
+#         """
+#
+#         l_supv, r_supv = out.intf_holder._node_spvr, inp.intf_holder._node_spvr
+#         # two graphs are islands so need to be merged beforehand
+#         is_merged = False
+#
+#         if l_supv != r_supv:
+#             # simply update dict and assign new supervisor to instances(nodes)
+#             l_supv._graph.update(r_supv._graph)
+#             for node in r_supv._graph:
+#                 node._node_spvr = l_supv
+#             is_merged = True
+#
+#         # check distance and update if needed
+#         supv = l_supv
+#         l_node, r_node = out.intf_holder, inp.intf_holder
+#
+#         # loop check ?
+#         # check only relationships is being built within an island
+#         # and right is before left
+#         if not is_merged:
+#             for nxt_node in supv._node_rightward(r_node):
+#                 if nxt_node == l_node:
+#                     warnings.warn("Trying to make a look. Connection not accepted")
+#                     return
+#                 if supv.dist(nxt_node) > supv.dist(l_node):
+#                     break
+#
+#         # write relationship and calculate distance,
+#         # push value, push r_node to update que as new value has been just pushed
+#         supv._relate(l_node, out.intf_name, inp.intf_name, r_node)
+#         supv._graph[r_node]['dist'] = max((self.dist(r_node), supv.dist(l_node) + 1))
+#         supv.push_needto_update(r_node)
+#
+#         # update distance of all r_node's rightward
+#         # no need to align nodes. just que
+#         que = deque([r_node])
+#
+#         while que:
+#             node = que.popleft()
+#             this_dist = supv.dist(node)
+#             for o, i, r_node in supv._node_full_rels(node):
+#                 if this_dist >= supv.dist(r_node):
+#                     supv._graph[r_node]['dist'] = this_dist + 1
+#                     que.append(r_node)
+#
+#     def disconnect(self, instance, intf):
+#         """
+#         Remove all connections of which one end is given interface
+#         :param instance:
+#         :param intf:
+#         :return:
+#         """
+#         # !Q does disconnection affect dist of nodes?
+#         # it doesn't violate hierarchy but could be cleaned to maintain dist understandable?
+#         # TODO: algorithm for maintaining nodes' (attr) dist relatively close
+#         if intf.intf_sign in (Input, Inout):
+#             for node, dist_rels in self._graph.items():
+#                 for out, rights in dist_rels['rels'].items():
+#                     for right, inps in rights.items():
+#                         if right != instance:
+#                             continue
+#                         if intf.intf_name in inps:
+#                             inps.remove(intf.intf_name)
+#                             if not inps:
+#                                 del rights[right]
+#                             break
+#
+#         elif intf.intf_sign == Output:
+#             d = self.rels(instance)
+#             if intf.intf_name in d:
+#                 for inp, rights in d.items():
+#                     for right, inps in rights.items():
+#                         for inp in inps:
+#                             # reset r_node's input into default value
+#                             delattr(right, inp)
+#                 del d[intf]
+#         else:
+#             raise NotImplementedError
+#         self.push_needto_update(instance)
+#
+#     def push_needto_update(self, instance):
+#         """
+#         Push into need to upadate que
+#
+#         Needing to update means node's (def) operate has to executed to update output value.
+#         :param instance:
+#         :return:
+#         """
+#         self._needto_update.add(instance)
+#
+#     def dist(self, node):
+#         """
+#         Hierarchial identifier
+#
+#         Closer to 0 means it has to be calculated beforehand.
+#         Higher means it has to be calculated later.
+#         :param node:
+#         :return:
+#         """
+#         return self._graph[node]['dist']
+#
+#     def rels(self, node):
+#         """
+#         Return info dict describing rightward nodes of this node
+#         :param node:
+#         :return:
+#         """
+#         return self._graph[node]['rels']
+#
+#     def update_tomake_updated(self, side, target_node=None):
+#         """
+#         Build update graph then push values consequently
+#
+#         From update_que, find all nodes needing update in rightward order
+#         then for each execute (def) operate and push outputs rightward
+#         :return:
+#         """
+#
+#         # adding i for dist(n) being the same
+#         # !Q is _update_que node that has run (def) operate or that has to run operate?
+#         for nxt_node in self._node_rightward(self._needto_update):
+#             # print('of', target_node)
+#             # print('     ', nxt_node, target_node, self.dist(nxt_node), self.dist(target_node))
+#             # if asking for input:
+#             # 1. leave it as needing to update
+#             # 2. don't try to generate output
+#             if nxt_node == target_node and side in (Input, Inout):
+#                 break
+#
+#             # all nodes before end_node can be calculated even if it doesn't affect end_node's value
+#             if self.dist(nxt_node) > self.dist(target_node):
+#                 break
+#
+#             if nxt_node in self._needto_update: # reset que
+#                 self._needto_update.remove(nxt_node)
+#
+#             nxt_node.calculate()  # run to update outputs
+#             # push outputs to next node
+#             for out, inp, r_node in self._node_full_rels(nxt_node):
+#                 self.push_value(nxt_node, out, inp, r_node)
+#
+#             # if asking for output:
+#             # 1. terminate after (def) operate run to generate fresh outputs
+#             if nxt_node == target_node and side == Output:
+#                 # push next of nxt_node needto update and stop updating
+#                 for out, inp, r_node in self._node_full_rels(nxt_node):
+#                     # if rights connected to inout
+#                     if getattr(nxt_node, out).intf_sign == Inout:
+#                         continue
+#                     self._needto_update.add(r_node)
+#                 break
+#
+#     def push_value(self,push_from, out, inp, push_into):
+#         """
+#         Passing intf value to next intf
+#
+#         ! don't mix interface value setting and interface value pushing
+#         :param push_from:
+#         :param out:
+#         :param inp:
+#         :param push_into:
+#         :return:
+#         """
+#         getattr(push_into, inp)._intf_obj = getattr(push_from, out)._intf_obj
+#
+#     def _graph_full_rels(self):
+#         """
+#         Generator of all relationships
+#
+#         :param node: relationship of
+#         :return: Generator('full_rel_info', ('output', 'input', 'right_node'))
+#         """
+#         np = namedtuple('graph_full_rels', ('dist', 'node', 'output', 'input', 'right_node'))
+#         for node, dist_rels in self._graph.items():
+#             for dist, rels in dist_rels.items():
+#                 for out, rights in rels.items():
+#                     for right, inps in rights.items():
+#                         for inp in inps:
+#                             yield np(dist, node, out, inp, right)
+#
+#     def _node_full_rels(self, node):
+#         """
+#         Generator relationships of given node
+#
+#         :param node: relationship of
+#         :return: Generator('node_full_rels', ('output', 'input', 'right_node'))
+#         """
+#         np = namedtuple('node_full_rels', ('output', 'input', 'right_node'))
+#         for out, rights in self._graph[node]['rels'].items():
+#             for right, inps in rights.items():
+#                 for inp in inps:
+#                     yield np(out, inp, right)
+#
+#     def _node_rightward(self, roots):
+#         """
+#         Generator of rightward nodes
+#
+#         Returns rightwards nodes of given roots in hierarchical order
+#         :param roots: Nodes tracking from. Multiple nodes can be given.
+#         :return: Generator
+#         """
+#
+#         if isinstance(roots, Iterable):
+#             heap = list([(self.dist(n), i, n) for i, n in enumerate(roots)])
+#             entry = len(roots)
+#             visited = set(roots)
+#         else:
+#             heap = [(self.dist(roots), 0, roots)]
+#             entry = 1
+#             visited = {roots}
+#
+#         heapq.heapify(heap)
+#         while heap:
+#             dist, _, node = heapq.heappop(heap)
+#             yield node
+#             for out, rights in self.rels(node).items():
+#                 for right, ins in rights.items():
+#                     if right not in visited:
+#                         heapq.heappush(heap, (self.dist(right), entry, right))
+#                         visited.add(right)
+#                         entry += 1
+#
+#     def __len__(self):
+#         return len(self._graph)
+#
+# # This approach failed as initializing superclass without knowing what it is impossible
+# # class IntfObj:
+# #     _wrapper_classes = {}
+# #     def __new__(cls, instance, name, sign, value):
+# #         if type(value) in cls._wrapper_classes:
+# #             typ = cls._wrapper_classes[type(value)]
+# #         else:
+# #             if value is None:
+# #                 clsname = f"intf_{type(value).__name__}"
+# #                 typ = type(clsname, (_IntfObj, ), {})
+# #             else:
+# #                 clsname = f"intf_{type(value).__name__}"
+# #                 typ = type(clsname, (_IntfObj, type(value)), {})
+# #             cls._wrapper_classes[value] = typ
+# #         print(typ, typ.__mro__)
+# #
+# #         inst = typ(instance, name, sign, value)
+# #         return inst
 
 
 class IntfObj:
@@ -664,45 +665,26 @@ class Inout(Input):
     pass
 
 
-def log_execution(func):
-    """
-    Decorator for logging method execution result
-    :return:
-    """
-    def wrapper(self, *args, **kwargs):
-        if not hasattr(self, '_execution_log'):
-            setattr(self, '_execution_log', {})
-        try:
-            func(self, *args, **kwargs)
-            self._execution_log[func.__name__] = 'god execution'
-        except Exception as e:
-            self._execution_log[func.__name__] = f'bad execution : {e}'
-    return wrapper
-
-
-class Node:
+class Node(FamilyMember):
     """
     Component type
 
     """
-    
+
+    _NEED_REFRESH = True
     def __new__(cls, *args, **kwargs):
         """
         Initiate interface
 
-        1. add node grapher to the instance
-        2. add attribute into the instance
-        3. add signature's attribute set, e.g. _inputs, into the instance
+        1. add attribute into the instance
+        2. add signature's attribute set, e.g. _inputs, into the instance
         :param args:
         :param kwargs:
         """
 
         ins = super().__new__(cls)
 
-        # 1 add node grapher
-        ins._node_spvr = NodeSpvr(ins)
-
-        # 2 add interface attribute looking mro backward to correctly override
+        # 1 add interface attribute looking mro backward to correctly override
         for c in reversed(cls.__mro__):
             if hasattr(c, '__dict__'):
                 for k, v in c.__dict__.items():
@@ -717,7 +699,6 @@ class Node:
 
         return ins
 
-    @log_execution
     def calculate(self):
         """
         Execution of the component
@@ -763,22 +744,15 @@ class Node:
         else:
             raise AttributeError(f"no such interface '{n}'")
 
-    @property
-    def inputs(self):
-        if not hasattr(self, 'inputs_defaulted'):
-            # defaulting
-            for cls in reversed(type(self).__mro__):
-                if hasattr(cls, '__dict__'):
-                    for k, v in cls.__dict__.items():
-                        if isinstance(v, Input):
-                            getattr(self, k)
 
-        return self.interfaces.get('Input', {})
 
     def set_inputs(self, *value):
         for intf_name, v in zip(self.inputs, value):
             setattr(self, intf_name, v)
 
+    @property
+    def inputs(self):
+        return self.interfaces.get('Input', {})
 
     @property
     def outputs(self):
