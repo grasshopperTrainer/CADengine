@@ -1,5 +1,5 @@
 from ..._node import *
-from ..opengl_node import OpenglNode
+from ..opengl_node import OpenglNodeBody
 from UVT.hooked import gl, glfw
 
 import inspect
@@ -10,7 +10,7 @@ import glfw
 
 
 
-class BufferComponent(OpenglNode):
+class BufferComponent(OpenglNodeBody):
     """
     Buffer for Buffer component.
 

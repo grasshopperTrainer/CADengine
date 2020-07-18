@@ -1,5 +1,6 @@
 from collections import deque
 import heapq
+from math import inf
 
 
 class SingletonClass:
@@ -52,56 +53,114 @@ class TimeParadoxError(AttributeError):
 class MemberIterator:
     def __init__(self):
         raise NotImplementedError
-    def __next__(self):
-        raise NotImplementedError
+
     def __iter__(self):
         raise NotImplementedError
-    def __len__(self):
-        raise NotImplementedError
+
+    def __call__(self, member):
+        self._iterable(member)
+        return self
+
+class LevelIterator(MemberIterator):
+
+    def __init__(self, iterable, step=inf):
+        self._iterable = iterable
+        self._step = step
+
+    def __iter__(self):
+        que = deque([(1, m) for m in self._iterable])
+        visited = set()
+        while que:
+            level, member = que.popleft()
+            if member not in visited and level <= self._step:
+                visited.add(member)
+                yield member
+                que += [(level+1, m) for m in self._iterable(member)]
+
+
+class PreorderIterator(MemberIterator):
+
+    def __init__(self, iterable, step=inf):
+        self._iterable = iterable
+        self._step = step
+
+    def __iter__(self):
+        heap = [(1, i, m) for i, m in enumerate(self._iterable)]
+        next_count = len(heap)
+        depth_record = {m: 1 for m in self._iterable}
+
+        while heap:
+            level, _, member = heapq.heappop(heap)
+            if depth_record.get(self, 0) >= level + 1:
+                continue
+
+            for next_member in self._iterable(member):
+                if depth_record.get(next_member, 0) < level + 1:
+                    depth_record[next_member] = level + 1
+                    heapq.heappush(heap, (level+1, next_count, next_member))
+                    next_count += 1
+
+        for member, level in sorted(depth_record.items(), key=lambda x: x[1]):
+            if level <= self._step:
+                yield member
+
+
+class PostorderIterator(MemberIterator):
+
+    def __init__(self, iterable, visited=None):
+        self._iterable = iterable
+        self._visited = visited
+        self.a = 10
+
+    def __iter__(self):
+        if self._visited is None:
+            self._visited = set()
+        for member in self._iterable:
+            if member not in self._visited:
+                self._visited.add(member)
+                for i in PostorderIterator(self._iterable(member), self._visited):
+                    yield i
+                yield member
+
+
+class TypeFilterIterator(MemberIterator):
+
+    def __init__(self, iterable, typ):
+        self._iterable = iterable
+        self._typ = typ
+
+    def __iter__(self):
+        for member in self._iterable:
+            if isinstance(member, self._typ):
+                yield member
 
 
 class ParentIterator(MemberIterator):
 
-    def __init__(self, start_at):
-        self._start_at = start_at
-        self._members = self._start_at.fm_get_parents()
-        self._iter_idx = 0
-
-    def __next__(self):
-        if self._iter_idx >= len(self._members):
-            raise StopIteration
-        m = self._members[self._iter_idx]
-        self._iter_idx += 1
-        return m
+    def __init__(self):
+        self._member = None
 
     def __iter__(self):
-        self._iter_idx = 0
-        return self
+        for parent in self._member.fm_all_parents():
+            yield parent
 
-    def __len__(self):
-        return len(self._start_at.fm_get_parents())
+    def __call__(self, member):
+        self._member = member
+        return self
 
 
 class ChildrenIterator(MemberIterator):
 
-    def __init__(self, start_at):
-        self._start_at = start_at
-        self._members = self._start_at.fm_get_children()
-        self._iter_idx = 0
-
-    def __next__(self):
-        if self._iter_idx >= len(self._members):
-            raise StopIteration
-        m = self._members[self._iter_idx]
-        self._iter_idx += 1
-        return m
+    def __init__(self):
+        self._member = None
 
     def __iter__(self):
-        self._iter_idx = 0
-        return self
+        for child in self._member.fm_all_children():
+            yield child
 
-    def __len__(self):
-        return len(self._members)
+    def __call__(self, member):
+        self._member = member
+        return self
 
 
 class FamilyMember:
@@ -111,46 +170,23 @@ class FamilyMember:
     Mono, polygamy functionality is supported by differentiating `set` `append` in method naming convention.
     """
     _ATTR_PREFIX = '_fm'
-    _PARENT = 'parent'
-    _CHILD = 'child'
+    PARENT = 0
+    CHILD = 1
 
-    ITER_PARENT = ParentIterator
-    ITER_CHILDREN = ChildrenIterator
+    PARENT_ITERATOR = ParentIterator
+    CHILDREN_ITOR = ChildrenIterator
+    TYPEFILTER_ITOR = TypeFilterIterator
+    PREORDER_ITOR = PreorderIterator
+    POSTORDER_ITOR = PostorderIterator
+    LEVEL_ITOR = LevelIterator
 
-    def _getdefault_attribute(self, attr_name, def_val):
-        """
-        Assign's attribute if nonexistant and return attribute
-        :param attr_name: name of attribute
-        :param def_val: default value of attribute
-        :return:
-        """
-        if not hasattr(self, attr_name):
-            setattr(self, attr_name, def_val)
-        return getattr(self, attr_name)
-
-    @property
-    def _children_list(self):
-        list_n = f"{self._ATTR_PREFIX}_children_list"
-        return self._getdefault_attribute(list_n, [])
-
-    @property
-    def _children_set(self):
-        set_n = f"{self._ATTR_PREFIX}_children_set"
-        return self._getdefault_attribute(set_n, set())
-
-    @property
-    def _parent_list(self):
-        list_n = f"{self._ATTR_PREFIX}_parent_list"
-        return self._getdefault_attribute(list_n, [])
-        
-    @property
-    def _parent_set(self):
-        set_n = f"{self._ATTR_PREFIX}_parent_set"
-        return self._getdefault_attribute(set_n, set())
+    def __init__(self):
+        self._relation_lst = ([], [])
+        self._relation_set = (set(), set())
 
     def _typ_check(self, obj):
         if not isinstance(obj, FamilyMember):
-            raise TypeError
+            raise TypeError("not a member")
 
     def _paradox_check(self, relationship, subj):
         """
@@ -164,112 +200,95 @@ class FamilyMember:
         :param subj:
         :return:
         """
-        if relationship == self._PARENT:
-            for offs in subj.fm_iter_preorder(self.ITER_CHILDREN):
+        pass
+        if relationship == self.PARENT:
+            for offs in subj.fm_iter_member(subj.PREORDER_ITOR(subj.CHILDREN_ITOR())):
                 if offs == self:
                     raise TimeParadoxError(subj, relationship, self)
 
-        elif relationship == self._CHILD:
-            for anc in subj.fm_iter_preorder(self.ITER_PARENT):
+        elif relationship == self.CHILD:
+            for anc in subj.fm_iter_member(subj.PREORDER_ITOR(subj.PARENT_ITERATOR())):
                 if anc == self:
                     raise TimeParadoxError(subj, relationship, self)
         else:
             raise TypeError
 
-    def fm_set_parent(self, parent_obj):
+    def fm_append(self, obj, kind):
         """
-        Set monopoly parent.
-        
-        All other parents will be removed.
-        If willing to add parent refer to `fm_append_parent`
-        :param parent_obj: object to set as parent of this
+        Appender
+        :param obj:
+        :param kind:
         :return:
         """
-        self._typ_check(parent_obj)
-        self._paradox_check(self._CHILD, parent_obj)
+        self._typ_check(obj)
+        self._paradox_check(not kind, obj)
 
-        for parent in self._parent_list:
+        if obj not in self._relation_set[kind]:
+            lst, st = self._relation_lst[kind], self._relation_set[kind]
+            lst.append(obj)
+            st.add(obj)
+
+    def fm_remove(self, obj, kind):
+        """
+        Remover
+        :param obj:
+        :param kind:
+        :return:
+        """
+        self._typ_check(obj)
+        if obj in self._relation_set[kind]:
+            lst, st = self._relation_lst[kind], self._relation_set[kind]
+            lst.remove(obj)
+            st.remove(obj)
+
+    def fm_append_parent(self, parent):
+        self.fm_append(parent, self.PARENT)
+        parent.fm_append(self, self.CHILD)
+
+    def fm_append_child(self, child):
+        self.fm_append(child, self.CHILD)
+        child.fm_append(self, self.PARENT)
+
+    # bidirectional manipulator
+    def fm_clear_parent(self):
+        for parent in self.fm_all_parents():
             parent.fm_remove_child(self)
-        self._parent_list.clear()
-        self._parent_list.append(parent_obj)
-        self._parent_set.clear()
-        self._parent_set.add(parent_obj)
-        # push self to parent obj
-        parent_obj.fm_append_child(self)
 
-    def fm_append_parent(self, parent_obj):
-        """
-        Append parent
-
-        If willing to set monopoly relationship refer to `fm_set_parent`
-        :param parent_obj: object to set as parent of this
-        :return:
-        """
-        self._typ_check(parent_obj)
-        self._paradox_check(self._CHILD, parent_obj)
-
-        if parent_obj not in self._parent_set:
-            self._parent_list.append(parent_obj)
-            self._parent_set.add(parent_obj)
-            # append self as parent's child
-            parent_obj.fm_append_child(self)
-
-    def fm_remove_parent(self, parent_obj):
-        self._typ_check(parent_obj)
-        if parent_obj in self._parent_set:
-            self._parent_list.remove(parent_obj)
-            self._parent_set.remove(parent_obj)
-
-    def fm_set_child(self, child_obj):
-        """
-        Set monopoly relationship with single child.
-
-        All other children relationship will be removed.
-        If willing to add child, refer to `fm_append_children`
-        :param child_obj: objects to set as child of this
-        :return:
-        """
-        self._typ_check(child_obj)
-        self._paradox_check(self._PARENT, child_obj)
-
-        for child in self._children_list:
+    def fm_clear_children(self):
+        for child in self.fm_all_children():
             child.fm_remove_parent(self)
-        self._children_list.clear()
-        self._children_list.append(child_obj)
-        self._children_set.clear()
-        self._children_set.add(child_obj)
-        # push self to parent obj
-        child_obj.fm_append_parent(self)
 
-    def fm_append_child(self, child_obj):
+    def fm_remove_parent(self, parent):
+        self.fm_remove(parent, self.PARENT)
+        parent.fm_remove(self, self.CHILD)
+
+    def fm_remove_child(self, child):
+        self.fm_remove(child, self.CHILD)
+        child.fm_remove(self, self.PARENT)
+
+    # checker
+    def fm_has_parent(self):
+        return bool(self._relation_lst[self.PARENT])
+
+    def fm_has_child(self):
+        return bool(self._relation_lst[self.CHILD])
+
+    # getter
+    def fm_get_child(self, idx):
         """
-        Append child.
+        Return child of given idx
+        :param idx: index of desired children
+        :return: child
+        """
+        return self._relation_lst[self.CHILD][idx]
 
-        if willing to set monopoly relationship(single child)
-        refer to `fm_set_child`
-        :param child_obj: objects to append as children of this
+    def fm_get_parent(self, idx):
+        """
+        Return parent of given idx
+        :param idx: index of desired parent
         :return:
         """
-        self._typ_check(child_obj)
-        self._paradox_check(self._PARENT, child_obj)
-        # discard if already a child
-        if child_obj not in self._children_set:
-            self._children_list.append(child_obj)
-            self._children_set.add(child_obj)
-            child_obj.fm_append_parent(self)
-
-    def fm_remove_child(self, child_obj):
-        self._typ_check(child_obj)
-        if child_obj in self._children_set:
-            self._children_list.remove(child_obj)
-            self._children_set.remove(child_obj)
-
-    def fm_get_parents(self):
-        """
-        Get copied list of parents
-        :return:
-        """
-        return self._parent_list.copy()
+        return self._relation_lst[self.PARENT][idx]
 
     def fm_get_roots(self, visited=set()):
         """
@@ -290,81 +309,22 @@ class FamilyMember:
                     roots += p.fm_get_roots(visited=visited)
         return roots
 
-    def fm_get_children(self):
+    def fm_all_parents(self):
         """
-        Return coyied list of children
-        :param idx: index of desired children
-        :return: list(children of given index) if idx is many else a child
-        """
-        return self._children_list.copy()
-    
-    def fm_iter_children(self):
-        """
-        Return generator of all children
+        Return list copy of parents
         :return:
         """
-        for child in self._children_list:
-            yield child
+        return self._relation_lst[self.PARENT].copy()
 
-    def fm_iter_parents(self):
+    def fm_all_children(self):
         """
-        Return generator of all parents
+        Return list copy of children
         :return:
         """
+        return self._relation_lst[self.CHILD].copy()
 
-    def fm_iter_close_siblings(self):
-        """
-        Return generator of members sharing parents of this
-        :return: 
-        """
-        raise NotImplementedError
-
-    def fm_iter_all_siblings(self):
-        """
-        Return generator of all members of same generation
-        :return: 
-        """
-        raise NotImplementedError
-
-    def _member_iterator_check(self, iterator):
-        if not issubclass(iterator, MemberIterator):
-            raise TypeError("feed one if member iterator enum such as ITER_PARENT")
-
-    def fm_iter_preorder(self, member_iterator):
-        self._member_iterator_check(member_iterator)
-        heap = [(1, i, m) for i, m in enumerate(member_iterator(self))]
-        in_count = len(heap)
-        depth_record = {m:1 for m in member_iterator(self)}
-        while heap:
-            level, _, member = heapq.heappop(heap)
-            if depth_record.get(self, 0) >= level + 1:
-                continue
-            for next_member in member_iterator(member):
-                if depth_record.get(next_member, 0) < level + 1:
-                    depth_record[next_member] = level + 1
-                    heapq.heappush(heap, (level+1, in_count, next_member))
-                    in_count += 1
-        for member, _ in sorted(depth_record.items(), key=lambda x: x[1]):
-            yield member
-
-
-    # def fm_iter_member(self, order_iterator, member_iterator):
-
-    def fm_iter_postorder(self, member_iterator, _visited=None):
-        this_is_origin = False
-        if _visited is None:
-            _visited = set()
-            this_is_origin = True
-        self._member_iterator_check(member_iterator)
-        for member in member_iterator(self):
-            if member not in _visited:
-                _visited.add(member)
-                for i in member.fm_iter_postorder(member_iterator, _visited=_visited):
-                    yield i
-
-        if not this_is_origin:
-            yield self
-
+    def fm_iter_member(self, iterator):
+        return iterator(self)
 
 
 
@@ -372,6 +332,7 @@ class FamilyMember:
 if __name__ == '__main__':
     class A(FamilyMember):
         def __init__(self, sign):
+            super().__init__()
             self._sign = sign
 
         def __str__(self):
@@ -380,7 +341,19 @@ if __name__ == '__main__':
         def __repr__(self):
             return self.__str__()
 
-    m = [A(i) for i in range(14)]
+    class B(FamilyMember):
+        def __init__(self, sign):
+            super().__init__()
+            self._sign = sign
+
+        def __str__(self):
+            return f"<obj {self._sign}>"
+
+        def __repr__(self):
+            return self.__str__()
+
+    m = [B(i) for i in range(4)]
+    m += [A(i) for i in range(4, 14)]
     # set ancestors of m[6]
     m[0].fm_append_child(m[2])
     m[0].fm_append_child(m[3])
@@ -400,19 +373,29 @@ if __name__ == '__main__':
     m[9].fm_append_child(m[10])
     m[10].fm_append_child(m[12])
     m[10].fm_append_child(m[13])
+    idx = 0
+    print('___________')
+    for i in m[7].fm_iter_member(PreorderIterator(ParentIterator(), 2)):
+        print(i)
+    print()
+    for i in m[6].fm_iter_member(LevelIterator(ParentIterator(), 2)):
+        print(i)
 
-    a = m[6].fm_iter_postorder(ParentIterator)
-    print(id(a))
-    for i in a:
-        print(i)
-    print('--------------')
-    for i in m[6].fm_iter_preorder(ParentIterator):
-        print(i)
-    print('_____________')
-    b = m[6].fm_iter_postorder(ChildrenIterator)
-    print(id(b))
-    for i in b:
-        print(i)
-    print('_____________')
-    for i in m[6].fm_iter_preorder(ChildrenIterator):
-        print(i)
+    # k = m[6].fm_iter_member(PreorderIterator(TypeFilterIterator(ParentIterator(), A)))
+    # print(k.a)
+    # print(m[6]._relation_lst)
+    # a = m[6].fm_iter_postorder(ParentIterator)
+    # print(id(a))
+    # for i in a:
+    #     print(i)
+    # print('--------------')
+    # for i in m[6].fm_iter_preorder(ParentIterator):
+    #     print(i)
+    # print('_____________')
+    # b = m[6].fm_iter_postorder(ChildrenIterator)
+    # print(id(b))
+    # for i in b:
+    #     print(i)
+    # print('_____________')
+    # for i in m[6].fm_iter_preorder(ChildrenIterator):
+    #     print(i)

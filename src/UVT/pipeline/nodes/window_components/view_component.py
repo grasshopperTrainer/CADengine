@@ -1,7 +1,7 @@
 from .._node import *
 
 
-class ViewNode(Node):
+class ViewNodeBody(NodeBody):
     
     x = Input(def_val=0.5, typs=(int, float, callable))
     y = Input(def_val=0.5, typs=(int, float, callable))

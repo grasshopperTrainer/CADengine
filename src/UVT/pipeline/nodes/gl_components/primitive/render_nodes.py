@@ -1,9 +1,9 @@
-from ..opengl_node import OpenglNode
+from ..opengl_node import OpenglNodeBody
 from ..._node import *
 from UVT.hooked import gl, glfw
 
 
-class RenderComponent(OpenglNode):
+class RenderComponent(OpenglNodeBody):
     """
     Renderable nodes
 

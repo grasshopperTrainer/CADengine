@@ -2,7 +2,7 @@ from ..opengl_node import *
 from ..primitive.program_shader_nodes import *
 import UVT.hooked.openglHooked as gl
 
-class ConShdrPrgrm(OpenglNode):
+class ConShdrPrgrm(OpenglNodeBody):
 
     in0_vrtx_shdr_src = Inout(typs=str)
     in1_frgmt_shdr_src = Inout(typs=str)

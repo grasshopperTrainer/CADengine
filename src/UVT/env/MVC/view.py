@@ -1,10 +1,10 @@
 import weakref as wr
-from ...pipeline.nodes.window_components import ViewNode
+from ...pipeline.nodes.window_components import ViewNodeBody
 
 
 class View:
     def __init__(self, x, y, w, h, mother):
-        self._node = ViewNode(x, y, w, h)
+        self._node = ViewNodeBody(x, y, w, h)
         if mother is None:
             pass
         elif isinstance(mother, View):

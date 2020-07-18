@@ -1,7 +1,7 @@
 from ._node import *
 
 
-class MathComponents(Node):
+class MathComponents(NodeBody):
     """
     Math operation nodes
     """

@@ -1,12 +1,12 @@
-from ._node import Node, Input, Output
+from ._node import NodeBody, Input, Output
 from ..data_types import Bound
 
 
-class DataNode(Node):
+class DataNodeBody(NodeBody):
     pass
 
 
-class ConBound(DataNode):
+class ConBound(DataNodeBody):
     start = Input(0)
     end = Input(1)
     value_out = Output(Bound())

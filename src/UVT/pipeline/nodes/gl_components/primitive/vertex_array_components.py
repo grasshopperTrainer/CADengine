@@ -1,10 +1,10 @@
 from ..._node import *
-from ..opengl_node import OpenglNode
+from ..opengl_node import OpenglNodeBody
 from UVT.hooked import gl, glfw
 from collections.abc import Iterable
 
 
-class VertexArrayComponent(OpenglNode):
+class VertexArrayComponent(OpenglNodeBody):
     pass
 
 class ConVertexArray(VertexArrayComponent):

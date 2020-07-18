@@ -1,14 +1,14 @@
 from UVT.pipeline.nodes._node import *
 
 
-class A(Node):
+class A(NodeBody):
     i = Input()
     o = Output()
     def calculate(self):
         print('calculated')
         self.o = self.i.r*10
 
-class B(Node):
+class B(NodeBody):
     i = Input()
     o = Output()
     def calculate(self):

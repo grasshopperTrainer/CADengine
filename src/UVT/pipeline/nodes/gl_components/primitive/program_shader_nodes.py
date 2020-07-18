@@ -3,7 +3,7 @@ import UVT.hooked.openglHooked as gl
 from UVT.pipeline.data_types.gl_data_types import PrgrmObj, _ShdrObj, VrtxShdrObj, FrgmtShdrObj
 
 
-class ConPrgrm(OpenglNode):
+class ConPrgrm(OpenglNodeBody):
     """
     Generate OpenGL Program object
     """
@@ -13,7 +13,7 @@ class ConPrgrm(OpenglNode):
         self.out0_prgrm = PrgrmObj(gl.glCreateProgram())
 
 
-class ConVrtxShdr(OpenglNode):
+class ConVrtxShdr(OpenglNodeBody):
     """
     Generate OpenGL Vertex Shader Object
     """
@@ -24,7 +24,7 @@ class ConVrtxShdr(OpenglNode):
         self.out0_vrtx_shdr = VrtxShdrObj(gl.glCreateShader(gl.GL_VERTEX_SHADER))
 
 
-class ConFrgmtShdr(OpenglNode):
+class ConFrgmtShdr(OpenglNodeBody):
     """
     Generate OpenGL Fragment Shader Object
     """
@@ -35,7 +35,7 @@ class ConFrgmtShdr(OpenglNode):
         self.out0_frgmt_shdr = FrgmtShdrObj(gl.glCreateShader(gl.GL_FRAGMENT_SHADER))
 
 
-class CompileShdr(OpenglNode):
+class CompileShdr(OpenglNodeBody):
     """
     Compile and Attach shader shader
     """
@@ -58,7 +58,7 @@ class CompileShdr(OpenglNode):
         self.out0_shdr = self.in0_shdr
 
 
-class DeleteShdr(OpenglNode):
+class DeleteShdr(OpenglNodeBody):
     """
     Delete OpenGL Shader Object
     """
@@ -72,7 +72,7 @@ class DeleteShdr(OpenglNode):
         self.in0_shdr.r._id = None
 
 
-class UsePrgrm(OpenglNode):
+class UsePrgrm(OpenglNodeBody):
     """
     Bind OpenGL Program Object
     """

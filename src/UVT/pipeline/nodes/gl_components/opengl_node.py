@@ -2,7 +2,7 @@ from .._node import *
 import weakref as wr
 
 
-class OpenglNode(Node):
+class OpenglNodeBody(NodeBody):
     """
     OpenGL component type
     """
