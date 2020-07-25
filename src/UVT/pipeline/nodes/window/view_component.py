@@ -18,12 +18,6 @@ class ViewNodeBody(NodeBody):
     real_w = Output(def_val=100, typs=int)
     real_h = Output(def_val=100, typs=int)
 
-    def __init__(self, x, y, w, h):
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-
     def calculate(self):
         for n in ('x', 'y', 'w', 'h'):
             setattr(self, f"real_{n}", int(self._calc_real(n)))

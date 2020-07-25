@@ -33,6 +33,7 @@ class ConOpenglData(VertexArrayComponent):
     out0_gl_data = Output(None)
 
     def __init__(self, attr_name, data, dtype):
+        super().__init__()
         self.in0_name = attr_name
         self.in1_data = data
         self.in2_dtype = dtype

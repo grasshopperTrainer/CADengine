@@ -29,37 +29,119 @@ class NullValue:
 class NodeMember(FamilyMember):
     pass
 
-class NodeInterfaceGroup(NodeMember):
+class _NodeIntfGroup(_NodeMember):
     """
-    Member to group Node Interfaces
+    Member grouping Node Interfaces
     """
-    def __init__(self, name):
+    def __init__(self, name, def_val, has_sibling_intf):
         super().__init__()
         self._name = name
+        self._def_val = def_val
+        self._has_sibling_intf = has_sibling_intf
+        self._next_sibling_id = 1
 
     def __getitem__(self, item):
-        if isinstance(self.fm_get_parent(0), NodeBody):
-            return self.fm_get_child(item)
-        else:
-            return self.fm_get_parent(item)
+        return self.interfaces[item]
 
     def __iter__(self):
-        if isinstance(self.fm_get_parent(0), NodeBody):
-            return iter(self.fm_all_children())
-        else:
-            return iter(self.fm_all_parents())
-
-    def __str__(self):
-        return f"<node_{'output' if self.fm_has_parent() else 'input'}_group : '{self._name}'>"
+        return iter(self.interfaces)
 
     def __repr__(self):
         return self.__str__()
 
+    def __len__(self):
+        return len(self.interfaces)
+
+    def append_new_intf(self):
+        pass
+    def set_intf_value(self, *args):
+        pass
+
+    def append_sibling_intf(self, value):
+        """
+        Add sibling interface.
+        :param value:
+        :return:
+        """
+        if not self._has_sibling_intf:
+            raise Exception("appending interface not allowed")
+        self.append_new_intf()
+        self.set_intf_value(len(self.interfaces)-1, value)
+        self.node_body._reset_calculated()
+
+        self._next_sibling_id += 1
+
+    def remove_sibling_intf(self, idx):
+        if idx == 0:
+            raise IndexError("can't remove default interface")
+        self.fm_remove_relationship(self, self.interfaces[idx])
+
+
+class _InputIntfGroup(_NodeIntfGroup):
+    def __init__(self, name, def_val, has_sibling_intf):
+        super().__init__(name, def_val, has_sibling_intf)
+        self.fm_append_member(parent=_InputIntf(name=f"{name}_0", value=def_val), child=self)
+
+    def __str__(self):
+        return f"<input_intf_group : '{self._name}'>"
+
+    @property
+    def interfaces(self):
+        return self.fm_all_parents()
+
+    @property
+    def node_body(self):
+        return self.fm_get_child(0)
+
+    @property
+    def intf_typ(self):
+        return type(self.fm_get_parent(0))
+
+    def append_new_intf(self):
+        new_intf = self.intf_typ(f"{self._name}_{self._next_sibling_id}", self._def_val)
+        self.fm_append_member(new_intf, self)
+
+    def set_intf_value(self, idx, value):
+        intf = self.interfaces[idx]
+        # by default relationship is monopoly so clear connection bidirectionally
+        intf.fm_clear_parent()
+        # make relationship
+        if isinstance(value, _NodeIntf):
+            # set relationship between interface
+            # by default direct setting goes to idx 0 of intf group
+            intf.fm_append_member(parent=value, child=intf)
+            value = value._value
+        intf._value = value
+
+
+class _OutputIntfGroup(_NodeIntfGroup):
+    def __init__(self, name, def_val, has_sibling_intf):
+        super().__init__(name, def_val, has_sibling_intf)
+        self.fm_append_member(parent=self, child=_OutputIntf(name=f"{name}_0", value=def_val))
+
+    def __str__(self):
+        return f"<output_intf_group : '{self._name}'>"
+
+    @property
+    def interfaces(self):
+        return self.fm_all_children()
+
+    @property
+    def node_body(self):
+        return self.fm_get_parent(0)
+
+    @property
+    def intf_typ(self):
+        return type(self.fm_get_child(0))
+
+    def append_new_intf(self):
+        new_intf = self.intf_typ(f"{self._name}_{self._next_sibling_id}", self._def_val)
+        self.fm_append_member(parent=self, child=new_intf)
+
+
 class NodeInterface(NodeMember):
     """
-    Delivers interface value with needed metadata
-
-    Wraps output data and delivers to input or not. Should be released after that. No other function.
+    Contains value with needed metadata for value delivery.
     """
 
     def __init__(self, name, value):
@@ -75,6 +157,30 @@ class NodeInterface(NodeMember):
         self._name = name
         self._value = value
 
+    def __repr__(self):
+        return self.__str__()
+
+    def __getitem__(self, item):
+        return self.group.interfaces[item]
+
+    def __len__(self):
+        return len(self.group)
+
+    @property
+    def r(self):
+        return self._value
+
+    def append_sibling_intf(self, value=NullValue()):
+        self.group.append_sibling_intf(value)
+
+    def remove_sibling_intf(self, idx):
+        self.group.remove_sibling_intf(idx)
+
+
+class _InputIntf(_NodeIntf):
+    """
+    Container of input value
+    """
     def __str__(self):
         return f"<node_intf '{self._name}' : {self._value}>"
 
@@ -96,24 +202,35 @@ class NodeBody(NodeMember):
         # create relationship between node body and node interface
         self._calculated = False
         self._calculation_status = ''
-        self._intfs = {}
-        self._inputgroups = {}
-        self._outputgroups = {}
+
+        input_dict, output_dict = {}, {}
+        # to override in correct order
         for c in reversed(self.__class__.__mro__):
             if hasattr(c, '__dict__'):
                 for k, v in c.__dict__.items():
-                    if isinstance(v, IntfDescriptor):
-                        intfgroup = NodeInterfaceGroup(v._name)
-                        intf = NodeInterface(f"{v._name}_0", v._def_val)
-                        self._intfs[v._name] = intfgroup
-                        if isinstance(v, (Input, Inout)):
-                            self._inputgroups[v._name] = intfgroup
-                            intfgroup.fm_append_parent(intf)
-                            self.fm_append_parent(intfgroup)
-                        elif isinstance(v, Output):
-                            self._outputgroups[v._name] = intfgroup
-                            intfgroup.fm_append_child(intf)
-                            self.fm_append_child(intfgroup)
+                    if isinstance(v, (Input, Inout)):
+                        input_dict[v._name] = v
+                    elif isinstance(v, Output):
+                        output_dict[v._name] = v
+        for name, v in input_dict.items():
+            self.fm_append_member(parent=_InputIntfGroup(name, v._def_val, v._has_siblings), child=self)
+
+        for name, v in output_dict.items():
+            self.fm_append_member(parent=self, child=_OutputIntfGroup(name, v._def_val, v._has_siblings))
+
+        # input __init__ ing convention
+        i = 0
+        for name, group in self.inputgroups.items():
+            try:
+                setattr(self, name, args[i])
+                i += 1
+            except IndexError as e:
+                break
+            except Exception as e:
+                raise
+
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def print_status(self):
         if self._calculation_status:
@@ -185,8 +302,8 @@ class NodeBody(NodeMember):
         Forces recalculation by calling outputs
         :return:
         """
-        self._node_spvr.push_needto_update(self)
-        self._node_spvr.update_tomake_updated(side=Output, target_node=self)
+        self._reset_calculated()
+        self._recalculate_upstream()
 
     def refresh_all(self):
         """

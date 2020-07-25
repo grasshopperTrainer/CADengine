@@ -3,7 +3,6 @@ from UVT.env.draw_bit import DrawBit
 import UVT.hooked.openglHooked as gl
 import UVT.pipeline.nodes as node
 
-
 class TriangleDrawer(DrawBit, SingletonClass):
     def __init__(self):
         # generation

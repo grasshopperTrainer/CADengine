@@ -4,6 +4,7 @@ from ...pipeline.nodes.window_components import ViewNodeBody
 
 class View:
     def __init__(self, x, y, w, h, mother):
+        super().__init__()
         self._node = ViewNodeBody(x, y, w, h)
         if mother is None:
             pass

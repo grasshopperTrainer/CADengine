@@ -241,15 +241,26 @@ class FamilyMember:
             lst.remove(obj)
             st.remove(obj)
 
-    def fm_append_parent(self, parent):
-        self.fm_append(parent, self.PARENT)
-        parent.fm_append(self, self.CHILD)
-
-    def fm_append_child(self, child):
-        self.fm_append(child, self.CHILD)
-        child.fm_append(self, self.PARENT)
-
     # bidirectional manipulator
+    @classmethod
+    def fm_append_member(cls, parent, child):
+        parent.fm_append(child, cls.CHILD)
+        child.fm_append(parent, cls.PARENT)
+
+    def fm_remove_relationship(self, member1, member2):
+        """
+        Remove relationship between two members if there is one
+        :param member1:
+        :param member2:
+        :return:
+        """
+        if member2 in member1.fm_all_parents():
+            member1.fm_remove(member2, self.PARENT)
+            member2.fm_remove(member1, self.CHILD)
+        elif member1 in member2.fm_all_parents():
+            member1.fm_remove(member2, self.CHILD)
+            member2.fm_remove(member1, self.PARENT)
+
     def fm_clear_parent(self):
         for parent in self.fm_all_parents():
             parent.fm_remove_child(self)

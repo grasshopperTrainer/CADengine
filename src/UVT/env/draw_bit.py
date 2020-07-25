@@ -16,7 +16,7 @@ class DrawBit(FamilyMember):
                     break
 
         # call draw method of children
-        for c in self.ftree_iter_children():
+        for c in self.fm_all_children():
             if isinstance(c, DrawBit):
                 c.draw()
 
