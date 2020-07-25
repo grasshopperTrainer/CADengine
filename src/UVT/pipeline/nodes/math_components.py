@@ -1,4 +1,4 @@
-from ._node import *
+from noding import *
 
 
 class MathComponents(NodeBody):

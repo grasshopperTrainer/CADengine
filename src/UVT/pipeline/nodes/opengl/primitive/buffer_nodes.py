@@ -1,5 +1,4 @@
-from ..._node import *
-from ..opengl_node import OpenglNodeBody
+from .._opengl import *
 from UVT.hooked import gl, glfw
 
 import inspect
@@ -10,7 +9,7 @@ import glfw
 
 
 
-class BufferComponent(OpenglNodeBody):
+class BufferComponent(OpenglNode):
     """
     Buffer for Buffer component.
 
@@ -28,21 +27,19 @@ class BufferComponent(OpenglNodeBody):
 
 
 class ConVertexBuffer(BufferComponent):
-    data = Input(None)
     out0_vrtx_bffr = Output(None)
-    _kind = opengl.GL_ARRAY_BUFFER
+    _kind = gl.GL_ARRAY_BUFFER
 
     def calculate(self):
-        self.out0_vrtx_bffr = VertexBufferObject(gl.glGenBuffers(1))
+        return VertexBufferObject(gl.glGenBuffers(1))
 
 
 class ConIndexBuffer(BufferComponent):
-    data = Input(None)
     out0_indx_bffr = Output(None)
     _kind = opengl.GL_ELEMENT_ARRAY_BUFFER
 
     def calculate(self):
-        self.out0_indx_bffr = IndexBufferObject(gl.glGenBuffers(1))
+        return IndexBufferObject(gl.glGenBuffers(1))
 
 
 class PushBufferData(BufferComponent):
@@ -58,20 +55,20 @@ class PushBufferData(BufferComponent):
         self.in0_bffr = vrtx_bffr
         self.in1_data = vrtx_attr
 
-    def calculate(self):
-        gl.glBindBuffer(self.in0_bffr.kind, self.in0_bffr.id)
-        gl.glBufferData(self.in0_bffr.kind,
-                        self.in1_data.bytesize,
-                        self.in1_data.data,
+    def calculate(self, bffr, data):
+        gl.glBindBuffer(bffr.kind, bffr.id)
+        gl.glBufferData(bffr.kind,
+                        data.bytesize,
+                        data.data,
                         gl.GL_STATIC_DRAW)
-        self.out0_data_bffr = DataBufferObject(self.in0_bffr, self.in1_data)
+        return DataBufferObject(bffr, data)
 
 
 # class ConIndexBuffer(ConVertexBuffer):
 #     def __init__(self, window: Window):
 #         if window._windows.get_current() == window:
-#             self._id = window.gl.glGenBuffers(1)
-#         self._kind = window.gl.GL_ELEMENT_ARRAY_BUFFER
+#             self._id = window.opengl.glGenBuffers(1)
+#         self._kind = window.opengl.GL_ELEMENT_ARRAY_BUFFER
 #         self._window = window
 #
 #     def input_data(self, data):

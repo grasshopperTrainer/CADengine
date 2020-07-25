@@ -1,19 +1,16 @@
-from ..opengl_node import *
-import UVT.hooked.openglHooked as gl
-from UVT.pipeline.data_types.gl_data_types import PrgrmObj, _ShdrObj, VrtxShdrObj, FrgmtShdrObj
+from .._opengl import *
 
-
-class ConPrgrm(OpenglNodeBody):
+class ConPrgrm(OpenglNode):
     """
     Generate OpenGL Program object
     """
     out0_prgrm = Output()
 
     def calculate(self):
-        self.out0_prgrm = PrgrmObj(gl.glCreateProgram())
+        return PrgrmObj(gl.glCreateProgram())
 
 
-class ConVrtxShdr(OpenglNodeBody):
+class ConVrtxShdr(OpenglNode):
     """
     Generate OpenGL Vertex Shader Object
     """
@@ -21,10 +18,10 @@ class ConVrtxShdr(OpenglNodeBody):
     out0_vrtx_shdr = Output()
 
     def calculate(self):
-        self.out0_vrtx_shdr = VrtxShdrObj(gl.glCreateShader(gl.GL_VERTEX_SHADER))
+        return VrtxShdrObj(gl.glCreateShader(gl.GL_VERTEX_SHADER))
 
 
-class ConFrgmtShdr(OpenglNodeBody):
+class ConFrgmtShdr(OpenglNode):
     """
     Generate OpenGL Fragment Shader Object
     """
@@ -32,15 +29,15 @@ class ConFrgmtShdr(OpenglNodeBody):
     out0_frgmt_shdr = Output()
 
     def calculate(self):
-        self.out0_frgmt_shdr = FrgmtShdrObj(gl.glCreateShader(gl.GL_FRAGMENT_SHADER))
+        return FrgmtShdrObj(gl.glCreateShader(gl.GL_FRAGMENT_SHADER))
 
 
-class CompileShdr(OpenglNodeBody):
+class CompileShdr(OpenglNode):
     """
     Compile and Attach shader shader
     """
 
-    in0_shdr = Input(typs=_ShdrObj)
+    in0_shdr = Input(typs=ShdrObj)
     in1_source = Input(typs=str)
     out0_shdr = Output()
 
@@ -49,30 +46,31 @@ class CompileShdr(OpenglNodeBody):
         self.in0_shdr = shader
         self.in1_source = source
 
-    def calculate(self):
-        id = self.in0_shdr.id
-        gl.glShaderSource(id, self.in1_source)
+    def calculate(self, shdr, source):
+        id = shdr.id
+        gl.glShaderSource(id, source)
         gl.glCompileShader(id)
         if not gl.glGetShaderiv(id, gl.GL_COMPILE_STATUS):
             raise Exception("Shader compile FAIL")
-        self.out0_shdr = self.in0_shdr
+        return self.in0_shdr.r
 
 
-class DeleteShdr(OpenglNodeBody):
+class DeleteShdr(OpenglNode):
     """
     Delete OpenGL Shader Object
     """
     in0_shdr = Input()
 
     def __init__(self, shdr):
+        super().__init__()
         self.in0_shdr = shdr
 
-    def calculate(self):
-        gl.glDeleteShader(self.in0_shdr.r.id)
-        self.in0_shdr.r._id = None
+    def calculate(self, shdr):
+        gl.glDeleteShader(shdr.r.id)
+        shdr.r._id = None
 
 
-class UsePrgrm(OpenglNodeBody):
+class UsePrgrm(OpenglNode):
     """
     Bind OpenGL Program Object
     """

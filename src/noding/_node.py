@@ -5,15 +5,9 @@ Conventions:
 1. Vertex, Buffer, Attribute, Array = vrtx, bffr, attr, arry
 """
 
-import heapq
-import traceback
-import warnings
-from collections import namedtuple, deque, OrderedDict
 import inspect
-from math import inf, isinf
-from UVT.patterns import FamilyMember
-if __name__ != '__main__':
-    from ..data_types import *
+from collections import deque
+from my_patterns import FamilyMember
 
 
 class NullValue:
@@ -22,11 +16,14 @@ class NullValue:
 
     For unable calculation
     """
+    def __init__(self, comment=''):
+        self._comment = comment
+
     def __str__(self):
-        return "NULL"
+        return f"NULL value : {self._comment}"
 
 
-class NodeMember(FamilyMember):
+class _NodeMember(FamilyMember):
     pass
 
 class _NodeIntfGroup(_NodeMember):
@@ -139,7 +136,7 @@ class _OutputIntfGroup(_NodeIntfGroup):
         self.fm_append_member(parent=self, child=new_intf)
 
 
-class NodeInterface(NodeMember):
+class _NodeIntf(_NodeMember):
     """
     Contains value with needed metadata for value delivery.
     """
@@ -182,13 +179,26 @@ class _InputIntf(_NodeIntf):
     Container of input value
     """
     def __str__(self):
-        return f"<node_intf '{self._name}' : {self._value}>"
+        return f"<input_intf '{self._name}' : {self._value}>"
 
-    def __repr__(self):
-        return self.__str__()
+    @property
+    def group(self):
+        return self.fm_get_child(0)
 
 
-class NodeBody(NodeMember):
+class _OutputIntf(_NodeIntf):
+    """
+    Container of output value
+    """
+    def __str__(self):
+        return f"<output_intf '{self._name}' : {self._value}>"
+
+    @property
+    def group(self):
+        return self.fm_get_parent(0)
+
+
+class NodeBody(_NodeMember):
     """
     Node Body
     Inheritable for subclassing Node class
@@ -197,7 +207,7 @@ class NodeBody(NodeMember):
 
     _NULL = NullValue
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__()
         # create relationship between node body and node interface
         self._calculated = False
@@ -238,6 +248,7 @@ class NodeBody(NodeMember):
             print(f"calculation fail of {self} :")
             print(self._calculation_status)
             print('\033[0m')
+
     def _set_calculated(self):
         """
         Raise flag this node need output value update
@@ -252,6 +263,20 @@ class NodeBody(NodeMember):
         """
         self._calculated = False
 
+    def _reset_calc_downstream(self, visited=None):
+        """
+        Reset child's calculation
+        :return:
+        """
+        if visited == None:
+            visited = set()
+        if self._is_calculated():
+            self._reset_calculated()
+            for child in self.child_nodes:
+                if child not in visited:
+                    visited.add(child)
+                    child._reset_calc_downstream(visited)
+
     def _is_calculated(self):
         """
         Return update flag
@@ -264,28 +289,54 @@ class NodeBody(NodeMember):
             _visited = set()
         if self._is_calculated():
             return
-        for member in self.fm_iter_member(self.TYPEFILTER_ITOR(self.LEVEL_ITOR(self.PARENT_ITERATOR(), 5), NodeBody)):
+        for member in self.fm_iter_member(self.TYPEFILTER_ITOR(self.LEVEL_ITOR(self.PARENT_ITOR(), 5), NodeBody)):
             if member not in _visited:
                 _visited.add(member)
                 member._recalculate_upstream(_visited)
         # set beforehand not to trigger infinite loop while calling itself's input when `calculate()`
         self._set_calculated()
         try:
-            self.calculate()
+            self._run_calculateion()
         except Exception as e:
-            for output in self.outputs:
-                output._value = self._NULL()
+            # set all outputs NULL
+            for group in self.outputgroups.values():
+                for output in group:
+                    output._value = self._NULL()
+            # record status
             self._calculation_status = e
-            self.print_status()
+            # self.print_status()
         else:
             self._calculation_status = ''
         finally:
             self._push_output_downstream()
 
+    def _run_calculateion(self):
+        # build input
+        inputs = []
+        for group in self.inputgroups.values():
+            if group._has_sibling_intf:
+                inputs.append(tuple(intf.r for intf in group))
+            else:
+                inputs.append(group[0].r)
+        # calculate
+        results = self.calculate(*inputs)
+        if not isinstance(results, (list, tuple)):
+            results = [results]
+
+        results = deque(results)
+        # setting calculation result
+        for group in self.outputgroups.values():
+            for intf in group:
+                if results:
+                    intf._value = results.popleft()
+                else:
+                    intf._value = NullValue('not enough value to unpack')
+
     def _push_output_downstream(self):
-        for output in self.outputs:
-            for child in output.fm_all_children():
-                child._value = output._value
+        for groups in self.outputgroups.values():
+            for output in groups:
+                for child in output.fm_all_children():
+                    child._value = output._value
 
     def calculate(self):
         """
@@ -321,20 +372,24 @@ class NodeBody(NodeMember):
         raise AttributeError(f"The component has no such interface '{intf_name}'")
 
     @property
-    def inputs(self):
-        for group in self._outputgroups.values():
-            for output in group:
-                yield output
+    def inputgroups(self):
+        return {i._name:i for i in self.fm_all_parents()}
 
     @property
-    def outputs(self):
-        for group in self._outputgroups.values():
-            for output in group:
-                yield output
+    def outputgroups(self):
+        return {i._name:i for i in self.fm_all_children()}
 
     @property
-    def intfs(self):
-        return self._intfs
+    def interfaces(self):
+        return {i._name:i for i in self.fm_all_parents()+self.fm_all_children()}
+
+    @property
+    def parent_nodes(self):
+        return self.fm_iter_member(self.TYPEFILTER_ITOR(self.LEVEL_ITOR(self.PARENT_ITOR(), 5), NodeBody))
+
+    @property
+    def child_nodes(self):
+        return self.fm_iter_member(self.TYPEFILTER_ITOR(self.LEVEL_ITOR(self.CHILDREN_ITOR(), 5), NodeBody))
 
     def __str__(self):
         return f"<Node '{type(self).__name__}'>"
@@ -343,7 +398,7 @@ class NodeBody(NodeMember):
         return self.__str__()
 
 
-class IntfDescriptor:
+class _IntfDescriptor:
     """
     Interface node for input and output
 
@@ -374,7 +429,7 @@ class IntfDescriptor:
     def __set__(self, instance, value):
         raise NotImplementedError
 
-    def __get__(self, instance, owner) -> NodeInterface:
+    def __get__(self, instance, owner) -> _NodeIntf:
         raise NotImplementedError
 
     def __delete__(self, instance):
@@ -390,7 +445,7 @@ class IntfDescriptor:
         print('DELETING', instance, self._name)
         self._check_init(instance)
         instance._node_spvr.disconnect(instance, getattr(instance, self._cache_name))
-        intf_obj = NodeInterface(instance, self._name, type(self), self._def_val)
+        intf_obj = _NodeIntf(instance, self._name, type(self), self._def_val)
         setattr(instance, self._cache_name, intf_obj)
 
     def _set_intfobj(self, instance, value):
@@ -404,7 +459,7 @@ class IntfDescriptor:
         """
         intf_to_update = getattr(instance, self._cache_name)
 
-        if isinstance(value, NodeInterface):  # new value is passed by another intf
+        if isinstance(value, _NodeIntf):  # new value is passed by another intf
             intf_to_update._intf_obj = value._intf_obj
         else:  # new value is a raw value
             intf_to_update._intf_obj = value
@@ -418,7 +473,7 @@ class IntfDescriptor:
         if not self._accepted_typs:  # if not given, all type accepted
             return True
         else:
-            v = v.r if isinstance(v, NodeInterface) else v
+            v = v.r if isinstance(v, _NodeIntf) else v
             if callable in self._accepted_typs:
                 if callable(v):
                     return True
@@ -429,7 +484,7 @@ class IntfDescriptor:
             raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
 
 
-class Input(IntfDescriptor):
+class Input(_IntfDescriptor):
     """
     Designate input value
     """
@@ -442,74 +497,25 @@ class Input(IntfDescriptor):
         :param value:
         :return:
         """
-        if instance._is_calculated():
-            # push needing refresh sign downstream
-            for child in instance.fm_iter_member(instance.TYPEFILTER_ITOR(instance.PREORDER_ITOR(instance.CHILDREN_ITOR()), NodeBody)):
-                child._reset_calculated()
-        instance._reset_calculated()
+        self._typecheck(value)
+        instance._reset_calc_downstream()
+        intf_group = instance.inputgroups[self._name]
+        intf_group.set_intf_value(0, value)
 
-        my_intf = instance._inputgroups[self._name].fm_get_parent(0)
-        # by default relationship is monopoly so clear connection bidirectionally
-        my_intf.fm_clear_parent()
-        # make relationship
-        if isinstance(value, NodeInterface):
-            # set relationship between interface
-            # by default direct setting goes to idx 0 of intf group
-            my_intf.fm_append_parent(value)
-            value = value._value
-        my_intf._value = value
-
-    def __get__(self, instance: NodeBody, value):
+    def __get__(self, instance: NodeBody, owner):
         """
         When input value asked make it up to date.
         :param instance:
         :param value:
         :return:
         """
-        instance._recalculate_upstream()
-        return instance._inputgroups[self._name][0]._value
-
-    def add_sibling(self, instance, owner):
-        """
-        Add sibling input
-
-        There might be cases where number of inputs is not identified initially.
-        To address this kind of situation, it is possible to add input siblings.
-        Sibling inputs a list of interfaces, which is understood to have same characteristics.
-        Builder of a component can address to this interface while writing (def) operate via
-        (attr) self._intfs.
-
-        :param owner: Owner class of intf that has siblings
-        :return:
-        """
-        if self._has_siblings:
-            new_intf = self.__class__(def_val=self._def_val, has_siblings=False)
-            idx = 1
-            while idx in self._siblings:
-                idx += 1
-            new_intf._name = f"{self._name}_{self.SIBLING_POSTFIX}_{idx}"
-            new_intf._cache_name = f"_{self.__class__.__name__}_{new_intf._name}"
-            setattr(owner, new_intf._name, new_intf)
-            self._siblings[idx] = new_intf._name
-
-            # registering
-            if isinstance(self, Input):
-                if self._name in instance.inputs:
-                    # both as a sibling and input
-                    instance.inputs[new_intf._name] = []
-                    instance.inputs[self._name].append(new_intf._name)
-                else:
-                    raise
-            elif isinstance(self, Output):
-                raise NotImplementedError
-            else:
-                raise TypeError
-            return new_intf._name
-        else:
-            raise AttributeError(f"The interface does not have any siblings")
+        # don't run this node's calculation as only output is affected by calculation.
+        for upper_node in instance.parent_nodes:
+            upper_node._recalculate_upstream()
+        return instance.inputgroups[self._name][0]
 
 
-class Output(IntfDescriptor):
+class Output(_IntfDescriptor):
     """
     Output Interface
 
@@ -525,10 +531,11 @@ class Output(IntfDescriptor):
         :param value:
         :return:
         """
-        if isinstance(value, NodeInterface):
+        raise
+        if isinstance(value, _NodeIntf):
             # for compound node, setting output with internal node's output
             value = value._value
-        instance._outputgroups[self._name][0]._value = value
+        instance.outputgroups[self._name][0]._value = value
 
     def __get__(self, instance: NodeBody, owner):
         """
@@ -538,7 +545,7 @@ class Output(IntfDescriptor):
         :return:
         """
         instance._recalculate_upstream()
-        return instance._outputgroups[self._name][0]
+        return instance.outputgroups[self._name][0]
 
 
 class Inout(Input):

@@ -1,9 +1,7 @@
-from ..opengl_node import OpenglNodeBody
-from ..._node import *
-from UVT.hooked import gl, glfw
+from .._opengl import *
 
 
-class RenderComponent(OpenglNodeBody):
+class RenderComponent(OpenglNode):
     """
     Renderable nodes
 
@@ -75,16 +73,9 @@ class RenderArray(DrawArrayComponent):
     in2_mode = Input()
     in3_idx_bound = Input(def_val=Bound(0, 3))
 
-    def __init__(self, vrtx_arry, prgrm=None, mode=None, idx_bound=None):
-        super().__init__()
-        self.in0_vrtx_arry = vrtx_arry
-        self.in1_prgrm = prgrm
-        self.in2_mode = mode
-        if idx_bound is not None:
-            self.in3_idx_bound = idx_bound
 
-    def calculate(self):
-        if self.in1_prgrm.r is not None:
-            gl.glUseProgram(self.in1_prgrm.r.id)
-        gl.glBindVertexArray(self.in0_vrtx_arry.id)
-        gl.glDrawArrays(self.in2_mode.r, self.in3_idx_bound.start, self.in3_idx_bound.len)
+    def calculate(self, vrtx_arry, prgrm, mode, idx_bound):
+        if prgrm is not None:
+            gl.glUseProgram(prgrm.id)
+        gl.glBindVertexArray(vrtx_arry.id)
+        gl.glDrawArrays(mode, idx_bound.start, idx_bound.len)

@@ -1,10 +1,11 @@
-from .._node import *
-import weakref as wr
+from noding import *
+from UVT.hooked import *
+from ...data_types import *
 
 
-class OpenglNodeBody(NodeBody):
+class OpenglNode(NodeBody):
     """
-    OpenGL component type
+    OpenGL node type
     """
 
     @property

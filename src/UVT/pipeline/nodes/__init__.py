@@ -1,4 +1,4 @@
-from .gl_components import *
-from .window_components import *
+from .opengl import *
+from .window import *
 from .data_components import *
 from .math_components import *

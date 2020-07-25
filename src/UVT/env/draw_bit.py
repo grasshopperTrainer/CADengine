@@ -1,4 +1,4 @@
-from ..patterns import FamilyMember
+from my_patterns import FamilyMember
 
 
 class DrawBit(FamilyMember):

@@ -1,8 +1,7 @@
-from ..._node import *
-from ..opengl_node import OpenglNodeBody
+from .._opengl import *
 
 
-class ConDataComponent(OpenglNodeBody):
+class ConDataComponent(OpenglNode):
     """
     Parent for data nodes using numpy array
     """
@@ -29,7 +28,7 @@ class ConUnsignedIntVector(ConDataComponent):
     _dtype = 'uint'
 
 
-class Window(OpenglNodeBody):
+class Window(OpenglNode):
     window = Output(None)
 
     def __init__(self, w):

@@ -50,7 +50,9 @@ class VertexArrayObject:
 
 class PrgrmObj(OpenglObject):
     pass
-class _ShdrObj(OpenglObject):
+
+
+class ShdrObj(OpenglObject):
     _kind = None
     def __init__(self, id):
         super().__init__(id)
@@ -59,10 +61,10 @@ class _ShdrObj(OpenglObject):
     def kind(self):
         return self._kind
 
-class VrtxShdrObj(_ShdrObj):
+class VrtxShdrObj(ShdrObj):
     pass
 
-class FrgmtShdrObj(_ShdrObj):
+class FrgmtShdrObj(ShdrObj):
     pass
 
 
@@ -76,10 +78,6 @@ class NamedData:
             raise TypeError
 
         self._data = data
-
-    @property
-    def bytesize(self):
-        return self._data.size * self._data.itemsize
 
     @property
     def properties(self):
@@ -98,6 +96,14 @@ class NamedData:
     @property
     def data(self):
         return self._data
+
+    @property
+    def bytesize(self):
+        return self._data.size * self._data.itemsize
+
+    @property
+    def shape(self):
+        return self._data.shape
 
 
 class DataBufferObject(VertexBufferObject, NamedData):

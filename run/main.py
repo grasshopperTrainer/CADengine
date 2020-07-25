@@ -1,5 +1,5 @@
 from UVT import Window, gl
-from UVT.doodle import *
+from doodle import *
 import UVT.pipeline.nodes as node
 
 class W(Window):

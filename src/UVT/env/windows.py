@@ -2,7 +2,7 @@ import threading
 import time
 from .context import ContextManager
 from .windowing.window_properties import *
-from ..patterns import SingletonClass
+from my_patterns import SingletonClass
 from .draw_bit import DrawBit
 from .MVC import View
 

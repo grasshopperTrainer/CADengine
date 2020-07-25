@@ -1,10 +1,8 @@
-from ..._node import *
-from ..opengl_node import OpenglNodeBody
-from UVT.hooked import gl, glfw
+from .._opengl import *
 from collections.abc import Iterable
 
 
-class VertexArrayComponent(OpenglNodeBody):
+class VertexArrayComponent(OpenglNode):
     pass
 
 class ConVertexArray(VertexArrayComponent):
@@ -15,8 +13,7 @@ class ConVertexArray(VertexArrayComponent):
     _kind = opengl.GL_VERTEX_ARRAY
 
     def calculate(self):
-        self.out0_vrtx_arry = VertexArrayObject(gl.glGenVertexArrays(1))
-
+        return VertexArrayObject(gl.glGenVertexArrays(1))
 
 class ConOpenglData(VertexArrayComponent):
     """
@@ -38,30 +35,30 @@ class ConOpenglData(VertexArrayComponent):
         self.in1_data = data
         self.in2_dtype = dtype
 
-    def calculate(self):
+    def calculate(self, name, data, dtype):
         # define size
-        if isinstance(self.in1_data.r[0], (tuple, list)):
-            size = len(self.in1_data.r[0])
+        if isinstance(data[0], (tuple, list)):
+            size = len(data[0])
         else:
-            size = len(self.in1_data.r)
+            size = len(data)
 
         # define data type
-        if self.in2_dtype.isinstance(str):
-            dtype = np.dtype([(self.in0_name.r, self.in2_dtype.r, size)])
+        if isinstance(dtype, str):
+            dtype = np.dtype([(name, dtype, size)])
         else:
             raise NotImplementedError
 
         # format values
-        if isinstance(self.in1_data.r, Iterable):
-            if isinstance(self.in1_data[0], Iterable):
-                value = [tuple([tuple(chunk)]) for chunk in self.in1_data]
+        if isinstance(data, Iterable):
+            if isinstance(data[0], Iterable):
+                value = [tuple([tuple(chunk)]) for chunk in data]
                 arr = np.array(value, dtype=dtype)
             else:
-                value = tuple([tuple(self.in1_data.r)])
+                value = tuple([tuple(data)])
                 arr = np.array(value, dtype=dtype)
         else:
             raise NotImplementedError
-        self.out0_gl_data = NamedData(arr)
+        return NamedData(arr)
 
 
 class EnhanceVertexArray(VertexArrayComponent):
@@ -73,17 +70,11 @@ class EnhanceVertexArray(VertexArrayComponent):
     in2_indx_data_bffr = Input()
     out0_vrtx_arry = Output()
 
-    def __init__(self, vrtx_arry, vrtx_data_bffr, indx_data_bffr):
-        super().__init__()
-        self.in0_vrtx_arry = vrtx_arry
-        self.in1_vrtx_data_bffr = vrtx_data_bffr
-        self.in2_indx_data_bffr = indx_data_bffr
-
-    def calculate(self):
-        gl.glBindVertexArray(self.in0_vrtx_arry.id)
+    def calculate(self, vrtx_arry, vrtx_data_bffr, indx_data_bffr):
+        gl.glBindVertexArray(vrtx_arry.id)
         idx = 0
         # bind all given attribute data in given order
-        for bffred_attr in (self.in1_vrtx_data_bffr, *self.siblings_of(self.in1_vrtx_data_bffr)):
+        for bffred_attr in vrtx_data_bffr:
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, bffred_attr.bffr.id)
             for name, size, dtype, stride, offset in bffred_attr.data.properties:
                 gl.glEnableVertexAttribArray(idx)
@@ -97,12 +88,12 @@ class EnhanceVertexArray(VertexArrayComponent):
                 )
                 idx += 1
 
-        if self.in2_indx_data_bffr.r is not None:
-            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.in2_indx_data_bffr.bffr.id)
+        if indx_data_bffr is not None:
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, indx_data_bffr.bffr.id)
 
         gl.glBindVertexArray(0)
 
-        self.out0_vrtx_arry = self.in0_vrtx_arry
+        return vrtx_arry
 
 #
 # class EnableVertexAttribute(VertexArrayComponent):
@@ -118,13 +109,13 @@ class EnhanceVertexArray(VertexArrayComponent):
 #         Binds vertex array and enables, sets vertex attrib pointer
 #         :return:
 #         """
-#         gl.glBindVertexArray(self.vrtx_arry.id)
+#         opengl.glBindVertexArray(self.vrtx_arry.id)
 #         for i, (name, size, dtype, stride, offset) in enumerate(self.vrtx_attr.properties):
 #             dtype = np_gl_type_convert(dtype)             # convert into OpenGL type
 #             offset = None if offset == 0 else offset    # None acts like 'void int'?
 #
-#             gl.glEnableVertexAttribArray(i)
-#             gl.glVertexAttribPointer(
+#             opengl.glEnableVertexAttribArray(i)
+#             opengl.glVertexAttribPointer(
 #                 index=i,
 #                 size=size,
 #                 type=dtype,
@@ -144,6 +135,6 @@ class EnhanceVertexArray(VertexArrayComponent):
 #     vrtx_arry_out = Output(None)
 #
 #     def calculate(self):
-#         gl.glBindVertexArray(self.vrtx_arry.id)
-#         gl.glBindBuffer(self.vrtx_bffr.kind, self.vrtx_bffr.id)
+#         opengl.glBindVertexArray(self.vrtx_arry.id)
+#         opengl.glBindBuffer(self.vrtx_bffr.kind, self.vrtx_bffr.id)
 #         self.vrtx_arry_out = self.vrtx_arry

@@ -18,6 +18,6 @@ def _hook(obj):
 
 
 for i in dir(gl):
-    if i.startswith('gl'):
+    if i.startswith('opengl'):
         locals()[i] = _hook(getattr(gl, i))
 

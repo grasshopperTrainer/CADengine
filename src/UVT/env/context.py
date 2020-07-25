@@ -43,7 +43,7 @@ class Logger:
 class ContextManager:
     """Class for launching GLFW context and testing GL behavior on it."""
 
-    _gl_object_shareness = {} # whether shared glfw contexts actually share gl objects
+    _gl_object_shareness = {} # whether shared glfw contexts actually share opengl objects
     _gl_VAO_children_binding = {} # whether vao binding binds object bounded to VAO ex) ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER
 
     _gl_version = None
@@ -61,7 +61,7 @@ class ContextManager:
         Tested subjects are such as :
         GL object shareness
         GL vertax array objects' children binding
-        basic glfw-gl info
+        basic glfw-opengl info
 
         :return: None
         """

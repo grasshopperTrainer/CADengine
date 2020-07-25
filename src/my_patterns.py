@@ -173,7 +173,7 @@ class FamilyMember:
     PARENT = 0
     CHILD = 1
 
-    PARENT_ITERATOR = ParentIterator
+    PARENT_ITOR = ParentIterator
     CHILDREN_ITOR = ChildrenIterator
     TYPEFILTER_ITOR = TypeFilterIterator
     PREORDER_ITOR = PreorderIterator
@@ -207,7 +207,7 @@ class FamilyMember:
                     raise TimeParadoxError(subj, relationship, self)
 
         elif relationship == self.CHILD:
-            for anc in subj.fm_iter_member(subj.PREORDER_ITOR(subj.PARENT_ITERATOR())):
+            for anc in subj.fm_iter_member(subj.PREORDER_ITOR(subj.PARENT_ITOR())):
                 if anc == self:
                     raise TimeParadoxError(subj, relationship, self)
         else:
@@ -263,19 +263,13 @@ class FamilyMember:
 
     def fm_clear_parent(self):
         for parent in self.fm_all_parents():
-            parent.fm_remove_child(self)
+            parent.fm_remove(self, self.CHILD)
+            self.fm_remove(parent, self.PARENT)
 
     def fm_clear_children(self):
         for child in self.fm_all_children():
             child.fm_remove_parent(self)
 
-    def fm_remove_parent(self, parent):
-        self.fm_remove(parent, self.PARENT)
-        parent.fm_remove(self, self.CHILD)
-
-    def fm_remove_child(self, child):
-        self.fm_remove(child, self.CHILD)
-        child.fm_remove(self, self.PARENT)
 
     # checker
     def fm_has_parent(self):

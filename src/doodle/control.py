@@ -1,4 +1,4 @@
-from UVT.patterns import SingletonClass
+from my_patterns import SingletonClass
 from UVT.env.draw_bit import DrawBit
 import UVT.hooked.openglHooked as gl
 import UVT.pipeline.nodes as node
