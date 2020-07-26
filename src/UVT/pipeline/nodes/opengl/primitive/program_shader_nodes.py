@@ -74,3 +74,9 @@ class UsePrgrm(OpenglNode):
     """
     Bind OpenGL Program Object
     """
+
+class PushUniform(OpenglNode):
+    in0_prgrm = Input()
+
+    def calculate(self):
+        gl.glUniformMatrix4fv()

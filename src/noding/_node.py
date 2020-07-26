@@ -304,7 +304,7 @@ class NodeBody(_NodeMember):
                     output._value = self._NULL()
             # record status
             self._calculation_status = e
-            # self.print_status()
+            self.print_status()
         else:
             self._calculation_status = ''
         finally:

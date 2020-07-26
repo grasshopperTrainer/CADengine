@@ -53,6 +53,7 @@ class ConOpenglData(VertexArrayComponent):
             if isinstance(data[0], Iterable):
                 value = [tuple([tuple(chunk)]) for chunk in data]
                 arr = np.array(value, dtype=dtype)
+
             else:
                 value = tuple([tuple(data)])
                 arr = np.array(value, dtype=dtype)

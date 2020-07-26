@@ -66,6 +66,8 @@ class Window(View, DrawBit):
         self._frame_to_render = None
         self._frame_count = 0
 
+        self._cameras = Cameras(self)
+
     def _per_window_init_setting(self):
         """
         Initial settings per window(context)
@@ -78,14 +80,8 @@ class Window(View, DrawBit):
         glfw.make_context_current(None)
 
     @property
-    def lyrs(self):
-        return self._render_registry._layers
-    @property
-    def viws(self):
-        return self._render_registry._views
-    @property
-    def cams(self):
-        return self._render_registry._cameras
+    def cameras(self):
+        return self._cameras
 
     def append_pipeline(self, pipeline):
         self._pipelines.append(pipeline)
