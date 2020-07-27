@@ -51,6 +51,7 @@ class _NodeIntfGroup(_NodeMember):
 
     def append_new_intf(self):
         pass
+
     def set_intf_value(self, *args):
         pass
 
@@ -72,6 +73,35 @@ class _NodeIntfGroup(_NodeMember):
         if idx == 0:
             raise IndexError("can't remove default interface")
         self.fm_remove_relationship(self, self.interfaces[idx])
+
+
+    def get_intf_values(self):
+        """
+        Return all interface values
+
+        If has siblings, return tuple of values
+        :return: `(values, )` if has sibling else `value`
+        """
+        if self._has_sibling_intf:
+            return tuple(intf.r for intf in self.interfaces)
+        return self[0].r
+
+    def reset_updated_all(self):
+        """
+        Resets updated sign of all interfaces
+
+        :return:
+        """
+        for intf in self:
+            intf.reset_updated()
+
+    def set_updated_all(self):
+        """
+        Sets updated sign of all interfaces
+        :return:
+        """
+        for intf in self:
+            intf.set_updated()
 
 
 class _InputIntfGroup(_NodeIntfGroup):
@@ -135,10 +165,23 @@ class _OutputIntfGroup(_NodeIntfGroup):
         new_intf = self.intf_typ(f"{self._name}_{self._next_sibling_id}", self._def_val)
         self.fm_append_member(parent=self, child=new_intf)
 
+    def set_intf_value(self, idx, value):
+        intf = self.interfaces[idx]
+        if isinstance(value, _NodeIntf):
+            value = value._value
+        intf._value = value
+
+    def push_intf_values(self):
+        for intf in self:
+            intf.reset_updated()
+            for child in intf.fm_all_children():
+                child.set_updated()
+                child._value = intf._value
+
 
 class _NodeIntf(_NodeMember):
     """
-    Contains value with needed metadata for value delivery.
+    Contains cached value
     """
 
     def __init__(self, name, value):
@@ -153,6 +196,7 @@ class _NodeIntf(_NodeMember):
         super().__init__()
         self._name = name
         self._value = value
+        self._updated = True
 
     def __repr__(self):
         return self.__str__()
@@ -172,6 +216,15 @@ class _NodeIntf(_NodeMember):
 
     def remove_sibling_intf(self, idx):
         self.group.remove_sibling_intf(idx)
+
+    def set_updated(self):
+        self._updated = True
+
+    def reset_updated(self):
+        self._updated = False
+
+    def is_updated(self):
+        return self._updated
 
 
 class _InputIntf(_NodeIntf):
@@ -314,10 +367,9 @@ class NodeBody(_NodeMember):
         # build input
         inputs = []
         for group in self.inputgroups.values():
-            if group._has_sibling_intf:
-                inputs.append(tuple(intf.r for intf in group))
-            else:
-                inputs.append(group[0].r)
+            inputs.append(group.get_intf_values())
+            group.reset_updated_all()
+
         # calculate
         results = self.calculate(*inputs)
         if not isinstance(results, (list, tuple)):
@@ -326,17 +378,14 @@ class NodeBody(_NodeMember):
         results = deque(results)
         # setting calculation result
         for group in self.outputgroups.values():
-            for intf in group:
-                if results:
-                    intf._value = results.popleft()
-                else:
-                    intf._value = NullValue('not enough value to unpack')
+            group.set_updated_all()
+            for i in range(len(group)):
+                v = results.popleft() if results else NullValue('not enough number of values from calculation')
+                group.set_intf_value(i, v)
 
     def _push_output_downstream(self):
-        for groups in self.outputgroups.values():
-            for output in groups:
-                for child in output.fm_all_children():
-                    child._value = output._value
+        for output_group in self.outputgroups.values():
+            output_group.push_intf_values()
 
     def calculate(self):
         """
