@@ -1,10 +1,9 @@
 import threading
 import time
 from .context import ContextManager
-from .windowing.window_properties import *
+from .windowing import *
 from my_patterns import SingletonClass
 from .draw_bit import DrawBit
-from .MVC import View
 
 from ..hooked import openglHooked as gl
 from ..hooked import glfwHooked as glfw
@@ -36,7 +35,7 @@ class Timer:
         self._dtpf = 1 / self._tfps
 
 
-class Window(View, DrawBit):
+class Window(Glyph, DrawBit):
     """
     Class for baking exact instance that's on screen
 
@@ -54,7 +53,7 @@ class Window(View, DrawBit):
 
 
         # make view object
-        super().__init__(0, 0, w=width, h=height, mother=None)
+        super().__init__(width, height, None, None)
 
         glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
@@ -66,7 +65,10 @@ class Window(View, DrawBit):
         self._frame_to_render = None
         self._frame_count = 0
 
+        self._views = Views(self)
         self._cameras = Cameras(self)
+
+        self._cameras[0].body.definer.in3_ratio = self._views[0].aspect_ratio
 
     def _per_window_init_setting(self):
         """

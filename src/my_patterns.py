@@ -162,6 +162,24 @@ class ChildrenIterator(MemberIterator):
         self._member = member
         return self
 
+class FirstDegreeIterator(MemberIterator):
+    """
+    Iter member's parent and children
+    """
+
+    def __init__(self):
+        self._member = None
+
+    def __iter__(self):
+        for parent in self._member.fm_all_parents():
+            yield parent
+        for child in self._child.fm_all_children():
+            yield child
+
+    def __call__(self, member):
+        self._member = member
+        return self
+
 
 class FamilyMember:
     """
@@ -179,6 +197,7 @@ class FamilyMember:
     PREORDER_ITOR = PreorderIterator
     POSTORDER_ITOR = PostorderIterator
     LEVEL_ITOR = LevelIterator
+    FIRSTDEGREE_ITOR = FirstDegreeIterator
 
     def __init__(self):
         self._relation_lst = ([], [])

@@ -5,6 +5,7 @@ import UVT.pipeline.nodes as node
 from noding.flow_control import Stream, Gate, Conveyor
 from noding.logical import Equal
 import numpy as np
+from UVT.env.windows import Windows
 
 
 class TriangleDrawer(DrawBit, SingletonClass):
@@ -54,49 +55,18 @@ def triangle(v1, v2, v3):
     v = np.array([v1, v2, v3])
     v = np.transpose(v)
     v = np.vstack((v, [1, 1, 1]))
-    # prepare matrix
-    # calculate lookat matrix
-    eye = np.array((20, 0, 10)).reshape((3, 1))
-    at = np.array((0, 0, 0)).reshape((3, 1))
-    up = np.array((0, 0, 1)).reshape((3, 1))
-    zaxis = at - eye
-    zaxis = zaxis / np.linalg.norm(zaxis)
-    xaxis = np.cross(zaxis, up, axis=0)
-    xaxis = xaxis / np.linalg.norm(xaxis)
-    yaxis = np.cross(xaxis, zaxis, axis=0)
-    zaxis *= -1
-    a = np.dot(np.reshape(xaxis, 3), np.reshape(eye, 3))
-    b = np.dot(np.reshape(yaxis, 3), np.reshape(eye, 3))
-    c = np.dot(np.reshape(zaxis, 3), np.reshape(eye, 3))
 
-    vm = np.eye(4)
-    vm[0, :3] = xaxis[:, 0]
-    vm[1, :3] = yaxis[:, 0]
-    vm[2, :3] = zaxis[:, 0]
-    vm[:3, 3] = -a, -b, -c
-    print(v)
-
-    l, r, b, t = -0.5, 0.5, -0.5, 0.5
-    n, f = 1, 1000
-    pm = np.eye(4)
-    pm[0,0] = n/r
-    pm[1,1] = n/t
-    pm[2,2] = -(f+n)/(f-n)
-    pm[2,3] = -2*f*n/(f-n)
-    pm[3] = 0,0,-1,0
+    vm = Windows.get_current().cameras.current_target().tripod_VM.r
+    pm = Windows.get_current().cameras.current_target().body_PM.r
 
     v = np.dot(vm, v)
     v = np.dot(pm, v)
-
     # set back to list
-    print(v)
     v[:,0] = v[:,0]/v[3,0]
     v[:,1] = v[:,1]/v[3,1]
     v[:,2] = v[:,2]/v[3,2]
-    print(v)
     v = np.transpose(v[:3])
     v = v.tolist()
-    print(v)
 
     TriangleDrawer()._set_vertex(*v)
     TriangleDrawer().draw()

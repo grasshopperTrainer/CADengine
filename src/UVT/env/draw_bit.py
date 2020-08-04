@@ -2,6 +2,9 @@ from my_patterns import FamilyMember
 
 
 class DrawBit(FamilyMember):
+    """
+    has draw call?
+    """
 
     def draw(self):
         """

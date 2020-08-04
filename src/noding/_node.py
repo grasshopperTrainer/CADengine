@@ -16,20 +16,29 @@ class NullValue:
 
     For unable calculation
     """
+
     def __init__(self, comment=''):
         self._comment = comment
 
     def __str__(self):
         return f"NULL value : {self._comment}"
 
+class MaintainCachedValue:
+    """
+    Tells to maintain already CachedValue
+    """
+    pass
+
 
 class _NodeMember(FamilyMember):
     pass
+
 
 class _NodeIntfGroup(_NodeMember):
     """
     Member grouping Node Interfaces
     """
+
     def __init__(self, name, def_val, has_sibling_intf):
         super().__init__()
         self._name = name
@@ -64,7 +73,7 @@ class _NodeIntfGroup(_NodeMember):
         if not self._has_sibling_intf:
             raise Exception("appending interface not allowed")
         self.append_new_intf()
-        self.set_intf_value(len(self.interfaces)-1, value)
+        self.set_intf_value(len(self.interfaces) - 1, value)
         self.node_body._reset_calculated()
 
         self._next_sibling_id += 1
@@ -73,7 +82,6 @@ class _NodeIntfGroup(_NodeMember):
         if idx == 0:
             raise IndexError("can't remove default interface")
         self.fm_remove_relationship(self, self.interfaces[idx])
-
 
     def get_intf_values(self):
         """
@@ -139,6 +147,7 @@ class _InputIntfGroup(_NodeIntfGroup):
             intf.fm_append_member(parent=value, child=intf)
             value = value._value
         intf._value = value
+        intf.set_updated()
 
 
 class _OutputIntfGroup(_NodeIntfGroup):
@@ -170,6 +179,7 @@ class _OutputIntfGroup(_NodeIntfGroup):
         if isinstance(value, _NodeIntf):
             value = value._value
         intf._value = value
+        intf.set_updated()
 
     def push_intf_values(self):
         for intf in self:
@@ -231,6 +241,7 @@ class _InputIntf(_NodeIntf):
     """
     Container of input value
     """
+
     def __str__(self):
         return f"<input_intf '{self._name}' : {self._value}>"
 
@@ -243,6 +254,7 @@ class _OutputIntf(_NodeIntf):
     """
     Container of output value
     """
+
     def __str__(self):
         return f"<output_intf '{self._name}' : {self._value}>"
 
@@ -262,9 +274,12 @@ class NodeBody(_NodeMember):
 
     def __init__(self, *args, **kwargs):
         super().__init__()
-        # create relationship between node body and node interface
+        # calculation flags
         self._calculated = False
         self._calculation_status = ''
+        self._calculate_permanent = False
+
+        # create relationship between node body and node interface
 
         input_dict, output_dict = {}, {}
         # to override in correct order
@@ -316,6 +331,14 @@ class NodeBody(_NodeMember):
         """
         self._calculated = False
 
+    def set_calc_permanent(self):
+        self._calculate_permanent = True
+        self._calculated = False
+
+    def reset_calc_permanent(self):
+        self._calculate_permanent = False
+
+
     def _reset_calc_downstream(self, visited=None):
         """
         Reset child's calculation
@@ -338,15 +361,22 @@ class NodeBody(_NodeMember):
         return self._calculated
 
     def _recalculate_upstream(self, _visited=None):
+        # initiate recursion
         if _visited is None:
             _visited = set()
+        # base condition
         if self._is_calculated():
-            return
-        for member in self.fm_iter_member(self.TYPEFILTER_ITOR(self.LEVEL_ITOR(self.PARENT_ITOR(), 5), NodeBody)):
+            return True
+        # if no parent node exist
+        is_parent_recalculated = True
+        for member in self.parent_nodes:
             if member not in _visited:
                 _visited.add(member)
-                member._recalculate_upstream(_visited)
-        # set beforehand not to trigger infinite loop while calling itself's input when `calculate()`
+                # check if parent is calculated after calculation
+                # if not, it means parent is set to be calculated permanently so
+                # self as child should reset calculated
+                is_parent_recalculated = is_parent_recalculated and member._recalculate_upstream(_visited)
+        # set beforehand not to trigger infinite loop while calling itself's input inside `calculate()`
         self._set_calculated()
         try:
             self._run_calculateion()
@@ -362,23 +392,28 @@ class NodeBody(_NodeMember):
             self._calculation_status = ''
         finally:
             self._push_output_downstream()
+            # if node is set to permanent recalculation reset calculated downstream
+            if self._calculate_permanent or not is_parent_recalculated:
+                self._reset_calculated()
+            else:
+                self._set_calculated()
+            return self._is_calculated()
 
     def _run_calculateion(self):
         # build input
         inputs = []
         for group in self.inputgroups.values():
             inputs.append(group.get_intf_values())
-            group.reset_updated_all()
-
         # calculate
         results = self.calculate(*inputs)
         if not isinstance(results, (list, tuple)):
             results = [results]
-
-        results = deque(results)
+        # reset updated as inputs are all taken in consideration
+        for group in self.inputgroups.values():
+            group.reset_updated_all()
         # setting calculation result
+        results = deque(results)
         for group in self.outputgroups.values():
-            group.set_updated_all()
             for i in range(len(group)):
                 v = results.popleft() if results else NullValue('not enough number of values from calculation')
                 group.set_intf_value(i, v)
@@ -412,7 +447,6 @@ class NodeBody(_NodeMember):
         """
         raise NotImplementedError
 
-
     def _get_desc(self, intf_name):
         for cls in self.__class__.__mro__:
             if intf_name in cls.__dict__:
@@ -422,15 +456,39 @@ class NodeBody(_NodeMember):
 
     @property
     def inputgroups(self):
-        return {i._name:i for i in self.fm_all_parents()}
+        return {i._name: i for i in self.fm_iter_member(self.TYPEFILTER_ITOR(self.PARENT_ITOR(), _InputIntfGroup))}
 
     @property
     def outputgroups(self):
-        return {i._name:i for i in self.fm_all_children()}
+        """
+        Returns output group dictionary
+        :return:
+        """
+        return {i._name: i for i in self.fm_iter_member(self.TYPEFILTER_ITOR(self.CHILDREN_ITOR(), _OutputIntfGroup))}
+    @property
+    def output_intfs(self):
+        """
+        Returns output interface dictionary
+        :return:
+        """
+        intfs = {}
+        for group in self.outputgroups.values():
+            for intf in group:
+                intfs[intf._name] = intf
+        return intfs
+    @property
+    def output_values(self):
+        """
+        Returns all updated output values
+
+        :return:
+        """
+        self._recalculate_upstream()
+        return tuple(intf._value for intf in self.output_intfs.values())
 
     @property
     def interfaces(self):
-        return {i._name:i for i in self.fm_all_parents()+self.fm_all_children()}
+        return {i._name: i for i in self.fm_iter_member(self.TYPEFILTER_ITOR(self.FIRSTDEGREE_ITOR(), _NodeIntfGroup))}
 
     @property
     def parent_nodes(self):
@@ -530,7 +588,7 @@ class _IntfDescriptor:
                     return True
             elif isinstance(v, self._accepted_typs):
                 return True
-            raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}")
+            raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._accepted_typs}, not {v}")
 
 
 class Input(_IntfDescriptor):

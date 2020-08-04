@@ -1,1 +1,1 @@
-from .view_component import *
+from .camera import *
