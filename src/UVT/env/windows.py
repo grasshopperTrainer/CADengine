@@ -68,7 +68,7 @@ class Window(Glyph, DrawBit):
         self._views = Views(self)
         self._cameras = Cameras(self)
 
-        self._cameras[0].body.definer.in3_ratio = self._views[0].aspect_ratio
+        self._cameras[0].body.builder.in3_ratio = self._views[0].aspect_ratio
 
     def _per_window_init_setting(self):
         """

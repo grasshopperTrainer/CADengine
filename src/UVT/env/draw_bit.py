@@ -11,7 +11,7 @@ class DrawBit(FamilyMember):
         Placeholder for chained draw call
         :return:
         """
-        if hasattr(self, 'setup'):
+        if hasattr(self, 'setup') and callable(getattr(self, 'setup')):
             getattr(self, 'setup')()
             for cls in self.__class__.__mro__:
                 if 'setup' in cls.__dict__:

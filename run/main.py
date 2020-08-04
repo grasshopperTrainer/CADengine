@@ -1,5 +1,5 @@
 from UVT import Window, gl
-from doodle import *
+from doodler import *
 import UVT.pipeline.nodes as node
 
 class W(Window):
@@ -23,4 +23,4 @@ class W(Window):
             triangle((a,a,0), (a,0,0), (0,a,0))
 
 w = W()
-w.run(1)
+w.run()

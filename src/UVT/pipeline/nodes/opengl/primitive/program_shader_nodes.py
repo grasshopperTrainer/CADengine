@@ -77,6 +77,24 @@ class UsePrgrm(OpenglNode):
 
 class PushUniform(OpenglNode):
     in0_prgrm = Input()
+    in1_data = Input()
 
-    def calculate(self):
-        gl.glUniformMatrix4fv()
+    out0_prgm = Output()
+
+    def calculate(self, prgrm, data):
+        gl.glUseProgram(prgrm.id)
+        for name, size, type, stride, offset, sub_data in data.properties:
+            loc = gl.glGetUniformLocation(prgrm.id, name)
+            if type == gl.GL_FLOAT:
+                if size == 1:
+                    gl.glUniform1f(loc, *sub_data)
+                elif size == 2:
+                    gl.glUniform2f(loc, *sub_data)
+                elif size == 3:
+                    gl.glUniform3f(loc, *sub_data)
+                elif size == 4:
+                    gl.glUniform4f(loc, *sub_data)
+            else:
+                raise
+
+        return prgrm

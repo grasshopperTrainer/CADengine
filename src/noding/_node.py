@@ -504,6 +504,10 @@ class NodeBody(_NodeMember):
     def __repr__(self):
         return self.__str__()
 
+    def __getattr__(self, item):
+        if item in self.output_intfs:
+            return self.output_intfs[item]
+
 
 class _IntfDescriptor:
     """

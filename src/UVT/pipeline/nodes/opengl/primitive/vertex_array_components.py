@@ -72,12 +72,13 @@ class EnhanceVertexArray(VertexArrayComponent):
     out0_vrtx_arry = Output()
 
     def calculate(self, vrtx_arry, vrtx_data_bffr, indx_data_bffr):
+        print("ENHANCING")
         gl.glBindVertexArray(vrtx_arry.id)
         idx = 0
         # bind all given attribute data in given order
         for bffred_attr in vrtx_data_bffr:
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, bffred_attr.bffr.id)
-            for name, size, dtype, stride, offset in bffred_attr.data.properties:
+            for name, size, dtype, stride, offset, sub_d in bffred_attr.data.properties:
                 gl.glEnableVertexAttribArray(idx)
                 gl.glVertexAttribPointer(
                     index=idx,

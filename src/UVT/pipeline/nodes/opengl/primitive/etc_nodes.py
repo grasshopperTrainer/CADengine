@@ -33,3 +33,11 @@ class Window(OpenglNode):
 
     def __init__(self, w):
         self.window = w
+
+
+class Listener(NodeBody):
+    in0_listento = Input(has_siblings=True)
+    out0_listened = Output(has_siblings=True)
+
+    def calculate(self, listentos):
+        return listentos
