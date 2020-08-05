@@ -83,17 +83,20 @@ class PushUniform(OpenglNode):
 
     def calculate(self, prgrm, data):
         gl.glUseProgram(prgrm.id)
-        for name, size, type, stride, offset, sub_data in data.properties:
+        for name, size, type, stride, offset, sub_d in data.properties:
             loc = gl.glGetUniformLocation(prgrm.id, name)
             if type == gl.GL_FLOAT:
                 if size == 1:
-                    gl.glUniform1f(loc, *sub_data)
+                    gl.glUniform1f(loc, *sub_d[0])
                 elif size == 2:
-                    gl.glUniform2f(loc, *sub_data)
+                    gl.glUniform2f(loc, *sub_d[0])
                 elif size == 3:
-                    gl.glUniform3f(loc, *sub_data)
+                    gl.glUniform3f(loc, *sub_d[0])
                 elif size == 4:
-                    gl.glUniform4f(loc, *sub_data)
+                    gl.glUniform4f(loc, *sub_d[0])
+                elif size == 16:
+                    # transpose has to be set true as glsl stores column-major
+                    gl.glUniformMatrix4fv(loc, 1, gl.GL_TRUE, sub_d[0])
             else:
                 raise
 

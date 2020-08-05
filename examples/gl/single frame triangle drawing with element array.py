@@ -12,8 +12,8 @@ def a():
     w = window1
     # raw data
     vertex = [[-0.8, -0.8, 0], [0.8, -0.8, 0], [-0.8, 0.8, 0], [0.8, 0.8, 0]]
-    vertex = comp.ConOpenglData('coord', vertex, 'f')
-    index = comp.ConOpenglData('indx', (0, 1, 2, 3), 'uint')
+    vertex = comp.ConSingleNamedData('coord', vertex, 'f')
+    index = comp.ConSingleNamedData('indx', (0, 1, 2, 3), 'uint')
 
     # opengl objects
     vao = comp.ConVertexArray(w)
@@ -21,9 +21,9 @@ def a():
     ibo = comp.ConIndexBuffer(w)
 
     # push raw data into buffers
-    vertex_pusher = comp.PushBufferData(w, vbo.out0_vrtx_bffr, vertex.out0_gl_data)
+    vertex_pusher = comp.PushBufferData(w, vbo.out0_vrtx_bffr, vertex.out0_ndata)
     data_vbo = vertex_pusher.out0_data_bffr
-    data_ibo = comp.PushBufferData(w, ibo.out0_indx_bffr, index.out0_gl_data).out0_data_bffr
+    data_ibo = comp.PushBufferData(w, ibo.out0_indx_bffr, index.out0_ndata).out0_data_bffr
 
     # make vertex attribut buffers(VABO?) and index buffer(IBO) known to VAO
     enhancer = comp.EnhanceVertexArray(w)
@@ -31,7 +31,7 @@ def a():
 
     # check component graph refreshing
     new_vertex = [[-0.8, -0.8, 0], [0.8, -0.8, 0], [-0.8, 0.8, 0], [0.5, 0.5, 0]]
-    vertex_pusher.in1_data = comp.ConOpenglData('coord', new_vertex, 'f').out0_gl_data
+    vertex_pusher.in1_data = comp.ConSingleNamedData('coord', new_vertex, 'f').out0_ndata
 
     # draw
     de = comp.RenderElement(w, enhancer.out0_vrtx_arry, data_ibo, w.gl.GL_TRIANGLE_STRIP)

@@ -1,7 +1,8 @@
-import numpy as np
+from .._DataType import *
 
 
-class GeomDataType:
+class GeomDataType(DataType):
+
     @classmethod
     def new_from_raw(cls, value):
         ins = cls()

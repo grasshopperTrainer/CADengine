@@ -437,7 +437,8 @@ class NodeBody(_NodeMember):
         Forces recalculation by calling outputs
         :return:
         """
-        self._reset_calculated()
+        # self._reset_calculated()
+        self._reset_calc_downstream()
         self._recalculate_upstream()
 
     def refresh_all(self):

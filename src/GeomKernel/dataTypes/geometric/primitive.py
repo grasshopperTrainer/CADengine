@@ -1,8 +1,9 @@
-from ._GeomDataTypeNode import *
+from ._GeomDataType import *
 
 
 class Vector(GeomDataType):
     def __init__(self, x=1,y=0,z=0):
+        super().__init__()
         self._data = np.array((x,y,z,0)).reshape((4,1))
 
     def __sub__(self, other):
@@ -53,6 +54,7 @@ class Plane(GeomDataType):
         return p
 
     def __init__(self,o=(0,0,0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
+        super().__init__()
         self._data = np.array((o, x, y, z)).T
         self._data = np.vstack([self._data, (1, 0, 0, 0)])
 
@@ -75,3 +77,8 @@ class Plane(GeomDataType):
     @property
     def components(self):
         return self.origin, self.x_axis, self.y_axis, self.z_axis
+
+class Line(GeomDataType):
+    def __init__(self):
+        raise NotImplementedError
+    pass

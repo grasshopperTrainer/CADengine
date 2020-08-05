@@ -15,53 +15,6 @@ class ConVertexArray(VertexArrayComponent):
     def calculate(self):
         return VertexArrayObject(gl.glGenVertexArrays(1))
 
-class ConOpenglData(VertexArrayComponent):
-    """
-    Data to be used as openGL data
-
-    :param attr_name: name of data
-    :param value: iterable values
-    :param dtype: data type
-    :param vattro: vertex attribute object
-    """
-    in0_name = Input(None)
-    in1_data = Input(None)
-    in2_dtype = Input(None)
-    out0_gl_data = Output(None)
-
-    def __init__(self, attr_name, data, dtype):
-        super().__init__()
-        self.in0_name = attr_name
-        self.in1_data = data
-        self.in2_dtype = dtype
-
-    def calculate(self, name, data, dtype):
-        # define size
-        if isinstance(data[0], (tuple, list)):
-            size = len(data[0])
-        else:
-            size = len(data)
-
-        # define data type
-        if isinstance(dtype, str):
-            dtype = np.dtype([(name, dtype, size)])
-        else:
-            raise NotImplementedError
-
-        # format values
-        if isinstance(data, Iterable):
-            if isinstance(data[0], Iterable):
-                value = [tuple([tuple(chunk)]) for chunk in data]
-                arr = np.array(value, dtype=dtype)
-
-            else:
-                value = tuple([tuple(data)])
-                arr = np.array(value, dtype=dtype)
-        else:
-            raise NotImplementedError
-        return NamedData(arr)
-
-
 class EnhanceVertexArray(VertexArrayComponent):
     """
     Make bond between vertex array, vertex buffer

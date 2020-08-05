@@ -2,8 +2,7 @@ from my_patterns import SingletonClass
 from UVT.env.draw_bit import DrawBit
 import UVT.hooked.openglHooked as gl
 import UVT.pipeline.nodes as node
-from noding.flow_control import Stream, Gate, Conveyor
-from noding.logical import Equal
+import GeomKernel.dataTypes as dt
 import numpy as np
 from UVT.env.windows import Windows
 
@@ -21,16 +20,28 @@ class TriangleDrawer(DrawBit, SingletonClass):
             fs_source = f.read()
         prgrm = node.ConShdrPrgrm(vrtx_shdr_src=vs_source, frgmt_shdr_src=fs_source).out0_prgrm
         # pushing data
-        self._con_vrtx_data = node.ConOpenglData('vertex', ((0, 0, 0), (0, 0, 0), (0, 0, 0)), 'f')
-        vrtx_data_bffr = node.PushBufferData(self._vbo, self._con_vrtx_data.out0_gl_data).out0_data_bffr
-        index = node.ConOpenglData('index', (0, 1, 2), 'uint').out0_gl_data
+        self._con_vrtx_data = node.ConSingleNamedData('vertex', ((0, 0, 0), (0, 0, 0), (0, 0, 0)), 'f')
+        vrtx_data_bffr = node.PushBufferData(self._vbo, self._con_vrtx_data.out0_ndata).out0_data_bffr
+        index = node.ConSingleNamedData('index', (0, 1, 2), 'uint').out0_ndata
         indx_data_bffr = node.PushBufferData(self._ibo, index).out0_data_bffr
 
         # pushing uniform
-        self._uniform_pusher = node.PushUniform()
-        self._uniform_pusher.in0_prgrm =prgrm
-        self._uniform_pusher.in1_data = node.ConOpenglData('color', (1,0,1,1), 'f').out0_gl_data
-        prgrm = self._uniform_pusher.out0_prgm
+        uniform_pusher = node.PushUniform()
+        uniform_pusher.in0_prgrm =prgrm
+        uniform_pusher.in1_data = node.ConSingleNamedData('color', (1, 0, 1, 1), 'f').out0_ndata
+        prgrm = uniform_pusher.out0_prgm
+
+        # pushing matrises
+        pm = node.GetCurrentCamera().body_PM
+        vm = node.GetCurrentCamera().tripod_VM
+        ndata = node.JoinNamedData()
+        ndata.in0_ndata = node.ConSingleNamedData('PM', pm, 'f').out0_ndata
+        ndata.in0_ndata.append_sibling_intf(node.ConSingleNamedData('VM', vm, 'f').out0_ndata)
+        ndata = ndata.out0_ndata
+
+        uniform_pusher = node.PushUniform(prgrm, ndata)
+        prgrm = uniform_pusher.out0_prgm
+        # print(uniform_pusher.in1_data.r._data)
 
         # enhance once and make renderer listen to vrtx_data_bffr
         node.EnhanceVertexArray(self._vao, vrtx_data_bffr, indx_data_bffr).refresh()
@@ -48,22 +59,6 @@ class TriangleDrawer(DrawBit, SingletonClass):
         self._renderer.refresh()
 
 
-def triangle(v1, v2, v3):
-    # make matrix of vertex
-    v = np.array([v1, v2, v3])
-    v = np.transpose(v)
-    v = np.vstack((v, [1, 1, 1]))
-
-    vm = Windows.get_current().cameras.current_target().tripod_VM.r
-    pm = Windows.get_current().cameras.current_target().body_PM.r
-
-    v = np.dot(vm, v)
-    v = np.dot(pm, v)
-    # set back to list
-    v[:,0] = v[:,0]/v[3,0]
-    v[:,1] = v[:,1]/v[3,1]
-    v[:,2] = v[:,2]/v[3,2]
-    v = np.transpose(v[:3])
-    v = v.tolist()
-    TriangleDrawer()._set_vertex(*v)
+def triangle(v0, v1, v2):
+    TriangleDrawer()._set_vertex(v0, v1, v2)
     TriangleDrawer().draw()

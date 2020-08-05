@@ -1,5 +1,6 @@
 from noding import *
 from GeomKernel.dataTypes import *
+from my_patterns import SingletonClass
 
 
 class CameraNode(NodeBody):
@@ -240,3 +241,48 @@ class CameraTripod(CameraNode):
         :return:
         """
 
+class GetCurrentCamera(CameraNode):
+
+    in0_current_camera = Input()
+
+    body_left = Output()
+    body_right = Output()
+    body_bottom = Output()
+    body_top = Output()
+    body_near = Output()
+    body_far = Output()
+    body_hfov = Output()
+    body_vfov = Output()
+    body_aspect_ratio = Output()
+    body_PM = Output()
+
+    tripod_plane = Output()
+    tripod_VM = Output()
+
+    def __init__(self):
+        super().__init__()
+        self.in0_current_camera = CameraCurrentStack().out0_current_camera
+
+    def calculate(self, cam):
+        print('getting current camera')
+        return cam.output_values
+
+
+class CameraCurrentStack(SingletonClass, CameraNode):
+    current_stack = []
+    out0_current_camera = Output()
+    def __init__(self):
+        super().__init__()
+
+    def calculate(self):
+        if self.current_stack:
+            return self.current_stack[-1]
+        return None
+
+    def append(self, cam):
+        self.current_stack.append(cam)
+        self.refresh()
+
+    def pop(self):
+        self.current_stack.pop()
+        self.refresh()

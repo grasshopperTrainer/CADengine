@@ -1,5 +1,7 @@
 from numbers import Number
 import numpy as np
+from collections import namedtuple
+from .mess_toolbox import np_gl_type_convert
 
 
 class PrimitiveDataType:
@@ -57,3 +59,49 @@ class Vector:
 
 class FloatVector(Vector):
     _dtype = 'f'
+
+
+class NamedData:
+    """
+    Numpy array value to be used pushed into buffer and used as vertex attribute
+    """
+    def __init__(self, data):
+        if not isinstance(data, np.ndarray):
+            raise TypeError
+
+        self._data = data
+
+    @property
+    def properties(self):
+        nt = namedtuple('named_data', ('name', 'size', 'type', 'stride', 'offset', 'sub_data'))
+        nts = []
+        stride = self._data.itemsize
+
+        for k, v in self._data.dtype.fields.items():
+            dtype, offset = v
+            if dtype == 'object':
+                sample = self._data[k][0]
+                dtype = sample.dtype
+                size = sample.size
+            else:
+                dtype, size = dtype.subdtype
+                size = size[0]
+
+            dtype = np_gl_type_convert(dtype)             # convert into OpenGL type
+            offset = None if offset == 0 else offset
+            sub_data = self._data[k]
+            nts.append(nt(k, size, dtype, stride, offset, sub_data))
+
+        return nts
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def bytesize(self):
+        return self._data.size * self._data.itemsize
+
+    @property
+    def shape(self):
+        return self._data.shape

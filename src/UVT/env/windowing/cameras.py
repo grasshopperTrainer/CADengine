@@ -73,3 +73,9 @@ class Camera(RenderTarget):
     @property
     def tripod(self):
         return self._tripod
+
+    def __enter__(self):
+        CameraCurrentStack().append(self)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        CameraCurrentStack().pop()
