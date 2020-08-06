@@ -477,6 +477,7 @@ class NodeBody(_NodeMember):
             for intf in group:
                 intfs[intf._name] = intf
         return intfs
+
     @property
     def output_values(self):
         """
@@ -508,6 +509,7 @@ class NodeBody(_NodeMember):
     def __getattr__(self, item):
         if item in self.output_intfs:
             return self.output_intfs[item]
+        raise AttributeError
 
 
 class _IntfDescriptor:

@@ -1,5 +1,6 @@
 from .window_properties import *
 from GeomKernel.dataTypes import Plane, Vector
+from .bits import KeyCallbackBit
 
 
 class Cameras(RenderTargetPool):
@@ -15,6 +16,12 @@ class Cameras(RenderTargetPool):
     def append_new_perspective(self, fov, near, far, ratio):
         new_cam = CameraFactory.new_camera(self, 'fov', 'prsp', fov, near, far, ratio)
         self.append_new_target(new_cam)
+
+    def set_fps_dolly(self, camera):
+        camera._dolly = FpsDolly(self.fm_get_parent(0), camera)
+
+    def set_dolly(self, camera, dolly):
+        camera._dolly = dolly
 
 
 class CameraFactory:
@@ -62,6 +69,7 @@ class Camera(RenderTarget):
         super().__init__(pool)
         self._body = body
         self._tripod = tripod
+        self._dolly = None
 
     def calculate(self):
         return *self._body.output_values, *self._tripod.output_values
@@ -74,8 +82,23 @@ class Camera(RenderTarget):
     def tripod(self):
         return self._tripod
 
+    @property
+    def dolly(self):
+        return self._dolly
+
     def __enter__(self):
         CameraCurrentStack().append(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         CameraCurrentStack().pop()
+
+
+class FpsDolly(KeyCallbackBit):
+
+    def __init__(self, window, camera):
+        super().__init__(window)
+        self._camera = camera
+
+    def callback(self, *args):
+        print('dolly reading', args)
+        super().callback(args)

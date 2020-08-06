@@ -25,9 +25,5 @@ for i in dir(glfw):
         locals()[i] = _hook(getattr(glfw, i))
 
 # override after this point
-
-def get_current_context():
-    return glfw.get_current_context()
-#
-# def create_window(width, height, title, monitor, share):
-#     return glfw.create_window(width, height, title, monitor, share)
+init = glfw.init
+get_current_context = glfw.get_current_context

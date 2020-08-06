@@ -3,7 +3,7 @@ Universal Visualization Tool(working title)
 """
 
 from .env.windows import Window
-from .env.draw_bit import DrawBit
+from UVT.env.windowing.bits import DrawBit
 from .hooked import openglHooked as gl
 from .hooked import glfwHooked as glfw
 #

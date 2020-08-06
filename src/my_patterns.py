@@ -164,7 +164,7 @@ class ChildrenIterator(MemberIterator):
 
 class FirstDegreeIterator(MemberIterator):
     """
-    Iter member's parent and children
+    Iter member's parent and children only
     """
 
     def __init__(self):
@@ -314,6 +314,19 @@ class FamilyMember:
         """
         return self._relation_lst[self.PARENT][idx]
 
+    def fm_get_ancestor(self, gen, idx):
+        ancestors = [self]
+        for i in range(gen):
+            new_ancestors = []
+            visited = set()
+            for ancestor in ancestors:
+                for e in ancestor.fm_all_parents():
+                    if e not in visited:
+                        visited.add(e)
+                        new_ancestors.append(e)
+            ancestors = new_ancestors
+        return ancestors[idx]
+
     def fm_get_roots(self, visited=set()):
         """
         Return roots of family tree
@@ -324,10 +337,10 @@ class FamilyMember:
         :return: [single_root] or [roots, ...]
         """
         roots = []
-        if not self._parent_set:
+        if not self._relation_set[self.PARENT]:
             return [self]
         else:
-            for p in self.fm_iter_parents():
+            for p in self.fm_all_parents():
                 if p not in visited:
                     visited.add(p)
                     roots += p.fm_get_roots(visited=visited)

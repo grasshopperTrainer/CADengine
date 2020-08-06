@@ -1,7 +1,12 @@
 from my_patterns import FamilyMember
+from UVT.hooked import glfw
 
 
-class DrawBit(FamilyMember):
+class _Bit(FamilyMember):
+    pass
+
+
+class DrawBit(_Bit):
     """
     has draw call?
     """
@@ -29,3 +34,28 @@ class DrawBit(FamilyMember):
         :return:
         """
         print('setup', self)
+
+class CallbackMaster(_Bit):
+    pass
+
+class CallbackBit(_Bit):
+
+    def __init__(self, parent_bit):
+        super().__init__()
+        if not isinstance(parent_bit, (self.__class__, CallbackMaster)):
+            raise TypeError
+        self.fm_append_member(parent_bit, self)
+
+class KeyCallbackBit(CallbackBit):
+
+    _callback_signature = glfw.set_key_callback
+
+    def callback(self, *args):
+        for child in self.fm_get_ancestor(2,0).fm_all_children():
+            if isinstance(child, KeyCallbackBit):
+                child.callback(*args)
+
+
+
+
+

@@ -3,10 +3,9 @@ import time
 from .context import ContextManager
 from .windowing import *
 from my_patterns import SingletonClass
-from .draw_bit import DrawBit
+from UVT.env.windowing.bits import DrawBit, CallbackMaster
 
-from ..hooked import openglHooked as gl
-from ..hooked import glfwHooked as glfw
+from ..hooked import *
 
 
 class Timer:
@@ -35,21 +34,27 @@ class Timer:
         self._dtpf = 1 / self._tfps
 
 
-class Window(Glyph, DrawBit):
+class Window(CallbackMaster, Glyph, DrawBit):
     """
     Class for baking exact instance that's on screen
 
     """
     def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):
+        super().__init__()
+        Windows.init_glfw()
         Windows.reg_window(self)
 
-        self._context_manager = ContextManager(**kwargs)
+        self._context_manager = ContextManager()
         if isinstance(shared, Window):
             shared = shared._glfw_window
         self._glfw_window = glfw.create_window(width, height, name, monitor, shared)
-        self._context_manager.log_glfw('create_window')
 
-        self._per_window_init_setting()
+        # per window init setting
+        glfw.make_context_current(self._glfw_window)
+        gl.glEnable(gl.GL_SCISSOR_TEST)
+        self._callback_handler = CallbackManager(self)
+        self._callback_handler.set_key_callback()
+        glfw.make_context_current(None)
 
 
         # make view object
@@ -70,16 +75,6 @@ class Window(Glyph, DrawBit):
 
         self._cameras[0].body.builder.in3_ratio = self._views[0].aspect_ratio
 
-    def _per_window_init_setting(self):
-        """
-        Initial settings per window(context)
-        :return:
-        """
-        glfw.make_context_current(self._glfw_window)
-
-        gl.glEnable(gl.GL_SCISSOR_TEST)
-
-        glfw.make_context_current(None)
 
     @property
     def cameras(self):
@@ -153,6 +148,13 @@ class Window(Glyph, DrawBit):
         self._frame_rate = v
         self._timer.tfps = v
 
+    def key_callback(self, window, key, scancode, action, mods):
+        print(key, scancode, action, mods)
+    def char_callback(self, window, codepoint):
+        print('char callback', codepoint)
+    def char_mods_callback(self, window, codepoint, mods):
+        print('char mods callback', codepoint, mods)
+
 
 class Windows(SingletonClass):
     """
@@ -163,6 +165,13 @@ class Windows(SingletonClass):
     """
     _windows = []
     _timer = Timer(60)
+    _is_glfw_inited = False
+
+    @classmethod
+    def init_glfw(cls):
+        if not cls._is_glfw_inited:
+            glfw.init()
+            cls._is_glfw_inited = True
 
     @classmethod
     def reg_window(cls, window):

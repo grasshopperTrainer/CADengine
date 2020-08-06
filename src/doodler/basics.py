@@ -1,10 +1,7 @@
 from my_patterns import SingletonClass
-from UVT.env.draw_bit import DrawBit
+from UVT.env.windowing.bits import DrawBit
 import UVT.hooked.openglHooked as gl
 import UVT.pipeline.nodes as node
-import GeomKernel.dataTypes as dt
-import numpy as np
-from UVT.env.windows import Windows
 
 
 class TriangleDrawer(DrawBit, SingletonClass):

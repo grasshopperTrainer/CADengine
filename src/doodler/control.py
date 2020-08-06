@@ -1,7 +1,4 @@
-from my_patterns import SingletonClass
-from UVT.env.draw_bit import DrawBit
 import UVT.hooked.openglHooked as gl
-import UVT.pipeline.nodes as node
 from UVT.env.windows import Windows
 
 def background(r=None,g=None,b=None,a=None):
