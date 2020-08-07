@@ -49,6 +49,16 @@ class _NodeIntfGroup(_NodeMember):
     def __getitem__(self, item):
         return self.interfaces[item]
 
+    def __setitem__(self, key, value):
+        intf = self.fm_get_child(key)
+        old_children = intf.fm_all_children()
+        self._relation_set[self.CHILD].remove(intf)
+        self._relation_lst[self.CHILD][key] = value
+        for child in old_children:
+            child.fm_remove(intf, self.PARENT)
+            child.fm_append(value, self.PARENT)
+        del intf
+
     def __iter__(self):
         return iter(self.interfaces)
 
@@ -305,7 +315,7 @@ class NodeBody(_NodeMember):
             except IndexError as e:
                 break
             except Exception as e:
-                raise
+                raise e
 
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -466,6 +476,7 @@ class NodeBody(_NodeMember):
         :return:
         """
         return {i._name: i for i in self.fm_iter_member(self.TYPEFILTER_ITOR(self.CHILDREN_ITOR(), _OutputIntfGroup))}
+
     @property
     def output_intfs(self):
         """
@@ -486,6 +497,11 @@ class NodeBody(_NodeMember):
         :return:
         """
         self._recalculate_upstream()
+        for k,v in self.output_intfs.items():
+            getattr(self, k)
+            print(k,v.fm_get_ancestor(2,0)._is_calculated())
+        print()
+
         return tuple(intf._value for intf in self.output_intfs.values())
 
     @property
@@ -645,11 +661,11 @@ class Output(_IntfDescriptor):
         :param value:
         :return:
         """
-        raise
-        if isinstance(value, _NodeIntf):
-            # for compound node, setting output with internal node's output
-            value = value._value
-        instance.outputgroups[self._name][0]._value = value
+        # pattern of delegating my output to internal node's output
+        if isinstance(value, _OutputIntf):
+            instance.outputgroups[self._name][0] = value
+        else:
+            raise Exception('trying to set output')
 
     def __get__(self, instance: NodeBody, owner):
         """

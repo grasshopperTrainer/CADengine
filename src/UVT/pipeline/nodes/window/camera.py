@@ -1,6 +1,6 @@
 from noding import *
 from GeomKernel.dataTypes import *
-from my_patterns import SingletonClass
+from my_patterns import Singleton
 
 
 class CameraNode(NodeBody):
@@ -66,12 +66,11 @@ class LrbtCamera(_CameraBodyBuilder):
     in5_far = Input()
 
     def calculate(self, l, r, b, t, n, f):
-        hfov = np.arcsin(r/np.sqrt(r**2+n**2))
-        ratio = r/t
+        hfov = np.arcsin(r / np.sqrt(r ** 2 + n ** 2))
+        ratio = r / t
         vfov = 2 * np.arctan(np.tan(hfov / 2) / ratio)
 
         return l, r, b, t, n, f, hfov, vfov, ratio
-
 
 
 class _FrustumShape(CameraNode):
@@ -98,12 +97,12 @@ class OrthFrustum(_FrustumShape):
         if l == -r and b == -t:
             proj_mat[0, 0] = 1 / r
             proj_mat[1, 1] = 1 / t
-            proj_mat[2, (2, 3)] = -2/(f-n), -(f+n)/(f-n)
+            proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
             proj_mat[3] = 0, 0, 0, 1
         else:
-            proj_mat[0, (0, 3)] = 2 / (r-l), -(r+l)/(r-l)
-            proj_mat[1, (1, 3)] = 2 / (t-b), -(t+b)/(t-b)
-            proj_mat[2, (2, 3)] = -2/(f-n), -(f+n)/(f-n)
+            proj_mat[0, (0, 3)] = 2 / (r - l), -(r + l) / (r - l)
+            proj_mat[1, (1, 3)] = 2 / (t - b), -(t + b) / (t - b)
+            proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
             proj_mat[3] = 0, 0, 0, 1
         return proj_mat
 
@@ -116,16 +115,17 @@ class PrspFrustum(_FrustumShape):
     def calculate(self, l, r, b, t, n, f):
         proj_mat = np.eye(4)
         if l == -r and b == -t:
-            proj_mat[0, 0] = n/r
-            proj_mat[1, 1] = n/t
-            proj_mat[2, (2, 3)] = -(f+n)/(f-n), -2*f*n/(f-n)
+            proj_mat[0, 0] = n / r
+            proj_mat[1, 1] = n / t
+            proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
             proj_mat[3] = 0, 0, -1, 0
         else:
-            proj_mat[0, (0, 2)] = 2*n/(r-l), (r+l)/(r-l)
-            proj_mat[1, (1, 2)] = 2*n/(t-b), (t+b)/(t-b)
-            proj_mat[2, (2, 3)] = -(f+n)/(f-n), -2*f*n/(f-n)
+            proj_mat[0, (0, 2)] = 2 * n / (r - l), (r + l) / (r - l)
+            proj_mat[1, (1, 2)] = 2 * n / (t - b), (t + b) / (t - b)
+            proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
             proj_mat[3] = 0, 0, -1, 0
         return proj_mat
+
 
 class CameraBody(CameraNode):
     out0_left = Output()
@@ -141,7 +141,7 @@ class CameraBody(CameraNode):
 
     out9_PM = Output()
 
-    def __init__(self, body_builder:_CameraBodyBuilder, frustrum_shape:_FrustumShape):
+    def __init__(self, body_builder: _CameraBodyBuilder, frustrum_shape: _FrustumShape):
         super().__init__()
         # incase two are not connected
         frustrum_shape.in0_left = body_builder.out0_left
@@ -168,21 +168,24 @@ class CameraTripod(CameraNode):
 
     including camera position and camera direction combined in camera_plane
     """
+    in0_plane = Input(def_val=Pln())
+
     out0_plane = Output()
     out1_VM = Output()
+
     def __init__(self):
         super().__init__()
-        self._plane = Plane()
 
-    def calculate(self):
-        return self._plane, self._calc_vm()
+    def calculate(self, pln):
+        print('TRIPOD')
+        return pln, self._calc_vm(pln)
 
-    def _calc_vm(self):
+    def _calc_vm(self, pln):
         """
         Calculate view matrix from self._camera_plane
         :return:
         """
-        eye, xaxis, yaxis, zaxis = self._plane.components
+        eye, xaxis, yaxis, zaxis = pln.components
 
         # calculate view_mat
         matrix = np.eye(4)
@@ -194,9 +197,9 @@ class CameraTripod(CameraNode):
 
     def lookat(self, eye, at, up):
         if all(isinstance(i, tuple) for i in (eye, at, up)):
-            eye = Vector(*eye)
-            at = Vector(*at)
-            up = Vector(*up)
+            eye = Vec(*eye)
+            at = Vec(*at)
+            up = Vec(*up)
         else:
             raise NotImplementedError
         # calculate plane
@@ -206,8 +209,7 @@ class CameraTripod(CameraNode):
         xaxis = xaxis / np.linalg.norm(xaxis)
         yaxis = xaxis.cross(zaxis)
         zaxis *= -1
-        self._plane = Plane.from_vectors(eye, xaxis,yaxis,zaxis)
-
+        self.in0_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
 
     def yaw(self):
         """
@@ -234,6 +236,16 @@ class CameraTripod(CameraNode):
         :return:
         """
 
+    def move_along_axis(self, axis, magnitude):
+        """
+        Move camera using camera plane's axis
+        :param axis:
+        :return:
+        """
+        tm = TranslationMatrix(**{c:magnitude for c in axis})
+        self.in0_plane = tm*self.in0_plane.r
+        print('puting input', self._is_calculated())
+
     def orient(self, pos):
         """
         position camera to given position
@@ -241,8 +253,12 @@ class CameraTripod(CameraNode):
         :return:
         """
 
-class GetCurrentCamera(CameraNode):
+    @property
+    def plane(self):
+        return self._plane
 
+
+class GetCurrentCamera(CameraNode):
     in0_current_camera = Input()
 
     body_left = Output()
@@ -264,25 +280,26 @@ class GetCurrentCamera(CameraNode):
         self.in0_current_camera = CameraCurrentStack().out0_current_camera
 
     def calculate(self, cam):
-        print('getting current camera')
         return cam.output_values
 
 
-class CameraCurrentStack(SingletonClass, CameraNode):
-    current_stack = []
+@Singleton
+class CameraCurrentStack(CameraNode):
+    _current_stack = []
     out0_current_camera = Output()
+
     def __init__(self):
         super().__init__()
 
     def calculate(self):
-        if self.current_stack:
-            return self.current_stack[-1]
+        if self._current_stack:
+            return self._current_stack[-1]
         return None
 
     def append(self, cam):
-        self.current_stack.append(cam)
+        self._current_stack.append(cam)
         self.refresh()
 
     def pop(self):
-        self.current_stack.pop()
+        self._current_stack.pop()
         self.refresh()

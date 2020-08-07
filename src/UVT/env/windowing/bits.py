@@ -47,15 +47,47 @@ class CallbackBit(_Bit):
         self.fm_append_member(parent_bit, self)
 
 class KeyCallbackBit(CallbackBit):
+    """
+    Class that listens to window's key callback
+    """
 
     _callback_signature = glfw.set_key_callback
+    # build dict
+    _char_dict = {}
+    for k, v in glfw.__dict__.items():
+        if k.startswith('KEY_'):
+            n = k.split('KEY_')[1].lower()
+            _char_dict[v] = n
+    # special cases
+    _char_dict[glfw.KEY_GRAVE_ACCENT] = '`'
+    _char_dict[glfw.KEY_MINUS] = '-'
+    _char_dict[glfw.KEY_EQUAL] = '='
+    _char_dict[glfw.KEY_LEFT_BRACKET] = '['
+    _char_dict[glfw.KEY_RIGHT_BRACKET] = ']'
+    _char_dict[glfw.KEY_BACKSLASH] = "\\"
+    _char_dict[glfw.KEY_SEMICOLON] = ';'
+    _char_dict[glfw.KEY_SEMICOLON] = ';'
+    _char_dict[glfw.KEY_APOSTROPHE] = "'"
+    _char_dict[glfw.KEY_COMMA] = ","
+    _char_dict[glfw.KEY_PERIOD] = "."
+    _char_dict[glfw.KEY_SLASH] = "/"
+
+    _special_char = {c:s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
 
     def callback(self, *args):
         for child in self.fm_get_ancestor(2,0).fm_all_children():
             if isinstance(child, KeyCallbackBit):
                 child.callback(*args)
 
-
+    def get_char(self, key, mods):
+        if key in self._char_dict:
+            char = self._char_dict[key]
+            if mods == glfw.MOD_SHIFT:
+                if char not in self._special_char:
+                    return char.upper()
+                return self._special_char[char]
+            return char
+        return None
 
 
 

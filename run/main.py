@@ -23,4 +23,4 @@ class W(Window):
             triangle((a,a,0), (a,0,0), (0,a,0))
 
 w = W()
-w.run()
+w.run(1)

@@ -2,7 +2,7 @@ import threading
 import time
 from .context import ContextManager
 from .windowing import *
-from my_patterns import SingletonClass
+from my_patterns import Singleton
 from UVT.env.windowing.bits import DrawBit, CallbackMaster
 
 from ..hooked import *
@@ -41,8 +41,8 @@ class Window(CallbackMaster, Glyph, DrawBit):
     """
     def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):
         super().__init__()
-        Windows.init_glfw()
-        Windows.reg_window(self)
+        Windows().init_glfw()
+        Windows().reg_window(self)
 
         self._context_manager = ContextManager()
         if isinstance(shared, Window):
@@ -107,7 +107,7 @@ class Window(CallbackMaster, Glyph, DrawBit):
         # when draw waiting is over - meaning destruction only takes place after a frame
         # this can cause 'noticable stall' when fps is very low
         self._render_thread.join()
-        Windows.dereg_window(self)
+        Windows().dereg_window(self)
         glfw.destroy_window(window)
 
     def __enter__(self):
@@ -156,7 +156,8 @@ class Window(CallbackMaster, Glyph, DrawBit):
         print('char mods callback', codepoint, mods)
 
 
-class Windows(SingletonClass):
+@Singleton
+class Windows():
     """
     Class for organizing multiple window insatnces.
 

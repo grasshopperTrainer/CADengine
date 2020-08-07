@@ -2,23 +2,13 @@ from collections import deque
 import heapq
 from math import inf
 
-
-class SingletonClass:
-    """
-    Singleton class
-    """
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            ins = super().__new__(cls)
-            cls._instance = ins
-            return ins
-
-        # not to load __init__ twice, simply erase it
-        if '__init__' in cls._instance.__class__.__dict__:
-            delattr(cls._instance.__class__, '__init__')
-        return cls._instance
+def Singleton(cls):
+    instances = {}
+    def getinstance():
+        if cls not in instances:
+            instances[cls] = cls()
+        return instances[cls]
+    return getinstance
 
 
 class NotRelatableError(TypeError):
@@ -263,8 +253,23 @@ class FamilyMember:
     # bidirectional manipulator
     @classmethod
     def fm_append_member(cls, parent, child):
+        """
+        Record new bidirectional relationship as parent-child
+        :param parent: member to be a parent
+        :param child: member to be a child
+        :return:
+        """
         parent.fm_append(child, cls.CHILD)
         child.fm_append(parent, cls.PARENT)
+
+    def fm_replace_member(self, old, new):
+        """
+        Replace member
+        :param old:
+        :param new:
+        :return:
+        """
+        pass
 
     def fm_remove_relationship(self, member1, member2):
         """

@@ -1,78 +1,77 @@
 from ._GeomDataType import *
 
 
-class Vector(GeomDataType):
+class Vec(GeomDataType):
     def __init__(self, x=1,y=0,z=0):
-        super().__init__()
-        self._data = np.array((x,y,z,0)).reshape((4,1))
+        super().__init__(np.array((x,y,z,0)).reshape((4,1)))
 
     def __sub__(self, other):
-        if isinstance(other, Vector):
-            v = Vector()
+        if isinstance(other, Vec):
+            v = Vec()
             v._data = self._data - other._data
             return v
         else:
             raise NotImplementedError
 
-    def __mul__(self, other):
-        if isinstance(other, (Vector, Point)):
-            return np.dot(self._data.T, other._data)[0,0]
-        elif isinstance(other, (float, int)):
-            v = Vector()
-            v._data = self._data*other
-            return v
-        else:
-            raise NotImplementedError
-
-    def __truediv__(self, other):
-        v = Vector()
-        v._data = self._data / other
-        return v
-
-    def __neg__(self):
-        v = Vector()
-        v._data = -1 * self._data
-        return v
 
     def cross(self, other):
         d = np.cross(self._data[:3], other._data[:3], axis=0)
-        return Vector(*d.flatten())
+        return Vec(*d.flatten())
 
 
-class Point(GeomDataType):
+class Pnt(GeomDataType, MatrixLikeData):
     def __init__(self, x=0, y=0, z=0):
-        super().__init__()
-        self._data = np.array((x,y,z,1)).reshape((4,1))
-
-
-class Plane(GeomDataType):
+        super().__init__(np.array((x,y,z,1)).reshape((4,1)))
 
     @classmethod
-    def from_vectors(cls,o, x, y, z):
-        p = Plane()
-        p._data = np.hstack((o._data, x._data, y._data, z._data))
+    def cast(self, v):
+        if isinstance(v, Pnt):
+            i = Pnt()
+            i._data = v._data.copy()
+            return i
+
+        if isinstance(v, Vec):
+            i = Pnt()
+            i._data = v._data.copy()
+            i._data[3,0] = 1
+            return i
+        else:
+            raise NotImplementedError
+
+
+class Pln(GeomDataType):
+    @classmethod
+    def from_components(cls, o, x, y, z):
+        p = Pln()
+        p._data = np.hstack((Pnt.cast(o)._data, x._data, y._data, z._data))
         return p
 
     def __init__(self,o=(0,0,0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
-        super().__init__()
-        self._data = np.array((o, x, y, z)).T
-        self._data = np.vstack([self._data, (1, 0, 0, 0)])
+        arr = np.array((o, x, y, z)).T
+        arr = np.vstack([arr, (1, 0, 0, 0)])
+        super().__init__(arr)
 
     @property
     def origin(self):
-        return Point(*self._data[:,0].flatten()[:3])
+        return Pnt(*self._data[:, 0].flatten()[:3])
+
+    def axis(self, sign:('x','y','z')):
+        sign = {'x':1, 'y':2, 'z':3}[sign]
+        v = Vec()
+        v.new_from_raw(self._data[:, sign])
+        return v
 
     @property
     def x_axis(self):
-        return Vector(*self._data[:,1].flatten()[:3])
+        return Vec(*self._data[:, 1].flatten()[:3])
 
     @property
     def y_axis(self):
-        return Vector(*self._data[:,2].flatten()[:3])
+        return Vec(*self._data[:, 2].flatten()[:3])
 
     @property
     def z_axis(self):
-        return Vector(*self._data[:,3].flatten()[:3])
+        return Vec(*self._data[:, 3].flatten()[:3])
 
     @property
     def components(self):

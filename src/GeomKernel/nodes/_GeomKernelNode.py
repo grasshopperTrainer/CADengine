@@ -12,5 +12,5 @@ class PlaneContainer(DataContainer):
 
     def __init__(self, plane=None):
         if plane is None:
-            plane = Plane()
+            plane = Pln()
         super().__init__(plane)

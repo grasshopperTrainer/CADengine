@@ -1,10 +1,11 @@
-from my_patterns import SingletonClass
+from my_patterns import Singleton
 from UVT.env.windowing.bits import DrawBit
 import UVT.hooked.openglHooked as gl
 import UVT.pipeline.nodes as node
 
 
-class TriangleDrawer(DrawBit, SingletonClass):
+@Singleton
+class TriangleDrawer(DrawBit):
     def __init__(self):
         # generation
         self._vao = node.ConVertexArray().out0_vrtx_arry
@@ -31,6 +32,9 @@ class TriangleDrawer(DrawBit, SingletonClass):
         # pushing matrises
         pm = node.GetCurrentCamera().body_PM
         vm = node.GetCurrentCamera().tripod_VM
+        print(pm)
+        print(pm.fm_get_ancestor(2,0))
+        exit()
         ndata = node.JoinNamedData()
         ndata.in0_ndata = node.ConSingleNamedData('PM', pm, 'f').out0_ndata
         ndata.in0_ndata.append_sibling_intf(node.ConSingleNamedData('VM', vm, 'f').out0_ndata)

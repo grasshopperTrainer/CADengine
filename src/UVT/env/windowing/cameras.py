@@ -1,5 +1,5 @@
 from .window_properties import *
-from GeomKernel.dataTypes import Plane, Vector
+from GeomKernel.dataTypes import Pln, Vec
 from .bits import KeyCallbackBit
 
 
@@ -68,11 +68,26 @@ class Camera(RenderTarget):
     def __init__(self, pool, body:CameraBody, tripod:CameraTripod):
         super().__init__(pool)
         self._body = body
+        self.body_left = body.out0_left
+        self.body_right = body.out1_right
+        self.body_bottom = body.out2_bottom
+        self.body_top = body.out3_top
+        self.body_near = body.out4_near
+        self.body_far = body.out5_far
+        self.body_hfov = body.out6_hfov
+        self.body_vfov = body.out7_vfov
+        self.body_aspect_ratio = body.out8_aspect_ratio
+        self.body_PM = body.out9_PM
+
         self._tripod = tripod
+        self.tripod_plane = tripod.out0_plane
+        self.tripod_VM = tripod.out1_VM
         self._dolly = None
 
-    def calculate(self):
-        return *self._body.output_values, *self._tripod.output_values
+    # def calculate(self):
+    #     return self.output_values
+    #     print('calcam')
+    #     return None
 
     @property
     def body(self):
@@ -98,7 +113,24 @@ class FpsDolly(KeyCallbackBit):
     def __init__(self, window, camera):
         super().__init__(window)
         self._camera = camera
+        self.move_speed = 1
+        self.view_speed = 1
 
-    def callback(self, *args):
-        print('dolly reading', args)
-        super().callback(args)
+    def callback(self, window, key, scancode, action, mods):
+        print('dolly reading', self.get_char(key, mods))
+        # left right back forward
+        if self.get_char(key, mods) == 'a':
+            self._camera.tripod.move_along_axis('x', -self.move_speed)
+        elif self.get_char(key, mods) == 'd':
+            self._camera.tripod.move_along_axis('x', self.move_speed)
+        elif self.get_char(key, mods) == 's':
+            self._camera.tripod.move_along_axis('z', self.move_speed)
+        elif self.get_char(key, mods) == 'w':
+            self._camera.tripod.move_along_axis('z', -self.move_speed)
+        # ascend descend
+        elif self.get_char(key, mods) == 'q':
+            self._camera.tripod.move_along_axis('y', -self.move_speed)
+        elif self.get_char(key, mods) == 'e':
+            self._camera.tripod.move_along_axis('y', self.move_speed)
+
+        super().callback(key, scancode, action, mods)
