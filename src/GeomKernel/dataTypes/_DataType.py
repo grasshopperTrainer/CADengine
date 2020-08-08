@@ -8,9 +8,10 @@ class DataType:
         self._data = data
 
     @classmethod
-    def new_from_raw(cls, value):
+    def new_from_raw(cls, raw_data):
         ins = cls()
-        ins._data = value
+        ins._data = raw_data
+
         return ins
 
 

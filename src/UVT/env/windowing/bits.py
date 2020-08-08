@@ -46,6 +46,7 @@ class CallbackBit(_Bit):
             raise TypeError
         self.fm_append_member(parent_bit, self)
 
+
 class KeyCallbackBit(CallbackBit):
     """
     Class that listens to window's key callback
@@ -75,9 +76,10 @@ class KeyCallbackBit(CallbackBit):
     _special_char = {c:s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
 
     def callback(self, *args):
-        for child in self.fm_get_ancestor(2,0).fm_all_children():
-            if isinstance(child, KeyCallbackBit):
-                child.callback(*args)
+        pass
+        # for child in self.fm_get_ancestor(2,0).fm_all_children():
+        #     if isinstance(child, KeyCallbackBit):
+        #         child.callback(*args)
 
     def get_char(self, key, mods):
         if key in self._char_dict:

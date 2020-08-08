@@ -2,8 +2,8 @@ from ._GeomDataType import *
 
 
 class Vec(GeomDataType):
-    def __init__(self, x=1,y=0,z=0):
-        super().__init__(np.array((x,y,z,0)).reshape((4,1)))
+    def __init__(self, x=1, y=0, z=0):
+        super().__init__(np.array((x, y, z, 0)).reshape((4, 1)))
 
     def __sub__(self, other):
         if isinstance(other, Vec):
@@ -13,15 +13,30 @@ class Vec(GeomDataType):
         else:
             raise NotImplementedError
 
-
     def cross(self, other):
         d = np.cross(self._data[:3], other._data[:3], axis=0)
         return Vec(*d.flatten())
 
+    def amplify(self, magnitude):
+        self.normalize()
+        self._data *= magnitude
+
+    def normalize(self):
+        self._data = self._data/self.length
+
+    @property
+    def length(self):
+        x, y, z, _ = self._data.T[0]
+        return np.sqrt(x**2 + y**2 + z**2)
+
+    @property
+    def xyz(self):
+        return self._data.T[0][:3]
+
 
 class Pnt(GeomDataType, MatrixLikeData):
     def __init__(self, x=0, y=0, z=0):
-        super().__init__(np.array((x,y,z,1)).reshape((4,1)))
+        super().__init__(np.array((x, y, z, 1)).reshape((4, 1)))
 
     @classmethod
     def cast(self, v):
@@ -33,7 +48,7 @@ class Pnt(GeomDataType, MatrixLikeData):
         if isinstance(v, Vec):
             i = Pnt()
             i._data = v._data.copy()
-            i._data[3,0] = 1
+            i._data[3, 0] = 1
             return i
         else:
             raise NotImplementedError
@@ -46,7 +61,7 @@ class Pln(GeomDataType):
         p._data = np.hstack((Pnt.cast(o)._data, x._data, y._data, z._data))
         return p
 
-    def __init__(self,o=(0,0,0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
+    def __init__(self, o=(0, 0, 0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
         arr = np.array((o, x, y, z)).T
         arr = np.vstack([arr, (1, 0, 0, 0)])
         super().__init__(arr)
@@ -55,10 +70,9 @@ class Pln(GeomDataType):
     def origin(self):
         return Pnt(*self._data[:, 0].flatten()[:3])
 
-    def axis(self, sign:('x','y','z')):
-        sign = {'x':1, 'y':2, 'z':3}[sign]
-        v = Vec()
-        v.new_from_raw(self._data[:, sign])
+    def get_axis(self, sign: ('x', 'y', 'z')):
+        sign = {'x': 1, 'y': 2, 'z': 3}[sign]
+        v = Vec.new_from_raw(self._data[:, sign:sign+1])
         return v
 
     @property
@@ -77,7 +91,9 @@ class Pln(GeomDataType):
     def components(self):
         return self.origin, self.x_axis, self.y_axis, self.z_axis
 
+
 class Line(GeomDataType):
     def __init__(self):
         raise NotImplementedError
+
     pass

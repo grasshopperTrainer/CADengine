@@ -56,7 +56,6 @@ class Window(CallbackMaster, DrawBit):
         self._callback_handler.set_key_callback()
         glfw.make_context_current(None)
 
-
         # make view object
         self._glyph = Glyph(width, height, None, None)
 
@@ -74,7 +73,6 @@ class Window(CallbackMaster, DrawBit):
         self._cameras = Cameras(self)
 
         self._cameras[0].body.builder.in3_ratio = self._views[0].aspect_ratio
-
 
     @property
     def cameras(self):
@@ -94,8 +92,9 @@ class Window(CallbackMaster, DrawBit):
         while not glfw.window_should_close(self._glfw_window):
             if self._frame_count == self._frame_to_render:
                 break   # if number of drawn frame is targeted number of frame drawn
-
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
+                gl.glClearColor(1,1,1,1)
+                gl.glClear(gl.GL_COLOR_BUFFER_BIT)
                 self.draw()
                 glfw.swap_buffers(self._glfw_window)
             self._frame_count += 1

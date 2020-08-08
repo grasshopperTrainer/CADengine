@@ -241,9 +241,10 @@ class CameraTripod(CameraNode):
         :param axis:
         :return:
         """
-        tm = TranslationMatrix(**{c:magnitude for c in axis})
+        axis = self.in0_plane.r.get_axis(axis)
+        axis.amplify(magnitude)
+        tm = TranslationMatrix(*axis.xyz)
         self.in0_plane = tm*self.in0_plane.r
-        print('puting input', self._is_calculated())
 
     def orient(self, pos):
         """

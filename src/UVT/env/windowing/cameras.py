@@ -113,11 +113,10 @@ class FpsDolly(KeyCallbackBit):
     def __init__(self, window, camera):
         super().__init__(window)
         self._camera = camera
-        self.move_speed = 1
-        self.view_speed = 1
+        self.move_speed = 10
+        self.view_speed = 10
 
     def callback(self, window, key, scancode, action, mods):
-        print('dolly reading', self.get_char(key, mods))
         # left right back forward
         if self.get_char(key, mods) == 'a':
             self._camera.tripod.move_along_axis('x', -self.move_speed)
