@@ -11,8 +11,8 @@ class W(Window):
         self._inited = False
         self.framerate = 4
         self.count = 0
-        self.cameras[0].tripod.lookat((100,-300,100), (0,0,0),(0,0,1))
-        self.cameras.set_fps_dolly(self.cameras[0])
+        self.cameras[0].tripod.lookat((100,100,100), (0,0,0),(0,0,1))
+        # self.cameras.set_fps_dolly(self.cameras[0])
     def draw(self):
         super().draw()
 
@@ -23,4 +23,4 @@ class W(Window):
             triangle((a,a,0), (a,0,0), (0,a,0))
 
 w = W()
-w.run(1)
+w.run()

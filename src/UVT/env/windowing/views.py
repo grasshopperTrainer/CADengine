@@ -4,7 +4,7 @@ from .glyph import Glyph
 class Views(RenderTargetPool):
     def __init__(self, window):
         super().__init__(window)
-        self.append_new_target(View(self,1.0, 1.0, window.out0_width, window.out1_height))
+        self.append_new_target(View(self,1.0, 1.0, window._glyph.out0_width, window._glyph.out1_height))
 
 
 class View(RenderTarget, Glyph):

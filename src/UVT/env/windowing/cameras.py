@@ -6,7 +6,7 @@ from .bits import KeyCallbackBit
 class Cameras(RenderTargetPool):
     def __init__(self, window):
         super().__init__(window)
-        r, t = window.width/2, window.height/2
+        r, t = window._glyph.width/2, window._glyph.height/2
         self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
 
     def append_new_orthogonal(self, left, right, bottom, top, near, far):
@@ -35,9 +35,9 @@ class CameraFactory:
             raise
 
         if orth_prsp == 'orth':
-            frustum = OrthFrustum(*definer.output_intfs.values())
+            frustum = OrthFrustum(*definer.output_intfs)
         elif orth_prsp == 'prsp':
-            frustum = PrspFrustum(*definer.output_intfs.values())
+            frustum = PrspFrustum(*definer.output_intfs)
         else:
             raise
         camera = Camera(pool, CameraBody(definer, frustum), CameraTripod())

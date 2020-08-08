@@ -177,7 +177,6 @@ class CameraTripod(CameraNode):
         super().__init__()
 
     def calculate(self, pln):
-        print('TRIPOD')
         return pln, self._calc_vm(pln)
 
     def _calc_vm(self, pln):

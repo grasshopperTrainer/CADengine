@@ -32,14 +32,10 @@ class TriangleDrawer(DrawBit):
         # pushing matrises
         pm = node.GetCurrentCamera().body_PM
         vm = node.GetCurrentCamera().tripod_VM
-        print(pm)
-        print(pm.fm_get_ancestor(2,0))
-        exit()
         ndata = node.JoinNamedData()
         ndata.in0_ndata = node.ConSingleNamedData('PM', pm, 'f').out0_ndata
         ndata.in0_ndata.append_sibling_intf(node.ConSingleNamedData('VM', vm, 'f').out0_ndata)
         ndata = ndata.out0_ndata
-
         uniform_pusher = node.PushUniform(prgrm, ndata)
         prgrm = uniform_pusher.out0_prgm
         # print(uniform_pusher.in1_data.r._data)
@@ -50,7 +46,7 @@ class TriangleDrawer(DrawBit):
         listener.in0_listento = vrtx_data_bffr
         listener.in0_listento.append_sibling_intf(self._vao)
         listener.out0_listened.append_sibling_intf()
-        # rendering
+
         self._renderer = node.RenderArray(listener.out0_listened_1, prgrm, gl.GL_TRIANGLES)
 
     def _set_vertex(self, v0, v1, v2):

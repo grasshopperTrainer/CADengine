@@ -34,7 +34,7 @@ class Timer:
         self._dtpf = 1 / self._tfps
 
 
-class Window(CallbackMaster, Glyph, DrawBit):
+class Window(CallbackMaster, DrawBit):
     """
     Class for baking exact instance that's on screen
 
@@ -58,7 +58,7 @@ class Window(CallbackMaster, Glyph, DrawBit):
 
 
         # make view object
-        super().__init__(width, height, None, None)
+        self._glyph = Glyph(width, height, None, None)
 
         glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
