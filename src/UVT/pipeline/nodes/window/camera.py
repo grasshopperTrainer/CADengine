@@ -210,30 +210,37 @@ class CameraTripod(CameraNode):
         zaxis *= -1
         self.in0_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
 
-    def yaw(self):
+    def yaw(self, rad):
         """
         rotate along y axis
         :return:
         """
+        origin, camerax, cameray, cameraz = self.in0_plane.r.components
+        new_x = camerax.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
+        new_z = cameray.cross(new_x)
+        self.in0_plane = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
 
-    def pitch(self):
+    def pitch(self, rad):
         """
         rotate along x axis
         :return:
         """
 
-    def roll(self):
+
+    def roll(self, rad):
         """
         rotate along z axis
         :return:
         """
-        pass
+        raise NotImplementedError
 
-    def move(self, vec):
+    def move(self, vec: Vec):
         """
         Move camera using vector
         :return:
         """
+        tm = TranslationMatrix(*vec.xyz)
+        self.in0_plane = tm*self.in0_plane.r
 
     def move_along_axis(self, axis, magnitude):
         """
@@ -241,7 +248,7 @@ class CameraTripod(CameraNode):
         :param axis:
         :return:
         """
-        axis = self.in0_plane.r.get_axis(axis)
+        axis = self.in0_plane.r.components[{'x':1, 'y':2, 'z':3}[axis]]
         axis.amplify(magnitude)
         tm = TranslationMatrix(*axis.xyz)
         self.in0_plane = tm*self.in0_plane.r

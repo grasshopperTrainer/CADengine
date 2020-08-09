@@ -35,23 +35,15 @@ class DrawBit(_Bit):
         """
         print('setup', self)
 
-class CallbackMaster(_Bit):
-    pass
+class Callbacktype:
+    def __init__(self, func):
+        self._func = func
 
-class CallbackBit(_Bit):
-
-    def __init__(self, parent_bit):
-        super().__init__()
-        if not isinstance(parent_bit, (self.__class__, CallbackMaster)):
-            raise TypeError
-        self.fm_append_member(parent_bit, self)
+    def callback(self, args):
+        self._func(*args)
 
 
-class KeyCallbackBit(CallbackBit):
-    """
-    Class that listens to window's key callback
-    """
-
+class KeyCallback(Callbacktype):
     _callback_signature = glfw.set_key_callback
     # build dict
     _char_dict = {}
@@ -75,12 +67,6 @@ class KeyCallbackBit(CallbackBit):
 
     _special_char = {c:s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
 
-    def callback(self, *args):
-        pass
-        # for child in self.fm_get_ancestor(2,0).fm_all_children():
-        #     if isinstance(child, KeyCallbackBit):
-        #         child.callback(*args)
-
     def get_char(self, key, mods):
         if key in self._char_dict:
             char = self._char_dict[key]
@@ -91,5 +77,65 @@ class KeyCallbackBit(CallbackBit):
             return char
         return None
 
+class CursorPosCallback(Callbacktype):
+    def __init__(self, func):
+        super().__init__(func)
+        self.last_pos = (0, 0)
+
+    def callback(self, window, xpos, ypos):
+        super().callback((window, xpos, ypos))
+        self.last_pos = xpos, ypos
 
 
+class CallbackMotif(_Bit):
+    KEY_CALL = KeyCallback
+    CUROSRPOS_CALL = CursorPosCallback
+
+
+class CallbackBit(CallbackMotif):
+
+    def __init__(self, parent):
+        super().__init__()
+        self.fm_append_member(parent=parent, child=self)
+        self._callback_dict = {}
+        self._callback_flag = {}
+
+    def set_callback(self, kind, func):
+        if not issubclass(kind, Callbacktype):
+            raise TypeError('given is not a callback type')
+        handler = kind(func)
+        self._callback_dict[kind] = handler
+        self._callback_flag.setdefault(kind, True)
+        return handler
+
+    def enable_callback(self, kind):
+        self._callback_flag[kind] = True
+
+    def disable_callback(self, kind):
+        self._callback_flag[kind] = False
+
+    def _callback(self, callback_type, *args):
+        if callback_type in self._callback_dict and self._callback_flag[callback_type]:
+            self._callback_dict[callback_type].callback(*args)
+
+    @property
+    def window(self):
+        return self.fm_get_parent(0).window
+
+
+class CallbackMaster(CallbackMotif):
+    def __init__(self, glfw_window):
+        super().__init__()
+        self._glfw_window = glfw_window
+        self.set_callback(glfw.set_key_callback, self.KEY_CALL)
+        self.set_callback(glfw.set_cursor_pos_callback, self.CUROSRPOS_CALL)
+
+    def set_callback(self, setter, callback_type):
+        def callback(*args):
+            for child in self.fm_all_children():
+                child._callback(callback_type, *args)
+        setter(self._glfw_window, callback)
+
+    @property
+    def window(self):
+        return self._glfw_window

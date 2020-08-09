@@ -9,6 +9,13 @@ class DataType:
 
     @classmethod
     def new_from_raw(cls, raw_data):
+        """
+        Return new instance of raw_data
+
+        ! User has full responsibility providing correct raw data
+        :param raw_data:
+        :return:
+        """
         ins = cls()
         ins._data = raw_data
 
@@ -35,6 +42,10 @@ class MatrixLikeData(DataType):
         v._data = self._data / other
         return v
 
+    # def __sub__(self, other):
+    #     raw = self._data - other._data
+    #     return self.new_from_raw(raw)
+
 
 class ColumnVectorLikeData(MatrixLikeData):
     def __mul__(self, other):
@@ -57,3 +68,6 @@ class ColumnVectorLikeData(MatrixLikeData):
         else:
             raise NotImplementedError
 
+    # def tolist(self):
+    #     if self._data.shape[1] == 1:
+    #         self._data.

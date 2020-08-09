@@ -1,6 +1,6 @@
 from .window_properties import *
 from GeomKernel.dataTypes import Pln, Vec
-from .bits import KeyCallbackBit
+from .bits import *
 
 
 class Cameras(RenderTargetPool):
@@ -18,7 +18,7 @@ class Cameras(RenderTargetPool):
         self.append_new_target(new_cam)
 
     def set_fps_dolly(self, camera):
-        camera._dolly = FpsDolly(self.fm_get_parent(0), camera)
+        camera._dolly = FpsDolly(self.fm_get_parent(0)._callback_handler, camera)
 
     def set_dolly(self, camera, dolly):
         camera._dolly = dolly
@@ -84,11 +84,6 @@ class Camera(RenderTarget):
         self.tripod_VM = tripod.out1_VM
         self._dolly = None
 
-    # def calculate(self):
-    #     return self.output_values
-    #     print('calcam')
-    #     return None
-
     @property
     def body(self):
         return self._body
@@ -108,28 +103,35 @@ class Camera(RenderTarget):
         CameraCurrentStack().pop()
 
 
-class FpsDolly(KeyCallbackBit):
+class FpsDolly(CallbackBit):
 
     def __init__(self, window, camera):
         super().__init__(window)
         self._camera = camera
         self.move_speed = 10
-        self.view_speed = 10
+        self.view_speed = 0.02
+        self._keyboard = self.set_callback(self.KEY_CALL, self.key_callback)
+        self._cursor = self.set_callback(self.CUROSRPOS_CALL, self.cursorpos_callback)
 
-    def callback(self, window, key, scancode, action, mods):
+    def key_callback(self, window, key, scancode, action, mods):
         # left right back forward
-        if self.get_char(key, mods) == 'a':
+        char = self.KEY_CALL.get_char(key, mods)
+        if char == 'a':
             self._camera.tripod.move_along_axis('x', -self.move_speed)
-        elif self.get_char(key, mods) == 'd':
+        elif char == 'd':
             self._camera.tripod.move_along_axis('x', self.move_speed)
-        elif self.get_char(key, mods) == 's':
+        elif char == 's':
             self._camera.tripod.move_along_axis('z', self.move_speed)
-        elif self.get_char(key, mods) == 'w':
+        elif char == 'w':
             self._camera.tripod.move_along_axis('z', -self.move_speed)
         # ascend descend
-        elif self.get_char(key, mods) == 'q':
-            self._camera.tripod.move_along_axis('y', -self.move_speed)
-        elif self.get_char(key, mods) == 'e':
-            self._camera.tripod.move_along_axis('y', self.move_speed)
+        elif char == 'q':
+            self._camera.tripod.move(Vec(0,0,-self.move_speed))
+        elif char == 'e':
+            self._camera.tripod.move(Vec(0,0,self.move_speed))
 
-        super().callback(key, scancode, action, mods)
+    def cursorpos_callback(self, window, xpos, ypos):
+        v = Vec.pnt2(Pnt(*self._cursor.last_pos), Pnt(xpos, ypos))
+        print('yaw', v.x)
+        self._camera.tripod.yaw(v.x*self.view_speed)
+        self._camera.tripod.pitch(v.y*self.view_speed)

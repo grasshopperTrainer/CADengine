@@ -89,11 +89,16 @@ class _NodeMember(FamilyMember):
         :param debug:
         :return:
         """
+        # print("CALC", debug, self, self._is_calculated())
         # initiate recursion
         if _visited is None:
             _visited = set()
         # base condition
         if self._is_calculated():
+            # self._push_value_downstrem()
+            # if isinstance(self, _OutputIntf):
+            #     for i in self.fm_all_children():
+            #         i._value = self._value
             return True
         # if no parent node exist
         is_parent_recalculated = True
@@ -294,9 +299,18 @@ class _OutputIntf(_NodeIntf):
         """
         super().set_provoke_value(value)
         if isinstance(value, _NodeIntf):
+            # pattern of delegating my output to internal node's output
+            if isinstance(value, _OutputIntf):
+                # remove relationship between body -> interface
+                # this mono directional relationship needed as interface is a spec of body
+                self.fm_remove(self.fm_get_parent(0), self.PARENT)
+                # make stream between value -> interface
+                self.fm_append_member(parent=value, child=self)
+            # extract value
             value = value._value
+        # set value
         self._value = value
-        self._reset_calculated()
+        self._reset_calc_downstream()
 
     def _run_calculation(self):
         """
@@ -306,8 +320,6 @@ class _OutputIntf(_NodeIntf):
         for i in self.fm_all_children():
             i._value = self._value
 
-    def _push_value_downstream(self):
-        pass
 
 class _SiblingIntf(FamilyMember):
     def __init__(self, intf):
@@ -413,7 +425,7 @@ class NodeBody(_NodeMember):
         add two numeric inputs and cache it into output interface.
         :return:
         """
-        raise NotImplementedError
+        pass
 
     def refresh(self):
         """
@@ -438,17 +450,6 @@ class NodeBody(_NodeMember):
 
         raise AttributeError(f"The component has no such interface '{intf_name}'")
 
-    # @property
-    # def inputgroups(self):
-    #     return {i._name: i for i in self.fm_iter_member(self.TYPEFILTER_ITOR(self.PARENT_ITOR(), _InputIntfGroup))}
-    #
-    # @property
-    # def outputgroups(self):
-    #     """
-    #     Returns output group dictionary
-    #     :return:
-    #     """
-    #     return {i._name: i for i in self.fm_iter_member(self.TYPEFILTER_ITOR(self.CHILDREN_ITOR(), _OutputIntfGroup))}
     @property
     def input_intfs(self):
         """
@@ -519,10 +520,6 @@ class NodeBody(_NodeMember):
             i._calculated_upstream()
             recalced_vs.append(i._value)
         return recalced_vs
-
-    @property
-    def interfaces(self):
-        return {i._name: i for i in self.fm_iter_member(self.TYPEFILTER_ITOR(self.FIRSTDEGREE_ITOR(), _NodeIntfGroup))}
 
     @property
     def parent_nodes(self):
@@ -649,21 +646,8 @@ class Output(_IntfDescriptor):
         :param value:
         :return:
         """
-        # pattern of delegating my output to internal node's output
-        if isinstance(value, _OutputIntf):
-            for i, intf in enumerate(instance.output_intfs):
-                if intf._name == self._name:
-                    break
-            old_children = intf.fm_all_children()
-            instance._relation_set[instance.CHILD].remove(intf)
-            instance._relation_lst[instance.CHILD][i] = value
-            for child in old_children:
-                child.fm_remove(intf, instance.PARENT)
-                child.fm_append(value, instance.PARENT)
-            del intf
-        else:
-            raise Exception('trying to set output')
-
+        intf = instance.get_output_intf(self._name)
+        intf.set_provoke_value(value)
 
 class Inout(Input):
     """

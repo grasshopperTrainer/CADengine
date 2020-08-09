@@ -41,7 +41,7 @@ class ConSingleNamedData(DataNode):
             arr = np.zeros(1, dtype=dtype)
             arr[0] = (data, )
         else:
-            raise NotImplementedError
+            raise NotImplementedError(name, data, dtype)
         return NamedData(arr)
 
 

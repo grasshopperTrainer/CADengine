@@ -34,7 +34,7 @@ class Timer:
         self._dtpf = 1 / self._tfps
 
 
-class Window(CallbackMaster, DrawBit):
+class Window(DrawBit):
     """
     Class for baking exact instance that's on screen
 
@@ -52,13 +52,12 @@ class Window(CallbackMaster, DrawBit):
         # per window init setting
         glfw.make_context_current(self._glfw_window)
         gl.glEnable(gl.GL_SCISSOR_TEST)
-        self._callback_handler = CallbackManager(self)
-        self._callback_handler.set_key_callback()
+        self._callback_handler = CallbackMaster(self._glfw_window)
+        # self._callback_handler.set_key_callback()
         glfw.make_context_current(None)
 
         # make view object
         self._glyph = Glyph(width, height, None, None)
-
         glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
         self._render_thread = threading.Thread(target=self._run)

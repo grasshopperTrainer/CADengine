@@ -1,7 +1,45 @@
 from ._GeomDataType import *
+import copy
 
 
-class Vec(GeomDataType):
+class Vectorlike(GeomDataType):
+
+    @property
+    def x(self):
+        return self._data[0][0]
+    @property
+    def y(self):
+        return self._data[1][0]
+    @property
+    def z(self):
+        return self._data[2][0]
+
+    @property
+    def xyz(self):
+        return self._data.T[0][:3]
+
+    def __sub__(self, other):
+        raw = self._data - other._data
+        sign = raw[3, 0]
+        if sign == 1:
+            return Pnt.new_from_raw(raw)
+        elif sign == 0:
+            return Vec.new_from_raw(raw)
+        else:
+            raise NotImplementedError
+
+    def __add__(self, other):
+        raw = self._data + other._data
+        sign = raw[3, 0]
+        if sign == 1:
+            return Pnt.new_from_raw(raw)
+        elif sign == 0:
+            return Vec.new_from_raw(raw)
+        else:
+            raise NotImplementedError
+
+
+class Vec(Vectorlike):
     def __init__(self, x=1, y=0, z=0):
         super().__init__(np.array((x, y, z, 0)).reshape((4, 1)))
 
@@ -13,13 +51,23 @@ class Vec(GeomDataType):
         else:
             raise NotImplementedError
 
+    def __str__(self):
+        return f"<Vec : {[round(n, 3) for n in self._data[:3, 0]]}>"
+
+    def __repr__(self):
+        return self.__str__()
+
     def cross(self, other):
         d = np.cross(self._data[:3], other._data[:3], axis=0)
         return Vec(*d.flatten())
 
-    def amplify(self, magnitude):
+    def amplify(self, magnitude, copy=False):
+        if copy:
+            self = self.copy()
         self.normalize()
         self._data *= magnitude
+        if copy:
+            return self
 
     def normalize(self):
         self._data = self._data/self.length
@@ -29,12 +77,25 @@ class Vec(GeomDataType):
         x, y, z, _ = self._data.T[0]
         return np.sqrt(x**2 + y**2 + z**2)
 
-    @property
-    def xyz(self):
-        return self._data.T[0][:3]
+    @classmethod
+    def pnt2(cls, tail, head):
+        """
+        Construct new vector from two points
+        :return:
+        """
+        return head - tail
+
+    def __copy__(self):
+        return self.__class__.new_from_raw(self._data)
+
+    def __deepcopy__(self, memodict={}):
+        return self.__class__.new_from_raw(self._data.copy())
+
+    def copy(self):
+        return copy.copy(self)
 
 
-class Pnt(GeomDataType, MatrixLikeData):
+class Pnt(Vectorlike):
     def __init__(self, x=0, y=0, z=0):
         super().__init__(np.array((x, y, z, 1)).reshape((4, 1)))
 
@@ -76,20 +137,20 @@ class Pln(GeomDataType):
         return v
 
     @property
-    def x_axis(self):
+    def axis_x(self):
         return Vec(*self._data[:, 1].flatten()[:3])
 
     @property
-    def y_axis(self):
+    def axis_y(self):
         return Vec(*self._data[:, 2].flatten()[:3])
 
     @property
-    def z_axis(self):
+    def axis_z(self):
         return Vec(*self._data[:, 3].flatten()[:3])
 
     @property
     def components(self):
-        return self.origin, self.x_axis, self.y_axis, self.z_axis
+        return self.origin, self.axis_x, self.axis_y, self.axis_z
 
 
 class Line(GeomDataType):
