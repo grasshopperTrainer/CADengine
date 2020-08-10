@@ -77,13 +77,16 @@ class KeyCallback(Callbacktype):
             return char
         return None
 
+
 class CursorPosCallback(Callbacktype):
     def __init__(self, func):
         super().__init__(func)
         self.last_pos = (0, 0)
 
-    def callback(self, window, xpos, ypos):
-        super().callback((window, xpos, ypos))
+    def callback(self, args):
+        _, xpos, ypos = args
+        print(args)
+        super().callback(args)
         self.last_pos = xpos, ypos
 
 
@@ -116,7 +119,7 @@ class CallbackBit(CallbackMotif):
 
     def _callback(self, callback_type, *args):
         if callback_type in self._callback_dict and self._callback_flag[callback_type]:
-            self._callback_dict[callback_type].callback(*args)
+            self._callback_dict[callback_type].callback(args)
 
     @property
     def window(self):

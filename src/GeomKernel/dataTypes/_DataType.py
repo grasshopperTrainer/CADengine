@@ -1,4 +1,6 @@
 import numpy as np
+from numbers import Number
+
 
 class DataType:
     """
@@ -17,7 +19,7 @@ class DataType:
         :return:
         """
         ins = cls()
-        ins._data = raw_data
+        ins._data = raw_data.copy()
 
         return ins
 
@@ -41,6 +43,10 @@ class MatrixLikeData(DataType):
         v = self.__class__()
         v._data = self._data / other
         return v
+    #
+    # def __mul__(self, other):
+    #     if isinstance(other, Number):
+    #         return self._data*np
 
     # def __sub__(self, other):
     #     raw = self._data - other._data

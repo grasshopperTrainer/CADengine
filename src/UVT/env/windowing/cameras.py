@@ -6,7 +6,7 @@ from .bits import *
 class Cameras(RenderTargetPool):
     def __init__(self, window):
         super().__init__(window)
-        r, t = window._glyph.width/2, window._glyph.height/2
+        r, t = window._glyph.width / 2, window._glyph.height / 2
         self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
 
     def append_new_orthogonal(self, left, right, bottom, top, near, far):
@@ -65,7 +65,7 @@ class Camera(RenderTarget):
     tripod_plane = Output()
     tripod_VM = Output()
 
-    def __init__(self, pool, body:CameraBody, tripod:CameraTripod):
+    def __init__(self, pool, body: CameraBody, tripod: CameraTripod):
         super().__init__(pool)
         self._body = body
         self.body_left = body.out0_left
@@ -109,13 +109,13 @@ class FpsDolly(CallbackBit):
         super().__init__(window)
         self._camera = camera
         self.move_speed = 10
-        self.view_speed = 0.02
+        self.view_speed = 0.01
         self._keyboard = self.set_callback(self.KEY_CALL, self.key_callback)
         self._cursor = self.set_callback(self.CUROSRPOS_CALL, self.cursorpos_callback)
 
     def key_callback(self, window, key, scancode, action, mods):
         # left right back forward
-        char = self.KEY_CALL.get_char(key, mods)
+        char = self._keyboard.get_char(key, mods)
         if char == 'a':
             self._camera.tripod.move_along_axis('x', -self.move_speed)
         elif char == 'd':
@@ -126,12 +126,16 @@ class FpsDolly(CallbackBit):
             self._camera.tripod.move_along_axis('z', -self.move_speed)
         # ascend descend
         elif char == 'q':
-            self._camera.tripod.move(Vec(0,0,-self.move_speed))
+            self._camera.tripod.move(Vec(0, 0, -self.move_speed))
         elif char == 'e':
-            self._camera.tripod.move(Vec(0,0,self.move_speed))
+            self._camera.tripod.move(Vec(0, 0, self.move_speed))
 
     def cursorpos_callback(self, window, xpos, ypos):
+        # cursor movement vector
         v = Vec.pnt2(Pnt(*self._cursor.last_pos), Pnt(xpos, ypos))
-        print('yaw', v.x)
-        self._camera.tripod.yaw(v.x*self.view_speed)
-        self._camera.tripod.pitch(v.y*self.view_speed)
+        # rotate vertically
+        self._camera.tripod.pitch(-v.y * self.view_speed)
+        # rotate horizontally around world z axis
+        p = self._camera.tripod.in0_plane.r
+        new_plane = TrnslMat(*p.origin.xyz) * RotMat('z', v.x * -self.view_speed) * TrnslMat(*-p.origin.xyz) * p
+        self._camera.tripod.in0_plane = new_plane

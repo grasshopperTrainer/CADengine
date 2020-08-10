@@ -225,6 +225,10 @@ class CameraTripod(CameraNode):
         rotate along x axis
         :return:
         """
+        origin, camerax, cameray, cameraz = self.in0_plane.r.components
+        new_y = cameray.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
+        new_z = camerax.cross(new_y)
+        self.in0_plane = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)
 
 
     def roll(self, rad):
@@ -239,7 +243,7 @@ class CameraTripod(CameraNode):
         Move camera using vector
         :return:
         """
-        tm = TranslationMatrix(*vec.xyz)
+        tm = TrnslMat(*vec.xyz)
         self.in0_plane = tm*self.in0_plane.r
 
     def move_along_axis(self, axis, magnitude):
@@ -250,7 +254,7 @@ class CameraTripod(CameraNode):
         """
         axis = self.in0_plane.r.components[{'x':1, 'y':2, 'z':3}[axis]]
         axis.amplify(magnitude)
-        tm = TranslationMatrix(*axis.xyz)
+        tm = TrnslMat(*axis.xyz)
         self.in0_plane = tm*self.in0_plane.r
 
     def orient(self, pos):

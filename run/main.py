@@ -4,7 +4,7 @@ import UVT.pipeline.nodes as node
 
 class W(Window):
     def __init__(self):
-        super().__init__(500, 250, 'window1')
+        super().__init__(2000, 1000, 'window1')
 
     def setup(self):
         print('setting up')

@@ -1,4 +1,6 @@
 from ._GeomDataType import *
+from ..nongeometric.complex import TrnsfMat
+
 import copy
 
 
@@ -137,6 +139,10 @@ class Pln(GeomDataType):
         return v
 
     @property
+    def origin(self):
+        return Pnt.new_from_raw(self._data[:, :1])
+
+    @property
     def axis_x(self):
         return Vec(*self._data[:, 1].flatten()[:3])
 
@@ -152,8 +158,14 @@ class Pln(GeomDataType):
     def components(self):
         return self.origin, self.axis_x, self.axis_y, self.axis_z
 
+    def __rmul__(self, other):
+        print('dddd')
+        if isinstance(other, TrnsfMat):
+            return self.new_from_raw(other._data.dot(self._data))
+
 
 class Line(GeomDataType):
+
     def __init__(self):
         raise NotImplementedError
 
