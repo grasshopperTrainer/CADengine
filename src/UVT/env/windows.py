@@ -57,7 +57,7 @@ class Window(DrawBit):
         glfw.make_context_current(None)
 
         # make view object
-        self._glyph = Glyph(width, height, None, None)
+        self._glyph = Glyph(0, 0, width, height, None, None, None, None)
         glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
         self._render_thread = threading.Thread(target=self._run)
@@ -71,7 +71,7 @@ class Window(DrawBit):
         self._views = Views(self)
         self._cameras = Cameras(self)
 
-        self._cameras[0].body.builder.in3_ratio = self._views[0].aspect_ratio
+        self._cameras[0].body.builder.in3_aspect_ratio = self._views[0].glyph.aspect_ratio
 
     @property
     def cameras(self):

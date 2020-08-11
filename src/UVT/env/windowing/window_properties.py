@@ -25,12 +25,4 @@ class RenderTargetPool(_RenderTargetMember):
 
 
 class RenderTarget(NodeBody):
-    def __init__(self, pool, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._pool = pool
-
-    def __enter__(self):
-        self._pool._current_target_stack.append(self)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._pool._current_target_stack.pop()
+    pass

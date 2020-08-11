@@ -4,58 +4,64 @@ from .glyph import Glyph
 class Views(RenderTargetPool):
     def __init__(self, window):
         super().__init__(window)
-        self.append_new_target(View(self,1.0, 1.0, window._glyph.out0_width, window._glyph.out1_height))
+        self.append_new_target(View(0, 0, 1.0, 1.0, *window._glyph.output_intfs[:-1]))
 
 
-class View(RenderTarget, Glyph):
-
-    def __init__(self, pool, width_exp, height_exp, parent_width, parent_height):
-        super().__init__(pool, width_exp, height_exp, parent_width, parent_height)
-        self._width_exp = width_exp
-        self._height_exp = height_exp
-
-    def calculate(self, w_e, h_e, p_w, p_h):
-        w, h = self._calc_real_v(w_e, p_w), self._calc_real_v(h_e, p_h)
-        return w, h, w/h
-
-    def _calc_real_v(self, exp, parent_v):
-        if isinstance(exp, int):
-            return exp
-        elif isinstance(exp, float):
-            if parent_v is None:
-                return 0
-            else:
-                return exp*parent_v
-        elif callable(exp):
-            if parent_v is None:
-                return 0
-            else:
-                return exp(parent_v)
-
+class View(RenderTarget):
+    def __init__(self, x_exp, y_exp, w_exp, h_exp, par_x, par_y, par_w, par_h):
+        super().__init__()
+        self._glyph = Glyph(x_exp, y_exp, w_exp, h_exp, par_x, par_y, par_w, par_h)
     @property
-    def width_exp(self):
-        return self._width_exp
-    @width_exp.setter
-    def width_exp(self, v):
-        if not isinstance(v, (int, float)) or not callable(v):
-            return TypeError('expression should be one of int, float, lambda(callable)')
-        self._width_exp = v
+    def glyph(self):
+        return self._glyph
 
-    @property
-    def height_exp(self):
-        return self._height_exp
-    @height_exp.setter
-    def width_exp(self, v):
-        if not isinstance(v, (int, float)) or not callable(v):
-            return TypeError('expression should be one of int, float, lambda(callable)')
-        self._height_exp = v
-
-    @property
-    def width(self):
-        return self.out0_width
-    @property
-    def height(self):
-        return self.out1_height
-    @property
-    def aspect_ratio(self):
-        return self.out2_aspect_ratio
+#
+# class ViewNode(NodeBody):
+#     pass
+#
+# @Singleton
+# class GetCurrentCamera(ViewNode):
+#     in0_current_camera = Input()
+#
+#     body_left = Output()
+#     body_right = Output()
+#     body_bottom = Output()
+#     body_top = Output()
+#     body_near = Output()
+#     body_far = Output()
+#     body_hfov = Output()
+#     body_vfov = Output()
+#     body_aspect_ratio = Output()
+#     body_PM = Output()
+#
+#     tripod_plane = Output()
+#     tripod_VM = Output()
+#
+#     def __init__(self):
+#         super().__init__()
+#         self.in0_current_camera = CameraCurrentStack().out0_current_camera
+#
+#     def calculate(self, cam):
+#         return cam.output_values
+#
+#
+# @Singleton
+# class ViewCurrentStack(ViewNode):
+#     _current_stack = []
+#     out0_current_view = Output()
+#
+#     def __init__(self):
+#         super().__init__()
+#
+#     def calculate(self):
+#         if self._current_stack:
+#             return self._current_stack[-1]
+#         return None
+#
+#     def append(self, cam):
+#         self._current_stack.append(cam)
+#         self.refresh()
+#
+#     def pop(self):
+#         self._current_stack.pop()
+#         self.refresh()

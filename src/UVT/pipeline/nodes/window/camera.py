@@ -38,17 +38,14 @@ class FovCamera(_CameraBodyBuilder):
     in0_hfov = Input()
     in1_near = Input()
     in2_far = Input()
-    in3_ratio = Input()
+    in3_aspect_ratio = Input()
 
-    def calculate(self, hfov, near, far, ratio, typ, input_degree=True):
-        r = near * np.tan(np.radians(hfov) / 2)
+    def calculate(self, hfov, near, far, ratio):
+        r = near * np.tan(hfov / 2)
         l = -r
         t = r / ratio
         b = -t
-
-        hfov = np.radians(hfov) if input_degree else hfov
         vfov = 2 * np.arctan(np.tan(hfov / 2) / ratio)
-
         return l, r, b, t, near, far, hfov, vfov, ratio
 
 
@@ -268,7 +265,7 @@ class CameraTripod(CameraNode):
     def plane(self):
         return self._plane
 
-
+@Singleton
 class GetCurrentCamera(CameraNode):
     in0_current_camera = Input()
 
@@ -291,6 +288,7 @@ class GetCurrentCamera(CameraNode):
         self.in0_current_camera = CameraCurrentStack().out0_current_camera
 
     def calculate(self, cam):
+        print(cam.output_values)
         return cam.output_values
 
 

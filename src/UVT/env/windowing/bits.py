@@ -85,7 +85,6 @@ class CursorPosCallback(Callbacktype):
 
     def callback(self, args):
         _, xpos, ypos = args
-        print(args)
         super().callback(args)
         self.last_pos = xpos, ypos
 

@@ -6,8 +6,10 @@ from .bits import *
 class Cameras(RenderTargetPool):
     def __init__(self, window):
         super().__init__(window)
-        r, t = window._glyph.width / 2, window._glyph.height / 2
-        self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
+        r, t = window._glyph.width.r / 2, window._glyph.height.r / 2
+        # self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
+        print(window._glyph.aspect_ratio)
+        self.append_new_perspective(np.radians(50), 1, 10000, window._glyph.aspect_ratio)
 
     def append_new_orthogonal(self, left, right, bottom, top, near, far):
         new_cam = CameraFactory.new_camera(self, 'lrbt', 'orth', left, right, bottom, top, near, far)
