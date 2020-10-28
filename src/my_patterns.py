@@ -271,19 +271,19 @@ class FamilyMember:
         """
         pass
 
-    def fm_remove_relationship(self, member1, member2):
-        """
-        Remove relationship between two members if there is one
-        :param member1:
-        :param member2:
-        :return:
-        """
-        if member2 in member1.fm_all_parents():
-            member1.fm_remove(member2, self.PARENT)
-            member2.fm_remove(member1, self.CHILD)
-        elif member1 in member2.fm_all_parents():
-            member1.fm_remove(member2, self.CHILD)
-            member2.fm_remove(member1, self.PARENT)
+    # def fm_remove_relationship(self, member1, member2):
+    #     """
+    #     Remove relationship between two members if there is one
+    #     :param member1:
+    #     :param member2:
+    #     :return:
+    #     """
+    #     if member2 in member1.fm_all_parents():
+    #         member1.fm_remove(member2, self.PARENT)
+    #         member2.fm_remove(member1, self.CHILD)
+    #     elif member1 in member2.fm_all_parents():
+    #         member1.fm_remove(member2, self.CHILD)
+    #         member2.fm_remove(member1, self.PARENT)
 
     def fm_clear_parent(self):
         for parent in self.fm_all_parents():
@@ -318,19 +318,19 @@ class FamilyMember:
         :return:
         """
         return self._relation_lst[self.PARENT][idx]
-
-    def fm_get_ancestor(self, gen, idx):
-        ancestors = [self]
-        for i in range(gen):
-            new_ancestors = []
-            visited = set()
-            for ancestor in ancestors:
-                for e in ancestor.fm_all_parents():
-                    if e not in visited:
-                        visited.add(e)
-                        new_ancestors.append(e)
-            ancestors = new_ancestors
-        return ancestors[idx]
+    #
+    # def fm_get_ancestor(self, gen, idx):
+    #     ancestors = [self]
+    #     for i in range(gen):
+    #         new_ancestors = []
+    #         visited = set()
+    #         for ancestor in ancestors:
+    #             for e in ancestor.fm_all_parents():
+    #                 if e not in visited:
+    #                     visited.add(e)
+    #                     new_ancestors.append(e)
+    #         ancestors = new_ancestors
+    #     return ancestors[idx]
 
     def fm_get_roots(self, visited=set()):
         """

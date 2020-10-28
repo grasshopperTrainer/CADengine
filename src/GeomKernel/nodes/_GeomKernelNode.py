@@ -1,5 +1,5 @@
 from ..dataTypes import *
-from noding import *
+from JINTFP import *
 
 class GeomKernelNode(NodeBody):
     pass

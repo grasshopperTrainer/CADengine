@@ -163,7 +163,7 @@ class Windows():
     and some global operation among window instances like creating a new window.
     """
     _windows = []
-    _timer = Timer(60)
+    _timer = Timer(120)
     _is_glfw_inited = False
 
     @classmethod

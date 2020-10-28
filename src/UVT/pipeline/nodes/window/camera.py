@@ -1,4 +1,4 @@
-from noding import *
+from JINTFP import *
 from GeomKernel.dataTypes import *
 from my_patterns import Singleton
 
@@ -288,7 +288,6 @@ class GetCurrentCamera(CameraNode):
         self.in0_current_camera = CameraCurrentStack().out0_current_camera
 
     def calculate(self, cam):
-        print(cam.output_values)
         return cam.output_values
 
 

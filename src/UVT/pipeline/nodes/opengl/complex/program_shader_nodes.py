@@ -3,8 +3,8 @@ from ..primitive.program_shader_nodes import *
 
 class ConShdrPrgrm(OpenglNode):
 
-    in0_vrtx_shdr_src = Inout(typs=str)
-    in1_frgmt_shdr_src = Inout(typs=str)
+    in0_vrtx_shdr_src = Input(typs=str)
+    in1_frgmt_shdr_src = Input(typs=str)
     out0_prgrm = Output(typs=PrgrmObj)
 
     def __init__(self, vrtx_shdr_src, frgmt_shdr_src):

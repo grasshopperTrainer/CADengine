@@ -67,9 +67,9 @@ class _NodeMember(FamilyMember):
     def _run_calculation(self):
         raise NotImplementedError
 
-    def _reset_calc_downstream(self, visited=None, debug =''):
+    def reset_downstream(self, visited=None, debug=''):
         """
-        Reset child's calculation
+        Reset child's calculated sign
         :return:
         """
         if visited == None:
@@ -79,51 +79,42 @@ class _NodeMember(FamilyMember):
             for child in self.fm_all_children():
                 if child not in visited:
                     visited.add(child)
-                    child._reset_calc_downstream(visited, debug=debug + '    ')
+                    child.reset_downstream(visited, debug + ' ' * 4)
 
-    def _calculated_upstream(self, _visited=None, debug=''):
+    def _recalculate_upstream(self, _visited=None, debug=''):
         """
-        calculated upstream to get up-to-date result
+        recalculated upstream to get up to date result
 
         :param _visited:
         :param debug:
         :return:
         """
-        # print("CALC", debug, self, self._is_calculated())
         # initiate recursion
         if _visited is None:
             _visited = set()
         # base condition
         if self._is_calculated():
-            # self._push_value_downstrem()
-            # if isinstance(self, _OutputIntf):
-            #     for i in self.fm_all_children():
-            #         i._value = self._value
             return True
-        # if no parent node exist
+        # flag for checking permanent recalculation
         is_parent_recalculated = True
+        # recursivly calculate upstream before calculating current
         for member in self.fm_all_parents():
             if not isinstance(member, _NodeMember):
                 continue
             if member not in _visited:
                 _visited.add(member)
-                # check if parent is calculated after calculation
-                # if not, it means parent is set to be calculated permanently so
-                # self as child should reset calculated
-                is_parent_recalculated = is_parent_recalculated and member._calculated_upstream(_visited, debug=debug+'   ')
-        # set beforehand not to trigger infinite loop while calling itself's input inside `calculate()`
+                is_parent_recalculated &= member._recalculate_upstream(_visited, debug+' '*4)
         self._set_calculated()
         self._run_calculation()
 
-        # if node is set to permanent recalculation reset calculated downstream
+        # if this node is set to permanently recalculate
+        # or one of parent is set so, pass this signal downstream
         if self._calculate_permanent or not is_parent_recalculated:
             self._reset_calculated()
-        else:
-            self._set_calculated()
         return self._is_calculated()
 
 
-class _NodeIntf(_NodeMember):
+class _IntfBffr(_NodeMember):
     """
     Contains cached value
     """
@@ -183,7 +174,7 @@ class _NodeIntf(_NodeMember):
         return self._sibling_intf_allowed
 
     def get_calculated_value(self):
-        self._calculated_upstream()
+        self._recalculate_upstream()
         return self._value
 
     def set_provoke_value(self, value):
@@ -197,7 +188,7 @@ class _NodeIntf(_NodeMember):
         if not self._typs:  # if not given, all type accepted
             return True
         else:
-            v = value.r if isinstance(value, _NodeIntf) else value
+            v = value.r if isinstance(value, _IntfBffr) else value
             if callable in self._typs:
                 if callable(v):
                     return True
@@ -223,7 +214,7 @@ class _NodeIntf(_NodeMember):
         sibling_intf.set_provoke_value(value)
         # make body know interface
         # and add descriptor to handle node connecting convention
-        if isinstance(self, _InputIntf):
+        if isinstance(self, _InputBffr):
             body = self.fm_get_child(0)
             self.fm_append_member(parent=sibling_intf, child=body)
             body.append_descriptor(Input(self._def_val, has_siblings=False, typs=self._typs, name=sibling_name))
@@ -238,7 +229,7 @@ class _NodeIntf(_NodeMember):
         raise NotImplementedError
 
 
-class _InputIntf(_NodeIntf):
+class _InputBffr(_IntfBffr):
     """
     Container of input value
     """
@@ -246,16 +237,11 @@ class _InputIntf(_NodeIntf):
     def __str__(self):
         return f"<input_intf '{self._name}' : {self._value}>"
 
-    @property
-    def group(self):
-        return self.fm_get_child(0)
-
     def set_provoke_value(self, value):
         """
         Set interface value
 
-        whilst building relationship
-        and reseting calculted flag
+        whilst building relationship and resetting calculated flag
         :param value:
         :return:
         """
@@ -263,13 +249,12 @@ class _InputIntf(_NodeIntf):
         # by default relationship is monopoly so clear connection bidirectionally
         self.fm_clear_parent()
         # make relationship
-        if isinstance(value, _NodeIntf):
+        if isinstance(value, _IntfBffr):
             # set relationship between interface
-            # by default direct setting goes to idx 0 of intf group
             self.fm_append_member(parent=value, child=self)
             value = value._value
         self._value = value
-        self._reset_calc_downstream()
+        self.reset_downstream()
 
     def _run_calculation(self):
         """
@@ -279,7 +264,7 @@ class _InputIntf(_NodeIntf):
         pass
 
 
-class _OutputIntf(_NodeIntf):
+class _OutputBffr(_IntfBffr):
     """
     Container of output value
     """
@@ -287,38 +272,37 @@ class _OutputIntf(_NodeIntf):
     def __str__(self):
         return f"<output_intf '{self._name}' : {self._value}>"
 
-    @property
-    def group(self):
-        return self.fm_get_parent(0)
-
     def set_provoke_value(self, value):
         """
-        Set value and do not build relationship even it's possible
+        Set interface value
+
+        whilst building relationship and resetting calculated flag
         :param value:
         :return:
         """
         super().set_provoke_value(value)
-        if isinstance(value, _NodeIntf):
-            # pattern of delegating my output to internal node's output
-            if isinstance(value, _OutputIntf):
+        if isinstance(value, _IntfBffr):
+            # pattern of connecting my output directly with internal node's output
+            if isinstance(value, _OutputBffr):
                 # remove relationship between body -> interface
                 # this mono directional relationship needed as interface is a spec of body
                 self.fm_remove(self.fm_get_parent(0), self.PARENT)
                 # make stream between value -> interface
                 self.fm_append_member(parent=value, child=self)
-            # extract value
+            else:
+                raise ValueError("violating unidirectional flow")
             value = value._value
-        # set value
         self._value = value
-        self._reset_calc_downstream()
+        self.reset_downstream()
 
     def _run_calculation(self):
         """
         Just push value downstream
         :return:
         """
-        for i in self.fm_all_children():
-            i._value = self._value
+        for child in self.fm_all_children():
+            if isinstance(child, _IntfBffr):
+                child._value = self._value
 
 
 class _SiblingIntf(FamilyMember):
@@ -354,15 +338,15 @@ class NodeBody(_NodeMember):
         for c in reversed(self.__class__.__mro__):
             if hasattr(c, '__dict__'):
                 for k, v in c.__dict__.items():
-                    if isinstance(v, (Input, Inout)):
+                    if isinstance(v, Input):
                         input_dict[v._name] = v
                     elif isinstance(v, Output):
                         output_dict[v._name] = v
         for intf_name, v in input_dict.items():
-            self.fm_append_member(parent=_InputIntf(intf_name, v._def_val, v._has_siblings, v._typs), child=self)
+            self.fm_append_member(parent=_InputBffr(intf_name, v._def_val, v._has_siblings, v._typs), child=self)
 
         for intf_name, v in output_dict.items():
-            self.fm_append_member(parent=self, child=_OutputIntf(intf_name, v._def_val, v._has_siblings, v._typs))
+            self.fm_append_member(parent=self, child=_OutputBffr(intf_name, v._def_val, v._has_siblings, v._typs))
 
         # input __init__ ing convention
         i = 0
@@ -386,36 +370,36 @@ class NodeBody(_NodeMember):
             print('\033[0m')
 
     def _run_calculation(self):
-        # build input
+        """
+        Execute concrete function and push value downstream
+        :return:
+        """
+        # collect input
         input_vs = OrderedDict()
         for intf in self.input_intfs:
             if intf.sibling_intf_allowed:
                 input_vs.setdefault(intf.family_name, []).append(intf.get_calculated_value())
             else:
                 input_vs[intf] = intf.get_calculated_value()
-        # calculate
+
+        # run actual function defined by user
         try:
             results = self.calculate(*input_vs.values())
         except Exception as e:
             # set all outputs NULL
-            results = [NullValue(f"calculation fail of {self}")] * len(list(self.output_intfs))
-            # record status
+            results = [NullValue(f"calculation fail of {self}")] * len(self.output_intfs)
+            # record and print error status
             self._calculation_status = e
             self.print_status()
-            raise e
         else:
-            # wrap singular result
+            # wrap singular result and match length
             results = [results] if not isinstance(results, (list, tuple)) else list(results)
+            results += [NullValue("calculation didn't return enough values")] * (len(self.output_intfs) - len(results))
             self._calculation_status = ''
         finally:
-            # push calculation result downstream
-            results = deque(results)
-            for intf in self.output_intfs:
-                # reset updated as input has been taken in consideration
-                # intf._reset_calculated()
-                # setting calculation result
-                v = results.popleft() if results else NullValue('not enough number of values from calculation')
-                intf.set_provoke_value(v)
+            # push calculation result down to outputs
+            for result, intf in zip(results, self.output_intfs):
+                intf.set_provoke_value(result)
 
     def calculate(self):
         """
@@ -433,8 +417,8 @@ class NodeBody(_NodeMember):
         :return:
         """
         # self._reset_calculated()
-        self._reset_calc_downstream()
-        self._calculated_upstream()
+        self.reset_downstream()
+        self._recalculate_upstream()
 
     def refresh_all(self):
         """
@@ -517,7 +501,7 @@ class NodeBody(_NodeMember):
         """
         recalced_vs = []
         for i in self.output_intfs:
-            i._calculated_upstream()
+            i._recalculate_upstream()
             recalced_vs.append(i._value)
         return recalced_vs
 
@@ -541,9 +525,7 @@ class NodeBody(_NodeMember):
 
 class _IntfDescriptor:
     """
-    Interface node for input and output
-
-    To control setting value
+    Descriptor for handling `node interface`
     """
     SIBLING_POSTFIX = 'sib'
 
@@ -565,19 +547,26 @@ class _IntfDescriptor:
     def has_siblings(self):
         return self._has_siblings
 
-    def __set__(self, instance, value):
-        raise NotImplementedError
+    def __set__(self, instance: NodeBody, value):
+        """
+        Accept output or raw value
 
+        :param instance:
+        :param value:
+        :return:
+        """
+        intf = instance.get_intf(self._name)
+        intf.set_provoke_value(value)
 
     def __get__(self, instance: NodeBody, owner):
         """
-        Returns output value by wrapping with `IntfDeliverer`
+        Return up to date value
         :param instance:
         :param owner:
         :return:
         """
         intf = instance.get_intf(self._name)
-        intf._calculated_upstream()
+        intf._recalculate_upstream()
         return intf
 
     def __delete__(self, instance):
@@ -593,7 +582,7 @@ class _IntfDescriptor:
         print('DELETING', instance, self._name)
         self._check_init(instance)
         instance._node_spvr.disconnect(instance, getattr(instance, self._cache_name))
-        intf_obj = _NodeIntf(instance, self._name, type(self), self._def_val)
+        intf_obj = _IntfBffr(instance, self._name, type(self), self._def_val)
         setattr(instance, self._cache_name, intf_obj)
 
     def _set_intfobj(self, instance, value):
@@ -607,7 +596,7 @@ class _IntfDescriptor:
         """
         intf_to_update = getattr(instance, self._cache_name)
 
-        if isinstance(value, _NodeIntf):  # new value is passed by another intf
+        if isinstance(value, _IntfBffr):  # new value is passed by another intf
             intf_to_update._intf_obj = value._intf_obj
         else:  # new value is a raw value
             intf_to_update._intf_obj = value
@@ -617,17 +606,7 @@ class Input(_IntfDescriptor):
     """
     Designate input value
     """
-
-    def __set__(self, instance: NodeBody, value):
-        """
-        Accepts output or raw value
-
-        :param instance:
-        :param value:
-        :return:
-        """
-        intf = instance.get_input_intf(self._name)
-        intf.set_provoke_value(value)
+    pass
 
 
 class Output(_IntfDescriptor):
@@ -635,23 +614,6 @@ class Output(_IntfDescriptor):
     Output Interface
 
     Manages setting getting deleting output value
-    """
-
-    def __set__(self, instance: NodeBody, value):
-        """
-        Sets output value
-
-        Do not explicitly set value. Value should be set via `calculate` method.
-        :param instance: Node
-        :param value:
-        :return:
-        """
-        intf = instance.get_output_intf(self._name)
-        intf.set_provoke_value(value)
-
-class Inout(Input):
-    """
-    Special interface to handle connecting compound component's input to its internal component.
     """
     pass
 
