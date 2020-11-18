@@ -4,15 +4,16 @@ import UVT.pipeline.nodes as node
 
 class W(Window):
     def __init__(self):
-        super().__init__(2000, 1000, 'window1')
+        super().__init__(200, 200, 'window1')
 
     def setup(self):
         print('setting up')
         self._inited = False
-        self.framerate = 30
+        self.framerate = 10
         self.count = 0
         self.cameras[0].tripod.lookat((100,100,100), (0,0,0),(0,0,1))
-        self.cameras.set_fps_dolly(self.cameras[0])
+        self.cameras[0].set_fps_dolly(self)
+        self.views.new_view(0.5, 0.5, 0.5, 0.5)
 
     def draw(self):
         super().draw()
@@ -22,6 +23,7 @@ class W(Window):
             triangle((0,0,0), (a,0,0), (0,a,0))
             triangle((0,0,0), (-a,0,0), (0,-a,0))
             triangle((a,a,0), (a,0,0), (0,a,0))
+            print(self._views[0]._glyph.posx)
 
 w = W()
 w.run()

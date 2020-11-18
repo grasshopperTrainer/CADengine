@@ -3,7 +3,7 @@ import time
 from .context import ContextManager
 from .windowing import *
 from my_patterns import Singleton
-from UVT.env.windowing.bits import DrawBit, CallbackMaster
+from UVT.env.windowing.bits import DrawBit
 
 from ..hooked import *
 
@@ -52,12 +52,11 @@ class Window(DrawBit):
         # per window init setting
         glfw.make_context_current(self._glfw_window)
         gl.glEnable(gl.GL_SCISSOR_TEST)
-        self._callback_handler = CallbackMaster(self._glfw_window)
         # self._callback_handler.set_key_callback()
         glfw.make_context_current(None)
 
         # make view object
-        self._glyph = Glyph(0, 0, width, height, None, None, None, None)
+        self._glyph = Glyph_node(0, 0, width, height, None, None, None, None)
         glfw.set_window_close_callback(self._glfw_window, self._close_window)
 
         self._render_thread = threading.Thread(target=self._run)
@@ -70,12 +69,20 @@ class Window(DrawBit):
 
         self._views = Views(self)
         self._cameras = Cameras(self)
+        self._devices = DeviceController(self)
 
         self._cameras[0].body.builder.in3_aspect_ratio = self._views[0].glyph.aspect_ratio
 
     @property
     def cameras(self):
         return self._cameras
+    @property
+    def views(self):
+        return self._views
+
+    @property
+    def devices(self):
+        return self._devices
 
     def append_pipeline(self, pipeline):
         self._pipelines.append(pipeline)

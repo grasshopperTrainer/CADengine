@@ -287,8 +287,8 @@ class GetCurrentCamera(CameraNode):
         super().__init__()
         self.in0_current_camera = CameraCurrentStack().out0_current_camera
 
-    def calculate(self, cam):
-        return cam.output_values
+    def calculate(self, camera):
+        return *camera.body.output_values, *camera.tripod.output_values
 
 
 @Singleton

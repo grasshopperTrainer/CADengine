@@ -1,7 +1,7 @@
 from JINTFP import *
 
 
-class Glyph(NodeBody):
+class Glyph_node(NodeBody):
     posx_exp = Input(typs=(int, float, callable))
     posy_exp = Input(typs=(int, float, callable))
     width_exp = Input(typs=(int, float, callable))

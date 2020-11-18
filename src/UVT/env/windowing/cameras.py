@@ -8,21 +8,15 @@ class Cameras(RenderTargetPool):
         super().__init__(window)
         r, t = window._glyph.width.r / 2, window._glyph.height.r / 2
         # self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
-        self.append_new_perspective(np.radians(50), 1, 10000, window._glyph.aspect_ratio)
+        self.new_perspective(np.radians(50), 1, 10000, window._glyph.aspect_ratio)
 
-    def append_new_orthogonal(self, left, right, bottom, top, near, far):
+    def new_orthogonal(self, left, right, bottom, top, near, far):
         new_cam = CameraFactory.new_camera(self, 'lrbt', 'orth', left, right, bottom, top, near, far)
-        self.append_new_target(new_cam)
+        self._append_new_target(new_cam)
 
-    def append_new_perspective(self, fov, near, far, ratio):
+    def new_perspective(self, fov, near, far, ratio):
         new_cam = CameraFactory.new_camera(self, 'fov', 'prsp', fov, near, far, ratio)
-        self.append_new_target(new_cam)
-
-    def set_fps_dolly(self, camera):
-        camera._dolly = FpsDolly(self.fm_get_parent(0)._callback_handler, camera)
-
-    def set_dolly(self, camera, dolly):
-        camera._dolly = dolly
+        self._append_new_target(new_cam)
 
 
 class CameraFactory:
@@ -41,7 +35,7 @@ class CameraFactory:
             frustum = PrspFrustum(*definer.output_intfs)
         else:
             raise
-        camera = Camera(pool, CameraBody(definer, frustum), CameraTripod())
+        camera = Camera(CameraBody(definer, frustum), CameraTripod(), pool)
         return camera
 
 
@@ -52,38 +46,18 @@ class Camera(RenderTarget):
     Camera consists of Two parts; camera body, camera orientation(position)
     """
 
-    body_left = Output()
-    body_right = Output()
-    body_bottom = Output()
-    body_top = Output()
-    body_near = Output()
-    body_far = Output()
-    body_hfov = Output()
-    body_vfov = Output()
-    body_aspect_ratio = Output()
-    body_PM = Output()
-
-    tripod_plane = Output()
-    tripod_VM = Output()
-
-    def __init__(self, pool, body: CameraBody, tripod: CameraTripod):
+    def __init__(self, body: CameraBody, tripod: CameraTripod, pool):
         super().__init__(pool)
-        self._body = body
-        self.body_left = body.out0_left
-        self.body_right = body.out1_right
-        self.body_bottom = body.out2_bottom
-        self.body_top = body.out3_top
-        self.body_near = body.out4_near
-        self.body_far = body.out5_far
-        self.body_hfov = body.out6_hfov
-        self.body_vfov = body.out7_vfov
-        self.body_aspect_ratio = body.out8_aspect_ratio
-        self.body_PM = body.out9_PM
 
+        self._body = body
         self._tripod = tripod
-        self.tripod_plane = tripod.out0_plane
-        self.tripod_VM = tripod.out1_VM
         self._dolly = None
+
+    def set_fps_dolly(self, window):
+        self._dolly = FpsDolly(self)
+
+    def set_dolly(self, dolly):
+        self._dolly = dolly
 
     @property
     def body(self):
@@ -104,19 +78,19 @@ class Camera(RenderTarget):
         CameraCurrentStack().pop()
 
 
-class FpsDolly(CallbackBit):
+class FpsDolly:
 
-    def __init__(self, window, camera):
-        super().__init__(window)
+    def __init__(self, camera):
         self._camera = camera
         self.move_speed = 10
         self.view_speed = 0.01
-        self._keyboard = self.set_callback(self.KEY_CALL, self.key_callback)
-        self._cursor = self.set_callback(self.CUROSRPOS_CALL, self.cursorpos_callback)
+        # should it be at upper?
+        self._keyboard = camera.manager.window.devices.set_key_callback(self.key_callback)
+        self._cursor = camera.manager.window.devices.set_cursor_pos_callback(self.cursorpos_callback)
 
-    def key_callback(self, window, key, scancode, action, mods):
+    def key_callback(self, window, key, scancode, action, mods, keyboard):
         # left right back forward
-        char = self._keyboard.get_char(key, mods)
+        char = keyboard.get_char(key, mods)
         if char == 'a':
             self._camera.tripod.move_along_axis('x', -self.move_speed)
         elif char == 'd':
@@ -131,9 +105,9 @@ class FpsDolly(CallbackBit):
         elif char == 'e':
             self._camera.tripod.move(Vec(0, 0, self.move_speed))
 
-    def cursorpos_callback(self, window, xpos, ypos):
+    def cursorpos_callback(self, window, xpos, ypos, mouse):
         # cursor movement vector
-        v = Vec.pnt2(Pnt(*self._cursor.last_pos), Pnt(xpos, ypos))
+        v = Vec.pnt2(Pnt(*mouse.get_last_pos()), Pnt(xpos, ypos))
         # rotate vertically
         self._camera.tripod.pitch(-v.y * self.view_speed)
         # rotate horizontally around world z axis

@@ -391,6 +391,7 @@ class NodeBody(_NodeMember):
             # record and print error status
             self._calculation_status = e
             self.print_status()
+            raise
         else:
             # wrap singular result and match length
             results = [results] if not isinstance(results, (list, tuple)) else list(results)
