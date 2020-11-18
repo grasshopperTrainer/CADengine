@@ -23,7 +23,7 @@ class W(Window):
             triangle((0,0,0), (a,0,0), (0,a,0))
             triangle((0,0,0), (-a,0,0), (0,-a,0))
             triangle((a,a,0), (a,0,0), (0,a,0))
-            print(self._views[0]._glyph.posx)
+            # print(self._views[0]._glyph.posx)
 
 w = W()
 w.run()

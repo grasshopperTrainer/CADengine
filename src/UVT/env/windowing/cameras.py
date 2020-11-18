@@ -85,8 +85,8 @@ class FpsDolly:
         self.move_speed = 10
         self.view_speed = 0.01
         # should it be at upper?
-        self._keyboard = camera.manager.window.devices.set_key_callback(self.key_callback)
-        self._cursor = camera.manager.window.devices.set_cursor_pos_callback(self.cursorpos_callback)
+        self._keyboard = camera.manager.window.devices.keyboard.set_key_callback(self.key_callback)
+        self._cursor = camera.manager.window.devices.mouse.set_cursor_pos_callback(self.cursorpos_callback)
 
     def key_callback(self, window, key, scancode, action, mods, keyboard):
         # left right back forward
@@ -107,7 +107,7 @@ class FpsDolly:
 
     def cursorpos_callback(self, window, xpos, ypos, mouse):
         # cursor movement vector
-        v = Vec.pnt2(Pnt(*mouse.get_last_pos()), Pnt(xpos, ypos))
+        v = Vec.pnt2(Pnt(*mouse.last_pos), Pnt(xpos, ypos))
         # rotate vertically
         self._camera.tripod.pitch(-v.y * self.view_speed)
         # rotate horizontally around world z axis

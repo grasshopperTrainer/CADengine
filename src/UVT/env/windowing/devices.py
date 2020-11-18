@@ -1,15 +1,57 @@
 from ...hooked import *
 
 class _Device:
-    pass
+    def __init__(self, controller):
+        self._controller = controller
+        self._callback_wrapped = {}
+
+    def _callback_setter(self, callback_func, glfw_type, wrapper):
+        wrapped_callback = wrapper(callback_func)
+        self._callback_wrapped.setdefault(glfw_type, set()).add(wrapped_callback)
+        return wrapped_callback
+
+    def _callback_caller(self, *args, callback_type):
+        """
+        Wrapped callback func caller pattern
+        :param args: glfw driven callback args
+        :param callback_type: callback type indicated with glfw callback setter
+        :return:
+        """
+
+        for wrapped in self._callback_wrapped.get(callback_type):
+            wrapped._run_callback(*args)
+
+    @property
+    def controller(self):
+        return self._controller
 
 
 class Mouse(_Device):
-    _last_pos = 100, 100
 
-    @classmethod
-    def get_last_pos(cls):
-        return cls._last_pos
+    def __init__(self, controller):
+        super().__init__(controller)
+        glfw.set_cursor_pos_callback(self.controller.window._glfw_window, self._cursor_pos_callback)
+
+        self._last_pos = 100, 100
+
+    def _cursor_pos_callback(self, window, xpos, ypos):
+        """
+        Calls all callbacks joined with 'cursor pos callback'
+        :param window:
+        :param xpos:
+        :param ypos:
+        :return:
+        """
+        self._callback_caller(window, xpos, ypos, self, callback_type=glfw.set_cursor_pos_callback)
+        # update last pos of cursor
+        self._last_pos = xpos, ypos
+
+    def set_cursor_pos_callback(self, callback_func):
+        return self._callback_setter(callback_func, glfw.set_cursor_pos_callback, CursorPosCallbackWrapper)
+
+    @property
+    def last_pos(self):
+        return self._last_pos
 
 
 class Keyboard(_Device):
@@ -36,6 +78,25 @@ class Keyboard(_Device):
 
     _special_char = {c:s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
 
+    def __init__(self, controller):
+        super().__init__(controller)
+        glfw.set_key_callback(self.controller.window._glfw_window, self._key_callback)
+
+    def set_key_callback(self, callback_func):
+        return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallbackWrapper)
+
+    def _key_callback(self, window, key, scancode, action, mods):
+        """
+        Calls all callbacks joined with 'key callback'
+        :param window:
+        :param key:
+        :param scancode:
+        :param action:
+        :param mods:
+        :return:
+        """
+        self._callback_caller(window, key, scancode, action, mods, self, callback_type=glfw.set_key_callback)
+
     @classmethod
     def get_char(cls, key, mods):
         """
@@ -61,60 +122,21 @@ class DeviceController:
     """
     def __init__(self, window):
         self._window = window
-        glfw.set_cursor_pos_callback(self._window._glfw_window, self._cursor_pos_callback)
-        glfw.set_key_callback(self._window._glfw_window, self._key_callback)
-        self._callback_wrapped = {}
+
+        self._mouse = Mouse(self)
+        self._keyboard = Keyboard(self)
 
     @property
     def window(self):
         return self._window
-
-    def _callback_caller(self, *args, callback_type):
-        """
-        Wrapped callback func caller pattern
-        :param args: glfw driven callback args
-        :param callback_type: callback type indicated with glfw callback setter
-        :return:
-        """
-
-        for wrapped in self._callback_wrapped.get(callback_type):
-            wrapped._run_callback(*args)
+    @property
+    def mouse(self):
+        return self._mouse
+    @property
+    def keyboard(self):
+        return self._keyboard
 
 
-    def _cursor_pos_callback(self, window, xpos, ypos):
-        """
-        Calls all callbacks joined with 'cursor pos callback'
-        :param window:
-        :param xpos:
-        :param ypos:
-        :return:
-        """
-        self._callback_caller(window, xpos, ypos, callback_type=glfw.set_cursor_pos_callback)
-        # update last pos of cursor
-        Mouse._last_pos = xpos, ypos
-
-    def _key_callback(self, window, key, scancode, action, mods):
-        """
-        Calls all callbacks joined with 'key callback'
-        :param window:
-        :param key:
-        :param scancode:
-        :param action:
-        :param mods:
-        :return:
-        """
-        self._callback_caller(window, key, scancode, action, mods, callback_type=glfw.set_key_callback)
-
-    def _callback_setter(self, callback_func, glfw_type, wrapper):
-        wrapped_callback = wrapper(callback_func)
-        self._callback_wrapped.setdefault(glfw_type, set()).add(wrapped_callback)
-        return wrapped_callback
-
-    def set_cursor_pos_callback(self, callback_func):
-        return self._callback_setter(callback_func, glfw.set_cursor_pos_callback, CursorPosCallback)
-
-    def set_key_callback(self, callback_func):
-        return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallback)
 
 
 class _CallbackWrapper:
@@ -127,7 +149,7 @@ class _CallbackWrapper:
         self._device = device
 
     def _run_callback(self, *args):
-        self._func(*args, self._device)
+        self._func(*args)
 
 
 class _KeyboardCallbackWrapper(_CallbackWrapper):
@@ -146,13 +168,14 @@ class _MouseCallbackWrapper(_CallbackWrapper):
         super().__init__(func, Mouse)
 
 
-class CursorPosCallback(_MouseCallbackWrapper):
+class CursorPosCallbackWrapper(_MouseCallbackWrapper):
     """
     Cursor pos callback
     """
+    pass
 
 
-class KeyCallback(_KeyboardCallbackWrapper):
+class KeyCallbackWrapper(_KeyboardCallbackWrapper):
     """
     Key press callback
     """
