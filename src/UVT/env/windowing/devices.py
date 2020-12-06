@@ -1,8 +1,8 @@
 from ...hooked import *
 
 class _Device:
-    def __init__(self, controller):
-        self._controller = controller
+    def __init__(self, glfw_window):
+        self._glfw_window = glfw_window
         self._callback_wrapped = {}
 
     def _callback_setter(self, callback_func, glfw_type, wrapper):
@@ -18,19 +18,19 @@ class _Device:
         :return:
         """
 
-        for wrapped in self._callback_wrapped.get(callback_type):
+        for wrapped in self._callback_wrapped.get(callback_type, []):
             wrapped._run_callback(*args)
 
     @property
-    def controller(self):
-        return self._controller
+    def glfw_window(self):
+        return self._glfw_window
 
 
 class Mouse(_Device):
 
-    def __init__(self, controller):
-        super().__init__(controller)
-        glfw.set_cursor_pos_callback(self.controller.window._glfw_window, self._cursor_pos_callback)
+    def __init__(self, glfw_window):
+        super().__init__(glfw_window)
+        glfw.set_cursor_pos_callback(self._glfw_window, self._cursor_pos_callback)
 
         self._last_pos = 100, 100
 
@@ -51,7 +51,15 @@ class Mouse(_Device):
 
     @property
     def last_pos(self):
-        return self._last_pos
+        _, height = glfw.get_window_size(self._glfw_window)
+        x, y = self._last_pos
+        return x, height-y
+
+    @property
+    def current_pos(self):
+        _, height = glfw.get_window_size(self._glfw_window)
+        x, y = glfw.get_cursor_pos(self._glfw_window)
+        return x, height-y
 
 
 class Keyboard(_Device):
@@ -78,9 +86,9 @@ class Keyboard(_Device):
 
     _special_char = {c:s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
 
-    def __init__(self, controller):
-        super().__init__(controller)
-        glfw.set_key_callback(self.controller.window._glfw_window, self._key_callback)
+    def __init__(self, glfw_window):
+        super().__init__(glfw_window)
+        glfw.set_key_callback(glfw_window, self._key_callback)
 
     def set_key_callback(self, callback_func):
         return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallbackWrapper)
@@ -116,15 +124,15 @@ class Keyboard(_Device):
         return None
 
 
-class DeviceController:
+class DeviceManager:
     """
     Control group of devices
     """
     def __init__(self, window):
         self._window = window
 
-        self._mouse = Mouse(self)
-        self._keyboard = Keyboard(self)
+        self._mouse = Mouse(window._glfw_window)
+        self._keyboard = Keyboard(window._glfw_window)
 
     @property
     def window(self):

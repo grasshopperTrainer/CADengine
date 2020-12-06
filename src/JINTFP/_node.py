@@ -119,7 +119,7 @@ class _IntfBffr(_NodeMember):
     Contains cached value
     """
 
-    def __init__(self, name, def_val, allow_sibling, typs=()):
+    def __init__(self, name, def_val, allow_sibling, valid_types=()):
         """
         Store interface properties
         :param instance:
@@ -139,7 +139,7 @@ class _IntfBffr(_NodeMember):
         self._next_sibling_id = 1
 
         # for typechecking
-        self._typs = typs if isinstance(typs, (tuple, list)) else (typs,)
+        self._valid_types = valid_types
 
     def __repr__(self):
         return self.__str__()
@@ -185,18 +185,15 @@ class _IntfBffr(_NodeMember):
         :param value:
         :return:
         """
-        if not self._typs:  # if not given, all type accepted
+        if not self._valid_types:  # if not given, all type accepted
             return True
-        else:
+        else:   # check validated type
             v = value.r if isinstance(value, _IntfBffr) else value
-            if callable in self._typs:
-                if callable(v):
-                    return True
-                elif isinstance(v, tuple(t for t in self._typs if t != callable)):
-                    return True
-            elif isinstance(v, self._typs):
+            if None in self._valid_types and v is None:
                 return True
-            raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._typs}, not {v}")
+            elif isinstance(v, tuple(t for t in self._valid_types if isinstance(t, type))): # if type is singular
+                return True
+            raise TypeError(f"{self.__class__.__name__} interface '{self._name}' accepts {self._valid_types}, not {v}")
         # actual setting is described inside overriden method
 
     def append_sibling_intf(self, value=NullValue('sibling intf no def value')):
@@ -207,7 +204,7 @@ class _IntfBffr(_NodeMember):
         """
         # build new sibling interface
         sibling_name = f"{self._name}_{self._next_sibling_id}"
-        sibling_intf = self.__class__(sibling_name, self._def_val, allow_sibling=True, typs=self._typs)
+        sibling_intf = self.__class__(sibling_name, self._def_val, allow_sibling=True, typs=self._valid_types)
         sibling_intf._family_name = self._name
         self._next_sibling_id += 1
         # set value
@@ -217,11 +214,11 @@ class _IntfBffr(_NodeMember):
         if isinstance(self, _InputBffr):
             body = self.fm_get_child(0)
             self.fm_append_member(parent=sibling_intf, child=body)
-            body.append_descriptor(Input(self._def_val, has_siblings=False, typs=self._typs, name=sibling_name))
+            body.append_descriptor(Input(self._def_val, has_siblings=False, typs=self._valid_types, name=sibling_name))
         else:
             body = self.fm_get_parent(0)
             self.fm_append_member(parent=body, child=sibling_intf)
-            body.append_descriptor(Output(self._def_val, has_siblings=False, typs=self._typs, name=sibling_name))
+            body.append_descriptor(Output(self._def_val, has_siblings=False, typs=self._valid_types, name=sibling_name))
             print('appending output', self, body, body.fm_all_children())
             body._reset_calculated()
 

@@ -52,6 +52,7 @@ class Window(DrawBit):
         # per window init setting
         glfw.make_context_current(self._glfw_window)
         gl.glEnable(gl.GL_SCISSOR_TEST)
+        gl.glEnable(gl.GL_BLEND)
         # self._callback_handler.set_key_callback()
         glfw.make_context_current(None)
 
@@ -67,17 +68,24 @@ class Window(DrawBit):
         self._frame_to_render = None
         self._frame_count = 0
 
-        self._views = Views(self)
-        self._cameras = Cameras(self)
-        self._devices = DeviceController(self)
+        # managers
+        self._views = ViewManager(self)
+        self._cameras = CameraManager(self)
+        self._devices = DeviceManager(self)
 
+        # default camera
         self._cameras[0].body.builder.in3_aspect_ratio = self._views[0].glyph.aspect_ratio
+
+    @property
+    def glyph(self) -> Glyph_node:
+        return self._glyph
 
     @property
     def cameras(self):
         return self._cameras
+
     @property
-    def views(self):
+    def views(self) -> ViewManager:
         return self._views
 
     @property
@@ -99,8 +107,8 @@ class Window(DrawBit):
             if self._frame_count == self._frame_to_render:
                 break   # if number of drawn frame is targeted number of frame drawn
             with self._timer:   # __exit__ of timer will hold thread by time.sleep()
-                gl.glClearColor(1,1,1,1)
-                gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+                # gl.glClearColor(1,1,1,1)
+                # gl.glClear(gl.GL_COLOR_BUFFER_BIT)
                 self.draw()
                 glfw.swap_buffers(self._glfw_window)
             self._frame_count += 1

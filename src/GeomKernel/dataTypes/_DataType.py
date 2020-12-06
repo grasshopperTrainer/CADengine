@@ -29,7 +29,6 @@ class MatrixLikeData(DataType):
     Data is represented as a matrix
     """
 
-
     @property
     def shape(self):
         return self._data.shape

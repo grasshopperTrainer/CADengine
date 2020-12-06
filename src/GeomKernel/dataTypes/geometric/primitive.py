@@ -1,5 +1,5 @@
 from ._GeomDataType import *
-from ..nongeometric.complex import TrnsfMat
+from ..nongeometric.matrix import TrnsfMat
 
 import copy
 

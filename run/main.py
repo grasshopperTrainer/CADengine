@@ -4,7 +4,7 @@ import UVT.pipeline.nodes as node
 
 class W(Window):
     def __init__(self):
-        super().__init__(200, 200, 'window1')
+        super().__init__(500, 500, 'window1')
 
     def setup(self):
         print('setting up')
@@ -17,13 +17,14 @@ class W(Window):
 
     def draw(self):
         super().draw()
-        self._views
-        with self.cameras[0]:
-            a = 100
-            triangle((0,0,0), (a,0,0), (0,a,0))
-            triangle((0,0,0), (-a,0,0), (0,-a,0))
-            triangle((a,a,0), (a,0,0), (0,a,0))
-            # print(self._views[0]._glyph.posx)
+        with self.views[0] as v:
+            with self.cameras[0]:
+                pass
+                # a = 100
+                # triangle((0,0,0), (a,0,0), (0,a,0))
+                # triangle((0,0,0), (-a,0,0), (0,-a,0))
+                # triangle((a,a,0), (a,0,0), (0,a,0))
+                # # print(self._views[0]._glyph.posx)
 
 w = W()
 w.run()
