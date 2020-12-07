@@ -7,7 +7,11 @@ class Mat4(MatrixLikeData):
         if isinstance(other, Mat4):
             return Mat4(self._data.dot(other._data))
         else:
-            raise NotImplementedError
+            arr = self._data.dot(other._data)
+            try:
+                return other.__class__.from_row(arr)
+            except:
+                return Mat4(arr)
 
     def __str__(self):
         return f"<Mat4\n{self._data}>"

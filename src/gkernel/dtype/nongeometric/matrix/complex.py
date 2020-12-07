@@ -41,7 +41,7 @@ class CompoundTrnsfMat(TrnsfMat):
         self._matrices += list(matrices)
 
     @property
-    def trnsf_matrix(self):
+    def M(self):
         m = EyeMat4()
         for mat in self._matrices:
             m = mat * m
@@ -62,7 +62,7 @@ class CompoundTrnsfMat(TrnsfMat):
         return f"<Matrices of: {[m.type_nickname for m in self._matrices]}>"
 
 
-class TrnslMat(TrnsfMat):
+class MoveMat(TrnsfMat):
     """
     Translation matrix (move)
     """
@@ -87,7 +87,7 @@ class TrnslMat(TrnsfMat):
 
     @property
     def I(self):
-        return TrnslMat(-self.x, -self.y, -self.z)
+        return MoveMat(-self.x, -self.y, -self.z)
 
 
 class ScaleMat(TrnsfMat):

@@ -1,5 +1,5 @@
-from ._GeomDataType import *
-from ..nongeometric.matrix import TrnsfMat
+from gkernel.dtype.geometric._GeomDataType import *
+from gkernel.dtype.nongeometric.matrix import TrnsfMat
 
 import copy
 
@@ -24,9 +24,9 @@ class Vectorlike(GeomDataType):
         raw = self._data - other._data
         sign = raw[3, 0]
         if sign == 1:
-            return Pnt.new_from_raw(raw)
+            return Pnt.from_row(raw)
         elif sign == 0:
-            return Vec.new_from_raw(raw)
+            return Vec.from_row(raw)
         else:
             raise NotImplementedError
 
@@ -34,9 +34,9 @@ class Vectorlike(GeomDataType):
         raw = self._data + other._data
         sign = raw[3, 0]
         if sign == 1:
-            return Pnt.new_from_raw(raw)
+            return Pnt.from_row(raw)
         elif sign == 0:
-            return Vec.new_from_raw(raw)
+            return Vec.from_row(raw)
         else:
             raise NotImplementedError
 
@@ -88,10 +88,10 @@ class Vec(Vectorlike):
         return head - tail
 
     def __copy__(self):
-        return self.__class__.new_from_raw(self._data)
+        return self.__class__.from_row(self._data)
 
     def __deepcopy__(self, memodict={}):
-        return self.__class__.new_from_raw(self._data.copy())
+        return self.__class__.from_row(self._data.copy())
 
     def copy(self):
         return copy.copy(self)
@@ -135,12 +135,12 @@ class Pln(GeomDataType):
 
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]
-        v = Vec.new_from_raw(self._data[:, sign:sign+1])
+        v = Vec.from_row(self._data[:, sign:sign + 1])
         return v
 
     @property
     def origin(self):
-        return Pnt.new_from_raw(self._data[:, :1])
+        return Pnt.from_row(self._data[:, :1])
 
     @property
     def axis_x(self):
@@ -161,7 +161,7 @@ class Pln(GeomDataType):
     def __rmul__(self, other):
         print('dddd')
         if isinstance(other, TrnsfMat):
-            return self.new_from_raw(other._data.dot(self._data))
+            return self.from_row(other._data.dot(self._data))
 
 
 class Line(GeomDataType):

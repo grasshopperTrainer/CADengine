@@ -1,5 +1,5 @@
 from .window_properties import *
-from .glyph_node import Glyph_node
+from .glyphnode import GlyphNode
 from UVT.hooked import openglHooked as gl
 
 
@@ -7,7 +7,7 @@ class View(RenderTarget):
     def __init__(self, x_exp, y_exp, w_exp, h_exp, par_x, par_y, par_w, par_h, par_m, pool):
         super().__init__(pool)
 
-        self._glyph = Glyph_node(x_exp, y_exp, w_exp, h_exp, par_x, par_y, par_w, par_h, par_m)
+        self._glyph = GlyphNode(x_exp, y_exp, w_exp, h_exp, par_x, par_y, par_w, par_h, par_m)
 
     def __enter__(self):
         """
@@ -51,7 +51,7 @@ class ViewManager(RenderTargetManager):
                                      window._glyph.posy,
                                      window._glyph.width,
                                      window._glyph.height,
-                                     window._glyph.trans_matrix,
+                                     window._glyph.trnsf_matrix,
                                      self))
 
     def __getitem__(self, item) -> View:
@@ -75,5 +75,5 @@ class ViewManager(RenderTargetManager):
                                      self.window.glyph.posy,
                                      self.window.glyph.width,
                                      self.window.glyph.height,
-                                     self.window.glyph.trans_matrix,
+                                     self.window.glyph.trnsf_matrix,
                                      self))

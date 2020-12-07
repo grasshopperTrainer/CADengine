@@ -1,5 +1,6 @@
 from .window_properties import *
-from GeomKernel.dataTypes import Pln, Vec
+from gkernel.dtype.geometric.primitive import Pln, Vec
+from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat
 from .bits import *
 
 
@@ -33,6 +34,7 @@ class FpsDolly:
         # should it be at upper?
         self._keyboard = camera.manager.window.devices.keyboard.set_key_callback(self.key_callback)
         self._cursor = camera.manager.window.devices.mouse.set_cursor_pos_callback(self.cursorpos_callback)
+        self._last_cursor_pos = None
 
     def key_callback(self, window, key, scancode, action, mods, keyboard):
         # left right back forward
@@ -53,13 +55,15 @@ class FpsDolly:
 
     def cursorpos_callback(self, window, xpos, ypos, mouse):
         # cursor movement vector
-        v = Vec.pnt2(Pnt(*mouse.last_pos), Pnt(xpos, ypos))
+        v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))
         # rotate vertically
         self._camera.tripod.pitch(-v.y * self.view_speed)
         # rotate horizontally around world z axis
         p = self._camera.tripod.in0_plane.r
-        new_plane = TrnslMat(*p.origin.xyz) * RotZMat(v.x * -self.view_speed) * TrnslMat(*-p.origin.xyz) * p
+        new_plane = MoveMat(*p.origin.xyz) * RotZMat(v.x * -self.view_speed) * MoveMat(*-p.origin.xyz) * p
         self._camera.tripod.in0_plane = new_plane
+
+        self._last_cursor_pos = xpos, ypos
 
 
 class Camera(RenderTarget):

@@ -1,8 +1,8 @@
 from JINTFP import *
 import numpy as np
-from GeomKernel.dataTypes.nongeometric.matrix import *
+from gkernel.dtype.nongeometric.matrix import *
 
-class Glyph_node(NodeBody):
+class GlyphNode(NodeBody):
     posx_exp = Input(typs=(int, float, callable))
     posy_exp = Input(typs=(int, float, callable))
     width_exp = Input(typs=(int, float, callable))
@@ -21,7 +21,7 @@ class Glyph_node(NodeBody):
     height = Output()
 
     aspect_ratio = Output()
-    trans_matrix = Output()
+    trnsf_matrix = Output()
 
     def calculate(self, xe, ye, we, he, x, y, w, h, pt):
         results = []
@@ -33,7 +33,7 @@ class Glyph_node(NodeBody):
             # results.append()
             results.append(pt)
         else:
-            translate_m = TrnslMat(results[0]-x, results[1]-y, 0)
+            translate_m = MoveMat(results[0] - x, results[1] - y, 0)
             scale_m = ScaleMat(results[2]/w, results[3]/h)
             matrix = pt.copy()
             matrix.append_all(scale_m, translate_m)
@@ -53,3 +53,7 @@ class Glyph_node(NodeBody):
                 return 0
             else:
                 return int(exp(parent_v))
+
+    @property
+    def size(self):
+        return self.width.r, self.height.r

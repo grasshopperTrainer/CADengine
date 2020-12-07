@@ -1,4 +1,4 @@
-from ..dataTypes import *
+from ..dtype import *
 from JINTFP import *
 
 class GeomKernelNode(NodeBody):

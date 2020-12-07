@@ -1,8 +1,11 @@
 from ...hooked import *
+from gkernel.dtype.geometric.primitive import Pnt
+from gkernel.dtype.nongeometric.matrix import ScaleMat
+
 
 class _Device:
-    def __init__(self, glfw_window):
-        self._glfw_window = glfw_window
+    def __init__(self, manager):
+        self._manager = manager
         self._callback_wrapped = {}
 
     def _callback_setter(self, callback_func, glfw_type, wrapper):
@@ -21,18 +24,12 @@ class _Device:
         for wrapped in self._callback_wrapped.get(callback_type, []):
             wrapped._run_callback(*args)
 
-    @property
-    def glfw_window(self):
-        return self._glfw_window
-
 
 class Mouse(_Device):
 
-    def __init__(self, glfw_window):
-        super().__init__(glfw_window)
-        glfw.set_cursor_pos_callback(self._glfw_window, self._cursor_pos_callback)
-
-        self._last_pos = 100, 100
+    def __init__(self, manager):
+        super().__init__(manager)
+        glfw.set_cursor_pos_callback(self._manager._window._glfw_window, self._cursor_pos_callback)
 
     def _cursor_pos_callback(self, window, xpos, ypos):
         """
@@ -43,22 +40,34 @@ class Mouse(_Device):
         :return:
         """
         self._callback_caller(window, xpos, ypos, self, callback_type=glfw.set_cursor_pos_callback)
-        # update last pos of cursor
-        self._last_pos = xpos, ypos
 
     def set_cursor_pos_callback(self, callback_func):
         return self._callback_setter(callback_func, glfw.set_cursor_pos_callback, CursorPosCallbackWrapper)
 
-    @property
-    def last_pos(self):
-        _, height = glfw.get_window_size(self._glfw_window)
-        x, y = self._last_pos
-        return x, height-y
+    def in_view(self, view, normalize=True):
+        """
+        Returns cursor position in view coordinate system
+        :param view:
+        :return:
+        """
+        transform_matrix = view.glyph.trnsf_matrix.r.I.M
+        w, h = self._manager._window.glyph.size
+        unitize_matrix = ScaleMat(1/w, 1/h)
+        pos = unitize_matrix*transform_matrix*Pnt(*self.current_pos)
+        if not normalize:
+            w, h = view.glyph.size
+            view_scale_matrix = ScaleMat(w, h)
+            pos = view_scale_matrix*pos
+        return pos.x, pos.y
 
     @property
     def current_pos(self):
-        _, height = glfw.get_window_size(self._glfw_window)
-        x, y = glfw.get_cursor_pos(self._glfw_window)
+        """
+        Ask glfw current cursor pos and return
+        :return:
+        """
+        _, height = glfw.get_window_size(self._manager._window._glfw_window)
+        x, y = glfw.get_cursor_pos(self._manager._window._glfw_window)
         return x, height-y
 
 
@@ -86,9 +95,9 @@ class Keyboard(_Device):
 
     _special_char = {c:s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
 
-    def __init__(self, glfw_window):
-        super().__init__(glfw_window)
-        glfw.set_key_callback(glfw_window, self._key_callback)
+    def __init__(self, manager):
+        super().__init__(manager)
+        glfw.set_key_callback(self._manager._window._glfw_window, self._key_callback)
 
     def set_key_callback(self, callback_func):
         return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallbackWrapper)
@@ -131,12 +140,9 @@ class DeviceManager:
     def __init__(self, window):
         self._window = window
 
-        self._mouse = Mouse(window._glfw_window)
-        self._keyboard = Keyboard(window._glfw_window)
+        self._mouse = Mouse(self)
+        self._keyboard = Keyboard(self)
 
-    @property
-    def window(self):
-        return self._window
     @property
     def mouse(self):
         return self._mouse

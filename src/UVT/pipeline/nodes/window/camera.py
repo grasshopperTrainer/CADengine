@@ -1,5 +1,5 @@
 from JINTFP import *
-from GeomKernel.dataTypes import *
+from gkernel.dtype import *
 from my_patterns import Singleton
 
 

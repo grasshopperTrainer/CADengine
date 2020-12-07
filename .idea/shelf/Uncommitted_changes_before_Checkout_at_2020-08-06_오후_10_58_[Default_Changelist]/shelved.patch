@@ -1,0 +1,262 @@
+Index: src/UVT/env/draw_bit.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from my_patterns import FamilyMember\r\n\r\n\r\nclass DrawBit(FamilyMember):\r\n    \"\"\"\r\n    has draw call?\r\n    \"\"\"\r\n\r\n    def draw(self):\r\n        \"\"\"\r\n        Placeholder for chained draw call\r\n        :return:\r\n        \"\"\"\r\n        if hasattr(self, 'setup') and callable(getattr(self, 'setup')):\r\n            getattr(self, 'setup')()\r\n            for cls in self.__class__.__mro__:\r\n                if 'setup' in cls.__dict__:\r\n                    delattr(cls, 'setup')\r\n                    break\r\n\r\n        # call draw method of children\r\n        for c in self.fm_all_children():\r\n            if isinstance(c, DrawBit):\r\n                c.draw()\r\n\r\n    def setup(self):\r\n        \"\"\"\r\n        Instant functions called once\r\n        :return:\r\n        \"\"\"\r\n        print('setup', self)\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/UVT/env/draw_bit.py	(revision 6c1535072f27947902cd058bba498a8a500ad872)
++++ src/UVT/env/windowing/bits.py	(date 1596720496950)
+@@ -1,7 +1,12 @@
+ from my_patterns import FamilyMember
++from UVT.hooked import glfw
++
+ 
++class _Bit(FamilyMember):
++    pass
+ 
+-class DrawBit(FamilyMember):
++
++class DrawBit(_Bit):
+     """
+     has draw call?
+     """
+@@ -29,3 +34,28 @@
+         :return:
+         """
+         print('setup', self)
++
++class CallbackMaster(_Bit):
++    pass
++
++class CallbackBit(_Bit):
++
++    def __init__(self, parent_bit):
++        super().__init__()
++        if not isinstance(parent_bit, (self.__class__, CallbackMaster)):
++            raise TypeError
++        self.fm_append_member(parent_bit, self)
++
++class KeyCallbackBit(CallbackBit):
++
++    _callback_signature = glfw.set_key_callback
++
++    def callback(self, *args):
++        for child in self.fm_all_children():
++            if isinstance(child, KeyCallbackBit):
++                child.callback(*args)
++
++
++
++
++
+Index: run/main.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from UVT import Window, gl\r\nfrom doodler import *\r\nimport UVT.pipeline.nodes as node\r\n\r\nclass W(Window):\r\n    def __init__(self):\r\n        super().__init__(500, 250, 'window1')\r\n\r\n    def setup(self):\r\n        print('setting up')\r\n        self._inited = False\r\n        self.framerate = 4\r\n        self.count = 0\r\n        self.cameras[0].tripod.lookat((100,-300,100), (0,0,0),(0,0,1))\r\n\r\n    def draw(self):\r\n        super().draw()\r\n\r\n        with self.cameras[0]:\r\n            a = 100\r\n            triangle((0,0,0), (a,0,0), (0,a,0))\r\n            triangle((0,0,0), (-a,0,0), (0,-a,0))\r\n            triangle((a,a,0), (a,0,0), (0,a,0))\r\n\r\nw = W()\r\nw.run()\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- run/main.py	(revision 6c1535072f27947902cd058bba498a8a500ad872)
++++ run/main.py	(date 1596717068108)
+@@ -12,6 +12,7 @@
+         self.framerate = 4
+         self.count = 0
+         self.cameras[0].tripod.lookat((100,-300,100), (0,0,0),(0,0,1))
++        self.cameras.set_fps_dolly(self.cameras[0])
+ 
+     def draw(self):
+         super().draw()
+Index: src/UVT/env/windowing/__init__.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from .views import *\r\nfrom .cameras import *
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/UVT/env/windowing/__init__.py	(revision 6c1535072f27947902cd058bba498a8a500ad872)
++++ src/UVT/env/windowing/__init__.py	(date 1596707812000)
+@@ -1,2 +1,3 @@
+ from .views import *
+-from .cameras import *
+\ No newline at end of file
++from .cameras import *
++from .callback_handler import *
+\ No newline at end of file
+Index: src/UVT/env/windows.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import threading\r\nimport time\r\nfrom .context import ContextManager\r\nfrom .windowing import *\r\nfrom my_patterns import SingletonClass\r\nfrom .draw_bit import DrawBit\r\n\r\nfrom ..hooked import openglHooked as gl\r\nfrom ..hooked import glfwHooked as glfw\r\n\r\n\r\nclass Timer:\r\n    \"\"\"\r\n    Time recorder for maintaining given fps\r\n    \"\"\"\r\n    def __init__(self, target_fps):\r\n        self._marked_time = 0\r\n        self._tfps = target_fps     # target frame per second\r\n        self._dtpf = 1 / target_fps # delay time per frame\r\n\r\n    def __enter__(self):\r\n        self._marked_time = time.time()\r\n\r\n    def __exit__(self, exc_type, exc_val, exc_tb):\r\n        loop_duration = time.time() - self._marked_time\r\n        wait = self._dtpf - loop_duration\r\n        if wait >= 0:\r\n            time.sleep(wait)\r\n    @property\r\n    def tfps(self):\r\n        return self._tfps\r\n    @tfps.setter\r\n    def tfps(self, v):\r\n        self._tfps = v\r\n        self._dtpf = 1 / self._tfps\r\n\r\n\r\nclass Window(Glyph, DrawBit):\r\n    \"\"\"\r\n    Class for baking exact instance that's on screen\r\n\r\n    \"\"\"\r\n    def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):\r\n        Windows.reg_window(self)\r\n\r\n        self._context_manager = ContextManager(**kwargs)\r\n        if isinstance(shared, Window):\r\n            shared = shared._glfw_window\r\n        self._glfw_window = glfw.create_window(width, height, name, monitor, shared)\r\n        self._context_manager.log_glfw('create_window')\r\n\r\n        self._per_window_init_setting()\r\n\r\n\r\n        # make view object\r\n        super().__init__(width, height, None, None)\r\n\r\n        glfw.set_window_close_callback(self._glfw_window, self._close_window)\r\n\r\n        self._render_thread = threading.Thread(target=self._run)\r\n        self._pipelines = []\r\n\r\n        self._frame_rate = 30\r\n        self._timer = Timer(self._frame_rate)\r\n        self._frame_to_render = None\r\n        self._frame_count = 0\r\n\r\n        self._views = Views(self)\r\n        self._cameras = Cameras(self)\r\n\r\n        self._cameras[0].body.builder.in3_ratio = self._views[0].aspect_ratio\r\n\r\n    def _per_window_init_setting(self):\r\n        \"\"\"\r\n        Initial settings per window(context)\r\n        :return:\r\n        \"\"\"\r\n        glfw.make_context_current(self._glfw_window)\r\n\r\n        gl.glEnable(gl.GL_SCISSOR_TEST)\r\n\r\n        glfw.make_context_current(None)\r\n\r\n    @property\r\n    def cameras(self):\r\n        return self._cameras\r\n\r\n    def append_pipeline(self, pipeline):\r\n        self._pipelines.append(pipeline)\r\n\r\n    def _run(self):\r\n        \"\"\"\r\n        Rendering thread incuding operations per-frame\r\n        :return:\r\n        \"\"\"\r\n        # bind and as this is a rendering happends in dedicated thread no need to unbind\r\n        glfw.make_context_current(self._glfw_window)\r\n\r\n        while not glfw.window_should_close(self._glfw_window):\r\n            if self._frame_count == self._frame_to_render:\r\n                break   # if number of drawn frame is targeted number of frame drawn\r\n\r\n            with self._timer:   # __exit__ of timer will hold thread by time.sleep()\r\n                self.draw()\r\n                glfw.swap_buffers(self._glfw_window)\r\n            self._frame_count += 1\r\n\r\n\r\n    def _close_window(self, window):\r\n        # if not joined, glfw function can be called where there is no glfw context\r\n        # anymore. Downside of joining is that window destruction will only occur\r\n        # when draw waiting is over - meaning destruction only takes place after a frame\r\n        # this can cause 'noticable stall' when fps is very low\r\n        self._render_thread.join()\r\n        Windows.dereg_window(self)\r\n        glfw.destroy_window(window)\r\n\r\n    def __enter__(self):\r\n        # syntax for recording basic rendering\r\n        # TODO: make batch rendering. Currently direct drawing\r\n        glfw.make_context_current(self._glfw_window)   # set context to draw things\r\n        return self\r\n\r\n    def __exit__(self, exc_type, exc_val, exc_tb):\r\n        # glfw.make_context_current(None)\r\n        # exit rendering recording\r\n        pass\r\n\r\n    def set_frame_to_render(self, v):\r\n        self._frame_to_render = v\r\n\r\n    @property\r\n    def is_current(self):\r\n        return self == Windows().get_current()\r\n\r\n    @property\r\n    def current_window(self):\r\n        return Windows().get_current()\r\n\r\n\r\n    # @property\r\n    # def render(self):\r\n    #     return self._render_registry._register\r\n\r\n    def run(self, frame_count=None):\r\n        Windows().run(frame_count)\r\n\r\n    @property\r\n    def framerate(self):\r\n        return self._frame_rate\r\n    @framerate.setter\r\n    def framerate(self, v):\r\n        self._frame_rate = v\r\n        self._timer.tfps = v\r\n\r\n\r\nclass Windows(SingletonClass):\r\n    \"\"\"\r\n    Class for organizing multiple window insatnces.\r\n\r\n    This includes control over main rendering loop\r\n    and some global operation among window instances like creating a new window.\r\n    \"\"\"\r\n    _windows = []\r\n    _timer = Timer(60)\r\n\r\n    @classmethod\r\n    def reg_window(cls, window):\r\n        \"\"\"\r\n        Register window object\r\n        :param window:\r\n        :return:\r\n        \"\"\"\r\n        if not isinstance(window, Window):\r\n            raise TypeError\r\n        cls._windows.append(window)\r\n\r\n    @classmethod\r\n    def dereg_window(cls, window):\r\n        \"\"\"\r\n        Exclude window object from list\r\n\r\n        Make main thread loose track of window object\r\n        :param window:\r\n        :return:\r\n        \"\"\"\r\n        cls._windows.remove(window)\r\n\r\n    @classmethod\r\n    def run(cls, frame_count=None):\r\n\r\n        \"\"\"\r\n        Main loop for operating, drawing a windows\r\n        :return:\r\n        \"\"\"\r\n        # to insist window drawing only after this function is called\r\n        # thread start is moved from Window().__init__ to here\r\n\r\n        for window in cls._windows:\r\n            window.set_frame_to_render(frame_count)\r\n            window._render_thread.start()\r\n        # main thread. all function calls that has to work in full speed should be here\r\n        while cls._windows:\r\n            with cls._timer:\r\n                glfw.poll_events()\r\n        glfw.terminate() # no window alive means end of opengl functionality\r\n\r\n    @classmethod\r\n    def get_current(cls) -> Window:\r\n        # find bound window from window list\r\n        current_context = glfw.get_current_context()\r\n        try:\r\n            current_context.contents\r\n        except:\r\n            # when 'ValueError : NULL pointer access'\r\n            return None\r\n            raise Exception('No context is current')\r\n\r\n        # find window\r\n        for window in cls._windows:\r\n            if window._glfw_window.contents.__reduce__() == current_context.contents.__reduce__():\r\n                return window\r\n        raise Exception(\"Window untrackable\")\r\n\r\n\r\nif __name__ == '__main__':\r\n    window1 = Windows.new_window(400, 400, 'main window')\r\n    window2 = Windows.new_window(500, 500, 'second')\r\n    Windows.run()\r\n    # glfw.create_window(100,100,'1',None,None)/
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/UVT/env/windows.py	(revision 6c1535072f27947902cd058bba498a8a500ad872)
++++ src/UVT/env/windows.py	(date 1596720962747)
+@@ -3,10 +3,9 @@
+ from .context import ContextManager
+ from .windowing import *
+ from my_patterns import SingletonClass
+-from .draw_bit import DrawBit
++from UVT.env.windowing.bits import DrawBit, CallbackMaster
+ 
+-from ..hooked import openglHooked as gl
+-from ..hooked import glfwHooked as glfw
++from ..hooked import *
+ 
+ 
+ class Timer:
+@@ -35,21 +34,27 @@
+         self._dtpf = 1 / self._tfps
+ 
+ 
+-class Window(Glyph, DrawBit):
++class Window(CallbackMaster, Glyph, DrawBit):
+     """
+     Class for baking exact instance that's on screen
+ 
+     """
+     def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):
++        super().__init__()
++        Windows.init_glfw()
+         Windows.reg_window(self)
+ 
+-        self._context_manager = ContextManager(**kwargs)
++        self._context_manager = ContextManager()
+         if isinstance(shared, Window):
+             shared = shared._glfw_window
+         self._glfw_window = glfw.create_window(width, height, name, monitor, shared)
+-        self._context_manager.log_glfw('create_window')
+ 
+-        self._per_window_init_setting()
++        # per window init setting
++        glfw.make_context_current(self._glfw_window)
++        gl.glEnable(gl.GL_SCISSOR_TEST)
++        self._callback_handler = CallbackManager(self)
++        self._callback_handler.set_key_callback()
++        glfw.make_context_current(None)
+ 
+ 
+         # make view object
+@@ -70,16 +75,6 @@
+ 
+         self._cameras[0].body.builder.in3_ratio = self._views[0].aspect_ratio
+ 
+-    def _per_window_init_setting(self):
+-        """
+-        Initial settings per window(context)
+-        :return:
+-        """
+-        glfw.make_context_current(self._glfw_window)
+-
+-        gl.glEnable(gl.GL_SCISSOR_TEST)
+-
+-        glfw.make_context_current(None)
+ 
+     @property
+     def cameras(self):
+@@ -153,6 +148,13 @@
+         self._frame_rate = v
+         self._timer.tfps = v
+ 
++    def key_callback(self, window, key, scancode, action, mods):
++        print(key, scancode, action, mods)
++    def char_callback(self, window, codepoint):
++        print('char callback', codepoint)
++    def char_mods_callback(self, window, codepoint, mods):
++        print('char mods callback', codepoint, mods)
++
+ 
+ class Windows(SingletonClass):
+     """
+@@ -163,6 +165,13 @@
+     """
+     _windows = []
+     _timer = Timer(60)
++    _is_glfw_inited = False
++
++    @classmethod
++    def init_glfw(cls):
++        if not cls._is_glfw_inited:
++            glfw.init()
++            cls._is_glfw_inited = True
+ 
+     @classmethod
+     def reg_window(cls, window):
+Index: src/UVT/env/windowing/callback_handler.py
+===================================================================
+--- src/UVT/env/windowing/callback_handler.py	(date 1596722295333)
++++ src/UVT/env/windowing/callback_handler.py	(date 1596722295333)
+@@ -0,0 +1,36 @@
++from UVT.hooked import glfwHooked as glfw
++from UVT.env.windowing.bits import CallbackBit, KeyCallbackBit
++from my_patterns import FamilyMember
++
++
++class CallbackManager(FamilyMember):
++
++    def __init__(self, window):
++        super().__init__()
++        self.fm_append_member(window, self)
++        self._callbacks = {}
++
++    def set_key_callback(self):
++        new_callback = Callback(self, KeyCallbackBit)
++        glfw.set_key_callback(self.fm_get_parent(0)._glfw_window, new_callback.callback)
++        self._callbacks['key_callback'] = new_callback
++
++
++class Callback(FamilyMember):
++    def __init__(self, handler, callback_bit):
++        super().__init__()
++        self.fm_append_member(handler, self)
++        self._callbackBit = callback_bit
++        self._push_flag = True
++
++    def callback(self, *args):
++        if self._push_flag:
++            for child in self.fm_get_ancestor(2, 0).fm_all_children():
++                if isinstance(child, self._callbackBit):
++                    child.callback(*args)
++
++    def enable(self):
++        self._push_flag = True
++
++    def disable(self):
++        self._push_flag = False
+\ No newline at end of file
+Index: .idea/pyopengl2.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<module type=\"PYTHON_MODULE\" version=\"4\">\r\n  <component name=\"NewModuleRootManager\">\r\n    <content url=\"file://$MODULE_DIR$\">\r\n      <sourceFolder url=\"file://$MODULE_DIR$/src\" isTestSource=\"false\" />\r\n      <sourceFolder url=\"file://$MODULE_DIR$/src/UVT/opengl\" isTestSource=\"false\" />\r\n      <excludeFolder url=\"file://$MODULE_DIR$/venv\" />\r\n    </content>\r\n    <orderEntry type=\"jdk\" jdkName=\"Python 3.8 (pyopengl2)\" jdkType=\"Python SDK\" />\r\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\r\n  </component>\r\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/pyopengl2.iml	(revision 6c1535072f27947902cd058bba498a8a500ad872)
++++ .idea/pyopengl2.iml	(date 1596715035237)
+@@ -3,8 +3,6 @@
+   <component name="NewModuleRootManager">
+     <content url="file://$MODULE_DIR$">
+       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/UVT/opengl" isTestSource="false" />
+-      <excludeFolder url="file://$MODULE_DIR$/venv" />
+     </content>
+     <orderEntry type="jdk" jdkName="Python 3.8 (pyopengl2)" jdkType="Python SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
+Index: src/UVT/__init__.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>\"\"\"\r\nUniversal Visualization Tool(working title)\r\n\"\"\"\r\n\r\nfrom .env.windows import Window\r\nfrom .env.draw_bit import DrawBit\r\nfrom .hooked import openglHooked as gl\r\nfrom .hooked import glfwHooked as glfw\r\n#\r\n# class Window(Windows):\r\n#     \"\"\"\r\n#     Front face of 'windowing' class.\r\n#     \"\"\"\r\n#     pass\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/UVT/__init__.py	(revision 6c1535072f27947902cd058bba498a8a500ad872)
++++ src/UVT/__init__.py	(date 1596692015000)
+@@ -3,7 +3,7 @@
+ """
+ 
+ from .env.windows import Window
+-from .env.draw_bit import DrawBit
++from UVT.env.windowing.bits import DrawBit
+ from .hooked import openglHooked as gl
+ from .hooked import glfwHooked as glfw
+ #
