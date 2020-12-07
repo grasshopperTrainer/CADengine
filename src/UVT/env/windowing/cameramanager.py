@@ -1,5 +1,5 @@
 from .window_properties import *
-from gkernel.dtype.geometric.primitive import Pln, Vec
+from gkernel.dtype.geometric.primitive import Pln, Vec, Pnt
 from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat
 from .bits import *
 
@@ -54,14 +54,24 @@ class FpsDolly:
             self._camera.tripod.move(Vec(0, 0, self.move_speed))
 
     def cursorpos_callback(self, window, xpos, ypos, mouse):
-        # cursor movement vector
-        v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))
-        # rotate vertically
-        self._camera.tripod.pitch(-v.y * self.view_speed)
-        # rotate horizontally around world z axis
-        p = self._camera.tripod.in0_plane.r
-        new_plane = MoveMat(*p.origin.xyz) * RotZMat(v.x * -self.view_speed) * MoveMat(*-p.origin.xyz) * p
-        self._camera.tripod.in0_plane = new_plane
+        """
+        move camera frustum with cursor move
+        :param window:
+        :param xpos:
+        :param ypos:
+        :param mouse:
+        :return:
+        """
+        if self._last_cursor_pos is not None:
+            # cursor movement vector
+            v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))
+            # rotate vertically
+            self._camera.tripod.pitch(-v.y * self.view_speed)
+            # rotate horizontally around world z axis
+            p = self._camera.tripod.in0_plane.r
+            ox, oy, oz = p.origin.xyz
+            new_plane = MoveMat(ox, oy, oz) * RotZMat(v.x * -self.view_speed) * MoveMat(-ox, -oy, -oz) * p
+            self._camera.tripod.in0_plane = new_plane
 
         self._last_cursor_pos = xpos, ypos
 

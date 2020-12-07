@@ -1,5 +1,6 @@
 from JINTFP import *
-from gkernel.dtype import *
+from gkernel.dtype.nongeometric.matrix import MoveMat
+from gkernel.dtype.geometric.primitive import Pln, Vec
 from my_patterns import Singleton
 
 
@@ -182,13 +183,12 @@ class CameraTripod(CameraNode):
         :return:
         """
         eye, xaxis, yaxis, zaxis = pln.components
-
         # calculate view_mat
         matrix = np.eye(4)
         matrix[0, :3] = xaxis._data.flatten()[:3]
         matrix[1, :3] = yaxis._data.flatten()[:3]
         matrix[2, :3] = zaxis._data.flatten()[:3]
-        matrix[:3, 3] = -xaxis * eye, -yaxis * eye, -zaxis * eye
+        matrix[:3, 3] = -xaxis.dot(eye), -yaxis.dot(eye), -zaxis.dot(eye)
         return matrix
 
     def lookat(self, eye, at, up):
@@ -200,9 +200,9 @@ class CameraTripod(CameraNode):
             raise NotImplementedError
         # calculate plane
         zaxis = at - eye
-        zaxis = zaxis / np.linalg.norm(zaxis)
+        zaxis = zaxis / zaxis.length
         xaxis = zaxis.cross(up)
-        xaxis = xaxis / np.linalg.norm(xaxis)
+        xaxis = xaxis / xaxis.length
         yaxis = xaxis.cross(zaxis)
         zaxis *= -1
         self.in0_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
@@ -240,7 +240,7 @@ class CameraTripod(CameraNode):
         Move camera using vector
         :return:
         """
-        tm = TrnslMat(*vec.xyz)
+        tm = MoveMat(*vec.xyz)
         self.in0_plane = tm*self.in0_plane.r
 
     def move_along_axis(self, axis, magnitude):
@@ -251,7 +251,7 @@ class CameraTripod(CameraNode):
         """
         axis = self.in0_plane.r.components[{'x':1, 'y':2, 'z':3}[axis]]
         axis.amplify(magnitude)
-        tm = TrnslMat(*axis.xyz)
+        tm = MoveMat(*axis.xyz)
         self.in0_plane = tm*self.in0_plane.r
 
     def orient(self, pos):

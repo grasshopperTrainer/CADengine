@@ -25,37 +25,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="pyopengl2-19 mapping cursor pos into view coordinate system&#10;&#10;build algorithm, need factoring">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-06__10_58__Default_Changelist_.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-06_오후_10_58_[Default_Changelist]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-17__1_35__Default_Changelist_.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-17_오후_1_35_[Default_Changelist]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/gkernel/dtype/_DataType.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/_GeomDataType.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-06__10_58__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-06__10_58__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-17__1_35__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-17__1_35__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/view/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/view/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/_DataType.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/geometric/_GeomDataType.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/geometric/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/geometric/complex.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/complex.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/geometric/primitive.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive/primitive.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/nongeometric/_NoneGeomDataType.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/_NoneGeomDataType.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/nongeometric/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/nongeometric/matrix/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/nongeometric/matrix/basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/basic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/dataTypes/nongeometric/matrix/complex.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/complex.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/nodes/_GeomKernelNode.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/nodes/_GeomKernelNode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GeomKernel/nodes/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/nodes/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/UVT/env/windowing/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/UVT/env/windowing/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/JINTFP/_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/JINTFP/_node.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/UVT/env/windowing/cameramanager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/UVT/env/windowing/cameramanager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/UVT/env/windowing/devices.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/UVT/env/windowing/devices.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/UVT/env/windowing/glyph_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/UVT/env/windowing/glyphnode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/UVT/env/windowing/viewmanager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/UVT/env/windowing/viewmanager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/UVT/env/windows.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/UVT/env/windows.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/UVT/pipeline/nodes/window/camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/UVT/pipeline/nodes/window/camera.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/_DataType.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/_DataType.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/geometric/_GeomDataType.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/_GeomDataType.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/geometric/complex.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/complex.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive/primitive.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive/primitive.py" afterDir="false" />
     </list>
     <list id="244346dc-c4b7-4080-9029-2152216f4b46" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />

@@ -139,7 +139,7 @@ class _IntfBffr(_NodeMember):
         self._next_sibling_id = 1
 
         # for typechecking
-        self._valid_types = valid_types
+        self._valid_types = tuple(valid_types) if isinstance(valid_types, (tuple, list)) else (valid_types,)
 
     def __repr__(self):
         return self.__str__()
@@ -204,7 +204,7 @@ class _IntfBffr(_NodeMember):
         """
         # build new sibling interface
         sibling_name = f"{self._name}_{self._next_sibling_id}"
-        sibling_intf = self.__class__(sibling_name, self._def_val, allow_sibling=True, typs=self._valid_types)
+        sibling_intf = self.__class__(sibling_name, self._def_val, allow_sibling=True, valid_types=self._valid_types)
         sibling_intf._family_name = self._name
         self._next_sibling_id += 1
         # set value

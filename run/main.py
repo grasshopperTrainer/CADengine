@@ -20,11 +20,11 @@ class W(Window):
         with self.views[0] as v:
             with self.cameras[0]:
                 pass
-                # a = 100
-                # triangle((0,0,0), (a,0,0), (0,a,0))
-                # triangle((0,0,0), (-a,0,0), (0,-a,0))
-                # triangle((a,a,0), (a,0,0), (0,a,0))
-                # # print(self._views[0]._glyph.posx)
+                a = 100
+                triangle((0,0,0), (a,0,0), (0,a,0))
+                triangle((0,0,0), (-a,0,0), (0,-a,0))
+                triangle((a,a,0), (a,0,0), (0,a,0))
+                # print(self._views[0]._glyph.posx)
 
 w = W()
 w.run()
