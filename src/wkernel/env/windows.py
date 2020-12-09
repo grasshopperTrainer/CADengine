@@ -3,7 +3,7 @@ import time
 from .context import ContextManager
 from .windowing import *
 from my_patterns import Singleton
-from UVT.env.windowing.bits import DrawBit
+from wkernel.env.windowing.bits import DrawBit
 
 from ..hooked import *
 

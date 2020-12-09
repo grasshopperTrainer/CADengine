@@ -97,11 +97,11 @@ class Camera(RenderTarget):
         self._dolly = dolly
 
     @property
-    def body(self):
+    def body(self) -> CameraBody:
         return self._body
 
     @property
-    def tripod(self):
+    def tripod(self) -> CameraTripod:
         return self._tripod
 
     @property
@@ -110,6 +110,7 @@ class Camera(RenderTarget):
 
     def __enter__(self):
         CameraCurrentStack().append(self)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         CameraCurrentStack().pop()

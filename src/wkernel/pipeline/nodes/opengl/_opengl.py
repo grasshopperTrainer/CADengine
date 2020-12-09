@@ -1,5 +1,5 @@
 from JINTFP import *
-from UVT.hooked import *
+from wkernel.hooked import *
 from ...data_types import *
 
 

@@ -404,7 +404,7 @@ class Input(IntfDescriptor):
 
     def __set__(self, instance, value):
         """
-        Handles assigning python primitive to InterfaceValueContainer
+        Handles assigning python dd to InterfaceValueContainer
 
         :param instance:
         :param value:

@@ -126,6 +126,9 @@ class PrspFrustum(_FrustumShape):
 
 
 class CameraBody(CameraNode):
+    """
+    Defines viewing shape.
+    """
     out0_left = Output()
     out1_right = Output()
     out2_bottom = Output()
@@ -164,7 +167,7 @@ class CameraTripod(CameraNode):
     """
     Camera property defining camera orientaiton;
 
-    including camera position and camera direction combined in camera_plane
+    including camera position and camera direction combined within camera_plane
     """
     in0_plane = Input(def_val=Pln())
 
@@ -263,7 +266,7 @@ class CameraTripod(CameraNode):
 
     @property
     def plane(self):
-        return self._plane
+        return self.out0_plane
 
 @Singleton
 class GetCurrentCamera(CameraNode):

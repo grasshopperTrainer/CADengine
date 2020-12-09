@@ -44,7 +44,7 @@ class Mouse(_Device):
     def set_cursor_pos_callback(self, callback_func):
         return self._callback_setter(callback_func, glfw.set_cursor_pos_callback, CursorPosCallbackWrapper)
 
-    def in_view(self, view, normalize=True):
+    def cursor_in_view(self, view, normalize=True):
         """
         Returns cursor position in view coordinate system
         :param view:
@@ -59,6 +59,19 @@ class Mouse(_Device):
             view_scale_matrix = ScaleMat(w, h)
             pos = view_scale_matrix*pos
         return pos.x, pos.y
+
+    def intersect_model(self, view, camera, model):
+        px, py = self.cursor_in_view(view)
+        pln = camera.tripod.out0_plane.r
+        ori = pln.origin
+        # 1. convert parameter value into point in space using VM, PM
+        #    to create intersection point on near frustum(A)
+        # 2. create ray(R) combining using origin(B) and vector from B to A
+        # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
+
+        print(ori)
+        exit()
+        raise NotImplementedError
 
     @property
     def current_pos(self):

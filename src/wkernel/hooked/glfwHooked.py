@@ -11,7 +11,7 @@ def _hook(obj):
     def wrapper(*args, **kwargs):
         # lazy import
         if not _windows:
-            _windows.append(getattr(importlib.import_module('UVT.env.windows'), 'Windows'))
+            _windows.append(getattr(importlib.import_module('wkernel.env.windows'), 'Windows'))
         if _windows[0]().get_current() is None:
             pass
         else:

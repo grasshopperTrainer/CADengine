@@ -159,10 +159,6 @@ class Pln(MatrixLikeData):
         arr = np.vstack([arr, (1, 0, 0, 0)])
         super().__init__(arr)
 
-    @property
-    def origin(self):
-        return Pnt(*self._data[:, 0].flatten()[:3])
-
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]
         v = Vec.from_row(self._data[:, sign:sign + 1])
@@ -195,6 +191,71 @@ class Pln(MatrixLikeData):
 
     def __str__(self):
         return f"<Pln : {[round(n, 3) for n in self._data[:3, 0]]}>"
+
+
+class Tgl(MatrixLikeData):
+    """
+    Tgl for 'triangle
+    """
+
+    def __init__(self, v0=(0, 0, 0), v1=(10, 0, 0), v2=(0, 10, 0)):
+        """
+        described by three vertices
+        :param v0:
+        :param v1:
+        :param v2:
+        """
+        arr = np.array([[v0[0], v1[0], v2[0]],
+                        [v0[1], v1[1], v2[1]],
+                        [v0[2], v1[2], v2[2]],
+                        [1, 1, 1]])
+        super().__init__(arr)
+
+    @property
+    def v0(self):
+        """
+        vertex 0
+        :return:
+        """
+        return Pnt.from_row(np.reshape(self._data[:4, 0], [4,1]))
+
+    @property
+    def v1(self):
+        """
+        vertex 1
+        :return:
+        """
+        return Pnt.from_row(np.reshape(self._data[:4, 1], [4, 1]))
+
+    @property
+    def v2(self):
+        """
+        vertex 2
+        :return:
+        """
+        return Pnt.from_row(np.reshape(self._data[:4, 2], [4, 1]))
+
+    @property
+    def vertices(self):
+        return self.v0, self.v1, self.v2
+
+    @property
+    def centroid(self):
+        """
+        average of vertices
+        :return:
+        """
+        return Pnt.from_row(np.dot(self._data, [[1], [1], [1]]) / 3)
+
+    def __str__(self):
+        """
+        triangle described by centroid
+        :return:
+        """
+        return f"<Tgl {self.centroid}>"
+
+class Ray(MatrixLikeData):
+    pass
 
 
 class Line(MatrixLikeData):

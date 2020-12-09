@@ -1,5 +1,5 @@
-from ._GeomDataType import *
-from .primitive import *
+# from ._GeomDataType import *
+# from .dd import *
 #
 # class Polygon(GeomDataType):
 #     pass

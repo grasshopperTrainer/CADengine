@@ -1,5 +1,5 @@
 from .._opengl import *
-from UVT.hooked import gl, glfw
+from wkernel.hooked import gl, glfw
 
 import inspect
 import numpy as np

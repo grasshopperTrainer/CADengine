@@ -1,1 +1,1 @@
-from .dtype import primitive as dtype
+from .dtype.geometric import primitive as dtype

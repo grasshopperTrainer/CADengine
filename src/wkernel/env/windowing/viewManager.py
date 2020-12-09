@@ -1,6 +1,6 @@
 from .window_properties import *
-from .glyphnode import GlyphNode
-from UVT.hooked import openglHooked as gl
+from .glyph import GlyphNode
+from wkernel.hooked import openglHooked as gl
 
 
 class View(RenderTarget):
