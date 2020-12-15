@@ -1,5 +1,5 @@
 from JINTFP import *
-from gkernel.dtype.nongeometric.matrix import MoveMat
+from gkernel.dtype.nongeometric.matrix import UnknownTrnsfMat, MoveMat
 from gkernel.dtype.geometric.primitive import Pln, Vec
 from my_patterns import Singleton
 
@@ -16,16 +16,16 @@ class _CameraBodyBuilder(CameraNode):
     Define camera body properties from given attribute
     """
 
-    out0_left = Output()
-    out1_right = Output()
-    out2_bottom = Output()
-    out3_top = Output()
-    out4_near = Output()
-    out5_far = Output()
+    left = Output()
+    right = Output()
+    bottom = Output()
+    top = Output()
+    near = Output()
+    far = Output()
 
-    out6_hfov = Output()
-    out7_vfov = Output()
-    out8_aspect_ratio = Output()
+    hfov = Output()
+    vfov = Output()
+    aspect_ratio = Output()
 
 
 class FovCamera(_CameraBodyBuilder):
@@ -36,10 +36,10 @@ class FovCamera(_CameraBodyBuilder):
     distance of near far plane
     ratio of width/height of near cliping plane
     """
-    in0_hfov = Input()
-    in1_near = Input()
-    in2_far = Input()
-    in3_aspect_ratio = Input()
+    hfov = Input()
+    near = Input()
+    far = Input()
+    aspect_ratio = Input()
 
     def calculate(self, hfov, near, far, ratio):
         r = near * np.tan(hfov / 2)
@@ -102,7 +102,7 @@ class OrthFrustum(_FrustumShape):
             proj_mat[1, (1, 3)] = 2 / (t - b), -(t + b) / (t - b)
             proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
             proj_mat[3] = 0, 0, 0, 1
-        return proj_mat
+        return UnknownTrnsfMat.from_row(proj_mat)
 
 
 class PrspFrustum(_FrustumShape):
@@ -122,35 +122,35 @@ class PrspFrustum(_FrustumShape):
             proj_mat[1, (1, 2)] = 2 * n / (t - b), (t + b) / (t - b)
             proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
             proj_mat[3] = 0, 0, -1, 0
-        return proj_mat
+        return UnknownTrnsfMat.from_row(proj_mat)
 
 
 class CameraBody(CameraNode):
     """
     Defines viewing shape.
     """
-    out0_left = Output()
-    out1_right = Output()
-    out2_bottom = Output()
-    out3_top = Output()
-    out4_near = Output()
-    out5_far = Output()
+    left = Output()
+    right = Output()
+    bottom = Output()
+    top = Output()
+    near = Output()
+    far = Output()
 
-    out6_hfov = Output()
-    out7_vfov = Output()
-    out8_aspect_ratio = Output()
+    hfov = Output()
+    vfov = Output()
+    aspect_ratio = Output()
 
-    out9_PM = Output()
+    PM = Output()
 
     def __init__(self, body_builder: _CameraBodyBuilder, frustrum_shape: _FrustumShape):
         super().__init__()
         # incase two are not connected
-        frustrum_shape.in0_left = body_builder.out0_left
-        frustrum_shape.in1_right = body_builder.out1_right
-        frustrum_shape.in2_bottom = body_builder.out2_bottom
-        frustrum_shape.in3_top = body_builder.out3_top
-        frustrum_shape.in4_near = body_builder.out4_near
-        frustrum_shape.in5_far = body_builder.out5_far
+        frustrum_shape.left = body_builder.left
+        frustrum_shape.right = body_builder.right
+        frustrum_shape.bottom = body_builder.bottom
+        frustrum_shape.top = body_builder.top
+        frustrum_shape.near = body_builder.near
+        frustrum_shape.far = body_builder.far
 
         self._body_builder = body_builder
         self._frustum_shape = frustrum_shape
@@ -162,6 +162,14 @@ class CameraBody(CameraNode):
     def builder(self):
         return self._body_builder
 
+    @property
+    def dim(self):
+        """
+        return frustrum dimension
+        :return:
+        """
+        return self.left.r, self.right.r, self.bottom.r, self.top.r, self.near.r, self.far.r
+
 
 class CameraTripod(CameraNode):
     """
@@ -169,10 +177,10 @@ class CameraTripod(CameraNode):
 
     including camera position and camera direction combined within camera_plane
     """
-    in0_plane = Input(def_val=Pln())
+    in_plane = Input(def_val=Pln())
 
-    out0_plane = Output()
-    out1_VM = Output()
+    out_plane = Output()
+    VM = Output()
 
     def __init__(self):
         super().__init__()
@@ -192,7 +200,8 @@ class CameraTripod(CameraNode):
         matrix[1, :3] = yaxis._data.flatten()[:3]
         matrix[2, :3] = zaxis._data.flatten()[:3]
         matrix[:3, 3] = -xaxis.dot(eye), -yaxis.dot(eye), -zaxis.dot(eye)
-        return matrix
+
+        return UnknownTrnsfMat.from_row(matrix)
 
     def lookat(self, eye, at, up):
         if all(isinstance(i, tuple) for i in (eye, at, up)):
@@ -208,7 +217,7 @@ class CameraTripod(CameraNode):
         xaxis = xaxis / xaxis.length
         yaxis = xaxis.cross(zaxis)
         zaxis *= -1
-        self.in0_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
+        self.in_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
 
     def yaw(self, rad):
         """
@@ -218,7 +227,7 @@ class CameraTripod(CameraNode):
         origin, camerax, cameray, cameraz = self.in0_plane.r.components
         new_x = camerax.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
         new_z = cameray.cross(new_x)
-        self.in0_plane = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
+        self.in_plane = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
 
     def pitch(self, rad):
         """
@@ -228,8 +237,7 @@ class CameraTripod(CameraNode):
         origin, camerax, cameray, cameraz = self.in0_plane.r.components
         new_y = cameray.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
         new_z = camerax.cross(new_y)
-        self.in0_plane = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)
-
+        self.in_plane = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)
 
     def roll(self, rad):
         """
@@ -244,7 +252,7 @@ class CameraTripod(CameraNode):
         :return:
         """
         tm = MoveMat(*vec.xyz)
-        self.in0_plane = tm*self.in0_plane.r
+        self.in_plane = tm*self.in0_plane.r
 
     def move_along_axis(self, axis, magnitude):
         """
@@ -255,7 +263,7 @@ class CameraTripod(CameraNode):
         axis = self.in0_plane.r.components[{'x':1, 'y':2, 'z':3}[axis]]
         axis.amplify(magnitude)
         tm = MoveMat(*axis.xyz)
-        self.in0_plane = tm*self.in0_plane.r
+        self.in_plane = tm*self.in0_plane.r
 
     def orient(self, pos):
         """
@@ -266,7 +274,7 @@ class CameraTripod(CameraNode):
 
     @property
     def plane(self):
-        return self.out0_plane
+        return self.out_plane
 
 @Singleton
 class GetCurrentCamera(CameraNode):

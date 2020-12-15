@@ -1,6 +1,6 @@
 from .window_properties import *
-from gkernel.dtype.geometric.primitive import Pln, Vec, Pnt
-from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat
+from gkernel.dtype.geometric.primitive import Pln, Vec, Pnt, Lin, Ray
+from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, ScaleMat
 from .bits import *
 
 
@@ -107,6 +107,25 @@ class Camera(RenderTarget):
     @property
     def dolly(self):
         return self._dolly
+
+    def ray_frustum(self, param_x, param_y):
+        """
+        return ray crossing near frustum at given param
+
+        param 0,0 points at the center of frustum
+        :param param_x: in domain(-1.0, 1.0)
+        :param param_y: in domain(-1.0, 1.0)
+        :return:
+        """
+        l, r, b, t, n, f = self.body.dim
+        # convert normalized into near frustum space
+        sm = ScaleMat(x=r-l, y=t-b)
+        mm = MoveMat(x=(r+l)/2, y=(t+b)/2, z=-n)
+        frustum_point = mm*sm*Pnt(x=param_x, y=param_y, z=0)
+
+        # define ray and cast into world space
+        ray = Ray([0,0,0], frustum_point.xyz)
+        return self.tripod.VM.r*ray
 
     def __enter__(self):
         CameraCurrentStack().append(self)

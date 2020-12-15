@@ -23,6 +23,12 @@ class DataType:
 
         return ins
 
+    def describe(self):
+        """
+        :return: string describing object
+        """
+        raise NotImplementedError
+
 
 class MatrixLikeData(DataType):
     """

@@ -1,7 +1,7 @@
 from gkernel.dtype.geometric._GeomDataType import *
 from gkernel.dtype.nongeometric.matrix import TrnsfMat
-
 import copy
+from math import sqrt
 
 
 class Vectorlike(MatrixLikeData):
@@ -217,7 +217,7 @@ class Tgl(MatrixLikeData):
         vertex 0
         :return:
         """
-        return Pnt.from_row(np.reshape(self._data[:4, 0], [4,1]))
+        return Pnt.from_row(np.reshape(self._data[:4, 0], [4, 1]))
 
     @property
     def v1(self):
@@ -254,13 +254,71 @@ class Tgl(MatrixLikeData):
         """
         return f"<Tgl {self.centroid}>"
 
+
 class Ray(MatrixLikeData):
-    pass
+    """
+    Ray is a line without ending
+    """
 
+    def __init__(self, o=(0, 0, 0), v=(0, 0, 1)):
+        """
 
-class Line(MatrixLikeData):
+        :param o: origin as a point
+        :param v: direction as a vector
+        """
+        arr = np.array([[o[0], v[0]],
+                        [o[1], v[1]],
+                        [o[2], v[2]],
+                        [1, 0]])
+        super().__init__(arr)
 
-    def __init__(self):
-        raise NotImplementedError
+    @property
+    def origin(self):
+        return Pnt(*self._data[:3, 0].tolist())
 
-    pass
+    @property
+    def heading(self):
+        return Vec(*self._data[:3, 1].tolist())
+
+    def __str__(self):
+        return f"<Ray from {self.origin}>"
+
+    def describe(self):
+        return f"<<Ray from:{self.origin} heading:{self.heading}"
+
+class Lin(MatrixLikeData):
+
+    def __init__(self, p0=(0, 0, 0), p1=(0, 0, 1)):
+        """
+        define line from two coordinate
+        :param p0: xyz coord of starting vertex
+        :param p1: xyz coord of ending vertex
+        """
+        arr = np.array([[p0[0], p1[0]],
+                        [p0[1], p1[1]],
+                        [p0[2], p1[2]],
+                        [1, 1]])
+        super().__init__(arr)
+
+    @classmethod
+    def from_two_pnt(cls, start: Pnt, end: Pnt):
+        """
+        create line using start, end vertex
+        :param start: starting vertex of line
+        :param end: ending vertex of line
+        :return:
+        """
+        return Lin(start.xyz, end.xyz)
+
+    def length(self):
+        """
+        of line
+        :return:
+        """
+        summed = 0
+        for i in range(3):
+            summed += pow(self._data[i, 0] - self._data[i, 1], 2)
+        return sqrt(summed)
+
+    def __str__(self):
+        return f"<Lin {round(self.length(), 3)}>"

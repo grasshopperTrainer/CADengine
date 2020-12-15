@@ -61,17 +61,21 @@ class Mouse(_Device):
         return pos.x, pos.y
 
     def intersect_model(self, view, camera, model):
-        px, py = self.cursor_in_view(view)
-        pln = camera.tripod.out0_plane.r
-        ori = pln.origin
+        """
+
+        :param view:
+        :param camera:
+        :param model:
+        :return:
+        """
         # 1. convert parameter value into point in space using VM, PM
         #    to create intersection point on near frustum(A)
         # 2. create ray(R) combining using origin(B) and vector from B to A
         # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
-
-        print(ori)
-        exit()
-        raise NotImplementedError
+        px, py = self.cursor_in_view(view)
+        ray = camera.ray_frustum(px, py)
+        print(ray.describe())
+        # raise NotImplementedError
 
     @property
     def current_pos(self):

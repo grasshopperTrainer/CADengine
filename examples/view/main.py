@@ -12,7 +12,7 @@ class W(Window):
 
     def setup(self):
         print('setting up')
-        self.framerate = 10
+        self.framerate = 2
         self.views.new_view(0.25, 0.25, 0.5, 0.5)
         # self.views.new_view(0, 0, 0.5, 0.5)
         self.cameras[0].tripod.lookat((100, 100, 100), (0, 0, 0), (0, 0, 1))
@@ -20,11 +20,15 @@ class W(Window):
 
     def draw(self):
         super().draw()
+
         with self.views[1] as v:
+
             v.clear(0, 1, 0.5, 1)
             with self.cameras[0] as c:
+                print()
                 print(self.devices.mouse.cursor_in_view(v))
-
+                print(self.cameras[0].tripod.plane.r.origin)
+                print(self.cameras[0].body.PM.r*self.cameras[0].tripod.VM.r*Pnt(0,0))
                 a = 100
                 model = Model()
                 model.append_shape(Tgl((0, 0, 0), (a, 0, 0), (0, a, 0)))

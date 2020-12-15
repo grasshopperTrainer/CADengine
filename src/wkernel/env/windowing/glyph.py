@@ -30,7 +30,6 @@ class GlyphNode(NodeBody):
         results.append(results[2] / results[3])  # ratio
         # transformation matrix
         if any([v is None for v in (x, y, w, h)]):
-            # results.append()
             results.append(pt)
         else:
             translate_m = MoveMat(results[0] - x, results[1] - y, 0)

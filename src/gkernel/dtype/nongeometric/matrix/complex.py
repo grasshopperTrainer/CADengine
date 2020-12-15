@@ -1,5 +1,6 @@
 from .basic import Mat4
 import numpy as np
+from numbers import Number
 
 
 class TrnsfMat(Mat4):
@@ -10,6 +11,28 @@ class TrnsfMat(Mat4):
     @property
     def I(self):
         raise NotImplementedError('inverse not defined')
+
+
+class UnknownTrnsfMat(TrnsfMat):
+    """
+    transformation matrix that is not well defined
+    """
+    def __init__(self,
+                 a0=1, a1=0, a2=0, a3=0,
+                 b0=0, b1=1, b2=0, b3=0,
+                 c0=0, c1=0, c2=1, c3=0,
+                 d0=0, d1=0, d2=0, d3=1):
+        if any(not isinstance(v, Number) for v in [a0, a1, a2, a3,
+                                                   b0, b1, b2, b3,
+                                                   c0, c1, c2, c3,
+                                                   d0, d1, d2, d3]):
+            raise TypeError
+
+        arr = np.array([[a0, a1, a2, a3],
+                        [b0, b1, b2, b3],
+                        [c0, c1, c2, c3],
+                        [d0, d1, d2, d3]])
+        super().__init__(arr)
 
 
 class CompoundTrnsfMat(TrnsfMat):
