@@ -1,5 +1,5 @@
 from JINTFP import *
-from gkernel.dtype.nongeometric.matrix import UnknownTrnsfMat, MoveMat
+from gkernel.dtype.nongeometric.matrix import MoveMat
 from gkernel.dtype.geometric.primitive import Pln, Vec
 from my_patterns import Singleton
 
@@ -102,7 +102,8 @@ class OrthFrustum(_FrustumShape):
             proj_mat[1, (1, 3)] = 2 / (t - b), -(t + b) / (t - b)
             proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
             proj_mat[3] = 0, 0, 0, 1
-        return UnknownTrnsfMat.from_row(proj_mat)
+
+        return proj_mat
 
 
 class PrspFrustum(_FrustumShape):
@@ -122,7 +123,7 @@ class PrspFrustum(_FrustumShape):
             proj_mat[1, (1, 2)] = 2 * n / (t - b), (t + b) / (t - b)
             proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
             proj_mat[3] = 0, 0, -1, 0
-        return UnknownTrnsfMat.from_row(proj_mat)
+        return proj_mat
 
 
 class CameraBody(CameraNode):
@@ -195,15 +196,23 @@ class CameraTripod(CameraNode):
         """
         eye, xaxis, yaxis, zaxis = pln.components
         # calculate view_mat
+        # cant explain calculation, scrapped from internet
         matrix = np.eye(4)
-        matrix[0, :3] = xaxis._data.flatten()[:3]
-        matrix[1, :3] = yaxis._data.flatten()[:3]
-        matrix[2, :3] = zaxis._data.flatten()[:3]
+        matrix[0, :3] = xaxis.xyz
+        matrix[1, :3] = yaxis.xyz
+        matrix[2, :3] = zaxis.xyz
         matrix[:3, 3] = -xaxis.dot(eye), -yaxis.dot(eye), -zaxis.dot(eye)
-
-        return UnknownTrnsfMat.from_row(matrix)
+        return matrix
 
     def lookat(self, eye, at, up):
+        """
+        move plane to look at from eye
+
+        :param eye: to look from
+        :param at: to look at
+        :param up: direction of camera up
+        :return:
+        """
         if all(isinstance(i, tuple) for i in (eye, at, up)):
             eye = Vec(*eye)
             at = Vec(*at)
@@ -211,12 +220,12 @@ class CameraTripod(CameraNode):
         else:
             raise NotImplementedError
         # calculate plane
-        zaxis = at - eye
-        zaxis = zaxis / zaxis.length
-        xaxis = zaxis.cross(up)
-        xaxis = xaxis / xaxis.length
-        yaxis = xaxis.cross(zaxis)
-        zaxis *= -1
+        zaxis = at - eye                # vector from eye to at
+        zaxis /= zaxis.length    # normalize
+        xaxis = zaxis.cross(up)         # find perpendicular of z and up(y) -> x
+        xaxis /= xaxis.length    # normalize
+        yaxis = xaxis.cross(zaxis)      # find true up
+        zaxis *= -1                     # reverse z
         self.in_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
 
     def yaw(self, rad):
@@ -234,7 +243,7 @@ class CameraTripod(CameraNode):
         rotate along x axis
         :return:
         """
-        origin, camerax, cameray, cameraz = self.in0_plane.r.components
+        origin, camerax, cameray, cameraz = self.in_plane.r.components
         new_y = cameray.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
         new_z = camerax.cross(new_y)
         self.in_plane = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)

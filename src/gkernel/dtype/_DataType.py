@@ -2,12 +2,26 @@ import numpy as np
 from numbers import Number
 
 
-class DataType:
+# class DataType:
+#     """
+#     Inharitable describing data type
+#     """
+#     def __init__(self, data):
+#         self._data = data
+#
+#
+#
+#     def describe(self):
+#         """
+#         :return: string describing object
+#         """
+#         raise NotImplementedError
+
+
+class ArrayLikeData(np.ndarray):
     """
-    Inharitable describing data type
+    Data is represented as a matrix
     """
-    def __init__(self, data):
-        self._data = data
 
     @classmethod
     def from_row(cls, raw_data):
@@ -23,33 +37,30 @@ class DataType:
 
         return ins
 
-    def describe(self):
-        """
-        :return: string describing object
-        """
-        raise NotImplementedError
-
-
-class MatrixLikeData(DataType):
-    """
-    Data is represented as a matrix
-    """
-
     @property
-    def shape(self):
-        return self._data.shape
+    def arr(self):
+        return super().__str__()
 
-    def __neg__(self):
-        """
-        negate matrix
-        :return:
-        """
-        ins = self.__class__()
-        ins._data = -1 * self._data
-        return ins
 
-    def __truediv__(self, other):
-        v = self.__class__()
-        v._data = self._data / other
-        print(self, other, v)
-        return v
+    def __getitem__(self, item):
+        return self.view(np.ndarray)[item]
+
+    # def __new__(subclass, shape = [], *args, **kwargs):
+    #     print(subclass, *args, **kwargs)
+    #     obj = super(ArrayLikeData, subclass).__new__(subclass, shape, *args, **kwargs)
+    #     return obj
+
+    # def __neg__(self):
+    #     """
+    #     negate matrix
+    #     :return:
+    #     """
+    #     ins = self.__class__()
+    #     ins._data = -1 * self._data
+    #     return ins
+    #
+    # def __truediv__(self, other):
+    #     v = self.__class__()
+    #     v._data = self._data / other
+    #     print(self, other, v)
+    #     return v

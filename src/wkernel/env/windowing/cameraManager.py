@@ -56,6 +56,7 @@ class FpsDolly:
     def cursorpos_callback(self, window, xpos, ypos, mouse):
         """
         move camera frustum with cursor move
+
         :param window:
         :param xpos:
         :param ypos:
@@ -63,14 +64,13 @@ class FpsDolly:
         :return:
         """
         if self._last_cursor_pos is not None:
-            # cursor movement vector
-            v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))
-            # rotate vertically
-            self._camera.tripod.pitch(-v.y * self.view_speed)
+            v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))  # cursor delta
+            self._camera.tripod.pitch(-v.y * self.view_speed)           # rotate vertically
             # rotate horizontally around world z axis
-            p = self._camera.tripod.in0_plane.r
-            ox, oy, oz = p.origin.xyz
-            new_plane = MoveMat(ox, oy, oz) * RotZMat(v.x * -self.view_speed) * MoveMat(-ox, -oy, -oz) * p
+            plane = self._camera.tripod.in_plane.r
+            ox, oy, oz = plane.origin.xyz
+            print(plane.origin, ox, oy, oz)
+            new_plane = MoveMat(ox, oy, oz) * RotZMat(v.x * -self.view_speed) * MoveMat(-ox, -oy, -oz) * plane
             self._camera.tripod.in0_plane = new_plane
 
         self._last_cursor_pos = xpos, ypos
@@ -122,9 +122,12 @@ class Camera(RenderTarget):
         sm = ScaleMat(x=r-l, y=t-b)
         mm = MoveMat(x=(r+l)/2, y=(t+b)/2, z=-n)
         frustum_point = mm*sm*Pnt(x=param_x, y=param_y, z=0)
-
+        frustum_point = Pnt(x=param_x, y=param_y, z=0)*sm*mm
+        # print(frustum_point)
+        # raise
         # define ray and cast into world space
         ray = Ray([0,0,0], frustum_point.xyz)
+
         return self.tripod.VM.r*ray
 
     def __enter__(self):

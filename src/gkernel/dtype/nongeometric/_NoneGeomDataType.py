@@ -1,4 +1,4 @@
 from .._DataType import *
 
-class NoneGeomDataType(DataType):
+class NoneGeomDataType(ArrayLikeData):
     pass

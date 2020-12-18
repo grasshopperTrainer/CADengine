@@ -2,6 +2,7 @@ from JINTFP import *
 import numpy as np
 from gkernel.dtype.nongeometric.matrix import *
 
+
 class GlyphNode(NodeBody):
     posx_exp = Input(typs=(int, float, callable))
     posy_exp = Input(typs=(int, float, callable))
@@ -13,7 +14,7 @@ class GlyphNode(NodeBody):
     parent_width = Input()
     parent_height = Input()
 
-    parent_trans_matrix = Input(typs=(Mat4, None), def_val=CompoundTrnsfMat([EyeMat4()]))
+    parent_trans_matrix = Input(typs=(Mat4, None), def_val=StackedMat([EyeMat4()]))
 
     posx = Output()
     posy = Output()
