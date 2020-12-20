@@ -1,5 +1,5 @@
 from JINTFP import *
-from gkernel.dtype.nongeometric.matrix import MoveMat
+from gkernel.dtype.nongeometric.matrix import MoveMat, RotXMat, RotYMat, RotZMat, TrnsfMats
 from gkernel.dtype.geometric.primitive import Pln, Vec
 from my_patterns import Singleton
 
@@ -201,7 +201,7 @@ class CameraTripod(CameraNode):
         matrix[0, :3] = xaxis.xyz
         matrix[1, :3] = yaxis.xyz
         matrix[2, :3] = zaxis.xyz
-        matrix[:3, 3] = -xaxis.dot(eye), -yaxis.dot(eye), -zaxis.dot(eye)
+        matrix[:3, 3] = Vec.dot(-xaxis,eye), Vec.dot(-yaxis, eye), Vec.dot(-zaxis, eye)
         return matrix
 
     def lookat(self, eye, at, up):
@@ -222,18 +222,38 @@ class CameraTripod(CameraNode):
         # calculate plane
         zaxis = at - eye                # vector from eye to at
         zaxis /= zaxis.length    # normalize
-        xaxis = zaxis.cross(up)         # find perpendicular of z and up(y) -> x
+        xaxis = Vec.cross(zaxis, up)         # find perpendicular of z and up(y) -> x
         xaxis /= xaxis.length    # normalize
-        yaxis = xaxis.cross(zaxis)      # find true up
+        yaxis = Vec.cross(xaxis, zaxis)      # find true up
         zaxis *= -1                     # reverse z
         self.in_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
+
+    def rotate_along(self, axis: Vec, rad):
+        """
+        rotate along given axis
+
+        :param axis:
+        :param rad:
+        :return:
+        """
+        # 1. MoveMat of camera to world origin
+        # 2. RotMat of axis to world z
+        # 3. RotZMat of given rad
+        # 4. apply inverse of 1->2 to resulted plane of 3
+        origin = self.in_plane.r.origin
+        moves = TrnsfMats()
+        moves.append(MoveMat(*(-origin).xyz))
+        # match z
+        # match y
+        # match x
+
 
     def yaw(self, rad):
         """
         rotate along y axis
         :return:
         """
-        origin, camerax, cameray, cameraz = self.in0_plane.r.components
+        origin, camerax, cameray, cameraz = self.in_plane.r.components
         new_x = camerax.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
         new_z = cameray.cross(new_x)
         self.in_plane = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
@@ -245,7 +265,7 @@ class CameraTripod(CameraNode):
         """
         origin, camerax, cameray, cameraz = self.in_plane.r.components
         new_y = cameray.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
-        new_z = camerax.cross(new_y)
+        new_z = Vec.cross(camerax, new_y)
         self.in_plane = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)
 
     def roll(self, rad):

@@ -34,11 +34,13 @@ class Mouse(_Device):
     def _cursor_pos_callback(self, window, xpos, ypos):
         """
         Calls all callbacks joined with 'cursor pos callback'
+
         :param window:
         :param xpos:
         :param ypos:
         :return:
         """
+        xpos, ypos = self.current_pos
         self._callback_caller(window, xpos, ypos, self, callback_type=glfw.set_cursor_pos_callback)
 
     def set_cursor_pos_callback(self, callback_func):
@@ -81,6 +83,8 @@ class Mouse(_Device):
     def current_pos(self):
         """
         Ask glfw current cursor pos and return
+
+        flips y to match OpenGL coordinate system
         :return:
         """
         _, height = glfw.get_window_size(self._manager._window._glfw_window)

@@ -14,7 +14,7 @@ class GlyphNode(NodeBody):
     parent_width = Input()
     parent_height = Input()
 
-    parent_trans_matrix = Input(typs=(Mat4, None), def_val=StackedMat([EyeMat4()]))
+    parent_trans_matrix = Input(typs=(Mat4, None), def_val=TrnsfMats())
 
     posx = Output()
     posy = Output()
@@ -24,18 +24,18 @@ class GlyphNode(NodeBody):
     aspect_ratio = Output()
     trnsf_matrix = Output()
 
-    def calculate(self, xe, ye, we, he, x, y, w, h, pt):
+    def calculate(self, xe, ye, we, he, x, y, w, h, ptm):
         results = []
         for e, p in zip((xe, ye, we, he), (w, h, w, h)):
             results.append(self._calc_real_value(e, p))
         results.append(results[2] / results[3])  # ratio
         # transformation matrix
         if any([v is None for v in (x, y, w, h)]):
-            results.append(pt)
+            results.append(ptm)
         else:
             translate_m = MoveMat(results[0] - x, results[1] - y, 0)
             scale_m = ScaleMat(results[2]/w, results[3]/h)
-            matrix = pt.copy()
+            matrix = ptm.copy()
             matrix.append_all(scale_m, translate_m)
             results.append(matrix)
         return results

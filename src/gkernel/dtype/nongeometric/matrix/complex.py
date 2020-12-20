@@ -1,6 +1,7 @@
 from .basic import Mat4
 import numpy as np
 from numbers import Number
+import copy
 
 
 class TrnsfMat(Mat4):
@@ -32,43 +33,21 @@ class TrnsfMat(Mat4):
         else:
             # try calculating
             try:
-                arr = self.dot(other)
+                arr = np.dot(self, other, out=other.copy())
+                return arr
             except Exception as e:
                 raise ArithmeticError("cant multiply")
             # try casting result into class on the right
-            if arr.shape == other.shape:
-                try:
-                    return arr.view(other.__class__)
-                except:
-                    raise Exception(f"result is not like {other.__class__.__name__}")
-            else:
-                raise TypeError
+            # if arr.shape == other.shape:
+            #     try:
+            #         return arr.view(other.__class__)
+            #     except:
+            #         raise Exception(f"result is not like {other.__class__.__name__}")
+            # else:
+            #     raise TypeError
 
 
-# class UnknownTrnsfMat(TrnsfMat):
-#     """
-#     transformation matrix that is not well defined
-#     """
-#
-#     def __init__(self,
-#                  a0=1, a1=0, a2=0, a3=0,
-#                  b0=0, b1=1, b2=0, b3=0,
-#                  c0=0, c1=0, c2=1, c3=0,
-#                  d0=0, d1=0, d2=0, d3=1):
-#         if any(not isinstance(v, Number) for v in [a0, a1, a2, a3,
-#                                                    b0, b1, b2, b3,
-#                                                    c0, c1, c2, c3,
-#                                                    d0, d1, d2, d3]):
-#             raise TypeError
-#
-#         arr = np.array([[a0, a1, a2, a3],
-#                         [b0, b1, b2, b3],
-#                         [c0, c1, c2, c3],
-#                         [d0, d1, d2, d3]])
-#         super().__init__(arr)
-
-
-class StackedMat(TrnsfMat):
+class TrnsfMats(TrnsfMat):
     """
     Ordered transformation matrices
 
@@ -78,32 +57,57 @@ class StackedMat(TrnsfMat):
     type_nickname = 'CM'
 
     def __new__(cls, matrices=[]):
-        obj = np.eye(4).view(cls)
-        obj._matrices = []
+        obj = super(TrnsfMats, cls).__new__(cls, shape=(4, 4))  # default transformation matrix that does nothing
+        obj._matrices = matrices  # stacked matrix for inverse
+        obj._merge()
         return obj
+
+    def __array_finalize__(self, obj):
+        """
+        copies matrix stack of original if obj is one of its kind
+        and update self as merged
+
+        :param obj:
+        :return:
+        """
+        if obj is None:
+            self._matrices = []
+        elif isinstance(obj, self.__class__):
+            self._matrices = copy.deepcopy(obj._matrices)  # deepcopying? what if its a view?
+            self._merge()
+
+    def _merge(self):
+        """
+        merge matrices and set it as self's value
+        :return:
+        """
+        # update as merged array
+        arr = np.eye(4)
+        for m in self._matrices:
+            arr = m.dot(arr)
+        self[:] = arr
 
     def append(self, matrix):
         """
         Append matrix for compound transformation
+
+        append matrix into list and update value of self
         :param matrix: matrix used to translate
         :return:
         """
+        self[:] = matrix * self  # be careful for the applying order
         self._matrices.append(matrix)
 
     def append_all(self, *matrices):
         """
         Append matrices with given order
+
         :param matrices: matrices for transformation
         :return:
         """
+        for mat in matrices:
+            self[:] = mat * self
         self._matrices += list(matrices)
-
-    @property
-    def M(self):
-        m = EyeMat4()
-        for mat in self._matrices:
-            m = mat * m
-        return m
 
     @property
     def I(self):
@@ -111,10 +115,7 @@ class StackedMat(TrnsfMat):
         Inverse of all transformation matrix
         :return:
         """
-        return StackedMat([m.I for m in reversed(self._matrices)])
-
-    def copy(self):
-        return StackedMat(self._matrices.copy())
+        return TrnsfMats([m.I for m in reversed(self._matrices)])
 
     def __str__(self):
         return f"<Matrices of: {[m.type_nickname for m in self._matrices]}>"
@@ -187,55 +188,82 @@ class ScaleMat(TrnsfMat):
         return f"<ScaleMat {self.x, self.y, self.z}>"
 
 
-class RotXMat(TrnsfMat):
+class SingleRotMat(TrnsfMat):
+    """
+    Rotation matrix around one of xyz axis
+    """
+
+    _angle = 0  # rotation angle
+
+    @property
+    def angle(self):
+        return self._angle
+
+    def __array_finalize__(self, other):
+        if other is None:
+            return
+        elif isinstance(other, self.__class__):
+            self._angle = other._angle
+        else:
+            pass
+
+    @property
+    def I(self):
+        return self.__class__(-self._angle)
+
+
+class RotXMat(SingleRotMat):
     """
     Rotate x matrix
     """
     type_nickname = 'RX'
 
     def __new__(cls, angle=0):
-        return np.array([[1, 0, 0, 0],
-                         [0, np.cos(angle), np.sin(angle), 0],
-                         [0, np.sin(angle), np.cos(angle), 0],
-                         [0, 0, 0, 1]], dtype=float).view(cls)
+        obj = np.array([[1, 0, 0, 0],
+                        [0, np.cos(angle), -np.sin(angle), 0],
+                        [0, np.sin(angle), np.cos(angle), 0],
+                        [0, 0, 0, 1]], dtype=float).view(cls)
+        obj._angle = angle
+        return obj
 
-    @property
-    def I(self):
-        return RotXMat(-self._angle)
+    def __str__(self):
+        return f"<RotXMat: {self._angle}>"
 
 
-class RotYMat(TrnsfMat):
+class RotYMat(SingleRotMat):
     """
     Rotate y matrix
     """
     type_nickname = 'RY'
 
     def __new__(cls, angle=np.pi / 2):
-        return np.array([[np.cos(angle), 0, np.sin(angle), 0],
-                         [0, 1, 0, 0],
-                         [np.sin(angle), 0, np.cos(angle), 0],
-                         [0, 0, 0, 1]], dtype=float).view(cls)
+        obj = np.array([[np.cos(angle), 0, np.sin(angle), 0],
+                        [0, 1, 0, 0],
+                        [-np.sin(angle), 0, np.cos(angle), 0],
+                        [0, 0, 0, 1]], dtype=float).view(cls)
+        obj._angle = angle
+        return obj
 
-    @property
-    def I(self):
-        return RotXMat(-self._angle)
+    def __str__(self):
+        return f"<RotYMat: {self._angle}>"
 
 
-class RotZMat(TrnsfMat):
+class RotZMat(SingleRotMat):
     """
     Rotate z matrix
     """
     type_nickname = 'RZ'
 
     def __new__(cls, angle=np.pi / 2):
-        return np.array([[np.cos(angle), -np.sin(angle), 0, 0],
-                         [np.sin(angle), np.cos(angle), 0, 0],
-                         [0, 0, 1, 0],
-                         [0, 0, 0, 1]], dtype=float).view(cls)
+        obj = np.array([[np.cos(angle), -np.sin(angle), 0, 0],
+                        [np.sin(angle), np.cos(angle), 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]], dtype=float).view(cls)
+        obj._angle = angle
+        return obj
 
-    @property
-    def I(self):
-        return RotXMat(-self._angle)
+    def __str__(self):
+        return f"<RotZMat: {self._angle}>"
 
 
 class EyeMat4(Mat4):

@@ -10,7 +10,7 @@ class W(Window):
     def setup(self):
         print('setting up')
         self._inited = False
-        self.framerate = 5
+        self.framerate = 1
         self.count = 0
         self.cameras[0].tripod.lookat((100, 100, 100), (0, 0, 0), (0, 0, 1))
         self.cameras[0].set_fps_dolly(self)

@@ -64,14 +64,16 @@ class FpsDolly:
         :return:
         """
         if self._last_cursor_pos is not None:
-            v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))  # cursor delta
-            self._camera.tripod.pitch(-v.y * self.view_speed)           # rotate vertically
-            # rotate horizontally around world z axis
-            plane = self._camera.tripod.in_plane.r
-            ox, oy, oz = plane.origin.xyz
-            print(plane.origin, ox, oy, oz)
-            new_plane = MoveMat(ox, oy, oz) * RotZMat(v.x * -self.view_speed) * MoveMat(-ox, -oy, -oz) * plane
-            self._camera.tripod.in0_plane = new_plane
+            v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))* self.view_speed  # cursor delta
+            self._camera.tripod.pitch(v.y)           # rotate vertically
+            self._camera.tripod.rotate_along(Vec(x=0, y=0, z=1), v.x)
+            # self._camera.tripod.yaw(-v.x * self.view_speed)
+            # # rotate horizontally around world y axis
+            # plane = self._camera.tripod.in_plane.r
+            # ox, oy, oz = plane.origin.xyz
+            #
+            # new_plane = MoveMat(ox, oy, oz) * RotZMat(v.x * -self.view_speed) * MoveMat(-ox, -oy, -oz) * plane
+            # self._camera.tripod.in_plane = new_plane
 
         self._last_cursor_pos = xpos, ypos
 

@@ -1,7 +1,8 @@
 from gkernel.dtype.geometric._GeomDataType import *
-from gkernel.dtype.nongeometric.matrix import TrnsfMat
+from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
 import copy
 from math import sqrt
+import warnings
 
 
 class Vectorlike(ArrayLikeData):
@@ -76,44 +77,116 @@ class Vec(Vectorlike):
                          [z],
                          [0]], dtype=float).view(cls)
 
-    # def __sub__(self, other):
-    #     if isinstance(other, Vec):
-    #         v = Vec()
-    #         v._data = self._data - other._data
-    #         return v
-    #     else:
-    #         raise NotImplementedError
-
     def __str__(self):
         return f"<Vec : {[round(n, 3) for n in self[:3, 0]]}>"
 
-    def cross(self, other):
-        d = np.cross(self[:3], other[:3], axis=0)
-        return Vec(*d.flatten())
-
-    def dot(self, point):
+    @classmethod
+    def cross(cls, a, b):
         """
-        dot product with a point?
+        cross product between two vectors
 
-        What does it mean?
-        returns dot between (1,4), (4,1)
+        ! cross product is anticommutative
+        :param a: vector
+        :param b: vector
+        :return: new vector
+        """
+        # formula scrapped from wiki
+        ax, ay, az = a.xyz
+        bx, by, bz = b.xyz
+        x = ay * bz - az * by
+        y = az * bx - ax * bz
+        z = ax * by - ay * bx
+        return Vec(x, y, z)
+
+    @classmethod
+    def angle_between(cls, a, b):
+        """
+        angle between two vectors in domain of (0, pi)
+
+        :param a: vector
+        :param b: vector
+        :return: in radian
+        """
+        return np.arccos(Vec.dot(a, b) / (a.length * b.length))
+
+    @classmethod
+    def dot(self, a, b):
+        """
+        calculate dot product between self and vec
+
         :param point:
         :return:
         """
-        if not isinstance(point, Pnt):
-            raise NotImplementedError
-        return float(np.dot(self.T, point))
+        return np.dot(a.T, b)[0, 0]
 
     def amplify(self, magnitude, copy=False):
         if copy:
             self = self.copy()
         self.normalize()
-        self[:] = self*magnitude
+        self[:] = self * magnitude
         if copy:
             return self
 
     def normalize(self):
+        """
+        normalize self
+
+        :return: None if self is 0vector else self
+        """
+        if self.is_zero():
+            warnings.warn("zero vector cant be normalized")
+            return
         self[:] = self / self.length
+        return self
+
+    def is_zero(self):
+        return True if self.xyz == (0, 0, 0) else False
+
+    def normalized(self):
+        """
+        normalized self
+
+        :return: copy of normalized self
+        """
+
+        return self / self.length
+
+    def _projected_on(self, plane):
+        """
+        projection
+
+        :param plane:
+        :return:
+        """
+        vec = self.copy()
+        if plane == 'xy':
+            vec[2] = 0
+        elif plane == 'yz':
+            vec[0] = 0
+        elif plane == 'zx':
+            vec[1] = 0
+        return vec
+
+    def projected_on_xy(self):
+        """
+        vector projected on xy plane
+        :return: copy of projected self
+        """
+        return self._projected_on('xy')
+
+    def projected_on_yz(self):
+        """
+        vector projected on yz plane
+        :return: copy of projected self
+        """
+        return self._projected_on('yz')
+
+    def projected_on_zx(self):
+        """
+        vector projected on zx plane
+        :return: copy of projected self
+        """
+        return self._projected_on('zx')
 
     @property
     def length(self):
@@ -184,10 +257,74 @@ class Pln(ArrayLikeData):
         return p
 
     def __new__(cls, o=(0, 0, 0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
+
         return np.array([[o[0], x[0], y[0], z[0]],
                          [o[1], x[1], y[1], z[1]],
                          [o[2], x[2], y[2], z[2]],
                          [1, 0, 0, 0]], dtype=float).view(cls)
+
+    def __array_finalize__(self, obj):
+        """
+        Make vectors perpendicular, normalized and
+        create transformation matrix into plane space
+
+        vectors are made perpendicular by referencing vectors in xyz order
+        :return:
+        """
+        # check for unit plane
+        if (self.view(np.ndarray) == np.array([[0, 1, 0, 0],
+                                               [0, 0, 1, 0],
+                                               [0, 0, 0, 1],
+                                               [1, 0, 0, 0]])).all():
+            self._trnsf_mats = TrnsfMats()
+            return
+        # make vectors normalized and perpendicular
+        x, y = self.axis_x, self.axis_y
+        z = Vec.cross(x, y)  # find z
+        y = Vec.cross(z, x)  # find y
+        x, y, z = [v.normalized() for v in (x, y, z)]
+        plane = np.array([[0, x.x, y.x, z.x],
+                          [0, x.y, y.y, z.y],
+                          [0, x.z, y.z, z.z],
+                          [1, 0, 0, 0]], dtype=float)
+        # calculate 'plane to origin' rotation matrices
+        # last rotation is of x so match axis x to unit x prior
+        x_on_xy = x.projected_on_xy()
+        dir_vec = Vec.cross(Vec(1, 0, 0), x_on_xy)
+        if dir_vec.is_zero():
+            rot_dir = 0
+        elif dir_vec.z > 0:
+            rot_dir = -1
+        else:
+            rot_dir = 1
+        rz = RotZMat(Vec.angle_between(Vec(1, 0, 0), x_on_xy) * rot_dir)
+
+        plane = rz * plane
+        x_on_zx = Vec(*plane[:3, 1])
+        dir_vec = Vec.cross(Vec(1, 0, 0), x_on_zx)
+        if dir_vec.is_zero():
+            rot_dir = 0
+        elif dir_vec.y > 0:
+            rot_dir = -1
+        else:
+            rot_dir = 1
+        ry = RotYMat(Vec.angle_between(Vec(1, 0, 0), x_on_zx) * rot_dir)
+
+        # axis x is aligned so lastly match axis y
+        plane = ry * plane
+        y_on_yz = Vec(*plane[:3, 2])
+        dir_vec = Vec.cross(Vec(0, 1, 0), y_on_yz)
+        if dir_vec.is_zero():
+            rot_dir = 0
+        elif dir_vec.x > 0:
+            rot_dir = -1
+        else:
+            rot_dir = 1
+        rx = RotXMat(Vec.angle_between(Vec(0, 1, 0), y_on_yz) * rot_dir)
+
+        to_origin = MoveMat(*(-self.origin).xyz)
+        # found 'plane to origin' so 'origin to plane' is inverse of it
+        self._trnsf_mats = TrnsfMats([to_origin, rz, ry, rx]).I
 
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]
@@ -200,24 +337,19 @@ class Pln(ArrayLikeData):
 
     @property
     def axis_x(self):
-        return Vec(*self[:, 1].flatten()[:3])
+        return Vec(*self[:3, 1])
 
     @property
     def axis_y(self):
-        return Vec(*self[:, 2].flatten()[:3])
+        return Vec(*self[:3, 2])
 
     @property
     def axis_z(self):
-        return Vec(*self[:, 3].flatten()[:3])
+        return Vec(*self[:3, 3])
 
     @property
     def components(self):
         return self.origin, self.axis_x, self.axis_y, self.axis_z
-
-    # def __rmul__(self, other):
-    #     print('dddd')
-    #     if isinstance(other, TrnsfMat):
-    #         return self.from_row(other.ata.dot(self._data))
 
     def __str__(self):
         return f"<Pln : {[round(n, 3) for n in self[:3, 0]]}>"
