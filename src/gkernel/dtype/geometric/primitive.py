@@ -23,6 +23,14 @@ class Vectorlike(ArrayLikeData):
     def xyz(self):
         return self.x, self.y, self.z
 
+    @property
+    def vec(self):
+        """
+        as vector
+        :return:
+        """
+        raise NotImplementedError
+
     # def __sub__(self, other):
     #     raw = self._data - other._data
     #     sign = raw[3, 0]
@@ -140,16 +148,99 @@ class Vec(Vectorlike):
         return self
 
     def is_zero(self):
-        return True if self.xyz == (0, 0, 0) else False
+        """
+        boolean for self being zero vector
+        :return:
+        """
+        return True if self.xyz == (0, 0, 0,) else False
 
-    def normalized(self):
+    def is_parallel_with(self, vec):
+        """
+        check if self is parallel with given vector
+        :param vec:
+        :return:
+        """
+        return True if Vec.cross(self, vec)[0] == 0 else False
+
+    def is_oposite_with(self, vec):
+        """
+        check if self is oposite with given vector
+        :param vec:
+        :return:
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def normalized(cls, vec):
         """
         normalized self
 
         :return: copy of normalized self
         """
 
-        return self / self.length
+        return vec / vec.length
+
+    @classmethod
+    def align_with_x(cls, vec):
+        """
+        calculate transformation matrix for aligning self to axis x
+        :return: compoud transformation matrix (TransfMats)
+        """
+        axis = Vec(1, 0, 0)
+        if vec.is_parallel_with(axis):
+            return TrnsfMats()
+        v_on_zx = vec.projected_on_yz()
+        rot_dir = 1 if Vec.cross(v_on_zx, axis).y > 0 else -1  # to determine direction of rotation
+        ry = RotYMat(Vec.angle_between(axis, v_on_zx) * rot_dir)
+
+        v_on_xy = ry * vec
+        rot_dir = 1 if Vec.cross(v_on_xy, axis).z > 0 else -1
+        rz = RotZMat(Vec.angle_between(axis, v_on_xy) * rot_dir)
+        return TrnsfMats([ry, rz])
+
+    @classmethod
+    def align_with_y(cls, vec):
+        """
+        calculate transformation matrix for aligning self to axis y
+        :return: compoud transformation matrix (TransfMats)
+        """
+        axis = Vec(0, 1, 0)
+        if vec.is_parallel_with(axis):
+            return TrnsfMats()
+        v_on_yz = vec.projected_on_yz()
+        rot_dir = 1 if Vec.cross(v_on_yz, axis).x > 0 else -1  # to determine direction of rotation
+        rx = RotXMat(Vec.angle_between(axis, v_on_yz) * rot_dir)
+
+        v_on_xy = rx * vec
+        rot_dir = 1 if Vec.cross(v_on_xy, axis).z > 0 else -1
+        rz = RotZMat(Vec.angle_between(axis, v_on_xy) * rot_dir)
+        return TrnsfMats([rx, rz])
+
+    @classmethod
+    def trnsf_to_z(cls, vec):
+        """
+        calculate transformation matrix for aligning self to axis z
+        :return: compoud transformation matrix (TransfMats)
+        """
+        axis = Vec(0, 0, 1)
+        if vec.is_parallel_with(axis):
+            return TrnsfMats()
+        v_on_yz = vec.projected_on_yz()
+        rot_dir = 1 if Vec.cross(v_on_yz, axis).x > 0 else -1  # to determine direction of rotation
+        rx = RotXMat(Vec.angle_between(axis, v_on_yz) * rot_dir)
+
+        v_on_zx = rx * vec
+        rot_dir = 1 if Vec.cross(v_on_zx, axis).y > 0 else -1
+        ry = RotYMat(Vec.angle_between(axis, v_on_zx) * rot_dir)
+        return TrnsfMats([rx, ry])
+
+    def align_with_vec(self, vec):
+        """
+        calculate transformation matrix for aligning self to given vector
+        :param vec:
+        :return:
+        """
+        raise NotImplementedError
 
     def _projected_on(self, plane):
         """
@@ -188,11 +279,6 @@ class Vec(Vectorlike):
         """
         return self._projected_on('zx')
 
-    @property
-    def length(self):
-        x, y, z, _ = self.T[0]
-        return np.sqrt(x ** 2 + y ** 2 + z ** 2)
-
     @classmethod
     def pnt2(cls, tail, head):
         """
@@ -201,17 +287,20 @@ class Vec(Vectorlike):
         """
         return head - tail
 
-    # def __copy__(self):
-    #     return self.
+    @property
+    def length(self):
+        x, y, z, _ = self.T[0]
+        return np.sqrt(x ** 2 + y ** 2 + z ** 2)
 
-    # def __deepcopy__(self, memodict={}):
-    #     return self.__class__.from_row(self._data.copy())
-
-    # def copy(self):
-    #     return copy.copy(self)
+    @property
+    def vec(self):
+        return self.copy()
 
 
 class Pnt(Vectorlike):
+    """
+    Point
+    """
     def __new__(cls, x=0, y=0, z=0):
         return np.array([[x],
                          [y],
@@ -232,6 +321,10 @@ class Pnt(Vectorlike):
             return i
         else:
             raise NotImplementedError
+
+    @property
+    def vec(self):
+        return Vec(*self.xyz)
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -276,13 +369,13 @@ class Pln(ArrayLikeData):
                                                [0, 0, 1, 0],
                                                [0, 0, 0, 1],
                                                [1, 0, 0, 0]])).all():
-            self._trnsf_mats = TrnsfMats()
+            self._trnsf_mat = TrnsfMats()
             return
         # make vectors normalized and perpendicular
         x, y = self.axis_x, self.axis_y
         z = Vec.cross(x, y)  # find z
         y = Vec.cross(z, x)  # find y
-        x, y, z = [v.normalized() for v in (x, y, z)]
+        x, y, z = [Vec.normalized(v) for v in (x, y, z)]
         plane = np.array([[0, x.x, y.x, z.x],
                           [0, x.y, y.y, z.y],
                           [0, x.z, y.z, z.z],
@@ -324,7 +417,7 @@ class Pln(ArrayLikeData):
 
         to_origin = MoveMat(*(-self.origin).xyz)
         # found 'plane to origin' so 'origin to plane' is inverse of it
-        self._trnsf_mats = TrnsfMats([to_origin, rz, ry, rx]).I
+        self._trnsf_mat = TrnsfMats([to_origin, rz, ry, rx]).I
 
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]
@@ -350,6 +443,14 @@ class Pln(ArrayLikeData):
     @property
     def components(self):
         return self.origin, self.axis_x, self.axis_y, self.axis_z
+
+    @property
+    def trnsf_mat(self):
+        """
+        return transformation matrix(origin -> plane)
+        :return:
+        """
+        return self._trnsf_mat
 
     def __str__(self):
         return f"<Pln : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -447,6 +548,7 @@ class Ray(ArrayLikeData):
         return f"<<Ray from:{self.origin} heading:{self.heading}"
 
 
+# should this eventually moved into `complex`?
 class Lin(ArrayLikeData):
 
     def __new__(cls, p0=(0, 0, 0), p1=(0, 0, 1)):
@@ -479,6 +581,18 @@ class Lin(ArrayLikeData):
         for i in range(3):
             summed += pow(self._data[i, 0] - self._data[i, 1], 2)
         return sqrt(summed)
+
+    @property
+    def start(self):
+        return Pnt(*self[:3, 0])
+
+    @property
+    def end(self):
+        return Pnt(*self[:3, 1])
+
+    @property
+    def vec(self):
+        return self.end - self.start
 
     def __str__(self):
         return f"<Lin {round(self.length(), 3)}>"

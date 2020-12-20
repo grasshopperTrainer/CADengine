@@ -2,6 +2,7 @@ from .basic import Mat4
 import numpy as np
 from numbers import Number
 import copy
+from warnings import warn
 
 
 class TrnsfMat(Mat4):
@@ -16,6 +17,9 @@ class TrnsfMat(Mat4):
     @property
     def str(self):
         return super().__str__()
+
+    def __neg__(self):
+        return self.I
 
     def __mul__(self, other):
         """
@@ -146,11 +150,15 @@ class MoveMat(TrnsfMat):
         return self[2, 3]
 
     @property
+    def xyz(self):
+        return self[:3, 3]
+
+    @property
     def I(self):
         return MoveMat(-self.x, -self.y, -self.z)
 
     def __str__(self):
-        return f"<MoveMat {self.x, self.y, self.z}>"
+        return f"<MoveMat {[round(v, 3) for v in self.xyz]}>"
 
     # def __array_finalize__(self, obj):
     #     if obj is None: return obj

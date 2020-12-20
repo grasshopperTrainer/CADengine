@@ -241,12 +241,9 @@ class CameraTripod(CameraNode):
         # 3. RotZMat of given rad
         # 4. apply inverse of 1->2 to resulted plane of 3
         origin = self.in_plane.r.origin
-        moves = TrnsfMats()
-        moves.append(MoveMat(*(-origin).xyz))
-        # match z
-        # match y
-        # match x
-
+        to_origin = MoveMat(*(-origin).xyz)
+        axis.vec.trnsf_to_z
+        self.in_plane = to_origin.I * RotZMat(rad) * to_origin * self.in_plane.r
 
     def yaw(self, rad):
         """
