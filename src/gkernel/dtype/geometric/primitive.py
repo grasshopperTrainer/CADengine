@@ -5,7 +5,7 @@ from math import sqrt
 import warnings
 
 
-class Vectorlike(ArrayLikeData):
+class Mat1(ArrayLikeData):
 
     @property
     def x(self):
@@ -23,61 +23,27 @@ class Vectorlike(ArrayLikeData):
     def xyz(self):
         return self.x, self.y, self.z
 
-    @property
-    def vec(self):
+    def __neg__(self):
         """
-        as vector
+        not to negate fourth(w)
         :return:
         """
-        raise NotImplementedError
+        obj = super().__neg__()
+        obj[3, 0] = -obj[3, 0]
+        return obj
 
-    # def __sub__(self, other):
-    #     raw = self._data - other._data
-    #     sign = raw[3, 0]
-    #     if sign == 1:
-    #         return Pnt.from_row(raw)
-    #     elif sign == 0:
-    #         return Vec.from_row(raw)
-    #     else:
-    #         raise NotImplementedError
-
-    # def __add__(self, other):
-    #     raw = self._data + other._data
-    #     sign = raw[3, 0]
-    #     if sign == 1:
-    #         return Pnt.from_row(raw)
-    #     elif sign == 0:
-    #         return Vec.from_row(raw)
-    #     else:
-    #         raise NotImplementedError
-    #
-    # def __mul__(self, other):
-    #     # do dot
-    #     if isinstance(other, ArrayLikeData):
-    #         return np.dot(self._data.T, other._data)[0, 0]
-    #     # do simple mult
-    #     elif isinstance(other, Number):
-    #         v = self.__class__()
-    #         v._data = self._data * other
-    #         return v
-    #     else:
-    #         raise NotImplementedError
     def __mul__(self, other):
-        # amplify
-        if isinstance(other, Number):
+        if isinstance(other, Number):  # amplify
             return super().__mul__(other)
-        elif not isinstance(other, Vectorlike):
-            # multiplying else unknown
+        elif not isinstance(other, Mat1):  # multiplying else unknown
             raise TypeError
-        elif isinstance(self, other.__class__):
-            # multiplying point to point unknown
+        elif isinstance(self, other.__class__):  # multiplying point to point unknown
             raise TypeError
-        else:
-            # multiplying point to vector or vise versa
+        else:  # multiplying point to vector or vise versa
             return self.dot(other.T)
 
 
-class Vec(Vectorlike):
+class Vec(Mat1):
 
     def __new__(cls, x=1, y=0, z=0):
         return np.array([[x],
@@ -181,7 +147,7 @@ class Vec(Vectorlike):
         return vec / vec.length
 
     @classmethod
-    def align_with_x(cls, vec):
+    def trnsf_to_x(cls, vec):
         """
         calculate transformation matrix for aligning self to axis x
         :return: compoud transformation matrix (TransfMats)
@@ -199,7 +165,7 @@ class Vec(Vectorlike):
         return TrnsfMats([ry, rz])
 
     @classmethod
-    def align_with_y(cls, vec):
+    def trnsf_to_y(cls, vec):
         """
         calculate transformation matrix for aligning self to axis y
         :return: compoud transformation matrix (TransfMats)
@@ -280,7 +246,7 @@ class Vec(Vectorlike):
         return self._projected_on('zx')
 
     @classmethod
-    def pnt2(cls, tail, head):
+    def of_two_pnt(cls, tail, head):
         """
         Construct new vector from two points
         :return:
@@ -292,20 +258,41 @@ class Vec(Vectorlike):
         x, y, z, _ = self.T[0]
         return np.sqrt(x ** 2 + y ** 2 + z ** 2)
 
-    @property
-    def vec(self):
-        return self.copy()
+    def as_vec(self):
+        return self
+
+    def as_pnt(self):
+        return Pnt(*self.xyz)
+
+    def as_lin(self):
+        return Lin(p0=(0, 0, 0), p1=self.xyz)
 
 
-class Pnt(Vectorlike):
+class Pnt(Mat1):
     """
     Point
     """
+
     def __new__(cls, x=0, y=0, z=0):
         return np.array([[x],
                          [y],
                          [z],
                          [1]], dtype=float).view(Pnt)
+
+    def __sub__(self, other):
+        """
+        to return `Vec` from two points
+        :param other:
+        :return:
+        """
+        r = super().__sub__(other)
+        if isinstance(other, Pnt):
+            return r.view(Vec)
+        else:
+            return r
+
+    def __str__(self):
+        return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
 
     @classmethod
     def cast(self, v):
@@ -322,12 +309,12 @@ class Pnt(Vectorlike):
         else:
             raise NotImplementedError
 
-    @property
-    def vec(self):
+    def as_vec(self):
         return Vec(*self.xyz)
 
-    def __str__(self):
-        return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
+    def as_pnt(self):
+        return self
+
 
 
 class Pln(ArrayLikeData):
@@ -346,7 +333,7 @@ class Pln(ArrayLikeData):
         p = Pln()
         # fill array
         for i, vec in enumerate([o, x, y, z]):
-            p[:3, i] = vec[:3, 0] if isinstance(vec, Vectorlike) else vec
+            p[:3, i] = vec[:3, 0]
         return p
 
     def __new__(cls, o=(0, 0, 0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
@@ -535,11 +522,14 @@ class Ray(ArrayLikeData):
 
     @property
     def origin(self):
-        return Pnt(*self[:3, 0].tolist())
+        return Pnt(*self[:3, 0])
 
     @property
     def heading(self):
-        return Vec(*self[:3, 1].tolist())
+        return Vec(*self[:3, 1])
+
+    def as_vec(self):
+        return Vec(*self[:3, 1])
 
     def __str__(self):
         return f"<Ray from {self.origin}>"
@@ -572,6 +562,16 @@ class Lin(ArrayLikeData):
         """
         return Lin(start.xyz, end.xyz)
 
+    @classmethod
+    def of_pnt_vec(cls, start: Pnt, direction: Vec):
+        """
+        line from start and direction
+        :param start: starting vertex of line
+        :param direction: ending vertex relative to start
+        :return:
+        """
+        return Lin(start.xyz, (start+direction).xyz)
+
     def length(self):
         """
         of line
@@ -590,9 +590,45 @@ class Lin(ArrayLikeData):
     def end(self):
         return Pnt(*self[:3, 1])
 
-    @property
-    def vec(self):
+    def as_vec(self):
         return self.end - self.start
+
+    def as_lin(self):
+        return self
 
     def __str__(self):
         return f"<Lin {round(self.length(), 3)}>"
+
+
+# casting into
+def pnt(obj):
+    """
+    as point
+    :return:
+    """
+    try:
+        return obj.as_pnt()
+    except Exception as e:
+        raise e
+
+
+def vec(obj):
+    """
+    as vector
+    :return:
+    """
+    try:
+        return obj.as_vec()
+    except Exception as e:
+        raise e
+
+
+def lin(obj):
+    """
+    as line
+    :return:
+    """
+    try:
+        return obj.as_lin()
+    except Exception as e:
+        raise e

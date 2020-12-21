@@ -1,6 +1,6 @@
 from JINTFP import *
 from gkernel.dtype.nongeometric.matrix import MoveMat, RotXMat, RotYMat, RotZMat, TrnsfMats
-from gkernel.dtype.geometric.primitive import Pln, Vec
+from gkernel.dtype.geometric.primitive import Pln, Vec, vec, lin
 from my_patterns import Singleton
 
 
@@ -201,7 +201,7 @@ class CameraTripod(CameraNode):
         matrix[0, :3] = xaxis.xyz
         matrix[1, :3] = yaxis.xyz
         matrix[2, :3] = zaxis.xyz
-        matrix[:3, 3] = Vec.dot(-xaxis,eye), Vec.dot(-yaxis, eye), Vec.dot(-zaxis, eye)
+        matrix[:3, 3] = Vec.dot(-xaxis, eye), Vec.dot(-yaxis, eye), Vec.dot(-zaxis, eye)
         return matrix
 
     def lookat(self, eye, at, up):
@@ -220,15 +220,15 @@ class CameraTripod(CameraNode):
         else:
             raise NotImplementedError
         # calculate plane
-        zaxis = at - eye                # vector from eye to at
-        zaxis /= zaxis.length    # normalize
-        xaxis = Vec.cross(zaxis, up)         # find perpendicular of z and up(y) -> x
-        xaxis /= xaxis.length    # normalize
-        yaxis = Vec.cross(xaxis, zaxis)      # find true up
-        zaxis *= -1                     # reverse z
+        zaxis = at - eye  # vector from eye to at
+        zaxis /= zaxis.length  # normalize
+        xaxis = Vec.cross(zaxis, up)  # find perpendicular of z and up(y) -> x
+        xaxis /= xaxis.length  # normalize
+        yaxis = Vec.cross(xaxis, zaxis)  # find true up
+        zaxis *= -1  # reverse z
         self.in_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
 
-    def rotate_along(self, axis: Vec, rad):
+    def rotate_along(self, axis, rad):
         """
         rotate along given axis
 
@@ -240,10 +240,10 @@ class CameraTripod(CameraNode):
         # 2. RotMat of axis to world z
         # 3. RotZMat of given rad
         # 4. apply inverse of 1->2 to resulted plane of 3
-        origin = self.in_plane.r.origin
-        to_origin = MoveMat(*(-origin).xyz)
-        axis.vec.trnsf_to_z
-        self.in_plane = to_origin.I * RotZMat(rad) * to_origin * self.in_plane.r
+        axis = axis.as_lin()
+        axis_o, axis_v = axis.start, axis.as_vec()
+        axis_to_z = TrnsfMats([MoveMat(*(-axis_o).xyz), Vec.trnsf_to_z(axis_v)])
+        self.in_plane = axis_to_z.I * RotZMat(rad) * axis_to_z * self.in_plane.r
 
     def yaw(self, rad):
         """
@@ -278,7 +278,7 @@ class CameraTripod(CameraNode):
         :return:
         """
         tm = MoveMat(*vec.xyz)
-        self.in_plane = tm*self.in0_plane.r
+        self.in_plane = tm * self.in0_plane.r
 
     def move_along_axis(self, axis, magnitude):
         """
@@ -286,10 +286,10 @@ class CameraTripod(CameraNode):
         :param axis:
         :return:
         """
-        axis = self.in0_plane.r.components[{'x':1, 'y':2, 'z':3}[axis]]
+        axis = self.in0_plane.r.components[{'x': 1, 'y': 2, 'z': 3}[axis]]
         axis.amplify(magnitude)
         tm = MoveMat(*axis.xyz)
-        self.in_plane = tm*self.in0_plane.r
+        self.in_plane = tm * self.in0_plane.r
 
     def orient(self, pos):
         """
@@ -301,6 +301,7 @@ class CameraTripod(CameraNode):
     @property
     def plane(self):
         return self.out_plane
+
 
 @Singleton
 class GetCurrentCamera(CameraNode):

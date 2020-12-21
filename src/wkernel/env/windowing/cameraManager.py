@@ -4,7 +4,6 @@ from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, ScaleMat
 from .bits import *
 
 
-
 class CameraFactory:
     @classmethod
     def new_camera(cls, pool, fov_lrbt, orth_prsp, *args):
@@ -27,8 +26,9 @@ class CameraFactory:
 
 class FpsDolly:
 
-    def __init__(self, camera):
+    def __init__(self, camera, tripod):
         self._camera = camera
+        self._tripod = tripod
         self.move_speed = 10
         self.view_speed = 0.01
         # should it be at upper?
@@ -40,18 +40,18 @@ class FpsDolly:
         # left right back forward
         char = keyboard.get_char(key, mods)
         if char == 'a':
-            self._camera.tripod.move_along_axis('x', -self.move_speed)
+            self._tripod.move_along_axis('x', -self.move_speed)
         elif char == 'd':
-            self._camera.tripod.move_along_axis('x', self.move_speed)
+            self._tripod.move_along_axis('x', self.move_speed)
         elif char == 's':
-            self._camera.tripod.move_along_axis('z', self.move_speed)
+            self._tripod.move_along_axis('z', self.move_speed)
         elif char == 'w':
-            self._camera.tripod.move_along_axis('z', -self.move_speed)
+            self._tripod.move_along_axis('z', -self.move_speed)
         # ascend descend
         elif char == 'q':
-            self._camera.tripod.move(Vec(0, 0, -self.move_speed))
+            self._tripod.move(Vec(0, 0, -self.move_speed))
         elif char == 'e':
-            self._camera.tripod.move(Vec(0, 0, self.move_speed))
+            self._tripod.move(Vec(0, 0, self.move_speed))
 
     def cursorpos_callback(self, window, xpos, ypos, mouse):
         """
@@ -64,16 +64,11 @@ class FpsDolly:
         :return:
         """
         if self._last_cursor_pos is not None:
-            v = Vec.pnt2(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos))* self.view_speed  # cursor delta
-            self._camera.tripod.pitch(v.y)           # rotate vertically
-            self._camera.tripod.rotate_along(Vec(x=0, y=0, z=1), v.x)
-            # self._camera.tripod.yaw(-v.x * self.view_speed)
-            # # rotate horizontally around world y axis
-            # plane = self._camera.tripod.in_plane.r
-            # ox, oy, oz = plane.origin.xyz
-            #
-            # new_plane = MoveMat(ox, oy, oz) * RotZMat(v.x * -self.view_speed) * MoveMat(-ox, -oy, -oz) * plane
-            # self._camera.tripod.in_plane = new_plane
+            v = Vec.of_two_pnt(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
+            # rotate vertically and horizontally
+            self._tripod.pitch(v.y)
+            axis = Lin.of_pnt_vec(self._tripod.in_plane.r.origin, Vec(0, 0, 1))
+            self._tripod.rotate_along(axis, -v.x)
 
         self._last_cursor_pos = xpos, ypos
 
@@ -93,7 +88,7 @@ class Camera(RenderTarget):
         self._dolly = None
 
     def set_fps_dolly(self, window):
-        self._dolly = FpsDolly(self)
+        self._dolly = FpsDolly(self, self._tripod)
 
     def set_dolly(self, dolly):
         self._dolly = dolly
@@ -121,16 +116,16 @@ class Camera(RenderTarget):
         """
         l, r, b, t, n, f = self.body.dim
         # convert normalized into near frustum space
-        sm = ScaleMat(x=r-l, y=t-b)
-        mm = MoveMat(x=(r+l)/2, y=(t+b)/2, z=-n)
-        frustum_point = mm*sm*Pnt(x=param_x, y=param_y, z=0)
-        frustum_point = Pnt(x=param_x, y=param_y, z=0)*sm*mm
+        sm = ScaleMat(x=r - l, y=t - b)
+        mm = MoveMat(x=(r + l) / 2, y=(t + b) / 2, z=-n)
+        frustum_point = mm * sm * Pnt(x=param_x, y=param_y, z=0)
+        frustum_point = Pnt(x=param_x, y=param_y, z=0) * sm * mm
         # print(frustum_point)
         # raise
         # define ray and cast into world space
-        ray = Ray([0,0,0], frustum_point.xyz)
+        ray = Ray([0, 0, 0], frustum_point.xyz)
 
-        return self.tripod.VM.r*ray
+        return self.tripod.VM.r * ray
 
     def __enter__(self):
         CameraCurrentStack().append(self)
