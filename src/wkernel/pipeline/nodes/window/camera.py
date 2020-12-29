@@ -226,7 +226,7 @@ class CameraTripod(CameraNode):
         xaxis /= xaxis.length  # normalize
         yaxis = Vec.cross(xaxis, zaxis)  # find true up
         zaxis *= -1  # reverse z
-        self.in_plane = Pln.from_components(eye, xaxis, yaxis, zaxis)
+        self.in_plane = Pln.from_ori_axies(eye, xaxis, yaxis, zaxis)
 
     def rotate_along(self, axis, rad):
         """

@@ -1,4 +1,4 @@
-from .dtype.geometric.primitive import Pnt
+from gkernel.dtype.geometric.primitive import Pln
 
 
 class ModelIterator:
@@ -7,16 +7,8 @@ class ModelIterator:
         self._iter_idx = 0
 
     def __next__(self):
-        # if self._iter_idx >= len(self._shapes):
-        #     raise StopIteration
-        # else:
-        print('ddd')
         for s in self._shapes:
-            print(s)
             yield s
-            # shape = self._shapes[self._iter_idx]
-            # self._iter_idx += 1
-            # return shape
 
     def __iter__(self):
         return self
@@ -25,7 +17,7 @@ class ModelIterator:
 class Model:
     def __init__(self):
         self._shapes = []
-        self._origin = Pnt()
+        self._plane = Pln()
 
     def append_shape(self, shape):
         self._shapes.append(shape)
@@ -51,14 +43,3 @@ class Model:
 
 
 
-class Shape:
-    def __init__(self):
-        pass
-
-    def intersect(self, ray):
-        """
-        shape is responsible for intersecting with ray
-        :param ray: to intersect with
-        :return:
-        """
-        raise NotImplementedError

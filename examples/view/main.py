@@ -1,6 +1,5 @@
 from wkernel import Window
-from doodler import *
-from gkernel.modelManager import *
+from mkernel.model import *
 from gkernel.dtype.geometric.primitive import Pnt, Tgl
 
 

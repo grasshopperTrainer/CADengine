@@ -1,8 +1,19 @@
-from gkernel.dtype.geometric._GeomDataType import *
+from .._DataType import ArrayLikeData
 from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
+
+import numpy as np
+
 import copy
 from math import sqrt
 import warnings
+from numbers import Number
+import abc
+
+
+
+
+# what is good min val?
+MIN_VAL = 1e-6
 
 
 class Mat1(ArrayLikeData):
@@ -43,16 +54,121 @@ class Mat1(ArrayLikeData):
             return self.dot(other.T)
 
 
-class Vec(Mat1):
+class VecConv(metaclass=abc.ABCMeta):
+    """
+    Interface for vector convertable
+    """
+    @abc.abstractmethod
+    def as_vec(self):
+        pass
+
+
+class LinConv(metaclass=abc.ABCMeta):
+    """
+    Interface for line convertalbe
+    """
+    @abc.abstractmethod
+    def as_lin(self):
+        pass
+
+
+class PntConv(metaclass=abc.ABCMeta):
+    """
+    Interface for point convertable
+    """
+    @abc.abstractmethod
+    def as_pnt(self):
+        pass
+
+
+class Ray(ArrayLikeData, VecConv, LinConv):
+    """
+    Ray is a line without ending
+    """
+
+    def __new__(cls, o=(0, 0, 0), v=(0, 0, 1)):
+        """
+
+        :param o: origin as a point
+        :param v: direction as a vector
+        """
+        return np.array([[o[0], v[0]],
+                         [o[1], v[1]],
+                         [o[2], v[2]],
+                         [1, 0]], dtype=float).view(cls)
+
+    @property
+    def origin(self):
+        return Pnt(*self[:3, 0])
+
+    @property
+    def normal(self):
+        return Vec(*self[:3, 1])
+
+    def as_vec(self):
+        return self.normal
+
+    def as_lin(self):
+        """
+        convert Ray into Line
+
+        :return: Lin instance with length 1
+        """
+        return Lin.from_pnt_vec(self.origin, self.normal)
+
+    def __str__(self):
+        return f"<Ray from {self.origin}>"
+
+    def describe(self):
+        return f"<<Ray from:{self.origin} heading:{self.normal}"
+
+
+class Vec(Mat1, VecConv, PntConv):
 
     def __new__(cls, x=1, y=0, z=0):
+        print('vector new')
         return np.array([[x],
                          [y],
                          [z],
                          [0]], dtype=float).view(cls)
 
+    def __array_finalize__(self, obj):
+        """
+        :param obj:
+        :atrib _is_new: flag for newly set. used to indicate when cache clean is needed.
+        :atrib _length: length of vector
+        :return:
+        """
+        self.__clean_cache = True
+        self.__length = None
+
     def __str__(self):
         return f"<Vec : {[round(n, 3) for n in self[:3, 0]]}>"
+
+    def __eq__(self, other):
+        """
+        logical equation
+
+        :param other: other vector
+        :return: bool
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        elif super().__eq__(other).all():
+            return True
+        else:
+            return False
+
+    def __setitem__(self, key, value):
+        """
+        overridden to indicate cache clean needed
+
+        :param key:
+        :param value:
+        :return:
+        """
+        super().__setitem__(key, value)
+        self.__clean_cache = True
 
     @classmethod
     def cross(cls, a, b):
@@ -93,13 +209,28 @@ class Vec(Mat1):
         """
         return np.dot(a.T, b)[0, 0]
 
-    def amplify(self, magnitude, copy=False):
-        if copy:
-            self = self.copy()
+    @classmethod
+    def amplified(cls, vec, magnitude):
+        """
+        return amplified vector
+
+        :param vec:
+        :param magnitude:
+        :return: copy of amplified vec
+        """
+        return vec.normalize().amplify(magnitude)
+
+    def amplify(self, magnitude):
+        """
+        amplify self
+
+        :param self:
+        :param magnitude:
+        :return:
+        """
         self.normalize()
         self[:] = self * magnitude
-        if copy:
-            return self
+        return self
 
     def normalize(self):
         """
@@ -141,7 +272,7 @@ class Vec(Mat1):
         """
         normalized self
 
-        :return: copy of normalized self
+        :return: copy of normalized vector
         """
 
         return vec / vec.length
@@ -253,10 +384,23 @@ class Vec(Mat1):
         """
         return head - tail
 
+    def __recal_cache(self):
+        """
+        recalculate cached values
+
+        :return:
+        """
+        x, y, z = self.xyz
+        self.__length = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+
     @property
     def length(self):
+        # if self.__clean_cache:
         x, y, z, _ = self.T[0]
-        return np.sqrt(x ** 2 + y ** 2 + z ** 2)
+        self.__length = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+        return self.__length
+        # else:
+        #     return self.__length
 
     def as_vec(self):
         return self
@@ -268,7 +412,7 @@ class Vec(Mat1):
         return Lin(p0=(0, 0, 0), p1=self.xyz)
 
 
-class Pnt(Mat1):
+class Pnt(Mat1, VecConv, PntConv):
     """
     Point
     """
@@ -277,7 +421,7 @@ class Pnt(Mat1):
         return np.array([[x],
                          [y],
                          [z],
-                         [1]], dtype=float).view(Pnt)
+                         [1]], dtype=float).view(cls)
 
     def __sub__(self, other):
         """
@@ -290,6 +434,20 @@ class Pnt(Mat1):
             return r.view(Vec)
         else:
             return r
+
+    def __eq__(self, other):
+        """
+        logical equation of two points
+
+        :param other:
+        :return:
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        elif super().__eq__(other).all():
+            return True
+        else:
+            return False
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -315,12 +473,57 @@ class Pnt(Mat1):
     def as_pnt(self):
         return self
 
+    def intersect(self, ray: Ray):
+        """
+        ray point intersection
+
+        :param ray: ray to intersect with
+        :return: self as an intersection point else None
+        """
+        # 0 cross product means parallel
+        ray_to_pnt = self - ray.origin
+        if Vec.cross(ray.normal, ray_to_pnt).is_zero():
+            return self
+        else:
+            return None
 
 
-class Pln(ArrayLikeData):
+class NamedVec(Vec):
+    """
+    Named vector
+    """
+    def __new__(cls, vec_like):
+        return vec_like.as_vec().view(cls)
+
+
+class Xax(NamedVec):
+    """
+    Vector as x axis
+    """
+    def __str__(self):
+        return f"<Xax {[round(n, 3) for n in self[:3, 0]]}>"
+
+
+class Yax(NamedVec):
+    """
+    Vector as y axis
+    """
+    def __str__(self):
+        return f"<Yax {[round(n, 3) for n in self[:3, 0]]}>"
+
+
+class Zax(NamedVec):
+    """
+    Vector as z axis
+    """
+    def __str__(self):
+        return f"<Zax {[round(n, 3) for n in self[:3, 0]]}>"
+
+
+class Pln(ArrayLikeData, PntConv):
 
     @classmethod
-    def from_components(cls, o, x, y, z):
+    def from_ori_axies(cls, o, x, y, z):
         """
         construct plane from its components
 
@@ -411,20 +614,23 @@ class Pln(ArrayLikeData):
         v = Vec.from_row(self._data[:, sign:sign + 1])
         return v
 
+    def as_pnt(self):
+        return self.origin
+
     @property
-    def origin(self):
+    def origin(self) -> Pnt:
         return Pnt(*self[:3, 0])
 
     @property
-    def axis_x(self):
+    def axis_x(self) -> Vec:
         return Vec(*self[:3, 1])
 
     @property
-    def axis_y(self):
+    def axis_y(self) -> Vec:
         return Vec(*self[:3, 2])
 
     @property
-    def axis_z(self):
+    def axis_z(self) -> Vec:
         return Vec(*self[:3, 3])
 
     @property
@@ -441,6 +647,116 @@ class Pln(ArrayLikeData):
 
     def __str__(self):
         return f"<Pln : {[round(n, 3) for n in self[:3, 0]]}>"
+
+    @classmethod
+    def from_lin_pnt(cls, line, point, axis_of='x'):
+        """
+        construct plane from line and vertex on it
+
+        :param line: axis on the plane
+        :param point: point on the plane
+        :param axis_of: #optional# tell what input axis is
+        :return: plane
+        """
+        if axis_of == 'x':
+            y_axis = Vec.from_pnt(point)
+            return Pln.from_ori_axies(line.start, line.as_vec(), y_axis, Vec(0, 0, 1))
+        else:
+            raise NotImplementedError
+
+    def intersect(self, ray: Ray):
+        """
+        ray plane intersection
+
+        referenced from Scratchapixel 2.0 :
+        https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection
+
+        :param ray: to intersect with
+        :return: Pnt if intersects else None
+        """
+        # 0 dot means perpendicular and
+        # ray perpendicular plane normal means they are parallel
+        plane_normal = self.axis_z
+        ray_normal = ray.normal
+        denom = Vec.dot(plane_normal, ray_normal)
+        if abs(denom) < MIN_VAL:  # check if value is 0
+            return None
+        # if not ray is not parallel with plane
+        # check if ray is pointing at plane, not away
+        ray_to_origin = self.origin - ray.origin
+        # scalar distance describing intersection point from ray origin
+        dist = Vec.dot(plane_normal, ray_to_origin) / denom
+        if dist >= 0:
+            return ray.origin + ray_normal.amplify(dist)
+        else:
+            return None
+
+    @classmethod
+    def is_coplanar(cls, a, b):
+        """
+        coplanar planes have same origin and normal but not other two axes
+
+        :param a: first plane
+        :param b: second plane
+        :return: bool
+        """
+        return True if a.origin == b.origin and a.axis_z == b.axis_z else False
+
+    def pnt_is_on(self, point):
+        """
+        check if given point is on the plane
+        :param point:
+        :return:
+        """
+        if Vec.dot(self.axis_z, point.as_vec()) == 0:
+            return True
+        else:
+            return False
+
+    def pnt_dist(self, point):
+        """
+        calculate shortest distance from point to plane
+
+        :param point: point to calculate distance from
+        :return: float distance
+        """
+        # find projected on normal
+        return abs(Vec.dot(self.axis_z, point.as_vec())/self.axis_z.length)
+
+    def pnt_shortest(self, point):
+        """
+        find closest point to plane
+
+        :param point: Pnt to drop from
+        :return: Pnt on Pln
+        """
+        d = Vec.dot(self.axis_z, point.as_vec())/self.axis_z.length
+        return point + self.axis_z.amplify(d)
+
+    @classmethod
+    def from_ori_norm(cls, origin, normal, axis=None):
+        """
+        construct new plane from origin and normal
+
+        :param origin: plane origin
+        :param normal: plane normal
+        :param axis: optional, axis to use as peripheral axis
+        :return:
+        """
+        if isinstance(axis, Xax):
+            # find axis y
+            axis_y = Vec.cross(normal, axis)
+            axis_x = Vec.cross(axis_y, normal)
+            return Pln.from_ori_axies(o=origin, x=axis_x, y=axis_y, z=normal)
+        elif isinstance(axis, Yax):
+            # find axis x
+            axis_x = Vec.cross(normal, axis)
+            axis_y = Vec.cross(normal, axis_x)
+            return Pln.from_ori_axies(o=origin, x=axis_x, y=axis_y, z=normal)
+        elif isinstance(axis, Zax):
+            raise TypeError("z axis cant relate with normal, normal means axis z")
+        else:
+            raise TypeError("optional axis argument should be wrapped first")
 
 
 class Tgl(ArrayLikeData):
@@ -504,42 +820,8 @@ class Tgl(ArrayLikeData):
         return f"<Tgl {self.centroid}>"
 
 
-class Ray(ArrayLikeData):
-    """
-    Ray is a line without ending
-    """
-
-    def __new__(cls, o=(0, 0, 0), v=(0, 0, 1)):
-        """
-
-        :param o: origin as a point
-        :param v: direction as a vector
-        """
-        return np.array([[o[0], v[0]],
-                         [o[1], v[1]],
-                         [o[2], v[2]],
-                         [1, 0]], dtype=float).view(cls)
-
-    @property
-    def origin(self):
-        return Pnt(*self[:3, 0])
-
-    @property
-    def heading(self):
-        return Vec(*self[:3, 1])
-
-    def as_vec(self):
-        return Vec(*self[:3, 1])
-
-    def __str__(self):
-        return f"<Ray from {self.origin}>"
-
-    def describe(self):
-        return f"<<Ray from:{self.origin} heading:{self.heading}"
-
-
 # should this eventually moved into `complex`?
-class Lin(ArrayLikeData):
+class Lin(ArrayLikeData, VecConv):
 
     def __new__(cls, p0=(0, 0, 0), p1=(0, 0, 1)):
         """
@@ -563,6 +845,16 @@ class Lin(ArrayLikeData):
         return Lin(start.xyz, end.xyz)
 
     @classmethod
+    def from_pnt(cls, point):
+        """
+        construct vertex from point
+
+        :param point: head of vertex
+        :return: new `Vec`
+        """
+        return cls(*point.xyz)
+
+    @classmethod
     def of_pnt_vec(cls, start: Pnt, direction: Vec):
         """
         line from start and direction
@@ -570,7 +862,25 @@ class Lin(ArrayLikeData):
         :param direction: ending vertex relative to start
         :return:
         """
-        return Lin(start.xyz, (start+direction).xyz)
+        return Lin(start.xyz, (start + direction).xyz)
+
+    @classmethod
+    def coplanar(cls, a, b):
+        """
+        check if two lines are on the same plane
+
+        :param a: first line
+        :param b: second line
+        :return: bool
+        """
+        # make two plane
+        a0, a1, b0, b1 = a.vertices, b.vertices
+        av = a1 - a0
+        # normal(z) will be calculated from input x, y axis so put trash value
+        p0 = Pln.from_ori_axies(o=a0, x=av, y=b0 - a0, z=Vec())
+        p1 = Pln.from_ori_axies(o=a0, x=av, y=b1 - a0, z=Vec())
+        if not p0 == p1:
+            return
 
     def length(self):
         """
@@ -595,6 +905,31 @@ class Lin(ArrayLikeData):
 
     def as_lin(self):
         return self
+
+    def intersect(self, ray):
+        """
+        ray line intersection
+
+        :param ray: ray to intersect with
+        :return: point if intersects else None
+        """
+        # 1. check two vectors on the same plane
+        Lin.is_coplanar(self.as_lin(), ray.as_lin())
+        # 2. check if assumed intersection point is parallel with line vector
+
+
+    @classmethod
+    def is_coplanar(cls, a, b):
+        """
+        check coplanarity between two lines
+
+        :param a: first line
+        :param b: second line
+        :return: bool
+        """
+        # build plane with line and vertex then check if another vertex is on it
+        plane = Pln.from_lin_pnt(a, b.start)
+        return plane.pnt_is_on(b.end)
 
     def __str__(self):
         return f"<Lin {round(self.length(), 3)}>"
