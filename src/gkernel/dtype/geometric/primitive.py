@@ -10,12 +10,6 @@ from numbers import Number
 import abc
 
 
-
-
-# what is good min val?
-MIN_VAL = 1e-6
-
-
 class Mat1(ArrayLikeData):
 
     @property
@@ -105,6 +99,18 @@ class Ray(ArrayLikeData, VecConv, LinConv):
     def normal(self):
         return Vec(*self[:3, 1])
 
+    @classmethod
+    def from_pnt_vec(cls, origin, normal):
+        """
+        create new ray from ray origin and normal
+
+        :param origin: Pnt ray origin
+        :param normal: Vec ray direction
+        :return:
+        """
+
+        return cls(origin.xyz, normal.xyz)
+
     def as_vec(self):
         return self.normal
 
@@ -126,7 +132,6 @@ class Ray(ArrayLikeData, VecConv, LinConv):
 class Vec(Mat1, VecConv, PntConv):
 
     def __new__(cls, x=1, y=0, z=0):
-        print('vector new')
         return np.array([[x],
                          [y],
                          [z],
@@ -145,19 +150,17 @@ class Vec(Mat1, VecConv, PntConv):
     def __str__(self):
         return f"<Vec : {[round(n, 3) for n in self[:3, 0]]}>"
 
-    def __eq__(self, other):
+    def __truediv__(self, other):
         """
-        logical equation
+        overridden to preserve w value of array
 
-        :param other: other vector
-        :return: bool
+        :param other:
+        :return:
         """
-        if not isinstance(other, self.__class__):
-            return False
-        elif super().__eq__(other).all():
-            return True
-        else:
-            return False
+        obj = super().__truediv__(other)
+        if isinstance(other, Number):
+            obj[3, 0] = 1
+        return obj
 
     def __setitem__(self, key, value):
         """
@@ -240,7 +243,7 @@ class Vec(Mat1, VecConv, PntConv):
         """
         if self.is_zero():
             warnings.warn("zero vector cant be normalized")
-            return
+            return self
         self[:] = self / self.length
         return self
 
@@ -377,12 +380,23 @@ class Vec(Mat1, VecConv, PntConv):
         return self._projected_on('zx')
 
     @classmethod
-    def of_two_pnt(cls, tail, head):
+    def from_pnts(cls, tail, head):
         """
         Construct new vector from two points
+
         :return:
         """
         return head - tail
+
+    @classmethod
+    def from_pnt(cls, point):
+        """
+        create new vector from point
+
+        :param point:
+        :return:
+        """
+        return Vec(*point.xyz)
 
     def __recal_cache(self):
         """
@@ -434,20 +448,6 @@ class Pnt(Mat1, VecConv, PntConv):
             return r.view(Vec)
         else:
             return r
-
-    def __eq__(self, other):
-        """
-        logical equation of two points
-
-        :param other:
-        :return:
-        """
-        if not isinstance(other, self.__class__):
-            return False
-        elif super().__eq__(other).all():
-            return True
-        else:
-            return False
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -533,11 +533,7 @@ class Pln(ArrayLikeData, PntConv):
         :param z: zaxis
         :return:
         """
-        p = Pln()
-        # fill array
-        for i, vec in enumerate([o, x, y, z]):
-            p[:3, i] = vec[:3, 0]
-        return p
+        return Pln(o.xyz, x.xyz, y.xyz, z.xyz)
 
     def __new__(cls, o=(0, 0, 0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
 
@@ -548,10 +544,11 @@ class Pln(ArrayLikeData, PntConv):
 
     def __array_finalize__(self, obj):
         """
-        Make vectors perpendicular, normalized and
-        create transformation matrix into plane space
+        standarization? of plane
 
-        vectors are made perpendicular by referencing vectors in xyz order
+        1. Make vectors perpendicular, normalized and
+        2. create transformation matrix into plane space
+        !vectors are made perpendicular by referencing vectors in xyz order!
         :return:
         """
         # check for unit plane
@@ -570,6 +567,9 @@ class Pln(ArrayLikeData, PntConv):
                           [0, x.y, y.y, z.y],
                           [0, x.z, y.z, z.z],
                           [1, 0, 0, 0]], dtype=float)
+        # apply normalized
+        self[:4, 1:4] = np.array([x, y, z]).T
+
         # calculate 'plane to origin' rotation matrices
         # last rotation is of x so match axis x to unit x prior
         x_on_xy = x.projected_on_xy()
@@ -658,8 +658,10 @@ class Pln(ArrayLikeData, PntConv):
         :param axis_of: #optional# tell what input axis is
         :return: plane
         """
+        if point in (line.start, line.end):
+            raise ValueError("point is the start or end of the line")
         if axis_of == 'x':
-            y_axis = Vec.from_pnt(point)
+            y_axis = point.as_vec()
             return Pln.from_ori_axies(line.start, line.as_vec(), y_axis, Vec(0, 0, 1))
         else:
             raise NotImplementedError
@@ -679,7 +681,7 @@ class Pln(ArrayLikeData, PntConv):
         plane_normal = self.axis_z
         ray_normal = ray.normal
         denom = Vec.dot(plane_normal, ray_normal)
-        if abs(denom) < MIN_VAL:  # check if value is 0
+        if abs(denom) < ATOL:  # check if value is 0
             return None
         # if not ray is not parallel with plane
         # check if ray is pointing at plane, not away
@@ -835,7 +837,7 @@ class Lin(ArrayLikeData, VecConv):
                          [1, 1]], dtype=float).view(cls)
 
     @classmethod
-    def from_two_pnt(cls, start: Pnt, end: Pnt):
+    def from_pnts(cls, start: Pnt, end: Pnt):
         """
         create line using start, end vertex
         :param start: starting vertex of line
@@ -845,19 +847,10 @@ class Lin(ArrayLikeData, VecConv):
         return Lin(start.xyz, end.xyz)
 
     @classmethod
-    def from_pnt(cls, point):
+    def from_pnt_vec(cls, start: Pnt, direction: Vec):
         """
-        construct vertex from point
+        create line from start and direction
 
-        :param point: head of vertex
-        :return: new `Vec`
-        """
-        return cls(*point.xyz)
-
-    @classmethod
-    def of_pnt_vec(cls, start: Pnt, direction: Vec):
-        """
-        line from start and direction
         :param start: starting vertex of line
         :param direction: ending vertex relative to start
         :return:
@@ -882,6 +875,7 @@ class Lin(ArrayLikeData, VecConv):
         if not p0 == p1:
             return
 
+    @property
     def length(self):
         """
         of line
@@ -889,8 +883,26 @@ class Lin(ArrayLikeData, VecConv):
         """
         summed = 0
         for i in range(3):
-            summed += pow(self._data[i, 0] - self._data[i, 1], 2)
+            summed += pow(self[i, 0] - self[i, 1], 2)
         return sqrt(summed)
+
+    def reversed(self):
+        """
+        create new Lin reversed
+
+        :return: new reversed Lin
+        """
+
+        return self.__class__(self.end.xyz, self.start.xyz)
+
+    def reverse(self):
+        """
+        reverse self
+
+        :return: self reversed
+        """
+        self[:] = np.roll(self, shift=1, axis=1)
+        return self
 
     @property
     def start(self):
@@ -900,39 +912,99 @@ class Lin(ArrayLikeData, VecConv):
     def end(self):
         return Pnt(*self[:3, 1])
 
+    def pnt_at(self, t):
+        """
+        return Point at parameter t
+
+        :param t: in between 0(start), 1(end). is compatible values under, above (0, 1)
+        :return:
+        """
+        if not isinstance(t, Number):
+            raise
+
+        return self.start + self.as_vec()*t
+
     def as_vec(self):
         return self.end - self.start
 
     def as_lin(self):
         return self
 
-    def intersect(self, ray):
+    def intx_ray(self, ray):
         """
         ray line intersection
+
+        refer to: https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
 
         :param ray: ray to intersect with
         :return: point if intersects else None
         """
-        # 1. check two vectors on the same plane
-        Lin.is_coplanar(self.as_lin(), ray.as_lin())
-        # 2. check if assumed intersection point is parallel with line vector
 
+        r = self.as_vec()   # line's vector
+        s = ray.normal      # ray's vector
+        p, q = self.start, ray.origin
+        pq_vec = q - p
+
+        pq_r_norm = Vec.cross(pq_vec, r)
+        r_s_norm = Vec.cross(r, s)
+        if r_s_norm.is_zero(): # means line and ray is parallel
+            if pq_r_norm.is_zero(): # means collinearity. notice parallel != collinear
+                # may be three cases
+                # 1. ray covers whole line -> return line itself
+                # 2. ray covers line fragment -> return new line fragment
+                # 3. ray covers no line -> return None
+                n, m = Vec.dot(pq_vec, r), Vec.dot(pq_vec, s)
+                line_param = n / r.length**2
+                if 0 <= line_param <= 1:    # ray starts at on the line
+                    if (line_param == 0 and m >= 0) or (line_param == 1 and m < 0): # 1.
+                        return self
+                    else:   # 2.
+                        start = self.start + r*line_param
+                        end = self.end if m >= 0 else self.start
+                        return Lin.from_pnts(start, end)
+                else:
+                    if line_param < 0 and m < 0:   # 1.
+                        return self
+                    elif line_param > 1 and m < 0:
+                        return self.reversed()
+                    else:   # 3.
+                        return None
+            else:
+                return None
+        else:   # may be point intersection or not
+            param_l = Vec.cross(pq_vec, s).length/Vec.cross(r, s).length
+            param_r = Vec.cross(pq_vec, r).length/Vec.cross(r, s).length
+            if param_l == 0:
+                return self.start
+            elif param_l == 1:
+                return self.end
+            elif 0 < param_l < 1:
+                lin_intx_pnt = self.start + r*param_l
+                pnt_intx_lin = ray.origin + s*param_r
+                # check for coplanarity here
+                if lin_intx_pnt == pnt_intx_lin:
+                    return lin_intx_pnt
+                else:
+                    return None
+            else:
+                return None
 
     @classmethod
     def is_coplanar(cls, a, b):
         """
         check coplanarity between two lines
 
-        :param a: first line
-        :param b: second line
+        :param a: first line convertable
+        :param b: second line convertable
         :return: bool
         """
         # build plane with line and vertex then check if another vertex is on it
+        a, b = a.as_lin(), b.as_lin()
         plane = Pln.from_lin_pnt(a, b.start)
         return plane.pnt_is_on(b.end)
 
     def __str__(self):
-        return f"<Lin {round(self.length(), 3)}>"
+        return f"<Lin {round(self.length, 5)}>"
 
 
 # casting into

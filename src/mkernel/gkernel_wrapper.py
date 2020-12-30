@@ -8,7 +8,7 @@ def is_zero(v):
     :param v: value to check
     :return:
     """
-    if abs(v) > pg.MIN_VAL:
+    if abs(v) > pg.ATOL:
         return False
     return True
 
