@@ -1,4 +1,4 @@
-from .._DataType import ArrayLikeData
+from .._DataType import ArrayLikeData, ATOL
 from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
 
 import numpy as np
@@ -91,6 +91,18 @@ class Ray(ArrayLikeData, VecConv, LinConv):
                          [o[2], v[2]],
                          [1, 0]], dtype=float).view(cls)
 
+    def __array_finalize__(self, obj):
+        """
+        to normalize ray normal
+
+        :param obj:
+        :return:
+        """
+        self[:, [1]] = Vec.normalized(self.normal)
+
+    def __str__(self):
+        return f"<Ray from {self.origin}>"
+
     @property
     def origin(self):
         return Pnt(*self[:3, 0])
@@ -122,11 +134,14 @@ class Ray(ArrayLikeData, VecConv, LinConv):
         """
         return Lin.from_pnt_vec(self.origin, self.normal)
 
-    def __str__(self):
-        return f"<Ray from {self.origin}>"
+    def reverse(self):
+        """
+        reverse self: simply ray heading opposite direction
 
-    def describe(self):
-        return f"<<Ray from:{self.origin} heading:{self.normal}"
+        :return:
+        """
+        self[:3, 1] = -self[:3, 1]
+        return self
 
 
 class Vec(Mat1, VecConv, PntConv):
@@ -473,21 +488,6 @@ class Pnt(Mat1, VecConv, PntConv):
     def as_pnt(self):
         return self
 
-    def intersect(self, ray: Ray):
-        """
-        ray point intersection
-
-        :param ray: ray to intersect with
-        :return: self as an intersection point else None
-        """
-        # 0 cross product means parallel
-        ray_to_pnt = self - ray.origin
-        if Vec.cross(ray.normal, ray_to_pnt).is_zero():
-            return self
-        else:
-            return None
-
-
 class NamedVec(Vec):
     """
     Named vector
@@ -666,33 +666,6 @@ class Pln(ArrayLikeData, PntConv):
         else:
             raise NotImplementedError
 
-    def intersect(self, ray: Ray):
-        """
-        ray plane intersection
-
-        referenced from Scratchapixel 2.0 :
-        https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection
-
-        :param ray: to intersect with
-        :return: Pnt if intersects else None
-        """
-        # 0 dot means perpendicular and
-        # ray perpendicular plane normal means they are parallel
-        plane_normal = self.axis_z
-        ray_normal = ray.normal
-        denom = Vec.dot(plane_normal, ray_normal)
-        if abs(denom) < ATOL:  # check if value is 0
-            return None
-        # if not ray is not parallel with plane
-        # check if ray is pointing at plane, not away
-        ray_to_origin = self.origin - ray.origin
-        # scalar distance describing intersection point from ray origin
-        dist = Vec.dot(plane_normal, ray_to_origin) / denom
-        if dist >= 0:
-            return ray.origin + ray_normal.amplify(dist)
-        else:
-            return None
-
     @classmethod
     def is_coplanar(cls, a, b):
         """
@@ -711,6 +684,18 @@ class Pln(ArrayLikeData, PntConv):
         :return:
         """
         if Vec.dot(self.axis_z, point.as_vec()) == 0:
+            return True
+        else:
+            return False
+
+    def lin_is_on(self, lin):
+        """
+        check if given line is on the plane
+        :param lin:
+        :return:
+        """
+        norm = self.axis_z
+        if Vec.dot(norm, lin.start) == 0 and Vec.dot(norm, lin.end) == 0:
             return True
         else:
             return False
@@ -784,7 +769,7 @@ class Tgl(ArrayLikeData):
         vertex 0
         :return:
         """
-        return Pnt.from_row(np.reshape(self._data[:4, 0], [4, 1]))
+        return Pnt(*self[:3, 0])
 
     @property
     def v1(self):
@@ -792,7 +777,7 @@ class Tgl(ArrayLikeData):
         vertex 1
         :return:
         """
-        return Pnt.from_row(np.reshape(self._data[:4, 1], [4, 1]))
+        return Pnt(*self[:3, 1])
 
     @property
     def v2(self):
@@ -800,11 +785,19 @@ class Tgl(ArrayLikeData):
         vertex 2
         :return:
         """
-        return Pnt.from_row(np.reshape(self._data[:4, 2], [4, 1]))
+        return Pnt(*self[:3, 2])
 
     @property
     def vertices(self):
         return self.v0, self.v1, self.v2
+
+    @property
+    def normal(self):
+        return Vec.cross(self.v1 - self.v0, self.v2 - self.v0)
+
+    @property
+    def pln(self):
+        return Pln.from_lin_pnt(Lin.from_pnts(self.v0, self.v1), self.v2)
 
     @property
     def centroid(self):
@@ -812,7 +805,7 @@ class Tgl(ArrayLikeData):
         average of vertices
         :return:
         """
-        return Pnt.from_row(np.dot(self._data, [[1], [1], [1]]) / 3)
+        return Pnt.from_row(np.dot(self, [[1], [1], [1]]) / 3)
 
     def __str__(self):
         """
@@ -821,8 +814,28 @@ class Tgl(ArrayLikeData):
         """
         return f"<Tgl {self.centroid}>"
 
+    def reverse(self):
+        """
+        reverse self's vertices
 
-# should this eventually moved into `complex`?
+        :return: self
+        """
+        self[:, (1, 2)] = self[:, (2, 1)]
+        return self
+
+    @classmethod
+    def from_pnts(cls, v0, v1, v2):
+        """
+        create triangle by vertices
+
+        :param v0:
+        :param v1:
+        :param v2:
+        :return:
+        """
+        return cls(*[v.xyz for v in (v0, v1, v2)])
+
+
 class Lin(ArrayLikeData, VecConv):
 
     def __new__(cls, p0=(0, 0, 0), p1=(0, 0, 1)):
@@ -929,65 +942,6 @@ class Lin(ArrayLikeData, VecConv):
 
     def as_lin(self):
         return self
-
-    def intx_ray(self, ray):
-        """
-        ray line intersection
-
-        refer to: https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
-
-        :param ray: ray to intersect with
-        :return: point if intersects else None
-        """
-
-        r = self.as_vec()   # line's vector
-        s = ray.normal      # ray's vector
-        p, q = self.start, ray.origin
-        pq_vec = q - p
-
-        pq_r_norm = Vec.cross(pq_vec, r)
-        r_s_norm = Vec.cross(r, s)
-        if r_s_norm.is_zero(): # means line and ray is parallel
-            if pq_r_norm.is_zero(): # means collinearity. notice parallel != collinear
-                # may be three cases
-                # 1. ray covers whole line -> return line itself
-                # 2. ray covers line fragment -> return new line fragment
-                # 3. ray covers no line -> return None
-                n, m = Vec.dot(pq_vec, r), Vec.dot(pq_vec, s)
-                line_param = n / r.length**2
-                if 0 <= line_param <= 1:    # ray starts at on the line
-                    if (line_param == 0 and m >= 0) or (line_param == 1 and m < 0): # 1.
-                        return self
-                    else:   # 2.
-                        start = self.start + r*line_param
-                        end = self.end if m >= 0 else self.start
-                        return Lin.from_pnts(start, end)
-                else:
-                    if line_param < 0 and m < 0:   # 1.
-                        return self
-                    elif line_param > 1 and m < 0:
-                        return self.reversed()
-                    else:   # 3.
-                        return None
-            else:
-                return None
-        else:   # may be point intersection or not
-            param_l = Vec.cross(pq_vec, s).length/Vec.cross(r, s).length
-            param_r = Vec.cross(pq_vec, r).length/Vec.cross(r, s).length
-            if param_l == 0:
-                return self.start
-            elif param_l == 1:
-                return self.end
-            elif 0 < param_l < 1:
-                lin_intx_pnt = self.start + r*param_l
-                pnt_intx_lin = ray.origin + s*param_r
-                # check for coplanarity here
-                if lin_intx_pnt == pnt_intx_lin:
-                    return lin_intx_pnt
-                else:
-                    return None
-            else:
-                return None
 
     @classmethod
     def is_coplanar(cls, a, b):

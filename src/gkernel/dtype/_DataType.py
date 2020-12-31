@@ -1,7 +1,6 @@
 import numpy as np
+from gkernel.constants import ATOL
 
-# what is good min val?
-ATOL = 1e-6
 
 class ArrayLikeData(np.ndarray):
     """

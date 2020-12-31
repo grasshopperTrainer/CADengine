@@ -1,5 +1,4 @@
 from gkernel.dtype.geometric.primitive import *
-from numpy import inf
 
 
 def test_intx(pnt_s, pnt_e, ray_o, ray_n):
@@ -18,6 +17,7 @@ def test_intx(pnt_s, pnt_e, ray_o, ray_n):
         print(f"intersecting at {intx}")
         print(f"vector correct? {vec_to_p == ray_norm}")
     print()
+
 
 print('TESTS ON XY(2D) PLANE:')
 ps, pe, ro = Pnt(0, 0, 0), Pnt(12, 0, 0), Pnt(0, 6, 0)
