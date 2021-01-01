@@ -1,10 +1,10 @@
 import threading
 import time
-from .context import ContextManager
-from .windowing import *
+
 from my_patterns import Singleton
 from wkernel.env.windowing.bits import DrawBit
-
+from .context import ContextManager
+from .windowing import *
 from ..hooked import *
 
 
@@ -12,9 +12,10 @@ class Timer:
     """
     Time recorder for maintaining given fps
     """
+
     def __init__(self, target_fps):
         self._marked_time = 0
-        self._tfps = target_fps     # target frame per second
+        self._tfps = target_fps  # target frame per second
         self._dtpf = 1 / target_fps # delay time per frame
 
     def __enter__(self):
@@ -25,20 +26,23 @@ class Timer:
         wait = self._dtpf - loop_duration
         if wait >= 0:
             time.sleep(wait)
+
     @property
     def tfps(self):
         return self._tfps
+
     @tfps.setter
     def tfps(self, v):
         self._tfps = v
         self._dtpf = 1 / self._tfps
 
 
-class Window(DrawBit):
+class Window(DrawBit, GlyphInterface):
     """
     Class for baking exact instance that's on screen
 
     """
+
     def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):
         super().__init__()
         Windows().init_glfw()
@@ -46,96 +50,79 @@ class Window(DrawBit):
 
         self._context_manager = ContextManager()
         if isinstance(shared, Window):
-            shared = shared._glfw_window
-        self._glfw_window = glfw.create_window(width, height, name, monitor, shared)
+            shared = shared.__glfw_window
+        self.__glfw_window = glfw.create_window(width, height, name, monitor, shared)
 
         # per window init setting
-        glfw.make_context_current(self._glfw_window)
+        glfw.make_context_current(self.__glfw_window)
         gl.glEnable(gl.GL_SCISSOR_TEST)
         gl.glEnable(gl.GL_BLEND)
         # self._callback_handler.set_key_callback()
         glfw.make_context_current(None)
 
         # make view object
-        self._glyph = GlyphNode(0, 0, width, height, None, None, None, None)
-        glfw.set_window_close_callback(self._glfw_window, self._close_window)
+        self.__glyph = GlyphNode(0, 0, width, height, None, None, None, None)
+        glfw.set_window_close_callback(self.__glfw_window, self.__close_window)
 
-        self._render_thread = threading.Thread(target=self._run)
+        self._render_thread = threading.Thread(target=self.__run)
         self._pipelines = []
 
-        self._frame_rate = 30
-        self._timer = Timer(self._frame_rate)
-        self._frame_to_render = None
-        self._frame_count = 0
+        self.__frame_rate = 30
+        self.__timer = Timer(self.__frame_rate)
+        self.__num_draw_frame = None
+        self.__frame_count = 0
 
         # managers
-        self._views = ViewManager(self)
-        self._cameras = CameraManager(self)
-        self._devices = DeviceManager(self)
+        self.__pane_manager = PaneManager(self)
+        self.__camera_manager = CameraManager(self)
+        self.__device_manager = DeviceManager(self)
 
         # default camera
-        self._cameras[0].body.builder.in3_aspect_ratio = self._views[0].glyph.aspect_ratio
-
-    @property
-    def glyph(self) -> GlyphNode:
-        return self._glyph
-
-    @property
-    def cameras(self):
-        return self._cameras
-
-    @property
-    def views(self) -> ViewManager:
-        return self._views
-
-    @property
-    def devices(self):
-        return self._devices
-
-    def append_pipeline(self, pipeline):
-        self._pipelines.append(pipeline)
-
-    def _run(self):
-        """
-        Rendering thread incuding operations per-frame
-        :return:
-        """
-        # bind and as this is a rendering happends in dedicated thread no need to unbind
-        glfw.make_context_current(self._glfw_window)
-
-        while not glfw.window_should_close(self._glfw_window):
-            if self._frame_count == self._frame_to_render:
-                break   # if number of drawn frame is targeted number of frame drawn
-            with self._timer:   # __exit__ of timer will hold thread by time.sleep()
-                # gl.glClearColor(1,1,1,1)
-                # gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-                self.draw()
-                glfw.swap_buffers(self._glfw_window)
-            self._frame_count += 1
-
-
-    def _close_window(self, window):
-        # if not joined, glfw function can be called where there is no glfw context
-        # anymore. Downside of joining is that window destruction will only occur
-        # when draw waiting is over - meaning destruction only takes place after a frame
-        # this can cause 'noticable stall' when fps is very low
-        self._render_thread.join()
-        Windows().dereg_window(self)
-        glfw.destroy_window(window)
+        self.__camera_manager[0].body.builder.in3_aspect_ratio = self.__pane_manager[0].glyph.aspect_ratio
 
     def __enter__(self):
         # syntax for recording basic rendering
         # TODO: make batch rendering. Currently direct drawing
-        glfw.make_context_current(self._glfw_window)   # set context to draw things
+        glfw.make_context_current(self.__glfw_window)  # set context to draw things
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # glfw.make_context_current(None)
-        # exit rendering recording
         pass
 
-    def set_frame_to_render(self, v):
-        self._frame_to_render = v
+    @property
+    def glyph(self) -> GlyphNode:
+        """
+        implementation of abstract method
+        :return:
+        """
+        return self.__glyph
+
+    @property
+    def cameras(self) -> CameraManager:
+        """
+        return CameraManager which handles cameras of this window
+
+        :return:
+        """
+        return self.__camera_manager
+
+    @property
+    def panes(self) -> PaneManager:
+        """
+        return PaneManager which handles view areas on the window
+        :return:
+        """
+
+        return self.__pane_manager
+
+    @property
+    def devices(self) -> DeviceManager:
+        """
+        return DeviceManager which handles keyboard and mouse operation
+
+        :return:
+        """
+        return self.__device_manager
 
     @property
     def is_current(self):
@@ -145,28 +132,106 @@ class Window(DrawBit):
     def current_window(self):
         return Windows().get_current()
 
-
-    # @property
-    # def render(self):
-    #     return self._render_registry._register
-
-    def run(self, frame_count=None):
-        Windows().run(frame_count)
-
     @property
     def framerate(self):
-        return self._frame_rate
-    @framerate.setter
-    def framerate(self, v):
-        self._frame_rate = v
-        self._timer.tfps = v
+        """
+        window render frame rate per sec
 
-    def key_callback(self, window, key, scancode, action, mods):
-        print(key, scancode, action, mods)
-    def char_callback(self, window, codepoint):
-        print('char callback', codepoint)
-    def char_mods_callback(self, window, codepoint, mods):
-        print('char mods callback', codepoint, mods)
+        :return:
+        """
+        return self.__frame_rate
+
+    @framerate.setter
+    def framerate(self, per_sec):
+        """
+        set frame rate per second
+        
+        :param per_sec: Number
+        :return: 
+        """
+        if not isinstance(per_sec, Number):
+            raise TypeError
+        self.__frame_rate = per_sec
+        self.__timer.tfps = per_sec
+
+    @property
+    def glfw_window(self):
+        """
+        read only glfw window
+
+        :return: glfw window context
+        """
+        return self.__glfw_window
+
+    def append_pipeline(self, pipeline):
+        self._pipelines.append(pipeline)
+
+    def __run(self):
+        """
+        Rendering thread incuding operations per-frame
+
+        :return:
+        """
+        # bind and as this is a rendering happends in dedicated thread no need to unbind
+        glfw.make_context_current(self.__glfw_window)
+
+        while not glfw.window_should_close(self.__glfw_window):
+            if self.__frame_count == self.__num_draw_frame:
+                break  # if number of drawn frame is targeted number of frame drawn
+            with self.__timer:  # __exit__ of timer will hold thread by time.sleep()
+                # gl.glClearColor(1,1,1,1)
+                # gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+                self.draw()
+                glfw.swap_buffers(self.__glfw_window)
+            self.__frame_count += 1
+
+    def __close_window(self, window):
+        """
+        if not joined, glfw function can be called where there is no glfw context
+        anymore. Downside of joining is that window destruction will only occur
+        when draw waiting is over - meaning destruction only takes place after a frame
+        this can cause 'noticable stall' when fps is very low
+
+        to detour this problem, window is hidden before actually being destroyed
+        :param window:
+        :return:
+        """
+        glfw.hide_window(self.__glfw_window)  # <- glfw window still alive here
+        self._render_thread.join()
+        Windows().dereg_window(self)
+        glfw.destroy_window(window)  # <- window destoied here
+
+    def set_num_draw_frame(self, num):
+        """
+        set number of frame to draw
+
+        Window will stall after drawing given number of frames.
+
+        :param num: int number of frames to draw
+        :return:
+        """
+        if not isinstance(num, (type(None), int)):
+            raise TypeError
+        self.__num_draw_frame = num
+
+    def run(self, num_draw_frame=None):
+        """
+        Main function running application
+
+        :param num_draw_frame: int number of frames to draw
+        :return:
+        """
+        Windows().run(num_draw_frame)
+    #
+    #
+    # def key_callback(self, window, key, scancode, action, mods):
+    #     print(key, scancode, action, mods)
+    #
+    # def char_callback(self, window, codepoint):
+    #     print('char callback', codepoint)
+    #
+    # def char_mods_callback(self, window, codepoint, mods):
+    #     print('char mods callback', codepoint, mods)
 
 
 @Singleton
@@ -210,7 +275,7 @@ class Windows():
         cls._windows.remove(window)
 
     @classmethod
-    def run(cls, frame_count=None):
+    def run(cls, num_draw_frame=None):
 
         """
         Main loop for operating, drawing a windows
@@ -220,7 +285,7 @@ class Windows():
         # thread start is moved from Window().__init__ to here
 
         for window in cls._windows:
-            window.set_frame_to_render(frame_count)
+            window.set_num_draw_frame(num_draw_frame)
             window._render_thread.start()
         # main thread. all function calls that has to work in full speed should be here
         while cls._windows:
@@ -241,7 +306,7 @@ class Windows():
 
         # find window
         for window in cls._windows:
-            if window._glfw_window.contents.__reduce__() == current_context.contents.__reduce__():
+            if window.glfw_window.contents.__reduce__() == current_context.contents.__reduce__():
                 return window
         raise Exception("Window untrackable")
 

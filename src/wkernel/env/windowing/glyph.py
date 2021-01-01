@@ -1,6 +1,18 @@
+import abc
+
 from JINTFP import *
-import numpy as np
 from gkernel.dtype.nongeometric.matrix import *
+
+
+class GlyphInterface(metaclass=abc.ABCMeta):
+
+    @abc.abstractmethod
+    def glyph(self):
+        """
+        should be implemented as property
+        :return: GlyphNode instance
+        """
+        pass
 
 
 class GlyphNode(NodeBody):
@@ -34,7 +46,7 @@ class GlyphNode(NodeBody):
             results.append(ptm)
         else:
             translate_m = MoveMat(results[0] - x, results[1] - y, 0)
-            scale_m = ScaleMat(results[2]/w, results[3]/h)
+            scale_m = ScaleMat(results[2] / w, results[3] / h)
             matrix = ptm.copy()
             matrix.append_all(scale_m, translate_m)
             results.append(matrix)

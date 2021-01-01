@@ -1,7 +1,6 @@
+from gkernel.dtype.geometric.primitive import Vec, Pnt, Lin, Ray
+from gkernel.dtype.nongeometric.matrix import MoveMat, ScaleMat
 from .window_properties import *
-from gkernel.dtype.geometric.primitive import Pln, Vec, Pnt, Lin, Ray
-from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, ScaleMat
-from .bits import *
 
 
 class CameraFactory:
@@ -138,9 +137,9 @@ class Camera(RenderTarget):
 class CameraManager(RenderTargetManager):
     def __init__(self, window):
         super().__init__(window)
-        r, t = window._glyph.width.r / 2, window._glyph.height.r / 2
+        r, t = window.glyph.width.r / 2, window.glyph.height.r / 2
         # self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
-        self.new_perspective(np.radians(50), 1, 10000, window._glyph.aspect_ratio)
+        self.new_perspective(np.radians(50), 1, 10000, window.glyph.aspect_ratio)
 
     def __getitem__(self, item) -> Camera:
         """

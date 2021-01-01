@@ -1,6 +1,5 @@
-from wkernel import Window, gl
 from doodler import *
-import wkernel.pipeline.nodes as node
+from wkernel import Window
 
 
 class W(Window):
@@ -18,7 +17,7 @@ class W(Window):
 
     def draw(self):
         super().draw()
-        with self.views[0] as v:
+        with self.panes[0] as v:
             v.clear(.5, .5, .5, 1)
             with self.cameras[0]:
                 print()

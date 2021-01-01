@@ -1,6 +1,6 @@
-from ...hooked import *
 from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix import ScaleMat
+from ...hooked import *
 
 
 class _Device:
@@ -29,7 +29,7 @@ class Mouse(_Device):
 
     def __init__(self, manager):
         super().__init__(manager)
-        glfw.set_cursor_pos_callback(self._manager._window._glfw_window, self._cursor_pos_callback)
+        glfw.set_cursor_pos_callback(self._manager._window.glfw_window, self._cursor_pos_callback)
 
     def _cursor_pos_callback(self, window, xpos, ypos):
         """
@@ -87,9 +87,9 @@ class Mouse(_Device):
         flips y to match OpenGL coordinate system
         :return:
         """
-        _, height = glfw.get_window_size(self._manager._window._glfw_window)
-        x, y = glfw.get_cursor_pos(self._manager._window._glfw_window)
-        return x, height-y
+        _, height = glfw.get_window_size(self._manager._window.glfw_window)
+        x, y = glfw.get_cursor_pos(self._manager._window.glfw_window)
+        return x, height - y
 
 
 class Keyboard(_Device):
@@ -118,7 +118,7 @@ class Keyboard(_Device):
 
     def __init__(self, manager):
         super().__init__(manager)
-        glfw.set_key_callback(self._manager._window._glfw_window, self._key_callback)
+        glfw.set_key_callback(self._manager._window.glfw_window, self._key_callback)
 
     def set_key_callback(self, callback_func):
         return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallbackWrapper)

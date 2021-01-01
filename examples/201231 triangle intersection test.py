@@ -1,5 +1,5 @@
-from gkernel.tools import Intersector as intx
 from gkernel.dtype.geometric.primitive import *
+from gkernel.tools import Intersector as intx
 
 
 def no_culling_tester(tgl, ray):
@@ -32,3 +32,4 @@ print()
 print('TEST RAY STARTING FROM ON THE TRIANGLE')
 no_culling_tester(tgl, Ray(o=[d/2, d/2, 0], v=[0, 0, 1]))
 no_culling_tester(tgl, Ray(o=(Pnt(d/2, d/2, 0) + Vec.from_pnts(Pnt(0,0,d), Pnt(d/2,d/2, 0)).amplify(10)).xyz, v=[0, 0, 1]))
+
