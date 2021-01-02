@@ -15,18 +15,59 @@ class Mat1(ArrayLikeData):
     def x(self):
         return self[0, 0]
 
+    @x.setter
+    def x(self, v):
+        """
+        setting coordinate x
+        :param v:
+        :return:
+        """
+        self[0, 0] = v
+
     @property
     def y(self):
         return self[1, 0]
+
+    @y.setter
+    def y(self, v):
+        """
+        setting coordinate y
+        :param v:
+        :return:
+        """
+        self[1, 0] = v
 
     @property
     def z(self):
         return self[2, 0]
 
+    @z.setter
+    def z(self, v):
+        """
+        setting coordinate z
+        :param v:
+        :return:
+        """
+        self[2, 0] = v
+
     @property
     def xyz(self):
-        # print('xyzing', self.arr)
         return self.x, self.y, self.z
+
+    @xyz.setter
+    def xyz(self, coord):
+        """
+        modify coordinate of the instance
+
+        as self[:] doesnt work for numpy subclass, providing modification function
+        :param coord:
+        :return:
+        """
+        if not isinstance(coord, (tuple, list)) and len(coord) != 3:
+            raise ValueError('coord has to be iterable of len 3')
+        self.x = coord[0]
+        self.y = coord[1]
+        self.z = coord[2]
 
     # as Pnt and Vec is closely related in arithmetic calculation
     # all is defined here in inherited class
@@ -131,7 +172,7 @@ class Mat1(ArrayLikeData):
         :param other:
         :return:
         """
-        if isinstance(other, Number):
+        if isinstance(self, Vec) and isinstance(other, Number):
             return super().__truediv__(other)
         raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} div unknown')
 
@@ -150,6 +191,7 @@ class VecConv(metaclass=abc.ABCMeta):
     """
     Interface for vector convertable
     """
+
     @abc.abstractmethod
     def as_vec(self):
         pass
@@ -159,6 +201,7 @@ class LinConv(metaclass=abc.ABCMeta):
     """
     Interface for line convertalbe
     """
+
     @abc.abstractmethod
     def as_lin(self):
         pass
@@ -168,6 +211,7 @@ class PntConv(metaclass=abc.ABCMeta):
     """
     Interface for point convertable
     """
+
     @abc.abstractmethod
     def as_pnt(self):
         pass
@@ -280,6 +324,9 @@ class Vec(Mat1, VecConv, PntConv):
         """
         overridden to indicate cache clean needed
 
+        resetting all values with [:] doesn't work as a ndarray subclass
+        seems like there need something to use templating.
+        Anyway for now, just giving x, y, z, xyz setter instead.
         :param key:
         :param value:
         :return:
@@ -346,7 +393,7 @@ class Vec(Mat1, VecConv, PntConv):
         :return:
         """
         self.normalize()
-        self[:] = self * magnitude
+        self[:, [0]] = self * magnitude
         return self
 
     def normalize(self):
@@ -358,8 +405,7 @@ class Vec(Mat1, VecConv, PntConv):
         if self.is_zero():
             warnings.warn("zero vector cant be normalized")
             return self
-        self[:] = self / self.length
-        # print('normalized', self)
+        self.xyz = (self / self.length).xyz
         return self
 
     def is_zero(self):
@@ -532,7 +578,7 @@ class Vec(Mat1, VecConv, PntConv):
         #     return self.__length
 
     def as_vec(self):
-        return self
+        return self.view(Vec)
 
     def as_pnt(self):
         return Pnt(*self.xyz)
@@ -881,7 +927,7 @@ class Pln(ArrayLikeData, PntConv):
         :return: float distance
         """
         # find projected on normal
-        return abs(Vec.dot(self.axis_z, point.as_vec())/self.axis_z.length)
+        return abs(Vec.dot(self.axis_z, point.as_vec()) / self.axis_z.length)
 
     def pnt_shortest(self, point):
         """
@@ -890,7 +936,7 @@ class Pln(ArrayLikeData, PntConv):
         :param point: Pnt to drop from
         :return: Pnt on Pln
         """
-        d = Vec.dot(self.axis_z, point.as_vec())/self.axis_z.length
+        d = Vec.dot(self.axis_z, point.as_vec()) / self.axis_z.length
         return point + self.axis_z.amplify(d)
 
     @classmethod
@@ -1108,7 +1154,7 @@ class Lin(ArrayLikeData, VecConv):
         if not isinstance(t, Number):
             raise
 
-        return self.start + self.as_vec()*t
+        return self.start + self.as_vec() * t
 
     def as_vec(self):
         return self.end - self.start

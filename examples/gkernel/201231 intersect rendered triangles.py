@@ -9,7 +9,7 @@ class MyWindow(Window):
 
         # enable camera move
         self.cameras[0].tripod.lookat((100, 100, 100), (0, 0, 0), (0, 0, 1))
-        self.cameras[0].set_fps_dolly(self)
+        self.cameras.attach_fps_dolly(0)
 
     def draw(self, frame_count=None):
         print('rendering')

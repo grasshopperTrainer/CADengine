@@ -64,7 +64,7 @@ class Mouse(_Device):
         xpos, ypos = self.cursor_pos
         self._run_all_callback(window, xpos, ypos, device=self, callback_type=glfw.set_cursor_pos_callback)
 
-    def set_cursor_pos_callback(self, callback_func):
+    def append_cursor_pos_callback(self, callback_func):
         return self._callback_setter(callback_func, glfw.set_cursor_pos_callback, CursorPosCallbackWrapper)
 
     def cursor_in_view(self, view, normalize=True):
@@ -215,7 +215,6 @@ class Keyboard(_Device):
             self.__key_press_dict[k] = [None, 0]  # time, pressed
 
         glfw.set_key_callback(window.glfw_window, self.__key_callback_master)
-        # glfw.set_key_callback(window.glfw_window, self.__key_press_update)
 
     def append_key_callback(self, callback_func):
         """

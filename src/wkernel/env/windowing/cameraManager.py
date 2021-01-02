@@ -23,34 +23,35 @@ class CameraFactory:
         return camera
 
 
-class FpsDolly:
+class Dolly:
+    """
+    Dolly parent
+    """
+    pass
 
-    def __init__(self, camera, tripod):
+
+class FpsDolly(Dolly):
+
+    def __init__(self, camera):
         self._camera = camera
-        self._tripod = tripod
         self.move_speed = 10
         self.view_speed = 0.01
         # should it be at upper?
-        self._keyboard = camera.manager.window.devices.keyboard.append_key_callback(self.key_callback)
-        self._cursor = camera.manager.window.devices.mouse.set_cursor_pos_callback(self.cursor_pos_callback)
-        self._last_cursor_pos = None
-        # self._char_vec_dict = {k:v for k, v in zip(('a', 's', 'd', 'w','e','q'),
-        #                                           (-XVec(), -YVec(), XVec(), YVec(), ZVec(), -ZVec()))}
 
-    def key_callback(self, window, key, scancode, action, mods, keyboard):
+        self._last_cursor_pos = None
+
+    def react_keyboard_callback(self, window, key, scancode, mods, action, keyboard):
         # left right back forward create delta vector
-        x, y, z = self._tripod.in_plane.r.axes
+        x, y, z = self._camera.tripod.in_plane.r.axes
         dvec = ZeroVec()
         for c, v in zip(('a', 's', 'd', 'w', 'e', 'q'), (-x, z, x, -z, ZVec(), -ZVec())):
             if keyboard.get_key_status(c)[0]:
                 dvec += v
-                print(dvec)
 
-        print(dvec)
-        dvec.amplify(self.move_speed)
-        self._tripod.move(dvec)
+        dvec.as_vec().amplify(self.move_speed)
+        self._camera.tripod.move(dvec)
 
-    def cursor_pos_callback(self, window, xpos, ypos, mouse):
+    def react_cursor_callback(self, window, xpos, ypos, mouse):
         """
         move camera frustum with cursor move
 
@@ -63,9 +64,9 @@ class FpsDolly:
         if self._last_cursor_pos is not None:
             v = Vec.from_pnts(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
             # rotate vertically and horizontally
-            self._tripod.pitch(v.y)
-            axis = Lin.from_pnt_vec(self._tripod.in_plane.r.origin, Vec(0, 0, 1))
-            self._tripod.rotate_along(axis, -v.x)
+            self.__camera.tripod.pitch(v.y)
+            axis = Lin.from_pnt_vec(self.__camera.tripod.in_plane.r.origin, Vec(0, 0, 1))
+            self.__camera.tripod.rotate_along(axis, -v.x)
 
         self._last_cursor_pos = xpos, ypos
         # mouse.cursor_goto_center()
@@ -85,11 +86,9 @@ class Camera(RenderTarget):
         self._tripod = tripod
         self._dolly = None
 
-    def set_fps_dolly(self, window):
-        self._dolly = FpsDolly(self, self._tripod)
-
-    def set_dolly(self, dolly):
-        self._dolly = dolly
+    #
+    # def set_dolly(self, dolly):
+    #     self._dolly = dolly
 
     @property
     def body(self) -> CameraBody:
@@ -102,6 +101,16 @@ class Camera(RenderTarget):
     @property
     def dolly(self):
         return self._dolly
+
+    def attach_dolly(self, dolly):
+        """
+        Assign dolly
+        :param dolly:
+        :return:
+        """
+        if not isinstance(dolly, Dolly):
+            raise TypeError
+        self._dolly = dolly
 
     def ray_frustum(self, param_x, param_y):
         """
@@ -162,3 +171,18 @@ class CameraManager(RenderTargetManager):
     def new_perspective(self, fov, near, far, ratio):
         new_cam = CameraFactory.new_camera(self, 'fov', 'prsp', fov, near, far, ratio)
         self._append_new_target(new_cam)
+
+    def attach_fps_dolly(self, camera_id):
+        """
+        attach dolly to the camera
+
+        :param camera_id:
+        :return:
+        """
+
+        camera = self[camera_id]
+        dolly = FpsDolly(camera)
+        camera.attach_dolly(dolly)
+        # handling callback
+        self.window.devices.keyboard.append_key_callback(dolly.react_keyboard_callback)
+        self.window.devices.mouse.append_cursor_pos_callback(dolly.react_cursor_callback)

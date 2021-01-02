@@ -232,16 +232,11 @@ class Window(DrawInterface, GlyphInterface):
     def setup(self):
         pass
 
-    #
-    #
-    # def key_callback(self, window, key, scancode, action, mods):
-    #     print(key, scancode, action, mods)
-    #
-    # def char_callback(self, window, codepoint):
-    #     print('char callback', codepoint)
-    #
-    # def char_mods_callback(self, window, codepoint, mods):
-    #     print('char mods callback', codepoint, mods)
+    def append_preframe_callback(self, func, **kwargs):
+        raise
+
+    def append_postframe_callback(self):
+        pass
 
 
 @Singleton
