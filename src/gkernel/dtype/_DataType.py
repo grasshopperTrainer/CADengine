@@ -1,8 +1,11 @@
+import abc
+
 import numpy as np
+
 from gkernel.constants import ATOL
 
 
-class ArrayLikeData(np.ndarray):
+class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
     """
     Data is represented as a matrix
     """
@@ -21,23 +24,32 @@ class ArrayLikeData(np.ndarray):
 
         return ins
 
+    # not working
+    @classmethod
+    @abc.abstractmethod
+    def is_array_like(cls, arr):
+        pass
+
     @property
     def arr(self):
         return super().__str__()
 
     def __getitem__(self, item):
-        return self.view(np.ndarray)[item]
+        """
+        do not cast into self's type as self has strict array property
+
+        :param item:
+        :return:
+        """
+        return np.array(self, dtype=np.ndarray)[item]
 
     def __eq__(self, other):
         """
-        logical equation
+        logical equation within absolute tolerance
 
-        :param other: other vector
+        :param other: of ArrayLikeData
         :return: bool
         """
-        if not isinstance(other, self.__class__):
-            return False
-        elif np.isclose(self, other, atol=ATOL).all():
+        if np.isclose(self, other, atol=ATOL).all():
             return True
-        else:
-            return False
+        return False

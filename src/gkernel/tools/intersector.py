@@ -1,6 +1,7 @@
 from warnings import warn
+
 from ..dtype.geometric.primitive import *
-from .box import iszero
+
 
 class Intersector:
     """

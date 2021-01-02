@@ -1,36 +1,24 @@
-from my_patterns import FamilyMember
-from wkernel.hooked import glfw
+import abc
 
 
-class _Bit(FamilyMember):
-    pass
-
-
-class DrawBit(_Bit):
+class DrawInterface(metaclass=abc.ABCMeta):
     """
-    has draw call?
+    interface for draw calls
     """
 
+    @abc.abstractmethod
     def draw(self):
         """
-        Placeholder for chained draw call
+        placeholder for glfw and OpenGL operation
         :return:
         """
-        if hasattr(self, 'setup') and callable(getattr(self, 'setup')):
-            getattr(self, 'setup')()
-            for cls in self.__class__.__mro__:
-                if 'setup' in cls.__dict__:
-                    delattr(cls, 'setup')
-                    break
+        pass
 
-        # call draw method of children
-        for c in self.fm_all_children():
-            if isinstance(c, DrawBit):
-                c.draw()
-
+    @abc.abstractmethod
     def setup(self):
         """
-        Instant functions called once
+        instant setting operation before draw
+
         :return:
         """
-        print('setup', self)
+        print('ddd')

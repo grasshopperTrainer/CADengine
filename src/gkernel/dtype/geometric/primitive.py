@@ -1,13 +1,12 @@
-from .._DataType import ArrayLikeData, ATOL
-from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
+import abc
+import warnings
+from math import sqrt
+from numbers import Number
 
 import numpy as np
 
-import copy
-from math import sqrt
-import warnings
-from numbers import Number
-import abc
+from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
+from .._DataType import ArrayLikeData
 
 
 class Mat1(ArrayLikeData):
@@ -26,8 +25,11 @@ class Mat1(ArrayLikeData):
 
     @property
     def xyz(self):
+        # print('xyzing', self.arr)
         return self.x, self.y, self.z
 
+    # as Pnt and Vec is closely related in arithmetic calculation
+    # all is defined here in inherited class
     def __neg__(self):
         """
         not to negate fourth(w)
@@ -37,15 +39,111 @@ class Mat1(ArrayLikeData):
         obj[3, 0] = -obj[3, 0]
         return obj
 
+    def __add__(self, other):
+        """
+        retain constant type casting in between Vec and Pnt addition
+
+        :param other:
+        :return:
+        """
+        if isinstance(self, Vec):
+            if isinstance(other, Vec):
+                return super().__add__(other)
+            elif isinstance(other, Pnt):
+                return other.__add__(self)
+        elif isinstance(self, Pnt):
+            if isinstance(other, Vec):
+                return super().__add__(other)
+        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} add unknown')
+
+    def __iadd__(self, other):
+        """
+        :param other:
+        :return:
+        """
+        if isinstance(self, Vec):
+            if isinstance(other, Vec):
+                return super().__iadd__(other)
+            elif isinstance(other, Pnt):
+                return other.__iadd__(self)
+        elif isinstance(self, Pnt):
+            if isinstance(other, Vec):
+                return super().__iadd__(other)
+        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} iadd unknown')
+
+    def __sub__(self, other):
+        """
+        retain constant type casting in between Vec and Pnt subtraction
+
+        :param other:
+        :return:
+        """
+        if isinstance(self, Vec):
+            if isinstance(other, Vec):
+                return super().__sub__(other)
+        elif isinstance(self, Pnt):
+            if isinstance(other, Pnt):
+                return super().__sub__(other).view(Vec)
+            elif isinstance(other, Vec):
+                return super().__sub__(other)
+        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} sub unknown')
+
+    def __isub__(self, other):
+        """
+        :param other:
+        :return:
+        """
+        if isinstance(self, Vec):
+            if isinstance(other, Vec):
+                return super().__isub__(other)
+        elif isinstance(self, Pnt):
+            if isinstance(other, Pnt):
+                return super().__isub__(other).view(Vec)
+            elif isinstance(other, Vec):
+                return super().__isub__(other)
+        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} isub unknown')
+
     def __mul__(self, other):
-        if isinstance(other, Number):  # amplify
+        """
+        only scalar multiplication on the right is accepted
+
+        :param other: scalar
+        :return:
+        """
+        if isinstance(self, Vec) and isinstance(other, Number):  # amplify
             return super().__mul__(other)
-        elif not isinstance(other, Mat1):  # multiplying else unknown
-            raise TypeError
-        elif isinstance(self, other.__class__):  # multiplying point to point unknown
-            raise TypeError
-        else:  # multiplying point to vector or vise versa
-            return self.dot(other.T)
+        raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} mul unknown')
+
+    def __imul__(self, other):
+        """
+
+        :param other:
+        :return:
+        """
+        if isinstance(self, Vec) and isinstance(other, Number):
+            return super().__imul__(other)
+        raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} imul unknown')
+
+    def __truediv__(self, other):
+        """
+        only scalar division is accepted
+
+        :param other:
+        :return:
+        """
+        if isinstance(other, Number):
+            return super().__truediv__(other)
+        raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} div unknown')
+
+    def __itruediv__(self, other):
+        """
+
+        :param other:
+        :return:
+        """
+        if isinstance(self, Vec) and isinstance(other, Number):
+            return super().__itruediv__(other)
+        raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} idiv unknown')
 
 
 class VecConv(metaclass=abc.ABCMeta):
@@ -163,7 +261,7 @@ class Vec(Mat1, VecConv, PntConv):
         self.__length = None
 
     def __str__(self):
-        return f"<Vec : {[round(n, 3) for n in self[:3, 0]]}>"
+        return f"<{self.__class__.__name__} : {[round(n, 3) for n in self[:3, 0]]}>"
 
     def __truediv__(self, other):
         """
@@ -172,9 +270,10 @@ class Vec(Mat1, VecConv, PntConv):
         :param other:
         :return:
         """
+        # print('trudiving')
         obj = super().__truediv__(other)
         if isinstance(other, Number):
-            obj[3, 0] = 1
+            obj[3, 0] = 0
         return obj
 
     def __setitem__(self, key, value):
@@ -232,7 +331,7 @@ class Vec(Mat1, VecConv, PntConv):
         """
         return amplified vector
 
-        :param vec:
+        :param vec01111:
         :param magnitude:
         :return: copy of amplified vec
         """
@@ -260,6 +359,7 @@ class Vec(Mat1, VecConv, PntConv):
             warnings.warn("zero vector cant be normalized")
             return self
         self[:] = self / self.length
+        # print('normalized', self)
         return self
 
     def is_zero(self):
@@ -267,7 +367,7 @@ class Vec(Mat1, VecConv, PntConv):
         boolean for self being zero vector
         :return:
         """
-        return True if self.xyz == (0, 0, 0,) else False
+        return True if self.xyz == (0, 0, 0) else False
 
     def is_parallel_with(self, vec):
         """
@@ -452,18 +552,6 @@ class Pnt(Mat1, VecConv, PntConv):
                          [z],
                          [1]], dtype=float).view(cls)
 
-    def __sub__(self, other):
-        """
-        to return `Vec` from two points
-        :param other:
-        :return:
-        """
-        r = super().__sub__(other)
-        if isinstance(other, Pnt):
-            return r.view(Vec)
-        else:
-            return r
-
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
 
@@ -488,36 +576,117 @@ class Pnt(Mat1, VecConv, PntConv):
     def as_pnt(self):
         return self
 
-class NamedVec(Vec):
+
+class _NamedVec(Vec):
     """
-    Named vector
+    Named vector: special vectors
     """
+
+    def __setitem__(self, key, value):
+        """
+        deny value modification as a special vector, presumably, wont need any change
+
+        this method should never be called
+        :param key:
+        :param value:
+        :return:
+        """
+        raise ValueError('Named Vector dosnt accept modification')
+
+    """
+    simply cast current into common class Vec
+    view is safe as calculation will yield new object always
+    this formatting may be dealt inside Vec's arithmetic magic methods but think this way is closer to OPP concept 
+    """
+
+    def __array_prepare__(self, out, context):
+        """
+        need for preventing __i~__ methods assigning updated values into self
+
+        no need to view as Vec as it is impossible to control arithmetic output of Vec
+        without overriding all function. Yet this function simply copies the output when needed
+        and tosses the responsibility for returning Vec object to __array_wrap__
+        :param out:
+        :param context:
+        :return:
+        """
+        if isinstance(out, self.__class__):
+            return np.array(out)
+        return out
+
+    def __array_wrap__(self, obj, context):
+        """
+        to cast all calculation result into Vec
+
+        chained with __array_prepare__ return resulted as primitive Vec instance
+        :param obj:
+        :param context:
+        :return:
+        """
+        return obj.view(Vec)
+
+
+class ZeroVec(_NamedVec):
+    """
+    Zero Vector
+    """
+
+    def __new__(cls):
+        return super().__new__(cls, 0, 0, 0)
+
+
+class XVec(_NamedVec):
+    """
+    x unit vector
+    """
+
+    def __new__(cls):
+        return super().__new__(cls, 1, 0, 0)
+
+
+class YVec(_NamedVec):
+    """
+    y unit vector
+    """
+
+    def __new__(cls):
+        return super().__new__(cls, 0, 1, 0)
+
+
+class ZVec(_NamedVec):
+    """
+    z unit vector
+    """
+
+    def __new__(cls):
+        return super().__new__(cls, 0, 0, 1)
+
+
+class _AsVec(Vec):
+    """
+    vector wrapper that represents special characteristics
+    """
+
     def __new__(cls, vec_like):
         return vec_like.as_vec().view(cls)
 
 
-class Xax(NamedVec):
+class Xax(_AsVec):
     """
     Vector as x axis
     """
-    def __str__(self):
-        return f"<Xax {[round(n, 3) for n in self[:3, 0]]}>"
 
 
-class Yax(NamedVec):
+class Yax(_AsVec):
     """
     Vector as y axis
     """
-    def __str__(self):
-        return f"<Yax {[round(n, 3) for n in self[:3, 0]]}>"
 
 
-class Zax(NamedVec):
+class Zax(_AsVec):
     """
     Vector as z axis
     """
-    def __str__(self):
-        return f"<Zax {[round(n, 3) for n in self[:3, 0]]}>"
 
 
 class Pln(ArrayLikeData, PntConv):
@@ -632,6 +801,10 @@ class Pln(ArrayLikeData, PntConv):
     @property
     def axis_z(self) -> Vec:
         return Vec(*self[:3, 3])
+
+    @property
+    def axes(self):
+        return self.axis_x, self.axis_y, self.axis_z
 
     @property
     def components(self):

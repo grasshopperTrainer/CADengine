@@ -1,8 +1,7 @@
 import threading
 import time
 
-from my_patterns import Singleton
-from wkernel.env.windowing.bits import DrawBit
+from wkernel.env.windowing.bits import DrawInterface
 from .context import ContextManager
 from .windowing import *
 from ..hooked import *
@@ -37,7 +36,7 @@ class Timer:
         self._dtpf = 1 / self._tfps
 
 
-class Window(DrawBit, GlyphInterface):
+class Window(DrawInterface, GlyphInterface):
     """
     Class for baking exact instance that's on screen
 
@@ -222,6 +221,17 @@ class Window(DrawBit, GlyphInterface):
         :return:
         """
         Windows().run(num_draw_frame)
+
+    def draw(self):
+        """
+        glfw, OpenGL placeholder to be overridden by the user
+
+        :return:
+        """
+
+    def setup(self):
+        pass
+
     #
     #
     # def key_callback(self, window, key, scancode, action, mods):

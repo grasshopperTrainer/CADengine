@@ -1,11 +1,11 @@
-from my_patterns import Singleton
-from wkernel.env.windowing.bits import DrawBit
 import wkernel.hooked.openglHooked as gl
 import wkernel.pipeline.nodes as node
-import os
+from global_tools import Singleton
+from wkernel.env.windowing.bits import DrawInterface
+
 
 @Singleton
-class TriangleDrawer(DrawBit):
+class TriangleDrawer(DrawInterface):
     def __init__(self):
         # generation
         self._vao = node.ConVertexArray().out0_vrtx_arry
@@ -54,6 +54,9 @@ class TriangleDrawer(DrawBit):
 
     def draw(self):
         self._renderer.refresh()
+
+    def setup(self):
+        pass
 
 
 def triangle(v0, v1, v2):

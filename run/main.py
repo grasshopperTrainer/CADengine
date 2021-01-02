@@ -22,7 +22,7 @@ class W(Window):
             with self.cameras[0]:
                 print()
                 print('drawing...')
-                # print(self.cameras[0].tripod.out_plane.r.arr)
+                # print(self.cameras[0].tripod.out"_plane.r.arr)
                 # print(self.cameras[0].tripod.VM.r)
                 # print(self.cameras[0].body.PM)
                 # print(self.cameras[0].tripod.out_plane.r.arr)

@@ -1,5 +1,5 @@
-from gkernel.dtype.geometric.primitive import Vec, Pnt, Lin, Ray
-from gkernel.dtype.nongeometric.matrix import MoveMat, ScaleMat
+from gkernel.dtype.geometric.primitive import Pnt, Lin, Ray, ZeroVec, ZVec
+from gkernel.dtype.nongeometric.matrix import ScaleMat
 from .window_properties import *
 
 
@@ -31,28 +31,26 @@ class FpsDolly:
         self.move_speed = 10
         self.view_speed = 0.01
         # should it be at upper?
-        self._keyboard = camera.manager.window.devices.keyboard.set_key_callback(self.key_callback)
-        self._cursor = camera.manager.window.devices.mouse.set_cursor_pos_callback(self.cursorpos_callback)
+        self._keyboard = camera.manager.window.devices.keyboard.append_key_callback(self.key_callback)
+        self._cursor = camera.manager.window.devices.mouse.set_cursor_pos_callback(self.cursor_pos_callback)
         self._last_cursor_pos = None
+        # self._char_vec_dict = {k:v for k, v in zip(('a', 's', 'd', 'w','e','q'),
+        #                                           (-XVec(), -YVec(), XVec(), YVec(), ZVec(), -ZVec()))}
 
     def key_callback(self, window, key, scancode, action, mods, keyboard):
-        # left right back forward
-        char = keyboard.get_char(key, mods)
-        if char == 'a':
-            self._tripod.move_along_axis('x', -self.move_speed)
-        elif char == 'd':
-            self._tripod.move_along_axis('x', self.move_speed)
-        elif char == 's':
-            self._tripod.move_along_axis('z', self.move_speed)
-        elif char == 'w':
-            self._tripod.move_along_axis('z', -self.move_speed)
-        # ascend descend
-        elif char == 'q':
-            self._tripod.move(Vec(0, 0, -self.move_speed))
-        elif char == 'e':
-            self._tripod.move(Vec(0, 0, self.move_speed))
+        # left right back forward create delta vector
+        x, y, z = self._tripod.in_plane.r.axes
+        dvec = ZeroVec()
+        for c, v in zip(('a', 's', 'd', 'w', 'e', 'q'), (-x, z, x, -z, ZVec(), -ZVec())):
+            if keyboard.get_key_status(c)[0]:
+                dvec += v
+                print(dvec)
 
-    def cursorpos_callback(self, window, xpos, ypos, mouse):
+        print(dvec)
+        dvec.amplify(self.move_speed)
+        self._tripod.move(dvec)
+
+    def cursor_pos_callback(self, window, xpos, ypos, mouse):
         """
         move camera frustum with cursor move
 
@@ -63,13 +61,14 @@ class FpsDolly:
         :return:
         """
         if self._last_cursor_pos is not None:
-            v = Vec.of_two_pnt(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
+            v = Vec.from_pnts(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
             # rotate vertically and horizontally
             self._tripod.pitch(v.y)
-            axis = Lin.of_pnt_vec(self._tripod.in_plane.r.origin, Vec(0, 0, 1))
+            axis = Lin.from_pnt_vec(self._tripod.in_plane.r.origin, Vec(0, 0, 1))
             self._tripod.rotate_along(axis, -v.x)
 
         self._last_cursor_pos = xpos, ypos
+        # mouse.cursor_goto_center()
 
 
 class Camera(RenderTarget):
@@ -127,7 +126,14 @@ class Camera(RenderTarget):
         return self.tripod.VM.r * ray
 
     def __enter__(self):
+        """
+        initiating camera
+
+        :return:
+        """
         CameraCurrentStack().append(self)
+        # if isinstance(self._dolly, FpsDolly):   # hide cursor to use virtual space
+        #     glfw.set_input_mode(self.manager.window.glfw_window, glfw.CURSOR, glfw.CURSOR_HIDDEN)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

@@ -1,19 +1,22 @@
 from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix import ScaleMat
+from global_tools import Singleton
+
 from ...hooked import *
 
 
 class _Device:
-    def __init__(self, manager):
-        self._manager = manager
-        self._callback_wrapped = {}
+    def __init__(self, window, manager):
+        self.__window = window
+        self.__manager = manager
+        self.__callback_wrapped = {}
 
     def _callback_setter(self, callback_func, glfw_type, wrapper):
         wrapped_callback = wrapper(callback_func)
-        self._callback_wrapped.setdefault(glfw_type, set()).add(wrapped_callback)
+        self.__callback_wrapped.setdefault(glfw_type, set()).add(wrapped_callback)
         return wrapped_callback
 
-    def _callback_caller(self, *args, callback_type):
+    def _run_all_callback(self, *args, device, callback_type):
         """
         Wrapped callback func caller pattern
         :param args: glfw driven callback args
@@ -21,15 +24,33 @@ class _Device:
         :return:
         """
 
-        for wrapped in self._callback_wrapped.get(callback_type, []):
-            wrapped._run_callback(*args)
+        for wrapped in self.__callback_wrapped.get(callback_type, []):
+            wrapped._run_callback(*args, device)
+
+    @property
+    def window(self):
+        """
+        read only window
+
+        :return: Window instance
+        """
+        return self.__window
+
+    @property
+    def manager(self):
+        """
+        read only manager
+
+        :return: Manager instance
+        """
+        return self.__manager
 
 
 class Mouse(_Device):
 
-    def __init__(self, manager):
-        super().__init__(manager)
-        glfw.set_cursor_pos_callback(self._manager._window.glfw_window, self._cursor_pos_callback)
+    def __init__(self, window, manager):
+        super().__init__(window, manager)
+        glfw.set_cursor_pos_callback(self.window.glfw_window, self._cursor_pos_callback)
 
     def _cursor_pos_callback(self, window, xpos, ypos):
         """
@@ -40,8 +61,8 @@ class Mouse(_Device):
         :param ypos:
         :return:
         """
-        xpos, ypos = self.current_pos
-        self._callback_caller(window, xpos, ypos, self, callback_type=glfw.set_cursor_pos_callback)
+        xpos, ypos = self.cursor_pos
+        self._run_all_callback(window, xpos, ypos, device=self, callback_type=glfw.set_cursor_pos_callback)
 
     def set_cursor_pos_callback(self, callback_func):
         return self._callback_setter(callback_func, glfw.set_cursor_pos_callback, CursorPosCallbackWrapper)
@@ -53,9 +74,9 @@ class Mouse(_Device):
         :return:
         """
         transform_matrix = view.glyph.trnsf_matrix.r.I.M
-        w, h = self._manager._window.glyph.size
-        unitize_matrix = ScaleMat(1/w, 1/h)
-        pos = unitize_matrix*transform_matrix*Pnt(*self.current_pos)
+        w, h = self.__manager._window.glyph.size
+        unitize_matrix = ScaleMat(1 / w, 1 / h)
+        pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos)
         if not normalize:
             w, h = view.glyph.size
             view_scale_matrix = ScaleMat(w, h)
@@ -80,60 +101,141 @@ class Mouse(_Device):
         # raise NotImplementedError
 
     @property
-    def current_pos(self):
+    def cursor_pos(self):
         """
         Ask glfw current cursor pos and return
 
         flips y to match OpenGL coordinate system
         :return:
         """
-        _, height = glfw.get_window_size(self._manager._window.glfw_window)
-        x, y = glfw.get_cursor_pos(self._manager._window.glfw_window)
+        _, height = glfw.get_window_size(self.window.glfw_window)
+        x, y = glfw.get_cursor_pos(self.window.glfw_window)
         return x, height - y
+
+    def cursor_goto_center(self):
+        win = self.window
+        glfw.set_cursor_pos(win.glfw_window, win.glyph.width.r / 2, win.glyph.height.r / 2)
+
+
+class UnknownKeyError(Exception):
+    """
+    error for unknown key. Shouldn't really happen.
+    """
+    pass
+
+
+@Singleton
+class GLFWCharDict:
+    """
+    singleton dictionary for translating glfw callback's key into keyboard char
+    """
+    # build dict
+    __key_char_dict = {}
+    __char_key_dict = {}
+    __char_shifted_dict = {}
+    __shifted_char_dict = {}
+
+    for k, key in glfw.__dict__.items():
+        if k.startswith('KEY_'):  # get all constants
+            char = k.split('KEY_')[1].lower()
+            __key_char_dict[key] = char
+    # special cases
+    __key_char_dict[glfw.KEY_GRAVE_ACCENT] = '`'
+    __key_char_dict[glfw.KEY_MINUS] = '-'
+    __key_char_dict[glfw.KEY_EQUAL] = '='
+    __key_char_dict[glfw.KEY_LEFT_BRACKET] = '['
+    __key_char_dict[glfw.KEY_RIGHT_BRACKET] = ']'
+    __key_char_dict[glfw.KEY_BACKSLASH] = "\\"
+    __key_char_dict[glfw.KEY_SEMICOLON] = ';'
+    __key_char_dict[glfw.KEY_SEMICOLON] = ';'
+    __key_char_dict[glfw.KEY_APOSTROPHE] = "'"
+    __key_char_dict[glfw.KEY_COMMA] = ","
+    __key_char_dict[glfw.KEY_PERIOD] = "."
+    __key_char_dict[glfw.KEY_SLASH] = "/"
+    # connect char to shifted char
+    __char_shifted_dict = {c: s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
+    # reversed dicts
+    __char_key_dict = {v: k for k, v in __key_char_dict.items()}
+    __shifted_char_dict = {v: k for k, v in __char_shifted_dict.items()}
+
+    @classmethod
+    def key_to_char(cls, key, mods):
+        """
+        Translate key, mods into char
+
+        :param key: glfw key code
+        :param mods: glfw mods code
+        :return:
+        """
+        if key in cls.__key_char_dict:
+            char = cls.__key_char_dict[key]
+            if mods == glfw.MOD_SHIFT:
+                if char in cls.__special_char:
+                    return cls.__special_char[char]
+                return char.upper()
+            return char
+        raise UnknownKeyError('input key has to be one of glfw key code')
+
+    @classmethod
+    def char_to_key(cls, char):
+        """
+        translate char into glfw key
+
+        :param char: character of keyboard
+        :return:
+        """
+        # check if shift is pressed?
+        if char in cls.__shifted_char_dict:
+            return cls.__char_key_dict[cls.__shifted_char_dict[char]]
+        elif char in cls.__char_key_dict:
+            return cls.__char_key_dict[char]
+        else:
+            raise UnknownKeyError('char unknown for glfw key code')
+
+    @classmethod
+    def get_copied_dict(cls):
+        """
+        for protect frozen dict, yet to allow custom usage, return copied dict
+
+        :return: copy of code -> char dictionary
+        """
+        return cls.__key_char_dict.copy()
 
 
 class Keyboard(_Device):
-    _callback_signature = glfw.set_key_callback
-    # build dict
-    _char_dict = {}
-    for k, v in glfw.__dict__.items():
-        if k.startswith('KEY_'):
-            n = k.split('KEY_')[1].lower()
-            _char_dict[v] = n
-    # special cases
-    _char_dict[glfw.KEY_GRAVE_ACCENT] = '`'
-    _char_dict[glfw.KEY_MINUS] = '-'
-    _char_dict[glfw.KEY_EQUAL] = '='
-    _char_dict[glfw.KEY_LEFT_BRACKET] = '['
-    _char_dict[glfw.KEY_RIGHT_BRACKET] = ']'
-    _char_dict[glfw.KEY_BACKSLASH] = "\\"
-    _char_dict[glfw.KEY_SEMICOLON] = ';'
-    _char_dict[glfw.KEY_SEMICOLON] = ';'
-    _char_dict[glfw.KEY_APOSTROPHE] = "'"
-    _char_dict[glfw.KEY_COMMA] = ","
-    _char_dict[glfw.KEY_PERIOD] = "."
-    _char_dict[glfw.KEY_SLASH] = "/"
+    __callback_signature = glfw.set_key_callback
+    __glfw_key_dict = GLFWCharDict()
 
-    _special_char = {c:s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
+    def __init__(self, window, manager):
+        super().__init__(window, manager)
+        # build key press dict
+        # what i want to record is... press status and time
+        self.__key_press_dict = self.__glfw_key_dict.get_copied_dict()
+        for k, v in self.__key_press_dict.items():
+            self.__key_press_dict[k] = [None, 0]  # time, pressed
 
-    def __init__(self, manager):
-        super().__init__(manager)
-        glfw.set_key_callback(self._manager._window.glfw_window, self._key_callback)
+        glfw.set_key_callback(window.glfw_window, self.__key_callback_master)
+        # glfw.set_key_callback(window.glfw_window, self.__key_press_update)
 
-    def set_key_callback(self, callback_func):
-        return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallbackWrapper)
-
-    def _key_callback(self, window, key, scancode, action, mods):
+    def append_key_callback(self, callback_func):
         """
-        Calls all callbacks joined with 'key callback'
-        :param window:
-        :param key:
-        :param scancode:
-        :param action:
-        :param mods:
+        append key callback
+
+        exposed callback setter
+        :param callback_func: function to call. Function has to accept all given arguments.
         :return:
         """
-        self._callback_caller(window, key, scancode, action, mods, self, callback_type=glfw.set_key_callback)
+        return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallbackWrapper)
+
+    def __key_callback_master(self, *args):
+        """
+        master key callback calls all other callback of its type
+
+        this is needed to pass Keyboard instance for extended operation
+        :param args: arguments passed by glfw event handler
+        :return:
+        """
+        self._run_all_callback(*args, device=self, callback_type=glfw.set_key_callback)
 
     @classmethod
     def get_char(cls, key, mods):
@@ -144,14 +246,10 @@ class Keyboard(_Device):
         :param mods: mod key, like 'shift' for upper char
         :return: char representation
         """
-        if key in cls._char_dict:
-            char = cls._char_dict[key]
-            if mods == glfw.MOD_SHIFT:
-                if char not in cls._special_char:
-                    return char.upper()
-                return cls._special_char[char]
-            return char
-        return None
+        return cls.__glfw_key_dict.key_to_char(key, mods)
+
+    def get_key_status(self, *chars):
+        return tuple(glfw.get_key(self.window.glfw_window, self.__glfw_key_dict.char_to_key(char)) for char in chars)
 
 
 class DeviceManager:
@@ -161,16 +259,16 @@ class DeviceManager:
     def __init__(self, window):
         self._window = window
 
-        self._mouse = Mouse(self)
-        self._keyboard = Keyboard(self)
+        self._mouse = Mouse(window, self)
+        self._keyboard = Keyboard(window, self)
 
     @property
     def mouse(self):
         return self._mouse
+
     @property
     def keyboard(self):
         return self._keyboard
-
 
 
 

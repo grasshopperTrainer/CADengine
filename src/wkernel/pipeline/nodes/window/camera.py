@@ -1,7 +1,7 @@
 from JINTFP import *
-from gkernel.dtype.nongeometric.matrix import MoveMat, RotXMat, RotYMat, RotZMat, TrnsfMats
-from gkernel.dtype.geometric.primitive import Pln, Vec, vec, lin
-from my_patterns import Singleton
+from gkernel.dtype.geometric.primitive import Pln, Vec
+from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, TrnsfMats
+from global_tools import Singleton
 
 
 class CameraNode(NodeBody):
@@ -232,8 +232,8 @@ class CameraTripod(CameraNode):
         """
         rotate along given axis
 
-        :param axis:
-        :param rad:
+        :param axis: to rotate along
+        :param rad: radian value to rotate
         :return:
         """
         # 1. MoveMat of camera to world origin
@@ -251,7 +251,7 @@ class CameraTripod(CameraNode):
         :return:
         """
         origin, camerax, cameray, cameraz = self.in_plane.r.components
-        new_x = camerax.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
+        new_x = camerax.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
         new_z = cameray.cross(new_x)
         self.in_plane = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
 
@@ -261,7 +261,7 @@ class CameraTripod(CameraNode):
         :return:
         """
         origin, camerax, cameray, cameraz = self.in_plane.r.components
-        new_y = cameray.amplify(np.cos(rad), copy=True) + cameraz.amplify(np.sin(rad), copy=True)
+        new_y = cameray.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
         new_z = Vec.cross(camerax, new_y)
         self.in_plane = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)
 
@@ -278,7 +278,7 @@ class CameraTripod(CameraNode):
         :return:
         """
         tm = MoveMat(*vec.xyz)
-        self.in_plane = tm * self.in0_plane.r
+        self.in_plane = tm * self.in_plane.r
 
     def move_along_axis(self, axis, magnitude):
         """
@@ -286,10 +286,10 @@ class CameraTripod(CameraNode):
         :param axis:
         :return:
         """
-        axis = self.in0_plane.r.components[{'x': 1, 'y': 2, 'z': 3}[axis]]
+        axis = self.in_plane.r.components[{'x': 1, 'y': 2, 'z': 3}[axis]]
         axis.amplify(magnitude)
         tm = MoveMat(*axis.xyz)
-        self.in_plane = tm * self.in0_plane.r
+        self.in_plane = tm * self.in_plane.r
 
     def orient(self, pos):
         """
