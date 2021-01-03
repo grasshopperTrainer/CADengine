@@ -1,5 +1,4 @@
 from gkernel.dtype.geometric.primitive import *
-
 #
 # v = Vec(10, 10, 10)
 #

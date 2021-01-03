@@ -32,24 +32,23 @@ class Dolly:
 
 class FpsDolly(Dolly):
 
-    def __init__(self, camera):
-        self._camera = camera
+    def __init__(self):
         self.move_speed = 10
         self.view_speed = 0.01
         # should it be at upper?
 
         self._last_cursor_pos = None
 
-    def react_keyboard_callback(self, window, key, scancode, mods, action, keyboard):
+    def react_keyboard_callback(self, keyboard, camera):
         # left right back forward create delta vector
-        x, y, z = self._camera.tripod.in_plane.r.axes
+        x, y, z = camera.tripod.in_plane.r.axes
         dvec = ZeroVec()
         for c, v in zip(('a', 's', 'd', 'w', 'e', 'q'), (-x, z, x, -z, ZVec(), -ZVec())):
             if keyboard.get_key_status(c)[0]:
                 dvec += v
 
         dvec.as_vec().amplify(self.move_speed)
-        self._camera.tripod.move(dvec)
+        camera.tripod.move(dvec)
 
     def react_cursor_callback(self, window, xpos, ypos, mouse):
         """
@@ -181,8 +180,9 @@ class CameraManager(RenderTargetManager):
         """
 
         camera = self[camera_id]
-        dolly = FpsDolly(camera)
+        dolly = FpsDolly()
         camera.attach_dolly(dolly)
         # handling callback
-        self.window.devices.keyboard.append_key_callback(dolly.react_keyboard_callback)
-        self.window.devices.mouse.append_cursor_pos_callback(dolly.react_cursor_callback)
+        self.window.append_preframe_callback(dolly.react_keyboard_callback, keyboard=self.window.devices.keyboard,
+                                             camera=camera)
+        self.window.devices.mouse.set_cursor_pos_callback(dolly.react_cursor_callback)
