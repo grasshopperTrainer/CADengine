@@ -20,12 +20,11 @@ class MyWindow(Window):
                 x = triangle([0, 0, 0],
                              [e, 0, 0],
                              [0, e, 0])
-                # y = triangle([0, 0, 0],
-                #              [0, e, 0],
-                #              [0, 0, e])
-                # z = triangle([0, 0, 0],
-                #              [e, 0, 0],
-                #              [0, 0, e])
-
+                y = triangle([0, 0, 0],
+                             [0, e, 0],
+                             [0, 0, e])
+                z = triangle([0, 0, 0],
+                             [e, 0, 0],
+                             [0, 0, e])
 
 MyWindow().run()

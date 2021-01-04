@@ -1,6 +1,7 @@
 import threading
 import time
 
+from global_tools import callbackRegistry
 from wkernel.env.windowing.bits import DrawInterface
 from .context import ContextManager
 from .windowing import *
@@ -178,9 +179,9 @@ class Window(DrawInterface, GlyphInterface):
             if self.__frame_count == self.__num_draw_frame:
                 break  # if number of drawn frame is targeted number of frame drawn
             with self.__timer:  # __exit__ of timer will hold thread by time.sleep()
-                # gl.glClearColor(1,1,1,1)
-                # gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+                self.call_predraw_callback()
                 self.draw()
+                self.call_postdraw_callback()
                 glfw.swap_buffers(self.__glfw_window)
             self.__frame_count += 1
 
@@ -232,10 +233,28 @@ class Window(DrawInterface, GlyphInterface):
     def setup(self):
         pass
 
-    def append_preframe_callback(self, func, **kwargs):
-        raise
+    @callbackRegistry
+    def call_predraw_callback(self):
+        """
+        called befor draw function
+        :return:
+        """
+        pass
 
-    def append_postframe_callback(self):
+    @call_predraw_callback.appender
+    def append_predraw_callback(self, func, *args, **kwargs):
+        pass
+
+    @callbackRegistry
+    def call_postdraw_callback(self):
+        """
+        called after draw function
+        :return:
+        """
+        pass
+
+    @call_postdraw_callback.appender
+    def append_postdraw_callback(self, func, *args, **kwargs):
         pass
 
 

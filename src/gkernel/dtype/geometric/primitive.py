@@ -59,15 +59,12 @@ class Mat1(ArrayLikeData):
         """
         modify coordinate of the instance
 
-        as self[:] doesnt work for numpy subclass, providing modification function
         :param coord:
         :return:
         """
         if not isinstance(coord, (tuple, list)) and len(coord) != 3:
             raise ValueError('coord has to be iterable of len 3')
-        self.x = coord[0]
-        self.y = coord[1]
-        self.z = coord[2]
+        self[:3, 0] = coord
 
     # as Pnt and Vec is closely related in arithmetic calculation
     # all is defined here in inherited class
@@ -751,11 +748,10 @@ class Pln(ArrayLikeData, PntConv):
         return Pln(o.xyz, x.xyz, y.xyz, z.xyz)
 
     def __new__(cls, o=(0, 0, 0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
-
-        return np.array([[o[0], x[0], y[0], z[0]],
-                         [o[1], x[1], y[1], z[1]],
-                         [o[2], x[2], y[2], z[2]],
-                         [1, 0, 0, 0]], dtype=float).view(cls)
+        return np.asarray([[o[0], x[0], y[0], z[0]],
+                           [o[1], x[1], y[1], z[1]],
+                           [o[2], x[2], y[2], z[2]],
+                           [1, 0, 0, 0]], dtype=float).view(cls)
 
     def __array_finalize__(self, obj):
         """
@@ -767,10 +763,11 @@ class Pln(ArrayLikeData, PntConv):
         :return:
         """
         # check for unit plane
-        if (self.view(np.ndarray) == np.array([[0, 1, 0, 0],
-                                               [0, 0, 1, 0],
-                                               [0, 0, 0, 1],
-                                               [1, 0, 0, 0]])).all():
+
+        if (self.view(np.ndarray) == [[0, 1, 0, 0],
+                                      [0, 0, 1, 0],
+                                      [0, 0, 0, 1],
+                                      [1, 0, 0, 0]]).all():
             self._trnsf_mat = TrnsfMats()
             return
         # make vectors normalized and perpendicular
@@ -782,8 +779,11 @@ class Pln(ArrayLikeData, PntConv):
                           [0, x.y, y.y, z.y],
                           [0, x.z, y.z, z.z],
                           [1, 0, 0, 0]], dtype=float)
+
         # apply normalized
-        self[:4, 1:4] = np.array([x, y, z]).T
+        self[:4, [1]] = x
+        self[:4, [2]] = y
+        self[:4, [3]] = z
 
         # calculate 'plane to origin' rotation matrices
         # last rotation is of x so match axis x to unit x prior

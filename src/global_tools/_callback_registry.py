@@ -1,5 +1,34 @@
 import weakref
 
+"""
+perpose of these descriptors are to get information of instance calling it.
+So it does nothing but return wrapped execution method with instance input.
+"""
+
+
+class _Appender:
+    def __get__(self, instance, owner):
+        def __wrapper(self, method, *args, **kwargs):
+            return instance.append(self, method, *args, **kwargs)
+
+        return __wrapper
+
+
+class _Enabler:
+    def __get__(self, instance, owner):
+        def __wrapper(self, v):
+            return instance.enable(self, v)
+
+        return __wrapper
+
+
+class _Remover:
+    def __get__(self, instance, owner):
+        def __wrapper(self, method):
+            return instance.remove(self, method)
+
+        return __wrapper
+
 
 class callbackRegistry:
     """
@@ -10,14 +39,16 @@ class callbackRegistry:
     then use method 'appender' of A's returned to decorated appender function.
     Additionally, `enabler` and `remover` decorator is provided to extend functionality.
 
-    # use of direct methods; append, remove, enable, disable
-    For cases where use of the registry is not exposed but only used inside the class,
-    all decorations can be omitted. Then one can use direct methods provided.
-
     # order insensitive execution
     callbacked are not guarantied to be executed in order.
     For order sensitive set of callbacked, simply provide master callbacked
     and call other functions inside that master callback in desired order.
+
+    ! not implemented
+    # use of direct methods; append, remove, enable, disable
+    For cases where use of the registry is not exposed but only used inside the class,
+    all decorations can be omitted. Then one can use direct methods provided.
+    !
 
     # example of simple, full functional implementation:
         class Foo:
@@ -46,6 +77,10 @@ class callbackRegistry:
     callbacked - functions called when caller calls
     """
 
+    __appender = _Appender()
+    __enabler = _Enabler()
+    __remover = _Remover()
+
     def __init__(self, _caller):
         """
         decorator wrapping caller method
@@ -56,44 +91,86 @@ class callbackRegistry:
         :param _caller:
         :return:
         """
-        self.__callback_funcs = weakref.WeakKeyDictionary()
-        self.__flag_enable = True
+        self.__callbacked_record = weakref.WeakKeyDictionary()
+        self.__callbacked_record_prop = weakref.WeakKeyDictionary()
 
-        self.caller(_caller)
-
-    def __call__(self, **on_call_kwarg):
+    def __get__(self, instance, owner):
         """
-        real method executed when wrapped caller(decorated by self.caller) is executed
+        self class is at the same time 'Caller' descriptor
 
-        :param on_call_kwarg: arguments to be put when
+        :param instance:
+        :param owner:
         :return:
         """
-        self.call(on_call_kwarg)
 
-    def call(self, on_call_kwarg):
+        def wrapper(**on_call_kwargs):
+            return self.call(instance, **on_call_kwargs)
+
+        return wrapper
+
+    def __init_record_needed(self, instance):
+        """
+        initiate record if its not there
+
+        :param instance:
+        :return:
+        """
+        # initiated if instance not registered
+        if instance not in self.__callbacked_record:
+            self.__callbacked_record.setdefault(instance, {})
+            self.__callbacked_record_prop.setdefault(instance, {'active': True})
+
+    """
+    decorator interface
+    """
+
+    def appender(self, _):
+        """
+        this is a decorator for callbacked append function
+
+        decorate functions that append callbacked functions and
+        kwargs to be put when calling callbacked afterward
+
+        :return:
+        """
+        return self.__appender
+
+    def enabler(self, _):
+        """
+        decorator to decorate enabler function
+
+        :return:
+        """
+        return self.__enabler
+
+    def remover(self, _):
+        """
+        decorator to decorate remover function
+
+        :return:
+        """
+        return self.__remover
+
+    """
+    real executors
+    """
+
+    def call(self, instance, **on_call_kwarg):
         """
         provided for strudctural consistency, refer to __call__ for real decorator in action
 
         :param on_call_kwarg:
         :return:
         """
-        if not self.__flag_enable:
+        self.__init_record_needed(instance)
+        if not self.__callbacked_record_prop[instance]['active']:
             return
         # calling actual callbacked functions
-        for k, (args, wkwargs, skwargs) in self.__callback_funcs.items():
+        for k, (args, wkwargs, skwargs) in self.__callbacked_record.get(instance, {}).items():
             args = (arg() if isinstance(arg, weakref.ref) else arg for arg in args)
             k(*args, **skwargs, **wkwargs, **on_call_kwarg)
 
-    def caller(self, _caller):
-        """
-        provided for structural consistency, refer to __init__ for real decorator in action
-
-        :param _caller:
-        :return:
-        """
-        pass
-
-    def append(self, callbacked, *args, **kwargs):
+    def append(self, instance, callbacked, *args, **kwargs):
         """
         real method executed when appender decorated with __init__ is called
 
@@ -103,13 +180,18 @@ class callbackRegistry:
         making weakref for all to prevent memory leak
         do not strongly store any objects that is not needed calling callbacked
 
+        FIXME: ! memory leak warning for storing callbacked as a key, yet by weak referencing it, method is lost
+                 in common situation where callbacked is dedicated function and not used elsewhere.
+
         :param callbacked: to be called when calling is triggered
         :param kwargs: to be put input callbacked while calling
         :return:
         """
+        self.__init_record_needed(instance)
+
         # store args
         arr = ([], weakref.WeakValueDictionary(), {})
-        self.__callback_funcs[callbacked] = arr
+        self.__callbacked_record[instance][callbacked] = arr
         for v in args:
             try:
                 arg = weakref.ref(v)
@@ -129,118 +211,75 @@ class callbackRegistry:
             except:
                 raise Exception("unknown error while storing input attributes")
 
-    def appender(self, _appender):
-        """
-        this is a decorator for callbacked append function
-
-        decorate functions that append callbacked functions and
-        kwargs to be put when calling callbacked afterward
-
-        :param method: method for appending callbacked
-        """
-        return self.append
-
-    def remove(self, method):
+    def remove(self, instance, method):
         """
         remove callbacked method
 
         :param method: method registered as a callbacked
         :return:
         """
-        if method not in self.__callback_funcs:
+        self.__init_record_needed(instance)
+
+        if method not in self.__callbacked_record[instance]:
             raise ValueError("given method doesnt exist in the register")
-        self.__callback_funcs.pop(method)
+        self.__callbacked_record[instance].pop(method)
 
-    def remover(self, _remover):
-        """
-        decorator to decorate remover function
-
-        :param _remover:
-        :return:
-        """
-        return self.remove
-
-    def enabler(self, _enabler):
-        """
-        decorator to decorate enabler function
-
-        :param _enabler:
-        :return:
-        """
-        return self.__enabler
-
-    def __enabler(self, v):
-        """
-        real method executed when decorated enabler method called
-
-        :param v:
-        :return:
-        """
-        try:
-            v = bool(v)
-            self.__flag_enable = v
-        except Exception as e:
-            raise e
-
-    def enable(self):
+    def enable(self, instance, v):
         """
         enable callback
         :return:
         """
-        self.__flag_enable = True
+        try:
+            v = bool(v)
+        except TypeError as e:
+            raise e
+        self.__init_record_needed(instance)
+        self.__callbacked_record_prop[instance]['active'] = v
 
-    def disable(self):
-        """
-        disable callback
-        :return:
-        """
-        self.__flag_enable = False
-
-
-if __name__ == '__main__':
-    # example
-
-    class Foo:
-        def __init__(self):
-            pass
-
-        @callbackRegistry
-        def call_a_callback(self, **on_call_kwargs):
-            print('caller')
-
-        @call_a_callback.appender
-        def append_a_callback(self, func, *args, **kwargs):
-            print('appender')
-
-        @call_a_callback.enabler
-        def enable_a_callback(self, do_enable):
-            print('enabler')
-
-        @call_a_callback.remover
-        def remove_a_callback(self, method):
-            print('remover')
-
-
-    f = Foo()
-
-
-    class Weakrefable:
-        pass
-
-
-    def a_callback(arg0, arg1, arg2, *args, **kwargs):
-        print(arg0, arg1, arg2)
-        print(args)
-        print(kwargs)
-
-
-    a = Weakrefable()
-    b = Weakrefable()
-
-    f.append_a_callback(a_callback, 10, a, arg2=10, unknown_arg=b)
-    # f.call_a_callback.disable()
-    # f.enable_a_callback(True)
-    # f.remove_a_callback(a_callback)
-    f.call_a_callback(on_call=3.3)
-
-    print(f.call_a_callback)
+# if __name__ == '__main__':
+#     # example
+#
+#     class Foo:
+#         def __init__(self):
+#             pass
+#
+#         @callbackRegistry
+#         def call_a_callback(self, **on_call_kwargs):
+#             print('caller')
+#
+#         @call_a_callback.appender
+#         def append_a_callback(self, func, *args, **kwargs):
+#             print('appender')
+#
+#         @call_a_callback.enabler
+#         def enable_a_callback(self, do_enable):
+#             print('enabler')
+#
+#         @call_a_callback.remover
+#         def remove_a_callback(self, method):
+#             print('remover')
+#
+#
+#     f = Foo()
+#     ff = Foo()
+#
+#     class Weakrefable:
+#         pass
+#
+#
+#     def a_callback(arg0, arg1, arg2, *args, **kwargs):
+#         print('CALLBACKED CALLING')
+#         pass
+#
+#     a = Weakrefable()
+#     b = Weakrefable()
+#
+#     f.append_a_callback(a_callback, 10, a, arg2=10, unknown_arg=b)
+#     f.call_a_callback()
+#     # print(f.call_a_callback)
+#     # print('another instance')
+#     # ff.call_a_callback()
+#     ff.call_a_callback()
+#     ff.enable_a_callback(False)
+#     # f.enable_a_callback(False)
+#     f.call_a_callback()

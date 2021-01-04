@@ -41,7 +41,7 @@ class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
         :param item:
         :return:
         """
-        return np.array(self, dtype=np.ndarray)[item]
+        return self.view(np.ndarray)[item]
 
     def __eq__(self, other):
         """

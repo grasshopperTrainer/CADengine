@@ -39,18 +39,27 @@ class FpsDolly(Dolly):
 
         self._last_cursor_pos = None
 
-    def react_keyboard_callback(self, keyboard, camera):
+    def callbacked_move_tripod(self, keyboard, tripod, **kwargs):
+        """
+        move tripod
+
+        callback intended to be used with window per frame callback
+        :param keyboard:
+        :param tripod:
+        :param kwargs: to accept args provided by glfw key callback handler if registered in it
+        :return:
+        """
         # left right back forward create delta vector
-        x, y, z = camera.tripod.in_plane.r.axes
+        x, y, z = tripod.in_plane.r.axes
         dvec = ZeroVec()
         for c, v in zip(('a', 's', 'd', 'w', 'e', 'q'), (-x, z, x, -z, ZVec(), -ZVec())):
             if keyboard.get_key_status(c)[0]:
                 dvec += v
 
         dvec.as_vec().amplify(self.move_speed)
-        camera.tripod.move(dvec)
+        tripod.move(dvec)
 
-    def react_cursor_callback(self, window, xpos, ypos, mouse):
+    def callbacked_move_camera(self, window, xpos, ypos, mouse, tripod):
         """
         move camera frustum with cursor move
 
@@ -63,9 +72,10 @@ class FpsDolly(Dolly):
         if self._last_cursor_pos is not None:
             v = Vec.from_pnts(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
             # rotate vertically and horizontally
-            self.__camera.tripod.pitch(v.y)
-            axis = Lin.from_pnt_vec(self.__camera.tripod.in_plane.r.origin, Vec(0, 0, 1))
-            self.__camera.tripod.rotate_along(axis, -v.x)
+            tripod.pitch(v.y)
+
+            axis = Lin.from_pnt_vec(tripod.in_plane.r.origin, Vec(0, 0, 1))
+            tripod.rotate_along(axis, -v.x)
 
         self._last_cursor_pos = xpos, ypos
         # mouse.cursor_goto_center()
@@ -84,10 +94,6 @@ class Camera(RenderTarget):
         self._body = body
         self._tripod = tripod
         self._dolly = None
-
-    #
-    # def set_dolly(self, dolly):
-    #     self._dolly = dolly
 
     @property
     def body(self) -> CameraBody:
@@ -110,6 +116,18 @@ class Camera(RenderTarget):
         if not isinstance(dolly, Dolly):
             raise TypeError
         self._dolly = dolly
+
+    def detach_dolly(self):
+        """
+        Remove dolly
+
+        :return: dolly for manager to handle callback detachment
+        """
+        if self._dolly is None:
+            raise ValueError('no dolly to detach')
+        d = self._dolly
+        self._dolly = None
+        return d
 
     def ray_frustum(self, param_x, param_y):
         """
@@ -171,6 +189,7 @@ class CameraManager(RenderTargetManager):
         new_cam = CameraFactory.new_camera(self, 'fov', 'prsp', fov, near, far, ratio)
         self._append_new_target(new_cam)
 
+    # TODO: need camera dolly connector? should it take all the responsibilities? who has to know about dolly?
     def attach_fps_dolly(self, camera_id):
         """
         attach dolly to the camera
@@ -178,11 +197,28 @@ class CameraManager(RenderTargetManager):
         :param camera_id:
         :return:
         """
-
         camera = self[camera_id]
         dolly = FpsDolly()
         camera.attach_dolly(dolly)
         # handling callback
-        self.window.append_preframe_callback(dolly.react_keyboard_callback, keyboard=self.window.devices.keyboard,
-                                             camera=camera)
-        self.window.devices.mouse.set_cursor_pos_callback(dolly.react_cursor_callback)
+        self.window.append_predraw_callback(dolly.callbacked_move_tripod,
+                                            keyboard=self.window.devices.keyboard,
+                                            tripod=camera.tripod)
+        self.window.devices.mouse.append_cursor_pos_callback(dolly.callbacked_move_camera,
+                                                             tripod=camera.tripod)
+
+    def detach_dolly(self, camera_id):
+        """
+        detach dolly from a camera
+
+        by disconnecting camera and dolly then removing callbacks
+        :param camera_id:
+        :return:
+        """
+        dolly = self[camera_id].detach_dolly()
+        # handling callback. temporary patching
+        if isinstance(dolly, FpsDolly):
+            self.window.remove_predraw_callback(dolly.callbacked_move_tripod)
+            self.window.devices.mouse.remove_cursor_pos_callback(dolly.callbacked_move_camera)
+        else:
+            raise NotImplementedError

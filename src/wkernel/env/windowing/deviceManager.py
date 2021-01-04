@@ -1,7 +1,6 @@
 from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix import ScaleMat
-from global_tools import Singleton
-
+from global_tools import Singleton, callbackRegistry
 from ...hooked import *
 
 
@@ -50,9 +49,9 @@ class Mouse(_Device):
 
     def __init__(self, window, manager):
         super().__init__(window, manager)
-        glfw.set_cursor_pos_callback(self.window.glfw_window, self._cursor_pos_callback)
+        glfw.set_cursor_pos_callback(self.window.glfw_window, self.__master_cursor_pos_callback)
 
-    def _cursor_pos_callback(self, window, xpos, ypos):
+    def __master_cursor_pos_callback(self, window, xpos, ypos):
         """
         Calls all callbacks joined with 'cursor pos callback'
 
@@ -62,10 +61,23 @@ class Mouse(_Device):
         :return:
         """
         xpos, ypos = self.cursor_pos
-        self._run_all_callback(window, xpos, ypos, device=self, callback_type=glfw.set_cursor_pos_callback)
+        self.call_cursor_pos_callback(window=window, xpos=xpos, ypos=ypos, mouse=self)
 
-    def append_cursor_pos_callback(self, callback_func):
-        return self._callback_setter(callback_func, glfw.set_cursor_pos_callback, CursorPosCallbackWrapper)
+    @callbackRegistry
+    def call_cursor_pos_callback(self):
+        pass
+
+    @call_cursor_pos_callback.appender
+    def append_cursor_pos_callback(self, callbacked, *args, **kwargs):
+        """
+        append cursor pos callback
+
+        :param callbacked: method should accept following kwargs: window, xpos, ypos, mouse
+        :param args: additional arguments to be put when executing (param)callbacked
+        :param kwargs: additional kwargs to be put when executing (param)callbacked
+        :return:
+        """
+        pass
 
     def cursor_in_view(self, view, normalize=True):
         """
@@ -80,7 +92,7 @@ class Mouse(_Device):
         if not normalize:
             w, h = view.glyph.size
             view_scale_matrix = ScaleMat(w, h)
-            pos = view_scale_matrix*pos
+            pos = view_scale_matrix * pos
         return pos.x, pos.y
 
     def intersect_model(self, view, camera, model):
@@ -214,27 +226,59 @@ class Keyboard(_Device):
         for k, v in self.__key_press_dict.items():
             self.__key_press_dict[k] = [None, 0]  # time, pressed
 
-        glfw.set_key_callback(window.glfw_window, self.__key_callback_master)
+        glfw.set_key_callback(window.glfw_window, self.__master_key_callback)
 
-    def append_key_callback(self, callback_func):
-        """
-        append key callback
-
-        exposed callback setter
-        :param callback_func: function to call. Function has to accept all given arguments.
-        :return:
-        """
-        return self._callback_setter(callback_func, glfw.set_key_callback, KeyCallbackWrapper)
-
-    def __key_callback_master(self, *args):
+    def __master_key_callback(self, window, key, scancode, action, mods):
         """
         master key callback calls all other callback of its type
 
-        this is needed to pass Keyboard instance for extended operation
-        :param args: arguments passed by glfw event handler
+        method simply does one thing: pass arguments provided by glfw callback handler + self to all key callbacked
+        :param window:
+        :param key:
+        :param scancode:
+        :param action:
+        :param mods:
         :return:
         """
-        self._run_all_callback(*args, device=self, callback_type=glfw.set_key_callback)
+        self.call_key_callback(window=window, key=key, scancode=scancode, action=action, mods=mods, keyboard=self)
+
+    @callbackRegistry
+    def call_key_callback(self, **on_call_kwargs):
+        """
+        callback caller
+
+        :param on_call_kwargs:
+        :return:
+        """
+        pass
+
+    @call_key_callback.appender
+    def append_key_callback(self, callbacked, *args, **kwargs):
+        """
+        :param callbacked:
+        :param args: arguments to put when executing callbacked
+        :param kwargs: kwargs to put when executing callbacked
+        :return:
+        """
+        pass
+
+    @call_key_callback.remover
+    def remove_key_callback(self, callbacked):
+        """
+        :param callbacked: function to remove
+        :return:
+        """
+        pass
+
+    @call_key_callback.enabler
+    def enable_key_callback(self, v):
+        """
+        sets activation status of callback calling
+
+        :param v: bool
+        :return:
+        """
+        pass
 
     @classmethod
     def get_char(cls, key, mods):
@@ -255,6 +299,7 @@ class DeviceManager:
     """
     Control group of devices
     """
+
     def __init__(self, window):
         self._window = window
 
@@ -269,46 +314,44 @@ class DeviceManager:
     def keyboard(self):
         return self._keyboard
 
-
-
-class _CallbackWrapper:
-    """
-    Needed to add custom-ability into glfw callback
-    """
-
-    def __init__(self, func, device):
-        self._func = func
-        self._device = device
-
-    def _run_callback(self, *args):
-        self._func(*args)
-
-
-class _KeyboardCallbackWrapper(_CallbackWrapper):
-    """
-    Callback related to keyboard
-    """
-    def __init__(self, func):
-        super().__init__(func, Keyboard)
-
-
-class _MouseCallbackWrapper(_CallbackWrapper):
-    """
-    Callback related to mouse
-    """
-    def __init__(self, func):
-        super().__init__(func, Mouse)
-
-
-class CursorPosCallbackWrapper(_MouseCallbackWrapper):
-    """
-    Cursor pos callback
-    """
-    pass
-
-
-class KeyCallbackWrapper(_KeyboardCallbackWrapper):
-    """
-    Key press callback
-    """
-    pass
+# class _CallbackWrapper:
+#     """
+#     Needed to add custom-ability into glfw callback
+#     """
+#
+#     def __init__(self, func, device):
+#         self._func = func
+#         self._device = device
+#
+#     def _run_callback(self, *args):
+#         self._func(*args)
+#
+#
+# class _KeyboardCallbackWrapper(_CallbackWrapper):
+#     """
+#     Callback related to keyboard
+#     """
+#     def __init__(self, func):
+#         super().__init__(func, Keyboard)
+#
+#
+# class _MouseCallbackWrapper(_CallbackWrapper):
+#     """
+#     Callback related to mouse
+#     """
+#     def __init__(self, func):
+#         super().__init__(func, Mouse)
+#
+#
+# class CursorPosCallbackWrapper(_MouseCallbackWrapper):
+#     """
+#     Cursor pos callback
+#     """
+#     pass
+#
+#
+# class KeyCallbackWrapper(_KeyboardCallbackWrapper):
+#     """
+#     Key press callback
+#     """
+#     pass
