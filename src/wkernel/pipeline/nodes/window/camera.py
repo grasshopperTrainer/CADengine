@@ -1,6 +1,6 @@
 from JINTFP import *
 from gkernel.dtype.geometric.primitive import Pln, Vec
-from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, TrnsfMats
+from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, TrnsfMats, ViewMatrix, ProjectionMatrix
 from global_tools import Singleton
 
 
@@ -91,19 +91,7 @@ class OrthFrustum(_FrustumShape):
     """
 
     def calculate(self, l, r, b, t, n, f):
-        proj_mat = np.eye(4)
-        if l == -r and b == -t:
-            proj_mat[0, 0] = 1 / r
-            proj_mat[1, 1] = 1 / t
-            proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
-            proj_mat[3] = 0, 0, 0, 1
-        else:
-            proj_mat[0, (0, 3)] = 2 / (r - l), -(r + l) / (r - l)
-            proj_mat[1, (1, 3)] = 2 / (t - b), -(t + b) / (t - b)
-            proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
-            proj_mat[3] = 0, 0, 0, 1
-
-        return proj_mat
+        return ProjectionMatrix(l, r, b, t, n, f, 'o')
 
 
 class PrspFrustum(_FrustumShape):
@@ -112,18 +100,7 @@ class PrspFrustum(_FrustumShape):
     """
 
     def calculate(self, l, r, b, t, n, f):
-        proj_mat = np.eye(4)
-        if l == -r and b == -t:
-            proj_mat[0, 0] = n / r
-            proj_mat[1, 1] = n / t
-            proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
-            proj_mat[3] = 0, 0, -1, 0
-        else:
-            proj_mat[0, (0, 2)] = 2 * n / (r - l), (r + l) / (r - l)
-            proj_mat[1, (1, 2)] = 2 * n / (t - b), (t + b) / (t - b)
-            proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
-            proj_mat[3] = 0, 0, -1, 0
-        return proj_mat
+        return ProjectionMatrix(l, r, b, t, n, f, 'p')
 
 
 class CameraBody(CameraNode):
@@ -194,15 +171,7 @@ class CameraTripod(CameraNode):
         Calculate view matrix from self._camera_plane
         :return:
         """
-        eye, xaxis, yaxis, zaxis = pln.components
-        # calculate view_mat
-        # cant explain calculation, scrapped from internet
-        matrix = np.eye(4)
-        matrix[0, :3] = xaxis.xyz
-        matrix[1, :3] = yaxis.xyz
-        matrix[2, :3] = zaxis.xyz
-        matrix[:3, 3] = Vec.dot(-xaxis, eye), Vec.dot(-yaxis, eye), Vec.dot(-zaxis, eye)
-        return matrix
+        return ViewMatrix.from_pln(pln)
 
     def lookat(self, eye, at, up):
         """

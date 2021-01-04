@@ -108,7 +108,7 @@ class Mouse(_Device):
         # 2. create ray(R) combining using origin(B) and vector from B to A
         # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
         px, py = self.cursor_in_view(view)
-        ray = camera.ray_frustum(px, py)
+        ray = camera.frusrum_ray(px, py)
         print(ray.describe())
         # raise NotImplementedError
 
@@ -123,6 +123,9 @@ class Mouse(_Device):
         _, height = glfw.get_window_size(self.window.glfw_window)
         x, y = glfw.get_cursor_pos(self.window.glfw_window)
         return x, height - y
+
+    def cursor_center(self):
+        return tuple(v / 2 for v in self.window.glyph.size)
 
     def cursor_goto_center(self):
         win = self.window

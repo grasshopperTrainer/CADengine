@@ -1,7 +1,7 @@
 import threading
 import time
+from numbers import Number
 
-from global_tools import callbackRegistry
 from wkernel.env.windowing.bits import DrawInterface
 from .context import ContextManager
 from .windowing import *

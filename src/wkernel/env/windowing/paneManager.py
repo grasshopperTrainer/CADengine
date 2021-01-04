@@ -1,3 +1,5 @@
+from gkernel.dtype.geometric.primitive import Pnt
+from gkernel.dtype.nongeometric.matrix import ScaleMat
 from wkernel.hooked import openglHooked as gl
 from .glyph import GlyphNode, GlyphInterface
 from .window_properties import *
@@ -70,8 +72,16 @@ class Pane(RenderTarget, GlyphInterface):
         gl.glClearColor(r, g, b, a)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-    def rel_mouse_pos(self):
-        pass
+    def local_cursor(self):
+        """
+        Returns cursor position in view coordinate system
+        :param view:
+        :return:
+        """
+        w, h = self.manager.window.glyph.size
+        unitize_matrix = ScaleMat(1 / w, 1 / h)
+        pos = unitize_matrix * self.glyph.trnsf_matrix.r.I * Pnt(*self.manager.window.devices.mouse.cursor_pos)
+        return pos.x, pos.y
 
     @property
     def glyph(self):

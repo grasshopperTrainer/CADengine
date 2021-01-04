@@ -69,16 +69,14 @@ class FpsDolly(Dolly):
         :param mouse:
         :return:
         """
-        if self._last_cursor_pos is not None:
-            v = Vec.from_pnts(Pnt(*self._last_cursor_pos), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
-            # rotate vertically and horizontally
-            tripod.pitch(v.y)
+        v = Vec.from_pnts(Pnt(*mouse.cursor_center()), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
+        # rotate vertically and horizontally
+        tripod.pitch(v.y)
 
-            axis = Lin.from_pnt_vec(tripod.in_plane.r.origin, Vec(0, 0, 1))
-            tripod.rotate_along(axis, -v.x)
+        axis = Lin.from_pnt_vec(tripod.in_plane.r.origin, Vec(0, 0, 1))
+        tripod.rotate_along(axis, -v.x)
 
-        self._last_cursor_pos = xpos, ypos
-        # mouse.cursor_goto_center()
+        mouse.cursor_goto_center()
 
 
 class Camera(RenderTarget):
@@ -129,7 +127,7 @@ class Camera(RenderTarget):
         self._dolly = None
         return d
 
-    def ray_frustum(self, param_x, param_y):
+    def frusrum_ray(self, param_x, param_y):
         """
         return ray crossing near frustum at given param
 
@@ -143,12 +141,7 @@ class Camera(RenderTarget):
         sm = ScaleMat(x=r - l, y=t - b)
         mm = MoveMat(x=(r + l) / 2, y=(t + b) / 2, z=-n)
         frustum_point = mm * sm * Pnt(x=param_x, y=param_y, z=0)
-        frustum_point = Pnt(x=param_x, y=param_y, z=0) * sm * mm
-        # print(frustum_point)
-        # raise
-        # define ray and cast into world space
         ray = Ray([0, 0, 0], frustum_point.xyz)
-
         return self.tripod.VM.r * ray
 
     def __enter__(self):

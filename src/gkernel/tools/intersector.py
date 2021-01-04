@@ -1,5 +1,6 @@
 from warnings import warn
 
+from ..constants import ATOL
 from ..dtype.geometric.primitive import *
 
 
