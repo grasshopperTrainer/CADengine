@@ -1,20 +1,20 @@
-from my_patterns import Singleton
-from UVT.env.windowing.bits import DrawBit
-import UVT.hooked.openglHooked as gl
-import UVT.pipeline.nodes as node
+import wkernel.hooked.openglHooked as gl
+import wkernel.pipeline.nodes as node
+from global_tools import Singleton
+from wkernel.env.windowing.bits import DrawInterface
 
 
 @Singleton
-class TriangleDrawer(DrawBit):
+class TriangleDrawer(DrawInterface):
     def __init__(self):
         # generation
         self._vao = node.ConVertexArray().out0_vrtx_arry
         self._vbo = node.ConVertexBuffer().out0_vrtx_bffr
         self._ibo = node.ConIndexBuffer().out0_indx_bffr
 
-        with open('C:/Users/dingo/OneDrive/prgrm_dev/pyopengl2/src/UVT/res/glsl/simple_vrtx_shdr.glsl', 'r') as f:
+        with open('C:/Users/dingo/OneDrive/prgrm_dev/pyopengl2/src/wkernel/res/glsl/simple_vrtx_shdr.glsl', 'r') as f:
             vs_source = f.read()
-        with open('C:/Users/dingo/OneDrive/prgrm_dev/pyopengl2/src/UVT/res/glsl/simple_frgmt_shdr.glsl', 'r') as f:
+        with open('C:/Users/dingo/OneDrive/prgrm_dev/pyopengl2/src/wkernel/res/glsl/simple_frgmt_shdr.glsl', 'r') as f:
             fs_source = f.read()
         prgrm = node.ConShdrPrgrm(vrtx_shdr_src=vs_source, frgmt_shdr_src=fs_source).out0_prgrm
         # pushing data
@@ -54,6 +54,9 @@ class TriangleDrawer(DrawBit):
 
     def draw(self):
         self._renderer.refresh()
+
+    def setup(self):
+        pass
 
 
 def triangle(v0, v1, v2):

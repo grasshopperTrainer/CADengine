@@ -6,7 +6,8 @@ Conventions:
 """
 
 import inspect
-from collections import deque, OrderedDict
+from collections import OrderedDict
+
 from my_patterns import FamilyMember
 
 
@@ -646,20 +647,20 @@ if __name__ == '__main__':
 
 
     m = {i: A(f"_{i}_") for i in 'abcdefghijklmn'}
-    m['a'].a = 'A'
-    m['b'].a = 10
-    m['c'].a = m['a'].oup
-    m['d'].a = m['a'].oup
+    m['a'].f = 'A'
+    m['b'].f = 10
+    m['c'].f = m['a'].oup
+    m['d'].f = m['a'].oup
     m['d'].b = m['b'].oup
     print(m['b'].oup)
     print(m['d'].oup)
     print()
-    m['b'].a = '10'
+    m['b'].f = '10'
     print(m['d'].oup)
-    m['e'].a = 'C'
-    m['f'].a = m['c'].oup
+    m['e'].f = 'C'
+    m['f'].f = m['c'].oup
     m['f'].b = m['d'].oup
-    m['g'].a = m['f'].oup
+    m['g'].f = m['f'].oup
     m['g'].b = m['d'].oup
     m['g'].c = m['e'].oup
     print()
@@ -667,19 +668,19 @@ if __name__ == '__main__':
     #
     print('-----------------------------')
 
-    m['a'].a = '0'
+    m['a'].f = '0'
     # m['b'].a = '1'
     # m['c'].a = '2'
     print(m['g'].oup)
-    m['a'].a = 'M'
+    m['a'].f = 'M'
     print(m['g'].oup)
     print()
-    m['b'].a = '1'
-    m['d'].a = 'D'
+    m['b'].f = '1'
+    m['d'].f = 'D'
     print(m['g'].oup)
     print('+++++++++++++++++++++')
-    m['e'].a = '3'
-    m['a'].a = 'Z'
-    print(m['e'].a)
+    m['e'].f = '3'
+    m['a'].f = 'Z'
+    print(m['e'].f)
     print(m['g'].oup)
     print(m['b'].oup)

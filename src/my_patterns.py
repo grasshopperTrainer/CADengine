@@ -1,14 +1,6 @@
-from collections import deque
 import heapq
+from collections import deque
 from math import inf
-
-def Singleton(cls):
-    instances = {}
-    def getinstance():
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
-    return getinstance
 
 
 class NotRelatableError(TypeError):
@@ -50,6 +42,7 @@ class MemberIterator:
     def __call__(self, member):
         self._iterable(member)
         return self
+
 
 class LevelIterator(MemberIterator):
 

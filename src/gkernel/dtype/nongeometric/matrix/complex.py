@@ -1,192 +1,84 @@
-from .basic import Mat4
 import numpy as np
 
+import gkernel.dtype.geometric.primitive as _pr
+from .primitive import TrnsfMat
 
-class TrnsfMat(Mat4):
-    """
-    Transformation matrix
-    """
-
-    @property
-    def I(self):
-        raise NotImplementedError('inverse not defined')
+"""
+these classes are complex or special
+may use geometric primitives, thus had to be separated from primitives
+"""
 
 
-class CompoundTrnsfMat(TrnsfMat):
-    """
-    Ordered transformation matrices
+class ViewMatrix(TrnsfMat):
 
-    Useful retrieving intermediate transformation matrix
-    of getting inverse of all transformation.
-    """
-    type_nickname = 'CM'
-
-    def __init__(self, matrices=[]):
-        self._matrices = matrices
-
-    def append(self, matrix):
+    def __new__(cls, eye, xaxis, yaxis, zaxis):
         """
-        Append matrix for compound transformation
-        :param matrix: matrix used to translate
-        :return:
+        calculated matrix is inversed transformation matrix describing world origin to given plane
+
+        :param eye: coordinate of view position in worls
+        :param xaxis: coordinate of x axis vector
+        :param yaxis: coordinate of y axis vector
+        :param zaxis: coordinate of z axis vector
         """
-        self._matrices.append(matrix)
+        # to verify axes, anyway need Pln instance
+        eye, xaxis, yaxis, zaxis = _pr.Pln(eye, xaxis, yaxis, zaxis).components
 
-    def append_all(self, *matrices):
+        matrix = np.eye(4)
+        matrix[0, :3] = xaxis.xyz
+        matrix[1, :3] = yaxis.xyz
+        matrix[2, :3] = zaxis.xyz
+        matrix[:3, 3] = _pr.Vec.dot(-xaxis, eye), _pr.Vec.dot(-yaxis, eye), _pr.Vec.dot(-zaxis, eye)
+        return np.array(matrix, dtype=float).view(cls)
+
+    @classmethod
+    def from_pln(cls, pln):
         """
-        Append matrices with given order
-        :param matrices: matrices for transformation
-        :return:
+        create ViewMatrix from plane
+        :param pln: Pln instance
+        :return: ViewMatrix
         """
-        self._matrices += list(matrices)
+        eye, xaxis, yaxis, zaxis = pln.components
+        return cls(eye.xyz, xaxis.xyz, yaxis.xyz, zaxis.xyz)
 
-    @property
-    def M(self):
-        m = EyeMat4()
-        for mat in self._matrices:
-            m = mat * m
-        return m
 
-    @property
-    def I(self):
+class ProjectionMatrix(TrnsfMat):
+
+    def __new__(cls, l, r, b, t, n, f, typ):
         """
-        Inverse of all transformation matrix
-        :return:
+
+        :param l: left
+        :param r: right
+        :param b: bottom
+        :param t: top
+        :param n: near
+        :param f: far
+        :param typ: type of projection 'p' for perspective and 'o' for orthographic
         """
-        return CompoundTrnsfMat([m.I for m in reversed(self._matrices)])
+        if typ not in ('p', 'o'):
+            raise ValueError("type has to be one of: 'p'rojection, 'o'rthographic")
 
-    def copy(self):
-        return CompoundTrnsfMat(self._matrices.copy())
+        proj_mat = np.eye(4)
+        if typ == 'p':
+            if l == -r and b == -t:
+                proj_mat[0, 0] = n / r
+                proj_mat[1, 1] = n / t
+                proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
+                proj_mat[3] = 0, 0, -1, 0
+            else:
+                proj_mat[0, (0, 2)] = 2 * n / (r - l), (r + l) / (r - l)
+                proj_mat[1, (1, 2)] = 2 * n / (t - b), (t + b) / (t - b)
+                proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
+                proj_mat[3] = 0, 0, -1, 0
+        else:
+            if l == -r and b == -t:
+                proj_mat[0, 0] = 1 / r
+                proj_mat[1, 1] = 1 / t
+                proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
+                proj_mat[3] = 0, 0, 0, 1
+            else:
+                proj_mat[0, (0, 3)] = 2 / (r - l), -(r + l) / (r - l)
+                proj_mat[1, (1, 3)] = 2 / (t - b), -(t + b) / (t - b)
+                proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
+                proj_mat[3] = 0, 0, 0, 1
 
-    def __str__(self):
-        return f"<Matrices of: {[m.type_nickname for m in self._matrices]}>"
-
-
-class MoveMat(TrnsfMat):
-    """
-    Translation matrix (move)
-    """
-    type_nickname = 'M'
-
-    def __init__(self, x=0, y=0, z=0):
-        mat = np.eye(4)
-        mat[:3, 3] = x, y, z
-        super().__init__(mat)
-
-    @property
-    def x(self):
-        return self._data[0, 3]
-
-    @property
-    def y(self):
-        return self._data[1, 3]
-
-    @property
-    def z(self):
-        return self._data[2, 3]
-
-    @property
-    def I(self):
-        return MoveMat(-self.x, -self.y, -self.z)
-
-
-class ScaleMat(TrnsfMat):
-    """
-    Scale matrix
-    """
-    type_nickname = 'S'
-
-    def __init__(self, x=1, y=1, z=1):
-        mat = np.array([[x, 0, 0, 0],
-                        [0, y, 0, 0],
-                        [0, 0, z, 0],
-                        [0, 0, 0, 1]])
-        super().__init__(mat)
-
-    @property
-    def x(self):
-        return self._data[0, 0]
-
-    @property
-    def y(self):
-        return self._data[1, 1]
-
-    @property
-    def z(self):
-        return self._data[2, 2]
-
-    @property
-    def I(self):
-        return ScaleMat(1 / self.x, 1 / self.y, 1 / self.z)
-
-
-class RotXMat(TrnsfMat):
-    """
-    Rotate x matrix
-    """
-    type_nickname = 'RX'
-
-    def __init__(self, angle=0):
-        mat = np.array([[1, 0, 0, 0],
-                        [0, np.cos(angle), np.sin(angle), 0],
-                        [0, np.sin(angle), np.cos(angle), 0],
-                        [0, 0, 0, 1]])
-        super().__init__(mat)
-        self._angle = angle
-
-    @property
-    def I(self):
-        return RotXMat(-self._angle)
-
-
-class RotYMat(TrnsfMat):
-    """
-    Rotate y matrix
-    """
-    type_nickname = 'RY'
-
-    def __init__(self, angle=np.pi / 2):
-        mat = np.array([[np.cos(angle), 0, np.sin(angle), 0],
-                        [0, 1, 0, 0],
-                        [np.sin(angle), 0, np.cos(angle), 0],
-                        [0, 0, 0, 1]])
-        super().__init__(mat)
-        self._angle = angle
-
-    @property
-    def I(self):
-        return RotXMat(-self._angle)
-
-
-class RotZMat(TrnsfMat):
-    """
-    Rotate z matrix
-    """
-    type_nickname = 'RZ'
-
-    def __init__(self, angle=np.pi / 2):
-        mat = np.array([[np.cos(angle), -np.sin(angle), 0, 0],
-                        [np.sin(angle), np.cos(angle), 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1]])
-        super().__init__(mat)
-        self._angle = angle
-
-    @property
-    def I(self):
-        return RotXMat(-self._angle)
-
-
-class EyeMat4(Mat4):
-    """
-    4x4 Identity matrix
-    """
-    type_nickname = 'E'
-
-    def __init__(self):
-        mat = np.eye(4)
-        super().__init__(mat)
-
-    @property
-    def I(self):
-        return EyeMat4()
+        return np.array(proj_mat, dtype=float).view(cls)
