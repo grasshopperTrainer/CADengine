@@ -40,8 +40,10 @@ class Model:
         :param ray: to intersect with
         :return:
         """
-        for shape in self.iterator():
-            print(intx.intx(shape, ray))
+        for i, shape in enumerate(self.iterator()):
+            x = intx.intx(shape, ray)
+            if x is not None:
+                print(i, x)
 
     def render(self):
         """

@@ -1,5 +1,6 @@
 import copy
 
+from gkernel.constants import DTYPE
 from .._NoneGeomDataType import *
 
 
@@ -35,23 +36,14 @@ class TrnsfMat(Mat4):
         """
         # combine transformation matrix
         if isinstance(other, TrnsfMat):
-            return self.dot(other).view(TrnsfMat)
+            return np.dot(self, other).view(TrnsfMat)
         else:
             # try calculating
             try:
-                arr = np.dot(self, other, out=other.copy())
+                arr = np.dot(self.view(np.ndarray), other).view(other.__class__)
                 return arr
             except Exception as e:
-                raise ArithmeticError("cant multiply")
-            # try casting result into class on the right
-            # if arr.shape == other.shape:
-            #     try:
-            #         return arr.view(other.__class__)
-            #     except:
-            #         raise Exception(f"result is not like {other.__class__.__name__}")
-            # else:
-            #     raise TypeError
-
+                raise e
 
 class TrnsfMats(TrnsfMat):
     """
@@ -63,9 +55,10 @@ class TrnsfMats(TrnsfMat):
     type_nickname = 'CM'
 
     def __new__(cls, matrices=[]):
-        obj = super(TrnsfMats, cls).__new__(cls, shape=(4, 4))  # default transformation matrix that does nothing
+        obj = super(TrnsfMats, cls).__new__(cls, shape=(4, 4),
+                                            dtype=DTYPE)  # default transformation matrix that does nothing
         obj._matrices = matrices  # stacked matrix for inverse
-        obj._merge()
+        obj.__merge()
         return obj
 
     def __array_finalize__(self, obj):
@@ -80,9 +73,9 @@ class TrnsfMats(TrnsfMat):
             self._matrices = []
         elif isinstance(obj, self.__class__):
             self._matrices = copy.deepcopy(obj._matrices)  # deepcopying? what if its a view?
-            self._merge()
+            self.__merge()
 
-    def _merge(self):
+    def __merge(self):
         """
         merge matrices and set it as self's value
         :return:
@@ -90,7 +83,7 @@ class TrnsfMats(TrnsfMat):
         # update as merged array
         arr = np.eye(4)
         for m in self._matrices:
-            arr = m.dot(arr)
+            arr = np.dot(m, arr)
         self[:] = arr
 
     def append(self, matrix):
@@ -115,6 +108,15 @@ class TrnsfMats(TrnsfMat):
             self[:] = mat * self
         self._matrices += list(matrices)
 
+    def mat_iter(self):
+        """
+        iter individual matrices
+
+        :return:
+        """
+        for m in self._matrices:
+            yield m
+
     @property
     def I(self):
         """
@@ -137,7 +139,7 @@ class MoveMat(TrnsfMat):
         return np.array([[1, 0, 0, x],
                          [0, 1, 0, y],
                          [0, 0, 1, z],
-                         [0, 0, 0, 1]], dtype=float).view(cls)
+                         [0, 0, 0, 1]], dtype=DTYPE).view(cls)
 
     @property
     def x(self):
@@ -176,7 +178,7 @@ class ScaleMat(TrnsfMat):
         return np.array([[x, 0, 0, 0],
                          [0, y, 0, 0],
                          [0, 0, z, 0],
-                         [0, 0, 0, 1]], dtype=float).view(cls)
+                         [0, 0, 0, 1]], dtype=DTYPE).view(cls)
 
     @property
     def x(self):
@@ -232,7 +234,7 @@ class RotXMat(SingleRotMat):
         obj = np.array([[1, 0, 0, 0],
                         [0, np.cos(angle), -np.sin(angle), 0],
                         [0, np.sin(angle), np.cos(angle), 0],
-                        [0, 0, 0, 1]], dtype=float).view(cls)
+                        [0, 0, 0, 1]], dtype=DTYPE).view(cls)
         obj._angle = angle
         return obj
 
@@ -247,10 +249,10 @@ class RotYMat(SingleRotMat):
     type_nickname = 'RY'
 
     def __new__(cls, angle=np.pi / 2):
-        obj = np.array([[np.cos(angle), 0, np.sin(angle), 0],
+        obj = np.array([[np.cos(angle, dtype=DTYPE), 0, np.sin(angle, dtype=DTYPE), 0],
                         [0, 1, 0, 0],
-                        [-np.sin(angle), 0, np.cos(angle), 0],
-                        [0, 0, 0, 1]], dtype=float).view(cls)
+                        [-np.sin(angle, dtype=DTYPE), 0, np.cos(angle, dtype=DTYPE), 0],
+                        [0, 0, 0, 1]], dtype=DTYPE).view(cls)
         obj._angle = angle
         return obj
 
@@ -268,7 +270,7 @@ class RotZMat(SingleRotMat):
         obj = np.array([[np.cos(angle), -np.sin(angle), 0, 0],
                         [np.sin(angle), np.cos(angle), 0, 0],
                         [0, 0, 1, 0],
-                        [0, 0, 0, 1]], dtype=float).view(cls)
+                        [0, 0, 0, 1]], dtype=DTYPE).view(cls)
         obj._angle = angle
         return obj
 
@@ -286,7 +288,7 @@ class EyeMat4(Mat4):
         return np.array([[1, 0, 0, 0],
                          [0, 1, 0, 0],
                          [0, 0, 1, 0],
-                         [0, 0, 0, 1]], dtype=float).view(cls)
+                         [0, 0, 0, 1]], dtype=DTYPE).view(cls)
 
     @property
     def I(self):

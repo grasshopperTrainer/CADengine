@@ -71,10 +71,11 @@ class FpsDolly(Dolly):
         """
         v = Vec.from_pnts(Pnt(*mouse.cursor_center()), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
         # rotate vertically and horizontally
-        tripod.pitch(v.y)
-
-        axis = Lin.from_pnt_vec(tripod.in_plane.r.origin, Vec(0, 0, 1))
-        tripod.rotate_along(axis, -v.x)
+        if abs(v.y) > 0.01:
+            tripod.pitch(v.y)
+        if abs(v.x) > 0.01:
+            axis = Lin.from_pnt_vec(tripod.in_plane.r.origin, Vec(0, 0, 1))
+            tripod.rotate_along(axis, -v.x)
 
         mouse.cursor_goto_center()
 
@@ -140,9 +141,10 @@ class Camera(RenderTarget):
         # convert normalized into near frustum space
         sm = ScaleMat(x=r - l, y=t - b)
         mm = MoveMat(x=(r + l) / 2, y=(t + b) / 2, z=-n)
-        frustum_point = mm * sm * Pnt(x=param_x, y=param_y, z=0)
+        offset = MoveMat(-.5, -.5)  # to compensate origin difference between OpenGL space and pane space
+        frustum_point = mm * sm * offset * Pnt(x=param_x, y=param_y, z=0)
         ray = Ray([0, 0, 0], frustum_point.xyz)
-        return self.tripod.VM.r * ray
+        return self.tripod.in_plane.r.trnsf_mat * ray
 
     def __enter__(self):
         """
@@ -164,7 +166,7 @@ class CameraManager(RenderTargetManager):
         super().__init__(window)
         r, t = window.glyph.width.r / 2, window.glyph.height.r / 2
         # self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
-        self.new_perspective(np.radians(50), 1, 10000, window.glyph.aspect_ratio)
+        self.new_perspective(np.radians(50), 0.1, 10000, window.glyph.aspect_ratio)
 
     def __getitem__(self, item) -> Camera:
         """

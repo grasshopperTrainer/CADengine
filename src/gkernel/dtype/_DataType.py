@@ -1,4 +1,5 @@
 import abc
+from numbers import Number
 
 import numpy as np
 
@@ -32,7 +33,17 @@ class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
 
     @property
     def arr(self):
-        return super().__str__()
+        """
+        pretty print raw array for debugging
+        :return: array elements rounded in decimal 5
+        """
+
+        def foo(x):
+            if x is None:
+                return
+            return round(x, 5)
+
+        return np.vectorize(foo)(self.view(np.ndarray)).__str__()
 
     def __getitem__(self, item):
         """
@@ -50,6 +61,11 @@ class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
         :param other: of ArrayLikeData
         :return: bool
         """
-        if np.isclose(self, other, atol=ATOL).all():
-            return True
-        return False
+        if isinstance(other, Number):
+            return (np.isclose(self[:3].view(np.ndarray), other, atol=ATOL)).all()
+        elif isinstance(other, np.ndarray):
+            if self.shape != other.shape:
+                return False
+            return np.isclose(self.view(np.ndarray), other.view(np.ndarray), atol=ATOL).all()
+        else:
+            raise TypeError

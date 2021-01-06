@@ -5,6 +5,7 @@ from numbers import Number
 
 import numpy as np
 
+from gkernel.constants import DTYPE
 from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
 from .._DataType import ArrayLikeData
 
@@ -127,7 +128,7 @@ class Mat1(ArrayLikeData):
         raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} sub unknown')
 
     def __isub__(self, other):
-        """
+        """01
         :param other:
         :return:
         """
@@ -228,7 +229,7 @@ class Ray(ArrayLikeData, VecConv, LinConv):
         return np.array([[o[0], v[0]],
                          [o[1], v[1]],
                          [o[2], v[2]],
-                         [1, 0]], dtype=float).view(cls)
+                         [1, 0]], dtype=DTYPE).view(cls)
 
     def __array_finalize__(self, obj):
         """
@@ -257,10 +258,20 @@ class Ray(ArrayLikeData, VecConv, LinConv):
 
         :param origin: Pnt ray origin
         :param normal: Vec ray direction
-        :return:
+        :return: new Ray object
         """
-
         return cls(origin.xyz, normal.xyz)
+
+    @classmethod
+    def from_pnts(cls, s, e):
+        """
+        create new ray from two points
+
+        :param s: origin of ray
+        :param e: destination point which forms ray normal connected with origin
+        :return: new Ray object
+        """
+        return Ray(s.xyz, (e - s).xyz)
 
     def as_vec(self):
         return self.normal
@@ -289,7 +300,7 @@ class Vec(Mat1, VecConv, PntConv):
         return np.array([[x],
                          [y],
                          [z],
-                         [0]], dtype=float).view(cls)
+                         [0]], dtype=DTYPE).view(cls)
 
     def __array_finalize__(self, obj):
         """
@@ -593,7 +604,7 @@ class Pnt(Mat1, VecConv, PntConv):
         return np.array([[x],
                          [y],
                          [z],
-                         [1]], dtype=float).view(cls)
+                         [1]], dtype=DTYPE).view(cls)
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -748,45 +759,43 @@ class Pln(ArrayLikeData, PntConv):
         return Pln(o.xyz, x.xyz, y.xyz, z.xyz)
 
     def __new__(cls, o=(0, 0, 0), x=(1, 0, 0), y=(0, 1, 0), z=(0, 0, 1)):
-        return np.asarray([[o[0], x[0], y[0], z[0]],
-                           [o[1], x[1], y[1], z[1]],
-                           [o[2], x[2], y[2], z[2]],
-                           [1, 0, 0, 0]], dtype=float).view(cls)
+        obj = super().__new__(cls, shape=(4, 4), dtype=DTYPE)
+        obj[:3, (0, 1, 2, 3)] = np.array([o, x, y, z]).T
+        obj[3] = 1, 0, 0, 0
+        obj.__standardize()
+        return obj
 
-    def __array_finalize__(self, obj):
+    def __standardize(self):
         """
         standarization? of plane
 
         1. Make vectors perpendicular, normalized and
         2. create transformation matrix into plane space
         !vectors are made perpendicular by referencing vectors in xyz order!
+        :param arr: array in np.ndarray type
         :return:
         """
-        # check for unit plane
-
         if (self.view(np.ndarray) == [[0, 1, 0, 0],
                                       [0, 0, 1, 0],
                                       [0, 0, 0, 1],
                                       [1, 0, 0, 0]]).all():
+            # unit plane transformation matrix equals to eye(4) matrix
             self._trnsf_mat = TrnsfMats()
             return
+
         # make vectors normalized and perpendicular
         x, y = self.axis_x, self.axis_y
         z = Vec.cross(x, y)  # find z
         y = Vec.cross(z, x)  # find y
-        x, y, z = [Vec.normalized(v) for v in (x, y, z)]
-        plane = np.array([[0, x.x, y.x, z.x],
-                          [0, x.y, y.y, z.y],
-                          [0, x.z, y.z, z.z],
-                          [1, 0, 0, 0]], dtype=float)
-
-        # apply normalized
-        self[:4, [1]] = x
-        self[:4, [2]] = y
-        self[:4, [3]] = z
+        x, y, z = [v.normalize() for v in (x, y, z)]
+        self[:, 1:] = np.array([x, y, z]).T
 
         # calculate 'plane to origin' rotation matrices
         # last rotation is of x so match axis x to unit x prior
+        plane = np.array([[0, x.x, y.x, z.x],
+                          [0, x.y, y.y, z.y],
+                          [0, x.z, y.z, z.z],
+                          [1, 0, 0, 0]], dtype=DTYPE)
         x_on_xy = x.projected_on_xy()
         dir_vec = Vec.cross(Vec(1, 0, 0), x_on_xy)
         if dir_vec.is_zero():
@@ -821,8 +830,49 @@ class Pln(ArrayLikeData, PntConv):
         rx = RotXMat(Vec.angle_between(Vec(0, 1, 0), y_on_yz) * rot_dir)
 
         to_origin = MoveMat(*(-self.origin).xyz)
+
         # found 'plane to origin' so 'origin to plane' is inverse of it
         self._trnsf_mat = TrnsfMats([to_origin, rz, ry, rx]).I
+
+    def __array_finalize__(self, obj):
+        """
+
+        :return:
+        """
+        if obj is None:
+            return
+        """
+        dont know when this can happen:
+        1.  happens when copying plane:
+            Somehow copy() internally circumvents Pln.__new__ and creates Pln with eye(4) value 
+        """
+
+        if isinstance(obj, self.__class__):
+            self[:] = obj
+            self.__standardize()
+        elif isinstance(obj, np.ndarray):
+            # self already has resulting value, need to check array correctness
+            if self.is_array_like(self):
+                self.__standardize()
+            else:
+                raise ValueError('given is not Pln-like')
+        else:
+            raise
+
+    @classmethod
+    def is_array_like(cls, arr):
+        """
+        check if raw array is Pln like
+
+        :param arr: np.ndarray or 2D list
+        :return:
+        """
+        if isinstance(arr, (tuple, list)):
+            arr = np.array(arr)
+
+        if isinstance(arr, np.ndarray) and arr.shape == (4, 4) and (arr[3] == (1, 0, 0, 0)).all():
+            return True
+        return False
 
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]
@@ -977,10 +1027,11 @@ class Tgl(ArrayLikeData):
         :param v1:
         :param v2:
         """
-        return np.array([[v0[0], v1[0], v2[0]],
-                         [v0[1], v1[1], v2[1]],
-                         [v0[2], v1[2], v2[2]],
-                         [1, 1, 1]], dtype=float).view(cls)
+        obj = np.array([[v0[0], v1[0], v2[0]],
+                        [v0[1], v1[1], v2[1]],
+                        [v0[2], v1[2], v2[2]],
+                        [1, 1, 1]], dtype=DTYPE).view(cls)
+        return obj
 
     @property
     def v0(self):
@@ -1066,7 +1117,7 @@ class Lin(ArrayLikeData, VecConv):
         return np.array([[p0[0], p1[0]],
                          [p0[1], p1[1]],
                          [p0[2], p1[2]],
-                         [1, 1]], dtype=float).view(cls)
+                         [1, 1]], dtype=DTYPE).view(cls)
 
     @classmethod
     def from_pnts(cls, start: Pnt, end: Pnt):
