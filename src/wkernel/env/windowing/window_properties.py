@@ -1,7 +1,3 @@
-from JINTFP import *
-from wkernel.pipeline.nodes.window import *
-
-
 # class _RenderTargetMember(FamilyMember):
 #     pass
 
@@ -20,6 +16,7 @@ class RenderTarget:
         :return:
         """
         return self._pool
+
 
 class RenderTargetManager:
     def __init__(self, window):
