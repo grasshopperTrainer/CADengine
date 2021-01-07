@@ -22,7 +22,7 @@ class MyWindow(Window):
         with self.panes[0] as v:
             with self.cameras[0] as c:
                 v.clear(.5, .5, .5, 1)
-                self.model.render()
+                self.model.test_render()
 
                 e = 100
                 triangle([0, 0, 0], [e, 0, 0], [0, e, 0])
@@ -31,4 +31,4 @@ class MyWindow(Window):
                 self.model.intersect(c.frusrum_ray(*v.local_cursor()))
 
 
-MyWindow().run()
+MyWindow().run(1)
