@@ -37,4 +37,4 @@ class W(Window):
 
 
 w = W()
-w.run()
+w.run_all()
