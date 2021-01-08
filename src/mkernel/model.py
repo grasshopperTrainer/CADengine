@@ -56,7 +56,7 @@ class Model:
         """
         for k, v in gw.__dict__.items():
             if isinstance(v, type) and issubclass(v, Shape):    # find shape class
-                v.get_cls_renderer().run()
+                v.get_cls_renderer().run_all()
 
     def test_render(self):
         gw.Tgl.get_cls_renderer().render()

@@ -1,4 +1,4 @@
-from ..virtual_gpu import GPUEntity
+from ckernel.render_context._renderer import GPUEntity
 
 
 class OpenGLEntity(GPUEntity):

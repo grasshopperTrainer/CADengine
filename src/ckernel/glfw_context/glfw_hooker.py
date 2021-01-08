@@ -4,25 +4,23 @@ import glfw
 from glfw import *
 
 
-_windows = []
+# naming scope problem exists. storing single class
+__glfw_context = []
 
 
 def _hook(obj):
     def wrapper(*args, **kwargs):
         # lazy import
-        if not _windows:
-            _windows.append(getattr(importlib.import_module('wkernel.env.window'), 'Windows'))
-        if _windows[0]().get_current() is None:
-            pass
-        else:
-            _windows[0]().get_current()._context_manager.log_glfw(obj.__name__)
-        return obj(*args, **kwargs)
+        if not __glfw_context:
+            __glfw_context.append(getattr(importlib.import_module('ckernel.glfw_context.context_stack'), 'GLFWContextStack'))
+        return obj(__glfw_context[0]._get_current(), *args, **kwargs)
     return wrapper
 
 
 for i in dir(glfw):
     if callable(getattr(glfw, i)):
         locals()[i] = _hook(getattr(glfw, i))
+
 
 # override after this point
 init = glfw.init

@@ -21,8 +21,10 @@ class MyWindow(Window):
     def draw(self, frame_count=None):
         with self.panes[0] as v:
             with self.cameras[0] as c:
+                pass
                 v.clear(.5, .5, .5, 1)
                 self.model.test_render()
+                self.context.raw_glfw.make_context_current(self.context.glfw._window)
 
                 e = 100
                 triangle([0, 0, 0], [e, 0, 0], [0, e, 0])
@@ -30,5 +32,4 @@ class MyWindow(Window):
                 triangle([0, 0, 0], [e, 0, 0], [0, 0, e])
                 self.model.intersect(c.frusrum_ray(*v.local_cursor()))
 
-
-MyWindow().run(1)
+MyWindow().run_all()

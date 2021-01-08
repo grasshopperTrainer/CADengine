@@ -19,4 +19,4 @@ w.ftree_append_children(c)
 cc = CC()
 cc.ftree_set_parent(c)
 
-w.run()
+w.run_all()

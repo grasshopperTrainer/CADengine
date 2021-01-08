@@ -72,4 +72,4 @@ class ShapeRenderer:
         # better separate binding to make it explicitly stated
         self.__buffer_syncer.bind()
         self.__buffer_syncer.sync()
-        self.__gpu_prgrm.run()
+        # self.__gpu_prgrm.run_all()

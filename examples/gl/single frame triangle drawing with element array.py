@@ -7,7 +7,7 @@ window1 = Window.new_window(200, 200, 'f', monitor=None, shared=None)
 
 window1.viws.append(0.25,0.25,0.5,0.5)
 
-@window1.run(lyr = window1.lyrs[0], viw=window1.viws[1], cam=window1.cams[0])
+@window1.run_all(lyr = window1.lyrs[0], viw=window1.viws[1], cam=window1.cams[0])
 def a():
     w = window1
     # raw data
@@ -37,4 +37,4 @@ def a():
     de = comp.RenderElement(w, enhancer.out0_vrtx_arry, data_ibo, w.gl.GL_TRIANGLE_STRIP)
     de.out0_render_result
 
-Window.run()
+Window.run_all()

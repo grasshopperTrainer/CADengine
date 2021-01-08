@@ -10,22 +10,6 @@ class _Device:
         self.__manager = manager
         self.__callback_wrapped = {}
 
-    def _callback_setter(self, callback_func, glfw_type, wrapper):
-        wrapped_callback = wrapper(callback_func)
-        self.__callback_wrapped.setdefault(glfw_type, set()).add(wrapped_callback)
-        return wrapped_callback
-
-    def _run_all_callback(self, *args, device, callback_type):
-        """
-        Wrapped callback func caller pattern
-        :param args: glfw driven callback args
-        :param callback_type: callback type indicated with glfw callback setter
-        :return:
-        """
-
-        for wrapped in self.__callback_wrapped.get(callback_type, []):
-            wrapped._run_callback(*args, device)
-
     @property
     def window(self):
         """
@@ -49,7 +33,8 @@ class Mouse(_Device):
 
     def __init__(self, window, manager):
         super().__init__(window, manager)
-        glfw.set_cursor_pos_callback(self.window.glfw_window, self.__master_cursor_pos_callback)
+        with window.context.glfw as glfw:
+            glfw.set_cursor_pos_callback(self.__master_cursor_pos_callback)
 
     def __master_cursor_pos_callback(self, window, xpos, ypos):
         """
@@ -120,8 +105,9 @@ class Mouse(_Device):
         flips y to match OpenGL coordinate system
         :return:
         """
-        _, height = glfw.get_window_size(self.window.glfw_window)
-        x, y = glfw.get_cursor_pos(self.window.glfw_window)
+        with self.window.context.glfw as glfw:
+            _, height = glfw.get_window_size()
+            x, y = glfw.get_cursor_pos()
         return x, height - y
 
     def cursor_center(self):
@@ -129,7 +115,8 @@ class Mouse(_Device):
 
     def cursor_goto_center(self):
         win = self.window
-        glfw.set_cursor_pos(win.glfw_window, win.glyph.width.r / 2, win.glyph.height.r / 2)
+        with self.window.context.glfw as glfw:
+            glfw.set_cursor_pos(win.glyph.width.r / 2, win.glyph.height.r / 2)
 
 
 class UnknownKeyError(Exception):
@@ -228,8 +215,8 @@ class Keyboard(_Device):
         self.__key_press_dict = self.__glfw_key_dict.get_copied_dict()
         for k, v in self.__key_press_dict.items():
             self.__key_press_dict[k] = [None, 0]  # time, pressed
-
-        glfw.set_key_callback(window.glfw_window, self.__master_key_callback)
+        with window.context.glfw as glfw:
+            glfw.set_key_callback(self.__master_key_callback)
 
     def __master_key_callback(self, window, key, scancode, action, mods):
         """
@@ -295,7 +282,8 @@ class Keyboard(_Device):
         return cls.__glfw_key_dict.key_to_char(key, mods)
 
     def get_key_status(self, *chars):
-        return tuple(glfw.get_key(self.window.glfw_window, self.__glfw_key_dict.char_to_key(char)) for char in chars)
+        with self.window.context.glfw as glfw:
+            return tuple(glfw.get_key(self.__glfw_key_dict.char_to_key(char)) for char in chars)
 
 
 class DeviceManager:

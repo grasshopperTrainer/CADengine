@@ -29,4 +29,4 @@ with window1 as w:
 
     print(tri_drawer.render_attempt)
 
-Window.run(1)
+Window.run_all(1)
