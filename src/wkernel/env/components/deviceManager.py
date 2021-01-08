@@ -1,7 +1,7 @@
 from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix import ScaleMat
 from global_tools import Singleton, callbackRegistry
-from ...hooked import *
+import glfw
 
 
 class _Device:

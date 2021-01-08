@@ -1,4 +1,6 @@
 from .._opengl import *
+import OpenGL.GL as gl
+
 
 class ConPrgrm(OpenglNode):
     """

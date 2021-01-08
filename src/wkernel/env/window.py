@@ -50,7 +50,7 @@ class Window(DrawInterface, GlyphInterface):
         else:
             self.__context = ContextManager(width, height, name, monitor, shared, window=self)
 
-        with self.__context.gl:
+        with self.__context.gl as gl:
             gl.glEnable(gl.GL_SCISSOR_TEST)
             gl.glEnable(gl.GL_BLEND)
         with self.__context.glfw as glfw:

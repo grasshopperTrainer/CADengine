@@ -1,8 +1,8 @@
-from ckernel.render_context._renderer import GPUEntity
 
 
-class OpenGLEntity(GPUEntity):
+class OpenGLEntity:
     pass
+
 
 class GPUPrgrm(OpenGLEntity):
     pass

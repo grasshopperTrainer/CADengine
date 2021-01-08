@@ -1,7 +1,7 @@
 from collections import deque
 import glfw as raw_glfw
 import OpenGL.GL as gl
-from ckernel.render_context.renderers import OpenglRenderer
+from .render_context.opengl_renderer.context import OpenglContext
 from ckernel.glfw_context.context import GLFWContext
 from .glfw_context.none_context import GLFWNoneContext
 
@@ -361,7 +361,7 @@ class ContextManager:
         self.__meta_context = MetaContext._checkbuild_meta(self, share)
         self.__window = weakref.ref(window)
         self.__glfw_context = GLFWContext(width, height, title, monitor, share)
-        self.__renderer_context = OpenglRenderer(self)
+        self.__renderer_context = OpenglContext(self)
         self.__init_local_setting()
         # self._gl_logger = Logger(size=1000, do_log=True, prefix='OpenGL_', sufix='')
 

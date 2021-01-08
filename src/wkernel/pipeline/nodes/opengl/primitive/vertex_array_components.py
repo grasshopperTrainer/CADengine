@@ -1,9 +1,11 @@
 from .._opengl import *
 from collections.abc import Iterable
+import OpenGL.GL as gl
 
 
 class VertexArrayComponent(OpenglNode):
     pass
+
 
 class ConVertexArray(VertexArrayComponent):
     """
