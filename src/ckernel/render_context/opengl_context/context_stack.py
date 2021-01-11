@@ -35,3 +35,12 @@ class OpenglContextStack:
         """
         if 1 < len(cls.__stack):
             cls.__stack.pop()
+
+
+class OpenglUnboundError(Exception):
+    """
+    exception for no bound opengl context
+
+    Raised when current opengl context is None.
+    """
+    pass

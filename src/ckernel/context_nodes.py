@@ -1,7 +1,7 @@
 from collections import deque
 import glfw as raw_glfw
 import OpenGL.GL as gl
-from .render_context.opengl_renderer.context import OpenglContext
+from .render_context.opengl_context.context import OpenglContext
 from ckernel.glfw_context.context import GLFWContext
 from .glfw_context.none_context import GLFWNoneContext
 

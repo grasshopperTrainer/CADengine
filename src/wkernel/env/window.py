@@ -157,10 +157,11 @@ class Window(DrawInterface, GlyphInterface):
                 if self.__frame_count == self.__num_draw_frame:
                     break  # if number of drawn frame is targeted number of frame drawn
                 with self.__timer:  # __exit__ of timer will hold thread by time.sleep()
-                    self.call_predraw_callback()
-                    self.draw()
-                    self.call_postdraw_callback()
-                    glfw.swap_buffers()
+                    with self.__context.gl:
+                        self.call_predraw_callback()
+                        self.draw()
+                        self.call_postdraw_callback()
+                        glfw.swap_buffers()
                 self.__frame_count += 1
 
     def __close_window(self, window):
@@ -200,11 +201,9 @@ class Window(DrawInterface, GlyphInterface):
         :param num_draw_frame: int number of frames to draw
         :return:
         """
-        print('run all')
         for window in self.__context.context_master.iter_all_windows():
             window.set_num_draw_frame(num_draw_frame)
             window._render_thread.start()
-        print(list(self.__context.context_master.iter_meta_context()))
         # main thread. all function calls that has to work in full speed should be here
         while self.__context.context_master.has_window():
             with self.__timer:
@@ -214,6 +213,9 @@ class Window(DrawInterface, GlyphInterface):
     def draw(self):
         """
         glfw, OpenGL placeholder to be overridden by the user
+
+        this method is called with OpenGL binding. OpenGL function calls can be dealt unless another OpenGL context is
+        bound within this draw call.
 
         :return:
         """

@@ -6,4 +6,6 @@ class OpenglNoneContext:
     def __init__(self):
         self._cntxt_manager = NoneContextManager()
 
-
+    @property
+    def is_none(self):
+        return True

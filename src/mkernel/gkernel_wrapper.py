@@ -1,13 +1,11 @@
 import gkernel.dtype.geometric.primitive as pg
 import mkernel.shape as shp
 import mkernel.buffer_syncer as bs
-import mkernel.gpu_prgrm as gp
+import ckernel.render_context.opengl_context.entity_template as ogl
 import os
 
 
 class Ray(pg.Ray, shp.Shape):
-
-    __renderer = shp.ShapeRenderer(bs.BufferSyncer(), gp.GPUPrgrm)
 
     @classmethod
     def get_cls_renderer(cls):
@@ -31,10 +29,12 @@ class Pln(pg.Pln, shp.Shape):
 
 
 class Tgl(pg.Tgl, shp.Shape):
+    # path of shaders reletive to current dir
     __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'tgl_vrtx_shdr.glsl')
     __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'tgl_frgm_shdr.glsl')
 
-    __prgrm = gp.GPUPrgrm(vrtx=__vrtx_shdr_path, frgm=__frgm_shdr_path)
+    # program... but program is per meta context, so this has to happen per context
+    __prgrm = ogl.OGLPrgrmTemp(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
     __renderer = shp.ShapeRenderer(bs.BufferSyncer(), __prgrm)
 
     @classmethod

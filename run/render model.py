@@ -17,7 +17,8 @@ class MyWindow(Window):
         self.model.append_shape(Tgl([0, 0, 0], [e, 0, 0], [0, e, 0]))
         self.model.append_shape(Tgl([0, 0, 0], [0, e, 0], [0, 0, e]))
         self.model.append_shape(Tgl([0, 0, 0], [e, 0, 0], [0, 0, e]))
-    #
+
+
     def draw(self, frame_count=None):
         with self.panes[0] as v:
             with self.cameras[0] as c:
@@ -25,10 +26,9 @@ class MyWindow(Window):
                 v.clear(.5, .5, .5, 1)
                 self.model.test_render()
                 e = 100
-                with self.context.gl:
-                    triangle([0, 0, 0], [e, 0, 0], [0, e, 0])
-                    triangle([0, 0, 0], [0, e, 0], [0, 0, e])
-                    triangle([0, 0, 0], [e, 0, 0], [0, 0, e])
+                triangle([0, 0, 0], [e, 0, 0], [0, e, 0])
+                triangle([0, 0, 0], [0, e, 0], [0, 0, e])
+                triangle([0, 0, 0], [e, 0, 0], [0, 0, e])
                 self.model.intersect(c.frusrum_ray(*v.local_cursor()))
 
 MyWindow().run_all(1)

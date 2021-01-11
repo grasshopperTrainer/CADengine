@@ -60,3 +60,4 @@ class Model:
 
     def test_render(self):
         gw.Tgl.get_cls_renderer().render()
+        raise

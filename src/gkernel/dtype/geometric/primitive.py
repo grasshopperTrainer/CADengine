@@ -601,10 +601,9 @@ class Pnt(Mat1, VecConv, PntConv):
     """
 
     def __new__(cls, x=0, y=0, z=0):
-        return np.array([[x],
-                         [y],
-                         [z],
-                         [1]], dtype=DTYPE).view(cls)
+        obj = super().__new__(cls, shape=(4, 1), dtype=DTYPE)
+        obj[:4, 0] = x, y, z, 1
+        return obj
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"

@@ -1,6 +1,6 @@
 from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix import ScaleMat
-from wkernel.hooked import openglHooked as gl
+
 from .glyph import GlyphNode, GlyphInterface
 from .window_properties import *
 
@@ -44,8 +44,9 @@ class Pane(RenderTarget, GlyphInterface):
         Open view
         :return:
         """
-        gl.glScissor(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
-        gl.glViewport(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
+        with self.manager.window.context.gl as gl:
+            gl.glScissor(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
+            gl.glViewport(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -69,8 +70,9 @@ class Pane(RenderTarget, GlyphInterface):
         :param a: alpha
         :return:
         """
-        gl.glClearColor(r, g, b, a)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        with self.manager.window.context.gl as gl:
+            gl.glClearColor(r, g, b, a)
+            gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
     def local_cursor(self):
         """
