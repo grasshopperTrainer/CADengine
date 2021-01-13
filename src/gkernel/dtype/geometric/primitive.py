@@ -7,7 +7,7 @@ import numpy as np
 
 from gkernel.constants import DTYPE
 from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
-from .._DataType import ArrayLikeData
+from gkernel.array_like import ArrayLikeData
 
 
 class Mat1(ArrayLikeData):

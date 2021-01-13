@@ -2,16 +2,22 @@ import abc
 import weakref
 from ckernel.render_context.opengl_context.context_stack import OpenglContextStack, OpenglUnboundError
 import ckernel.render_context.opengl_context.opengl_hooker as gl
+from .entities import OGLEntity
 from collections import defaultdict
 from .error import *
+import numpy as np
+
 
 
 class OpenglEntityTemplate(metaclass=abc.ABCMeta):
     """
     Template knows properties and context relationship of Entities.
     """
-
-    __context_entity = weakref.WeakKeyDictionary()
+    def __init__(self):
+        """
+        call by super to initiate self.__context_entity
+        """
+        self.__context_entity = weakref.WeakKeyDictionary()
 
     def get_entity(self):
         """
@@ -29,9 +35,25 @@ class OpenglEntityTemplate(metaclass=abc.ABCMeta):
             return self.__context_entity[context]
         # if not, create new and store
         with context:
-            entity = self._create_entity(context)
+            entity = self._create_entity()
+            if not isinstance(entity, OGLEntity):
+                raise Exception('creator method is not wrapped, check opengl_hooked')
             self.__context_entity[context] = entity
         return entity
+
+    # does template having opengl operations good?
+    # should template be exposed as concrete entity of should it simply manage entities?
+    # explicity is preferred but maybe whole communication with gpu can be objectified more, being implicit here.
+    @abc.abstractmethod
+    def bind(self):
+        """
+        get context entity and bind
+
+        Binding might need extra target input, so subclass has to implements its own.
+        In any case, entity per context has to be retrived, so get_entity has to be called first
+        :return:
+        """
+        self.get_entity().bind()
 
     @abc.abstractmethod
     def _create_entity(self):
@@ -41,17 +63,6 @@ class OpenglEntityTemplate(metaclass=abc.ABCMeta):
         Implemented method assuming context is bound.
         :return: newly created entity
         """
-
-    # does template having opengl operations good?
-    # should template be exposed as concrete entity of should it simply manage entities?
-    # explicity is preferred but maybe whole communication with gpu can be objectified more, being implicit here.
-    def bind(self):
-        """
-        get context entity and bind
-        :return:
-        """
-        entity = self.get_entity()
-        entity.bind()
 
 
 # what if there are templates and reald entity and
@@ -66,6 +77,7 @@ class OGLPrgrmTemp(OpenglEntityTemplate):
         :param vrtx_path:
         :param frgm_path:
         """
+        super().__init__()
         self.__shdr_srcs = defaultdict(None)
         self.__read_source(vrtx_path, gl.GL_VERTEX_SHADER)
         self.__read_source(frgm_path, gl.GL_FRAGMENT_SHADER)
@@ -81,19 +93,18 @@ class OGLPrgrmTemp(OpenglEntityTemplate):
         with open(file_path, mode='r') as file:
             self.__shdr_srcs[shdr_type] = file.read()
 
-    def _create_entity(self, context):
+    def _create_entity(self):
         """
         compile shaders and create program
-        :param context:
         :return:
         """
-        prgrm = context.entity_getnew_prgrm()
+        prgrm = gl.glCreateProgram()
 
         # create, compile, attach shaders
         shdrs = []
         for shdr_type, src in self.__shdr_srcs.items():
             if src is not None:
-                shdr = context.entity_getnew_shdr(shdr_type)
+                shdr = gl.glCreateShader(shdr_type)
                 gl.glShaderSource(shdr, src)
                 gl.glCompileShader(shdr)
                 if not gl.glGetShaderiv(shdr, gl.GL_COMPILE_STATUS):
@@ -107,7 +118,24 @@ class OGLPrgrmTemp(OpenglEntityTemplate):
 
         # deleted used shaders
         for shdr in shdrs:
-            shdr.delete()
+            gl.glDeleteShader(shdr)
         return prgrm
 
+    def bind(self):
+        self.get_entity().bind()
 
+
+class OGLArryBffrTemp(OpenglEntityTemplate):
+
+    def __init__(self):
+        super().__init__()
+        self.__bffr_type = gl.GL_ARRAY_BUFFER
+
+    def _create_entity(self):
+        """
+        :return:
+        """
+        return gl.glGenBuffers(1)
+
+    def bind(self):
+        self.get_entity().bind(self.__bffr_type)

@@ -10,7 +10,7 @@ a = Pln([100, 50, 30], x=(5, 5, 3))
 print('test 2: check TM after calculation')
 m = MoveMat(10, 10, 5)
 b = m * a
-print(b.arr, type(b))
-print(b.trnsf_mat.arr)
+print(b.interleaved, type(b))
+print(b.trnsf_mat.interleaved)
 
 # print(np.array([[1,2,3,4], [5,6,7,8], [10,11,12,13], [14,15,16,17]]).view(Pln))

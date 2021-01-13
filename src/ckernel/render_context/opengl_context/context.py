@@ -1,7 +1,6 @@
 from ckernel.render_context._renderer import Renderer
 import ckernel.render_context.opengl_context.opengl_hooker as hooked_opengl
 from .context_stack import OpenglContextStack
-from .entities import _OGLPrgrm, _OGLShdr
 
 
 class OpenglContext(Renderer):
@@ -13,7 +12,7 @@ class OpenglContext(Renderer):
         :param context:
         """
         self._cntxt_manager = context
-        self.__entities = []
+        self.__entities = {}
 
     def __enter__(self):
         """
@@ -48,35 +47,11 @@ class OpenglContext(Renderer):
     def is_none(self):
         return False
 
-    # if context has to know all the entities, shouldnt context provide entity?
-    # these getters simply return newly created entities.
-    def entity_getnew_prgrm(self):
+    def append_entity(self, entity):
         """
-        create new program entity
-
-        :return: _OGLPrgrm obj
-        """
-        with self:
-            obj = _OGLPrgrm()
-            self.__entities.append(obj) #! not fully supported, for now simply record
-        return obj
-
-    def entity_getnew_shdr(self, shdr_type):
-        """
-        create new shader entity
-        :return: _OGLShdr obj
-        """
-        with self:
-            obj = _OGLShdr(shdr_type)
-            self.__entities.append(obj)
-        return obj
-
-    def entity_delete(self, entity):
-        """
-        delete entity and release from record
+        track entity
 
         :param entity:
         :return:
         """
-        self.__entities.remove(entity)
-        entity.delete()
+        self.__entities.setdefault(entity.__class__, []).append(entity)

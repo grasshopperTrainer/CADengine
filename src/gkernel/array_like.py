@@ -32,6 +32,15 @@ class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
         pass
 
     @property
+    @abc.abstractmethod
+    def shape_std(self):
+        """
+        return standard shape
+        :return:
+        """
+        pass
+
+    @property
     def arr(self):
         """
         pretty print raw array for debugging

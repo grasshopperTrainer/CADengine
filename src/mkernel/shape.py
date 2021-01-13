@@ -34,6 +34,18 @@ class Shape(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    @property
+    @abc.abstractmethod
+    def geo(self):
+        """
+        return geometry object of the shape
+
+        Geometry object is a object that stores goemetric data.
+        Geometric calculation has to be done using this object and set with resulted to make it updated.
+        :return:
+        """
+        return self.__geo
+
     def triangulated(self):
         """
         return triangulated form?
@@ -45,15 +57,15 @@ class ShapeRenderer:
     """
     Simply is a container for pair of program and buffer.
     """
-    def __init__(self, buffer_syncer, gpu_prgrm):
+    def __init__(self, __arry_bffr, gpu_prgrm):
         """
         gpu program doesnt has to be internal; gpu_prgrm can accept anonymous buffer
         But for now leave it as one to one.
 
-        :param buffer_syncer: BufferSyncer instance
+        :param __arry_bffr: BufferSyncer instance
         :param gpu_prgrm:
         """
-        self.__buffer_syncer = buffer_syncer
+        self.__arry_bffr = __arry_bffr
         self.__gpu_prgrm = gpu_prgrm
 
     def render(self):
@@ -70,8 +82,7 @@ class ShapeRenderer:
         # OpenGL buffer binding is done in sync to push data into gpu
         # so its safe to call push data? but gpu buffer doesn't know it
         # better separate binding to make it explicitly stated
-        self.__buffer_syncer.bind()
-        self.__buffer_syncer.sync()
+        self.__arry_bffr.bind()
         self.__gpu_prgrm.bind()
         raise
         # self.__gpu_prgrm.run_all()
