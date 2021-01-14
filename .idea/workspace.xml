@@ -24,22 +24,29 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab781be5-2480-46e6-9943-b2bdd67124a5" name="pyopengl2-17 implement intersection ray" comment="pyopengl2-17 implement intersection ray&#10;&#10;define Model, Triangle for intersection">
+    <list default="true" id="f68a635c-fd00-4334-a140-614904dd1a59" name="pyopengl2-40 implement rkernel" comment="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement `CompoundArray`&#10;This is an `ndarray` container which provides slices of the array to be used for updating the array.&#10;Purpose is to maintain singular array that maintains interweaved order thus ready to be pushed into OpenGL buffer.&#10;&#10;Next is connecting this array with OpenGL buffer, in vao context.">
+      <change afterPath="$PROJECT_DIR$/examples/gl/duplicate buffer push test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/entity_factory.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_factories.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/uniforms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/view/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/view/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/_DataType.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/_DataType.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run/render model.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/buffer_syncer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/buffer_syncer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/context.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/entities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/entity_template.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/error.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/error.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/opengl_hooker.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/opengl_hooker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/tools/compound_array.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/cpu_entities.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/basic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/complex.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/complex.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/windowing/cameraManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/env/windowing/cameraManager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/windowing/deviceManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/env/windowing/deviceManager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/windowing/glyph.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/env/windowing/glyph.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/window/camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/window/camera.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/shape.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shape.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/tgl_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/tgl_frgm_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/tgl_vrtx_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/tgl_vrtx_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/env/windowing/cameraManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/env/components/cameraManager.py" afterDir="false" />
     </list>
     <list id="244346dc-c4b7-4080-9029-2152216f4b46" name="Default Changelist" comment="" />
-    <list id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="some refactoring before writing ray-traingle intersection">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -65,37 +72,19 @@
     </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="pyopengl2-39" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/src/wkernel/env/windowing/window_properties.py" root0="FORCE_HIGHLIGHTING" />
-  </component>
-  <component name="LineStatusTrackerManager">
-    <file path="$PROJECT_DIR$/.idea/workspace.xml">
-      <ranges>
-        <range start1="26" end1="29" start2="26" end2="27" changelist="ab781be5-2480-46e6-9943-b2bdd67124a5" />
-        <range start1="31" end1="35" start2="29" end2="29" changelist="ab781be5-2480-46e6-9943-b2bdd67124a5" />
-        <range start1="36" end1="39" start2="30" end2="37" changelist="ab781be5-2480-46e6-9943-b2bdd67124a5" />
-        <range start1="41" end1="41" start2="39" end2="42" changelist="ab781be5-2480-46e6-9943-b2bdd67124a5" />
-        <range start1="73" end1="74" start2="74" end2="98" changelist="ab781be5-2480-46e6-9943-b2bdd67124a5" />
-        <range start1="92" end1="94" start2="116" end2="118" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="104" end1="104" start2="128" end2="130" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="107" end1="109" start2="133" end2="133" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="112" end1="113" start2="136" end2="137" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="124" end1="125" start2="148" end2="149" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="221" end1="222" start2="245" end2="246" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="512" end1="513" start2="536" end2="537" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="524" end1="525" start2="548" end2="549" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="526" end1="527" start2="550" end2="571" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="531" end1="532" start2="575" end2="576" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="577" end1="579" start2="621" end2="621" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-        <range start1="602" end1="603" start2="644" end2="647" changelist="a2bb444d-d792-46e6-85ce-941cf08504b1" />
-      </ranges>
-    </file>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="ProjectId" id="1df5FSoV5Z1VWTwNotKKDn0t2kR" />
   <component name="ProjectLevelVcsManager">
@@ -110,31 +99,33 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="TODO_SCOPE" value="All Places" />
     <property name="ToolWindowRun.ShowToolbar" value="false" />
     <property name="add_unversioned_files" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/examples/view" />
-    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
-    <property name="start.from.branch" value="origin/windowing" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/examples/numpy" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="start.from.branch" value="origin/pyopengl2-39" />
     <property name="tasks.open.task.update.state.enabled" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\numpy" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\run" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\env\components" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\view" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\UVT\pipeline\nodes\logical" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\UVT\res\glsl" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\gl" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\GeomKernel\dataTypes\geometric\primitive" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\UVT\env\windowing" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\UVT\pipeline\data_types" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\GeomKernel\dataTypes\geometric" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\GeomKernel\nodes" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\ckernel\render_context\opengl_context" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\gkernel" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\ckernel" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\gl" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\numpy" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main (1)">
-    <configuration name="cameramanager" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.scratch">
+    <configuration name="duplicate buffer push test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -142,11 +133,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/UVT/env/windowing" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/gl" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\UVT\env\windowing\cameramanager.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/gl/duplicate buffer push test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -155,49 +146,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="main (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pyopengl2" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/view" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/view/main.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pyopengl2" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/main.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="single structured array" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="looking for correct struct" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -209,7 +158,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/numpy/single structured array.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/numpy/looking for correct struct.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -218,7 +167,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="window" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="memory firstfit alocating test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -226,11 +175,53 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/window.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/memory firstfit alocating test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="render model" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyopengl2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render model.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="scratch" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyopengl2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -241,11 +232,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main (1)" />
-        <item itemvalue="Python.main" />
-        <item itemvalue="Python.cameramanager" />
-        <item itemvalue="Python.window" />
-        <item itemvalue="Python.single structured array" />
+        <item itemvalue="Python.scratch" />
+        <item itemvalue="Python.render model" />
+        <item itemvalue="Python.duplicate buffer push test" />
+        <item itemvalue="Python.looking for correct struct" />
+        <item itemvalue="Python.memory firstfit alocating test" />
       </list>
     </recent_temporary>
   </component>
@@ -534,26 +525,39 @@
       <option name="project" value="LOCAL" />
       <updated>1596877691293</updated>
     </task>
-    <task active="true" id="pyopengl2-19" summary="mapping cursor pos into view coordinate system">
-      <branch name="origin/windowing" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
-      <branch name="pyopengl2-19" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
-      <changelist id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="" />
-      <option name="closed" value="true" />
-      <created>1597150597000</created>
+    <task active="true" id="pyopengl2-39" summary="hard coded primitive shape renderer">
+      <branch name="master" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
+      <branch name="pyopengl2-39" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
+      <changelist id="f68a635c-fd00-4334-a140-614904dd1a59" name="pyopengl2-40 implement rkernel" comment="pyopengl2-40 implement rkernel&#10;&#10;refactoring ckernel&#10;remove hooked module from wkernel" />
+      <created>1609989983000</created>
       <option name="issue" value="true" />
-      <url>https://github.com/grasshopperTrainer/pyopengl2/issues/19</url>
-      <option name="number" value="19" />
-      <option name="presentableId" value="pyopengl2-19" />
+      <url>https://github.com/grasshopperTrainer/pyopengl2/issues/39</url>
+      <option name="number" value="39" />
+      <option name="presentableId" value="pyopengl2-39" />
       <option name="project" value="pyopengl2" />
       <option name="type" value="BUG" />
-      <updated>1607263084654</updated>
+      <updated>1610518261578</updated>
+    </task>
+    <task id="pyopengl2-40" summary="implement rkernel">
+      <branch name="origin/pyopengl2-39" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
+      <branch name="pyopengl2-40" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
+      <changelist id="f68a635c-fd00-4334-a140-614904dd1a59" name="pyopengl2-40 implement rkernel" comment="" />
+      <option name="closed" value="true" />
+      <created>1610005382000</created>
+      <option name="issue" value="true" />
+      <url>https://github.com/grasshopperTrainer/pyopengl2/issues/40</url>
+      <option name="number" value="40" />
+      <option name="presentableId" value="pyopengl2-40" />
+      <option name="project" value="pyopengl2" />
+      <option name="type" value="BUG" />
+      <updated>1610108640036</updated>
     </task>
     <option name="localTasksCounter" value="27" />
     <option name="clearContext" value="false" />
     <servers>
       <GitHub url="https://github.com">
         <option name="preferredOpenTaskState">
-          <CustomTaskState id="RESOLVED" predefined="true" name="Resolved" />
+          <CustomTaskState id="OPEN" predefined="true" name="Open" />
         </option>
         <option name="repoAuthor" value="grasshopperTrainer" />
         <option name="repoName" value="pyopengl2" />
@@ -599,12 +603,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="write backbone of 'RenderTarget' mechanism and 'View'&#10;&#10;RenderTarget(Layer, View, Camera) is a description on where and how to render renderable.&#10;View is an inheritable description on rectangular area. It builds graph by having a parent and children. This is to allow referencing parent to define its property(pos_x, pos_y, width, height)" />
-    <MESSAGE value="redefine 'View' as a node&#10;&#10;To track parent's size and reference, use noding mechanism.&#10;'Component' will be refactored into 'Node'" />
-    <MESSAGE value="Provide draw call bonding&#10;&#10;Wrote ParentChildren(PC) pattern and SingletonClass pattern. SingletonClass seems to be redundant for now - maybe it should be refactored as to be NoInstanceClass - however PC pattern makes manipulation of drawcall possible in runtime. User interaction can simply add or removed through methods provided by PC." />
-    <MESSAGE value="add abstraction DrawBit&#10;&#10;(class) DrawBit is an abstraction of classes that is a part of parent-child relationship and has (def) draw for chained draw call.&#10;Basic mechanism is to call children't draw call after or before instance's own draw call.&#10;For example window is a subclass of ParentChild so any subclass of it can be added as child of it,&#10;then if a child is subclass of DrawBit, window will execute (def) draw while it runs main render loop.&#10;Of course the child also can have DrawBit children thus chaining (def) draw call.&#10;This way DrawBit child doesn't have to know its root Window object. It just knows it's parent via ParentChild thus encapsulating itself." />
-    <MESSAGE value="pyopengl2-1 Make current GLFW context hooking global-read&#10;&#10;resolved: #1" />
-    <MESSAGE value="## pyopengl2-6,7,8 build context of OpenGL program and shader and triangle drawer&#10;&#10;## OpenGL program and shader build&#10;* resolved: #6&#10;* need extra functionality&#10;&#10;## refactor 'Component' into 'Node'&#10;* resolved: #7&#10;* refactor by changed naming convention : 'Component' into 'Node'&#10;* add `Node.refresh` mechanism&#10;* change in interface initiation. now it's in `Node.__new__`&#10;* refer to _example.refreshing.py_&#10;&#10;## write single buffer triangle drawer&#10;* resolved: #8&#10;* use singleton pattern not to generate multiple buffers&#10;* use single vao, vertex buffer, index buffer and push buffer data when `triangle` function is called" />
     <MESSAGE value="pyopengl2-11 refactor noding with simpler parent - child pattern&#10;&#10;`FamilyMember` class rewritten. Moving on to refactoring `Node`, 'IntfDescriptor'" />
     <MESSAGE value="pyopengl2-10,11 refactor noding and accepting calculation fail&#10;&#10;* refactor noding with simpler parent - child pattern #11&#10;* is not 'simpler' but think its better encapsulated and logical&#10;* resolved #11&#10;&#10;* enhance result streaming with failed calculation #10&#10;* still mediocre but enough for now&#10;* resolved #10" />
     <MESSAGE value="pyopengl2-9,12 write some flow control nodes and farther encapsulate Node classes&#10;&#10;* farther encapsulate Node classes #12&#10;* fixed a lot, implemented functionality of appending removeing sibling interface&#10;* distributed responsibilities among `NodeBody`, `_NodeIntfGroup`, `_NodeIntf`.&#10;* `_NodeIntfGroup` now controls creation, removal, value set of `_NodeIntf`&#10;* resolved #12&#10;&#10;* duplicate grasshopper's stream filter, gate concept #9&#10;* whilst doing so, module structure was modified. Node `noding` is an independent package. It contains modules of nodes, should represent general functionality of programming language and parametric calculation.&#10;* resolved #9" />
@@ -624,6 +622,12 @@
     <MESSAGE value="pyopengl2-19 mapping cursor pos into view coordinate system&#10;&#10;minor update - refactoring glfw input callback handler into 'devices'" />
     <MESSAGE value="pyopengl2-19 mapping cursor pos into view coordinate system&#10;&#10;build structure, need factoring" />
     <MESSAGE value="pyopengl2-19 mapping cursor pos into view coordinate system&#10;&#10;build algorithm, need factoring" />
-    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-19 mapping cursor pos into view coordinate system&#10;&#10;build algorithm, need factoring" />
+    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement basic render sequence.&#10;But rkernel is needed to proceed. Hopping over to the next issue for writing rkernel." />
+    <MESSAGE value="pyopengl2-40 implement rkernel&#10;&#10;build rkernel and chained binding algorithm&#10;Maybe rkernel has to become c(context)kernel and relocate context.py into it." />
+    <MESSAGE value="pyopengl2-40 implement rkernel&#10;&#10;redesign rkernel into ckernel&#10;resolve #40" />
+    <MESSAGE value="pyopengl2-40 implement rkernel&#10;&#10;refactoring ckernel&#10;remove hooked module from wkernel" />
+    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement `OpenglEntityTemplate` pattern&#10;This class hides Context dependency of an Entity. Main purpose of the class is to create and store dict of {context, concrete Entity} pair and provide Entity getter of current context. Through the Template, user can handle entity without concerning current context." />
+    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement `CompoundArray`&#10;This is an `ndarray` container which provides slices of the array to be used for updating the array.&#10;Purpose is to maintain singular array that maintains interweaved order thus ready to be pushed into OpenGL buffer.&#10;&#10;Next is connecting this array with OpenGL buffer, in vao context." />
+    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement `CompoundArray`&#10;This is an `ndarray` container which provides slices of the array to be used for updating the array.&#10;Purpose is to maintain singular array that maintains interweaved order thus ready to be pushed into OpenGL buffer.&#10;&#10;Next is connecting this array with OpenGL buffer, in vao context." />
   </component>
 </project>

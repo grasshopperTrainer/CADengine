@@ -2,7 +2,7 @@ import importlib
 # for code completion
 import OpenGL.GL as gl
 from OpenGL.GL import *
-from .entities import OGLEntity, _OGLPrgrm, _OGLBffr, _OGLShdr
+from .ogl_entities import OGLEntity, _Program, _Buffer, _Shader, _VertexArray
 
 _context = []
 
@@ -36,16 +36,24 @@ def __creator(func):
 # creator wrappers
 @__creator
 def glCreateProgram():
-    return _OGLPrgrm(gl.glCreateProgram())
+    return _Program(gl.glCreateProgram())
 
 @__creator
 def glCreatShader(typ):
-    return _OGLShdr(gl.glCreateShader(typ))
-
-# @__creator
-# def glCreateBuffers(n):
-#     return _OGLBffr(gl.glCreateBuffers(n))
+    return _Shader(gl.glCreateShader(typ))
 
 @__creator
 def glGenBuffers(n):
-    return _OGLBffr(gl.glGenBuffers(n))
+    return _Buffer(gl.glGenBuffers(n))
+
+@__creator
+def glGenVertexArrays(n):
+    return _VertexArray(gl.glGenVertexArrays(n))
+
+# def __deleter(func):
+#     def __wrapper(*args, **kwargs):
+#         args = [arg.id if isinstance(arg, OGLEntity) else arg for arg in args]
+#         kwargs = {k: arg.id if isinstance(arg, OGLEntity) else arg for k, arg in kwargs.items()}
+#         func(*args, **kwargs)
+#
+#     return __wrapper

@@ -59,5 +59,4 @@ class Model:
                 v.get_cls_renderer().run_all()
 
     def test_render(self):
-        gw.Tgl.get_cls_renderer().render()
-        raise
+        gw.Tgl.render_all()

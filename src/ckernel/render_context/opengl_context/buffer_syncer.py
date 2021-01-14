@@ -1,4 +1,4 @@
-from .entity_template import OGLArryBffrTemp
+from .ogl_factories import OGLArryBffrFactory
 
 
 class BufferSyncer:
@@ -11,7 +11,7 @@ class BufferSyncer:
 
         :param dtype: structured numpy dtype
         """
-        self.__ogl_buffer = OGLArryBffrTemp(dtype)
+        self.__ogl_buffer = OGLArryBffrFactory(dtype)
         raise
 
     def bind(self):

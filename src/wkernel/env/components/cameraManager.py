@@ -1,7 +1,7 @@
 from gkernel.dtype.geometric.primitive import Pnt, Lin, Ray, ZeroVec, ZVec
 from gkernel.dtype.nongeometric.matrix import ScaleMat
 from .window_properties import *
-
+from wkernel.pipeline.nodes.window.camera import *
 
 class CameraFactory:
     @classmethod

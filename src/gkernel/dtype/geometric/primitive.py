@@ -1026,10 +1026,11 @@ class Tgl(ArrayLikeData):
         :param v1:
         :param v2:
         """
-        obj = np.array([[v0[0], v1[0], v2[0]],
-                        [v0[1], v1[1], v2[1]],
-                        [v0[2], v1[2], v2[2]],
-                        [1, 1, 1]], dtype=DTYPE).view(cls)
+        obj = super().__new__(cls, shape=(4, 3), dtype=DTYPE)
+        obj[:] = [[v0[0], v1[0], v2[0]],
+                  [v0[1], v1[1], v2[1]],
+                  [v0[2], v1[2], v2[2]],
+                  [1, 1, 1]]
         return obj
 
     @property

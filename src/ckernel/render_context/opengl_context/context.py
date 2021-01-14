@@ -55,3 +55,12 @@ class OpenglContext(Renderer):
         :return:
         """
         self.__entities.setdefault(entity.__class__, []).append(entity)
+
+    def remove_entity(self, entity):
+        """
+        release entity
+
+        :param entity:
+        :return:
+        """
+        self.__entities[entity.__class__].remove(entity)
