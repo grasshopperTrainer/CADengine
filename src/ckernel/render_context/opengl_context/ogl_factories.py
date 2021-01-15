@@ -5,15 +5,15 @@ import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 from .error import *
 from .entity_factory import OGLEntityFactory
-from .cpu_entities import _CPUBffr
-from .uniforms import _UniformPusher
+from .bffr_cache import BffrCache
+
 
 """
 these are most likely intended to be used as descriptors
 """
 
 
-class OGLPrgrmFactory(OGLEntityFactory):
+class PrgrmFactory(OGLEntityFactory):
 
     def __init__(self, vrtx_path=None, frgm_path=None, is_descriptor=True):
         """
@@ -68,7 +68,7 @@ class OGLPrgrmFactory(OGLEntityFactory):
         return prgrm
 
 
-class OGLBffrFactory(OGLEntityFactory):
+class BffrFactory(OGLEntityFactory):
 
     def __init__(self, attr_desc, is_descriptor=True):
         """
@@ -107,13 +107,14 @@ class OGLBffrFactory(OGLEntityFactory):
         :return: list(namedtuple(),...)
         """
         tuples = []
+        np = namedtuple('interleave_prop', 'name, size, dtype, stride')
         for name, (dtype, stride) in self.__attr_desc.fields.items():
             dtype, shape = dtype.subdtype
-            tuples.append(namedtuple(name, 'size, type, stride')(shape[0], dtype, stride))
+            tuples.append(np(name, shape[0], dtype, stride))
         return tuple(tuples)
 
 
-class OGLArryBffrFactory(OGLBffrFactory):
+class ArryBffrFactory(BffrFactory):
     """
     Descriptor
 
@@ -122,16 +123,16 @@ class OGLArryBffrFactory(OGLBffrFactory):
     __target = gl.GL_ARRAY_BUFFER
 
 
-class OGLVrtxArryFactory(OGLEntityFactory):
+class VrtxArryFactory(OGLEntityFactory):
 
-    def __init__(self, *bffrs, is_descriptor=True):
+    def __init__(self, *bffr_facs, is_descriptor=True):
         """
 
-        :param bffrs: buffers with attribute formatting data
+        :param bffr_facs: ! OGLBffrFactory not OGLBffr
         :param is_descriptor:
         """
         super().__init__(is_descriptor)
-        self.__bffrs = bffrs
+        self.__bffr_facs = bffr_facs
 
     def _create_entity(self):
         """
@@ -140,19 +141,18 @@ class OGLVrtxArryFactory(OGLEntityFactory):
         """
         attr_idx = 0
         vao = gl.glGenVertexArrays(1)
-        vao.bind()
-        # for each buffer, bind attribute pointer in order
-        for bffr in self.__bffrs:
-            bffr.get_entity().bind()
-            for _, size, dtype, stride in bffr.interleave_props:
-                gl.glVertexAttribPointer(index=attr_idx,
-                                         size=size,
-                                         type=self.numpy_dtype_translator(dtype),
-                                         normalized=False,
-                                         stride=stride,
-                                         pointer=0)
-                attr_idx += 1
-        vao.unbind()  # ! if not any oncoming buffer binding will affect this vao binding
+        with vao:
+            # for each buffer, bind attribute pointer in order
+            for bffr_fct in self.__bffr_facs:
+                with bffr_fct.get_entity():
+                    for _, size, dtype, stride in bffr_fct.interleave_props:
+                        gl.glVertexAttribPointer(index=attr_idx,
+                                                 size=size,
+                                                 type=self.numpy_dtype_translator(dtype),
+                                                 normalized=False,
+                                                 stride=stride,
+                                                 pointer=0)
+                        attr_idx += 1
         return vao
 
     @staticmethod
@@ -193,12 +193,12 @@ class OGLVrtxArryFactory(OGLEntityFactory):
             raise ValueError('incomprehensible numpy dtype')
 
 
-class CPUBffrFactory(OGLEntityFactory):
+class BffrCacheFactory(OGLEntityFactory):
     """
     Provide `_CPUBffr` object
     """
 
-    def __init__(self, dtype, is_descriptor=True):
+    def __init__(self, dtype, size, is_descriptor=True):
         """
         create master array
 
@@ -213,30 +213,7 @@ class CPUBffrFactory(OGLEntityFactory):
                 raise StructuredDtypeError
         except:
             raise StructuredDtypeError
+        self.__cache_size = size
 
     def _create_entity(self):
-        return _CPUBffr(self.__dtype)
-
-
-class OGLUniformPusherFactory(OGLEntityFactory):
-    def __init__(self, uniform_desc, prgrm_fct, is_descriptor=True):
-        """
-
-        :param uniform_desc: (list, tuple), description in ndarray structured dtype form
-        :param prgrm_fct: `_OGLPrgrm`, OpenGL program Entity to push uniform into
-        """
-        super().__init__(is_descriptor)
-        try:
-            self.__dtype = np.dtype(uniform_desc)
-        except:
-            raise StructuredDtypeError
-        self.__prgrm_fct = prgrm_fct
-
-    def _create_entity(self):
-        """
-        find location and create pusher with it
-        :return:
-        """
-        prgrm = self.__prgrm_fct.get_entity()
-        locations = {name: gl.glGetUniformLocation(prgrm, name) for name in self.__dtype.names}
-        return _UniformPusher(locations)
+        return BffrCache(self.__dtype, size=self.__cache_size)

@@ -12,7 +12,7 @@ class OpenglContext(Renderer):
         :param context:
         """
         self._cntxt_manager = context
-        self.__entities = {}
+        self.__entities = OGLEntityRegistry()
 
     def __enter__(self):
         """
@@ -47,20 +47,60 @@ class OpenglContext(Renderer):
     def is_none(self):
         return False
 
-    def append_entity(self, entity):
+    @property
+    def entities(self):
+        return self.__entities
+
+    @property
+    def context(self):
+        return self._cntxt_manager
+
+
+class OGLEntityRegistry:
+    """
+    Control, track OpenGL Entity(Object) existence and binding
+    """
+    def __init__(self):
+        # this holds strong reference of the Entity, in case of deletion,
+        # this, at the end, has to release the Entity
+        self.__registry = {}
+        # this holds stack for each type of entities
+        self.__stacks = {}
+
+    def append(self, entity):
         """
         track entity
 
         :param entity:
         :return:
         """
-        self.__entities.setdefault(entity.__class__, []).append(entity)
+        self.__registry.setdefault(entity.__class__, []).append(entity)
 
-    def remove_entity(self, entity):
+    def remove(self, entity):
         """
         release entity
 
         :param entity:
         :return:
         """
-        self.__entities[entity.__class__].remove(entity)
+        self.__registry[entity.__class__].remove(entity)
+
+    def push(self, entity):
+        self.__stacks.setdefault(entity.__class__, [None]).append(entity)
+
+    def pop(self, entity_class):
+        if self.is_stack_empty(entity_class):
+            raise Exception('bad context management')
+        return self.__stacks[entity_class].pop()
+
+    def get_current(self, entity_class):
+        return self.__stacks.setdefault(entity_class, [None])[-1]
+
+    def get_current_byname(self, entity_name):
+        for key_cls in self.__stacks:
+            if key_cls.name == entity_name:
+                return self.get_current(key_cls)
+        return None
+
+    def is_stack_empty(self, entity_class):
+        return len(self.__stacks.get(entity_class, [None])) == 1

@@ -1,5 +1,4 @@
 import numpy as np
-import weakref
 from collections import namedtuple
 
 
@@ -13,7 +12,7 @@ class ArrayContainer:
         return self.__array
 
 
-class _CPUBffr(ArrayContainer):
+class BffrCache(ArrayContainer):
     """
     ! vocabulary:
         point : vertex as geometric entity
@@ -27,15 +26,23 @@ class _CPUBffr(ArrayContainer):
     array to `_Block` instance that has been viewing old array.
     """
     # initial size of array for placeholder
-    __ARRAY_INIT_SIZE = 32
 
-    def __init__(self, dtype):
-        self.__array = np.ndarray(self.__ARRAY_INIT_SIZE, dtype=dtype)
-        self.__array_len = self.__ARRAY_INIT_SIZE
+    def __init__(self, dtype, size):
+        self.__array = np.ndarray(size, dtype=dtype)
+        self.__array_len = size
         # for first fit allocation free space record, (idx, size)
         self.__block_pool = [(0, self.__array_len)]
         self.__blocks = []
         self.__num_vertex_inuse = 0
+
+    def __getitem__(self, item):
+        """
+        for direct access into the array
+
+        :param item:
+        :return:
+        """
+        return self.__array.__getitem__(item)
 
     def __expand_array(self):
         """
@@ -72,7 +79,7 @@ class _CPUBffr(ArrayContainer):
                 else:
                     self.__block_pool[i] = (sidx+size, leftover)  # append new free space
                 # TODO: think of memory freeing mechanism
-                block = self.__Block(self, sidx, size)
+                block = self.__Block(self, sidx, sidx+size)
                 self.__blocks.append(block)
                 return block
 
@@ -91,41 +98,6 @@ class _CPUBffr(ArrayContainer):
             self.__block_vacant_pointer -= 1
         else:
             self.__block_returned.append(idx)
-
-    class __Block:
-        """
-        redirector to buffer array
-
-        Syncs value update between sliced array and master array
-        """
-
-        def __init__(self, array_container, start_idx, block_size):
-            self.__array_container = array_container
-            self.__start_idx = start_idx
-            self.__block_size = block_size
-
-        def __getitem__(self, item):
-            """
-            slice is used to update value of the array
-
-            Updated value always has to be push into container's array.
-            :param item:
-            :return:
-            """
-            s, e = self.__start_idx, self.__start_idx+self.__block_size
-            return self.__array_container.array[s:e].__getitem__(item)
-
-        def __str__(self):
-            return f"<Block [{self.__start_idx}:{self.__start_idx+self.__block_size}]>"
-
-        @property
-        def block_loc(self):
-            """
-            block location in raw array
-
-            :return: tuple, (start index, block size)
-            """
-            return self.__start_idx, self.__block_size
 
     @property
     def array(self):
@@ -152,17 +124,17 @@ class _CPUBffr(ArrayContainer):
         return self.__num_vertex_inuse
 
     @property
-    def interleave_props(self):
+    def field_props(self):
         """
         set of property describing interleaveness of the array
 
-        :return: list(namedtuple(),...)
+        :return: list(namedtuple(name, shape, dtype, stride),...)
         """
         tuples = []
-        np = namedtuple('interleave prop', 'name, size, dtype, stride')
+        np = namedtuple('interleave_prop', 'name, size, dtype, stride')
         for name, (dtype, stride) in self.__array.dtype.fields.items():
             dtype, shape = dtype.subdtype
-            tuples.append(np(name, shape[0], dtype, stride))
+            tuples.append(np(name, shape, dtype, stride))
         return tuple(tuples)
 
     @classmethod
@@ -174,3 +146,37 @@ class _CPUBffr(ArrayContainer):
         :return:
         """
         raise NotImplementedError
+
+    class __Block:
+        """
+        redirector to buffer array
+
+        Syncs value update between sliced array and master array
+        """
+
+        def __init__(self, array_container, start_idx, stop_idx):
+            self.__array_container = array_container
+            self.__start = start_idx
+            self.__stop = stop_idx
+
+        def __getitem__(self, item):
+            """
+            slice is used to update value of the array
+
+            Updated value always has to be push into container's array.
+            :param item:
+            :return:
+            """
+            return self.__array_container.array[self.__start:self.__stop].__getitem__(item)
+
+        def __str__(self):
+            return f"<Block [{self.__start}:{self.__stop}]>"
+
+        @property
+        def block_loc(self):
+            """
+            block location in raw array
+
+            :return: tuple, (start index, block size)
+            """
+            return self.__start, self.__stop

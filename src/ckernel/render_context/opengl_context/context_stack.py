@@ -37,6 +37,10 @@ class OpenglContextStack:
             cls.__stack.pop()
 
 
+def get_current_context():
+    return OpenglContextStack.get_current()
+
+
 class OpenglUnboundError(Exception):
     """
     exception for no bound opengl context

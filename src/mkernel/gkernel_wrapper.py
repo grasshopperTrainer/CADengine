@@ -6,6 +6,8 @@ from gkernel.color.primitive import ClrRGBA
 import mkernel.shape as shp
 import ckernel.render_context.opengl_context.ogl_factories as ogl
 import ckernel.render_context.opengl_context.opengl_hooker as gl
+from ckernel.render_context.opengl_context.uniform_pusher import UniformPusher
+from ckernel.render_context.opengl_context.context_stack import get_current_context
 
 
 class Ray(pg.Ray, shp.Shape):
@@ -39,15 +41,15 @@ class Tgl(shp.Shape):
 
     # use same dtype to push data cpu -> gpu
     __dtype = [('vtx', 'f4', 4), ('clr', 'f4', 4)]
-    __vrtx_bffr = ogl.OGLArryBffrFactory(attr_desc=__dtype, is_descriptor=True)
-    __arry_bffr = ogl.CPUBffrFactory(dtype=__dtype, is_descriptor=False).get_entity()
+    __vrtx_bffr = ogl.ArryBffrFactory(attr_desc=__dtype, is_descriptor=True)
+    __vrtx_cache = ogl.BffrCacheFactory(dtype=__dtype, size=32, is_descriptor=False).get_entity()
     # create vao and program
-    __vao = ogl.OGLVrtxArryFactory(__vrtx_bffr, is_descriptor=True)
-    __gpu_prgrm = ogl.OGLPrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path, is_descriptor=True)
+    __vao = ogl.VrtxArryFactory(__vrtx_bffr, is_descriptor=True)
+    __gpu_prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path, is_descriptor=True)
     # use dtype for uniform array
     __dtype = [('MM', 'f4', (4, 4)), ('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4))]
-    __ufrm_bffr = ogl.CPUBffrFactory(dtype=__dtype, is_descriptor=False).get_entity()
-    __ufrm_pshr = ogl.OGLUniformPusherFactory(dtype=__dtype, prgrm_fct=__gpu_prgrm, is_descriptor=False).get_entity()
+    __ufrm_cache = ogl.BffrCacheFactory(dtype=__dtype, size=1, is_descriptor=False).get_entity()
+    __ufrm_pshr = UniformPusher()
 
     def __init__(self, v0, v1, v2):
         """
@@ -62,7 +64,7 @@ class Tgl(shp.Shape):
         :param __geo: exposed geometric data
                       ! always a copy of __block to prevent undesired value contamination
         """
-        self.__block = self.__arry_bffr.request_block_vacant(3)
+        self.__block = self.__vrtx_cache.request_block_vacant(3)
         self.__geo = pg.Tgl()
         self.__clr_fill = ClrRGBA()
         self.__clr_stroke = None
@@ -113,12 +115,14 @@ class Tgl(shp.Shape):
 
         :return:
         """
-        cls.__vrtx_bffr.push_all(cls.__arry_bffr)
-        cls.__vao.bind()
-        cls.__gpu_prgrm.bind()
-        # need uniform pusher...
-        # need camera stack and view stack?...
+        cls.__vrtx_bffr.push_all(cls.__vrtx_cache)
+        with cls.__vao:
+            with cls.__gpu_prgrm as prgrm:
+                # update uniform data
+                cls.__ufrm_pshr.push_all(cls.__ufrm_cache, prgrm)
+                # need uniform pusher...
+                # need camera stack and view stack?...
 
-        gl.glDrawArrays(gl.GL_TRIANGLES,
-                        0,
-                        cls.__arry_bffr.num_vertex_inuse)
+                gl.glDrawArrays(gl.GL_TRIANGLES,
+                                0,
+                                cls.__vrtx_cache.num_vertex_inuse)

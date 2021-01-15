@@ -59,7 +59,6 @@ class Window(DrawInterface, GlyphInterface):
         # make view object
         self.__glyph = GlyphNode(0, 0, width, height, None, None, None, None)
 
-
         self._render_thread = threading.Thread(target=self.__run)
         self._pipelines = []
 

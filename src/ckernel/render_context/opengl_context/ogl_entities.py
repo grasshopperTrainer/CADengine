@@ -5,6 +5,7 @@ common operations like binding, deleting
 """
 import abc
 import ckernel.render_context.opengl_context.opengl_hooker as gl
+from .context_stack import get_current_context
 
 
 class OGLEntity(metaclass=abc.ABCMeta):
@@ -13,6 +14,10 @@ class OGLEntity(metaclass=abc.ABCMeta):
     """
     def __init__(self, id):
         self.__id = id
+
+    @property
+    def name(self):
+        return self.__name
 
     @property
     def id(self):
@@ -24,7 +29,7 @@ class OGLEntity(metaclass=abc.ABCMeta):
 
 
     @abc.abstractmethod
-    def bind(self):
+    def _bind(self):
         """
         bind ogl object
         :return:
@@ -32,7 +37,7 @@ class OGLEntity(metaclass=abc.ABCMeta):
         pass
 
     # not abstractmethod
-    def unbind(self):
+    def _unbind(self):
         """
         unbind ogl object
 
@@ -40,6 +45,7 @@ class OGLEntity(metaclass=abc.ABCMeta):
         for example, vertex array object needs unbind to be safe from oncoming buffer bindings
         :return:
         """
+        pass
 
     @abc.abstractmethod
     def delete(self):
@@ -49,13 +55,34 @@ class OGLEntity(metaclass=abc.ABCMeta):
         """
         pass
 
+    # binding context implement into context manager
+    def __enter__(self):
+        if get_current_context().entities.get_current(self.__class__) == self:
+            get_current_context().entities.push(self)
+        else:
+            get_current_context().entities.push(self)
+            self._bind()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        entities = get_current_context().entities
+        entities.pop(self.__class__)
+        # control over matryoshka context
+        # follow bind-only policy
+        if not entities.is_stack_empty(self.__class__):
+            entity = entities.get_current_byclass(self.__class__)
+            entity.bind()
+        else:
+            # only if there is no entity to return binding
+            self._unbind()
+
 
 # use under bar
-class _Program(OGLEntity):
+class _Prgrm(OGLEntity):
     def __init__(self, id):
         self.__id = id
 
-    def bind(self):
+    def _bind(self):
         """
         bind program
 
@@ -71,12 +98,12 @@ class _Program(OGLEntity):
         return f"<Program: {self.__id}>"
 
 
-class _Shader(OGLEntity):
+class _Shdr(OGLEntity):
     def __init__(self, typ, id):
         self.__id = id
         self.__typ = typ
 
-    def bind(self):
+    def _bind(self):
         """
         no bind
 
@@ -96,7 +123,7 @@ class _Shader(OGLEntity):
         return f"<Shader: {self.__id}>"
 
 
-class _Buffer(OGLEntity):
+class _Bffr(OGLEntity):
     def __init__(self, id):
         self.__id = id
         self.__target = None
@@ -105,7 +132,7 @@ class _Buffer(OGLEntity):
     def __str__(self):
         return f"<Buffer: {self.__id}>"
 
-    def bind(self):
+    def _bind(self):
         gl.glBindBuffer(self.__target, self.__id)
 
     def delete(self):
@@ -118,12 +145,12 @@ class _Buffer(OGLEntity):
         :param cpu_bffr: `_CPUBffr`, data to push into ogl buffer
         :return:
         """
-        self.bind()
-        gl.glBufferData(target=self.__target,
-                        size=cpu_bffr.bytesize,
-                        data=cpu_bffr.array,
-                        usage=self.__usage)
-        # unbinding needed? does vao affected by vbo binding before its binding?
+        with self as bffr:
+            gl.glBufferData(target=bffr.__target,
+                            size=cpu_bffr.bytesize,
+                            data=cpu_bffr.array,
+                            usage=bffr.__usage)
+            # unbinding needed? does vao affected by vbo binding before its binding?
 
     def set_target(self, target):
         self.__target = target
@@ -132,14 +159,14 @@ class _Buffer(OGLEntity):
         self.__usage = usage
 
 
-class _VertexArray(OGLEntity):
+class _VrtxArry(OGLEntity):
     def __init__(self, id):
         self.__id = id
 
-    def bind(self):
+    def _bind(self):
         gl.glBindVertexArray(self.__id)
 
-    def unbind(self):
+    def _unbind(self):
         gl.glBindVertexArray(0)
 
     def delete(self):

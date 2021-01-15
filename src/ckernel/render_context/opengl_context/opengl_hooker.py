@@ -2,7 +2,7 @@ import importlib
 # for code completion
 import OpenGL.GL as gl
 from OpenGL.GL import *
-from .ogl_entities import OGLEntity, _Program, _Buffer, _Shader, _VertexArray
+from .ogl_entities import OGLEntity, _Prgrm, _Bffr, _Shdr, _VrtxArry
 
 _context = []
 
@@ -29,26 +29,26 @@ for i in dir(gl):
 def __creator(func):
     def __wrapper(*args, **kwargs):
         obj = func(*args, **kwargs)
-        _context[0].get_current().append_entity(obj)
+        _context[0].get_current().entities.append(obj)
         return obj
     return __wrapper
 
 # creator wrappers
 @__creator
 def glCreateProgram():
-    return _Program(gl.glCreateProgram())
+    return _Prgrm(gl.glCreateProgram())
 
 @__creator
 def glCreatShader(typ):
-    return _Shader(gl.glCreateShader(typ))
+    return _Shdr(gl.glCreateShader(typ))
 
 @__creator
 def glGenBuffers(n):
-    return _Buffer(gl.glGenBuffers(n))
+    return _Bffr(gl.glGenBuffers(n))
 
 @__creator
 def glGenVertexArrays(n):
-    return _VertexArray(gl.glGenVertexArrays(n))
+    return _VrtxArry(gl.glGenVertexArrays(n))
 
 # def __deleter(func):
 #     def __wrapper(*args, **kwargs):
