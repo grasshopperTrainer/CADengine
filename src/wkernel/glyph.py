@@ -1,7 +1,7 @@
 import abc
 
 from JINTFP import *
-from gkernel.dtype.nongeometric.matrix import *
+from gkernel.dtype.nongeometric.matrix.primitive import *
 
 
 class GlyphInterface(metaclass=abc.ABCMeta):

@@ -1,11 +1,11 @@
 from gkernel.dtype.geometric.primitive import Pnt
-from gkernel.dtype.nongeometric.matrix import ScaleMat
+from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 
-from .glyph import GlyphNode, GlyphInterface
-from .window_properties import *
+from wkernel.glyph import GlyphNode, GlyphInterface
+from ._base import RenderDevice, RenderDeviceManager
 
 
-class Pane(RenderTarget, GlyphInterface):
+class Pane(RenderDevice, GlyphInterface):
     """
     Defines area of window to render on.
 
@@ -90,7 +90,7 @@ class Pane(RenderTarget, GlyphInterface):
         return self._glyph
 
 
-class PaneManager(RenderTargetManager):
+class PaneManager(RenderDeviceManager):
     """
     Manages multitue of `Pane`
 
@@ -99,15 +99,16 @@ class PaneManager(RenderTargetManager):
 
     def __init__(self, window):
         super().__init__(window)
-        self._append_new_target(Pane(x_exp=0,
-                                     y_exp=0,
-                                     w_exp=1.0,
-                                     h_exp=1.0,
-                                     parent=window,
-                                     manager=self))
+        # default device
+        self._appendnew_device(Pane(x_exp=0,
+                                    y_exp=0,
+                                    w_exp=1.0,
+                                    h_exp=1.0,
+                                    parent=window,
+                                    manager=self))
 
     def __getitem__(self, item) -> Pane:
-        return self._targets[item]
+        return self._devices[item]
 
     def new_pane(self, x_exp, y_exp, w_exp, h_exp, parent: GlyphInterface):
         """
@@ -120,9 +121,9 @@ class PaneManager(RenderTargetManager):
         :param parent: parent implementing GlyphInterface
         :return:
         """
-        self._append_new_target(Pane(x_exp,
-                                     y_exp,
-                                     w_exp,
-                                     h_exp,
-                                     parent=parent,
-                                     manager=self))
+        self._appendnew_device(Pane(x_exp,
+                                    y_exp,
+                                    w_exp,
+                                    h_exp,
+                                    parent=parent,
+                                    manager=self))

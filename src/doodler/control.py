@@ -1,5 +1,5 @@
 
-# from wkernel.env.window import Windows
+# from wkernel.devices.window import Windows
 
 
 # def background(r=None,g=None,b=None,a=None):

@@ -1,10 +1,11 @@
 from gkernel.dtype.geometric.primitive import Pnt
-from gkernel.dtype.nongeometric.matrix import ScaleMat
+from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 from global_tools import Singleton, callbackRegistry
-import glfw
+
+import ckernel.glfw_context.glfw_hooker as glfw
 
 
-class _Device:
+class _InputDevice:
     def __init__(self, window, manager):
         self.__window = window
         self.__manager = manager
@@ -29,7 +30,7 @@ class _Device:
         return self.__manager
 
 
-class Mouse(_Device):
+class Mouse(_InputDevice):
 
     def __init__(self, window, manager):
         super().__init__(window, manager)
@@ -71,7 +72,7 @@ class Mouse(_Device):
         :return:
         """
         transform_matrix = view.glyph.trnsf_matrix.r.I.M
-        w, h = self.__manager._window.glyph.size
+        w, h = self.__manager.__window.glyph.size
         unitize_matrix = ScaleMat(1 / w, 1 / h)
         pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos)
         if not normalize:
@@ -204,7 +205,7 @@ class GLFWCharDict:
         return cls.__key_char_dict.copy()
 
 
-class Keyboard(_Device):
+class Keyboard(_InputDevice):
     __callback_signature = glfw.set_key_callback
     __glfw_key_dict = GLFWCharDict()
 
@@ -285,64 +286,3 @@ class Keyboard(_Device):
         with self.window.context.glfw as glfw:
             return tuple(glfw.get_key(self.__glfw_key_dict.char_to_key(char)) for char in chars)
 
-
-class DeviceManager:
-    """
-    Control group of devices
-    """
-
-    def __init__(self, window):
-        self._window = window
-
-        self._mouse = Mouse(window, self)
-        self._keyboard = Keyboard(window, self)
-
-    @property
-    def mouse(self):
-        return self._mouse
-
-    @property
-    def keyboard(self):
-        return self._keyboard
-
-# class _CallbackWrapper:
-#     """
-#     Needed to add custom-ability into glfw callback
-#     """
-#
-#     def __init__(self, func, device):
-#         self._func = func
-#         self._device = device
-#
-#     def _run_callback(self, *args):
-#         self._func(*args)
-#
-#
-# class _KeyboardCallbackWrapper(_CallbackWrapper):
-#     """
-#     Callback related to keyboard
-#     """
-#     def __init__(self, func):
-#         super().__init__(func, Keyboard)
-#
-#
-# class _MouseCallbackWrapper(_CallbackWrapper):
-#     """
-#     Callback related to mouse
-#     """
-#     def __init__(self, func):
-#         super().__init__(func, Mouse)
-#
-#
-# class CursorPosCallbackWrapper(_MouseCallbackWrapper):
-#     """
-#     Cursor pos callback
-#     """
-#     pass
-#
-#
-# class KeyCallbackWrapper(_KeyboardCallbackWrapper):
-#     """
-#     Key press callback
-#     """
-#     pass

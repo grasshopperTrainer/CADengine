@@ -1,13 +1,12 @@
-# class _RenderTargetMember(FamilyMember):
-#     pass
+import abc
 
 
-class RenderTarget:
+class RenderDevice(metaclass=abc.ABCMeta):
     """
     Instance of render target types
     """
-    def __init__(self, pool):
-        self._pool = pool
+    def __init__(self, manager):
+        self.__manager = manager
 
     @property
     def manager(self):
@@ -15,22 +14,23 @@ class RenderTarget:
         Render target pool is seen as a 'manager' from its target
         :return:
         """
-        return self._pool
+        return self.__manager
 
 
-class RenderTargetManager:
+class RenderDeviceManager:
+    """
+    Collector of render devices.
+    """
     def __init__(self, window):
-        super().__init__()
-        # self.fm_append_member(window, self)
-        self._window = window
-        self._targets = []
+        self.__window = window
+        self._devices = []
         self._current_target_stack = []
 
-    def __getitem__(self, item) -> RenderTarget:
+    def __getitem__(self, item) -> RenderDevice:
         raise NotImplementedError
 
-    def _append_new_target(self, target):
-        self._targets.append(target)
+    def _appendnew_device(self, target):
+        self._devices.append(target)
 
     def current_target(self):
         if self._current_target_stack:
@@ -39,5 +39,4 @@ class RenderTargetManager:
 
     @property
     def window(self):
-        return self._window
-
+        return self.__window

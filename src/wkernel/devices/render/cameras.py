@@ -1,7 +1,8 @@
 from gkernel.dtype.geometric.primitive import Pnt, Lin, Ray, ZeroVec, ZVec
-from gkernel.dtype.nongeometric.matrix import ScaleMat
-from .window_properties import *
+from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
+from ._base import *
 from wkernel.pipeline.nodes.window.camera import *
+
 
 class CameraFactory:
     @classmethod
@@ -80,15 +81,15 @@ class FpsDolly(Dolly):
         mouse.cursor_goto_center()
 
 
-class Camera(RenderTarget):
+class Camera(RenderDevice):
     """
     Camera
 
     Camera consists of Two parts; camera body, camera orientation(position)
     """
 
-    def __init__(self, body: CameraBody, tripod: CameraTripod, pool):
-        super().__init__(pool)
+    def __init__(self, body: CameraBody, tripod: CameraTripod, manager):
+        super().__init__(manager)
 
         self._body = body
         self._tripod = tripod
@@ -161,7 +162,7 @@ class Camera(RenderTarget):
         CameraCurrentStack().pop()
 
 
-class CameraManager(RenderTargetManager):
+class CameraManager(RenderDeviceManager):
     def __init__(self, window):
         super().__init__(window)
         r, t = window.glyph.width.r / 2, window.glyph.height.r / 2
@@ -174,15 +175,15 @@ class CameraManager(RenderTargetManager):
         :param item: index of cameras
         :return: Camera object
         """
-        return self._targets[item]
+        return self._devices[item]
 
     def new_orthogonal(self, left, right, bottom, top, near, far):
         new_cam = CameraFactory.new_camera(self, 'lrbt', 'orth', left, right, bottom, top, near, far)
-        self._append_new_target(new_cam)
+        self._appendnew_device(new_cam)
 
     def new_perspective(self, fov, near, far, ratio):
         new_cam = CameraFactory.new_camera(self, 'fov', 'prsp', fov, near, far, ratio)
-        self._append_new_target(new_cam)
+        self._appendnew_device(new_cam)
 
     # TODO: need camera dolly connector? should it take all the responsibilities? who has to know about dolly?
     def attach_fps_dolly(self, camera_id):

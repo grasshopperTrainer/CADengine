@@ -6,7 +6,7 @@ from numbers import Number
 import numpy as np
 
 from gkernel.constants import DTYPE
-from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
+from gkernel.dtype.nongeometric.matrix.primitive import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
 from gkernel.array_like import ArrayLikeData
 
 
