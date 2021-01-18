@@ -1,26 +1,7 @@
 from gkernel.dtype.geometric.primitive import Pnt, Lin, Ray, ZeroVec, ZVec
-from gkernel.dtype.nongeometric.matrix import ScaleMat
-from .window_properties import *
+from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
+from ._base import *
 from wkernel.pipeline.nodes.window.camera import *
-
-class CameraFactory:
-    @classmethod
-    def new_camera(cls, pool, fov_lrbt, orth_prsp, *args):
-        if fov_lrbt == 'fov':
-            definer = FovCamera(*args)
-        elif fov_lrbt == 'lrbt':
-            definer = LrbtCamera(*args)
-        else:
-            raise
-
-        if orth_prsp == 'orth':
-            frustum = OrthFrustum(*definer.output_intfs)
-        elif orth_prsp == 'prsp':
-            frustum = PrspFrustum(*definer.output_intfs)
-        else:
-            raise
-        camera = Camera(CameraBody(definer, frustum), CameraTripod(), pool)
-        return camera
 
 
 class Dolly:
@@ -80,15 +61,15 @@ class FpsDolly(Dolly):
         mouse.cursor_goto_center()
 
 
-class Camera(RenderTarget):
+class Camera(RenderDevice):
     """
     Camera
 
     Camera consists of Two parts; camera body, camera orientation(position)
     """
 
-    def __init__(self, body: CameraBody, tripod: CameraTripod, pool):
-        super().__init__(pool)
+    def __init__(self, body: CameraBody, tripod: CameraTripod, manager):
+        super().__init__(manager)
 
         self._body = body
         self._tripod = tripod
@@ -146,43 +127,29 @@ class Camera(RenderTarget):
         ray = Ray([0, 0, 0], frustum_point.xyz)
         return self.tripod.in_plane.r.trnsf_mat * ray
 
-    def __enter__(self):
-        """
-        initiating camera
 
-        :return:
-        """
-        CameraCurrentStack().append(self)
-        # if isinstance(self._dolly, FpsDolly):   # hide cursor to use virtual space
-        #     glfw.set_input_mode(self.manager.window.glfw_window, glfw.CURSOR, glfw.CURSOR_HIDDEN)
-        return self
+class CameraManager(RenderDeviceManager):
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        CameraCurrentStack().pop()
+    def __init__(self, device_master):
+        super().__init__(device_master)
+        r, t = self.window.glyph.width.r / 2, self.window.glyph.height.r / 2
 
+        # factories
+        self.__perspective_fac = CameraFactory(self)
 
-class CameraManager(RenderTargetManager):
-    def __init__(self, window):
-        super().__init__(window)
-        r, t = window.glyph.width.r / 2, window.glyph.height.r / 2
         # self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
-        self.new_perspective(np.radians(50), 0.1, 10000, window.glyph.aspect_ratio)
+        self.perspective_fac.prsp_from_hfov(hfov=np.radians(50),
+                                            ratio=self.window.glyph.aspect_ratio,
+                                            near=0.1,
+                                            far=10000)
 
-    def __getitem__(self, item) -> Camera:
-        """
-        Returns camera object
-        :param item: index of cameras
-        :return: Camera object
-        """
-        return self._targets[item]
+    @property
+    def device_type(self):
+        return Camera
 
-    def new_orthogonal(self, left, right, bottom, top, near, far):
-        new_cam = CameraFactory.new_camera(self, 'lrbt', 'orth', left, right, bottom, top, near, far)
-        self._append_new_target(new_cam)
-
-    def new_perspective(self, fov, near, far, ratio):
-        new_cam = CameraFactory.new_camera(self, 'fov', 'prsp', fov, near, far, ratio)
-        self._append_new_target(new_cam)
+    @property
+    def perspective_fac(self):
+        return self.__perspective_fac
 
     # TODO: need camera dolly connector? should it take all the responsibilities? who has to know about dolly?
     def attach_fps_dolly(self, camera_id):
@@ -217,3 +184,63 @@ class CameraManager(RenderTargetManager):
             self.window.devices.mouse.remove_cursor_pos_callback(dolly.callbacked_move_camera)
         else:
             raise NotImplementedError
+
+
+class CameraFactory:
+    def __init__(self, manager):
+        self.__manager = manager
+
+    # perspective
+    def prsp_from_hfov(self, hfov, ratio, near, far):
+        """
+        perspective camera defined by field of view and ratio value
+        :param hfov: Number, radian, horizontal field of view
+        :param ratio: Number, ratio of width/height ex) 16/9
+        :param near: Number, frustum near for clipping
+        :param far: Number, frustum far for clipping
+        :return:
+        """
+        definer = FovCamera(hfov, ratio, near, far)
+        frustum = PrspFrustum(*definer.output_intfs)
+        camera = Camera(CameraBody(definer, frustum), CameraTripod(), self.__manager)
+        self.__manager.appendnew_device(camera)
+        return camera
+
+    def prsp_from_lrbt(self, left, right, bottom, top, near, far):
+        """
+        perspective camera defined by frustum near plane dimension
+
+        (0, 0) is a common center of frustum dimension
+        :param left: Number, left boundary value
+        :param right: Number, right boundary value
+        :param bottom: Number, bottom boundary value
+        :param top: Number, top boundary value
+        :param near: Number, frustum near for clipping
+        :param far: Number, frustum far clipping
+        :return:
+        """
+        definer = LrbtCamera(left, right, bottom, top, near, far)
+        frustum = PrspFrustum(*definer.output_intfs)
+        camera = Camera(CameraBody(definer, frustum), CameraTripod(), self.__manager)
+        self.__manager.appendnew_device(camera)
+        return camera
+
+    # orthogonal
+    def orth_from_lrbt(self, left, right, bottom, top, near, far):
+        """
+        orthogonal camera defined by frustum near plane dimension
+
+        (0, 0) is a common center of frustum dimension
+        :param left: Number, left boundary value
+        :param right: Number, right boundary value
+        :param bottom: Number, bottom boundary value
+        :param top: Number, top boundary value
+        :param near: Number, frustum near for clipping
+        :param far: Number, frustum far clipping
+        :return:
+        """
+        definer = LrbtCamera(left, right, bottom, top, near, far)
+        frustum = OrthFrustum(*definer.output_intfs)
+        camera = Camera(CameraBody(definer, frustum), CameraTripod(), self.__manager)
+        self.__manager.appendnew_device(camera)
+        return camera

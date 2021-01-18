@@ -25,7 +25,7 @@ class _Enabler:
 class _Remover:
     def __get__(self, instance, owner):
         def __wrapper(self, method):
-            return instance.remove(self, method)
+            return instance.deregister(self, method)
 
         return __wrapper
 

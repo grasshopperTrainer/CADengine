@@ -1,9 +1,13 @@
 import threading
 import time
 
-from wkernel.env.components.bits import DrawInterface
+from numbers import Number
+
+from wkernel.devices.bits import DrawInterface
 from ckernel.context_nodes import ContextManager
-from .components import *
+from .glyph import GlyphNode, GlyphInterface
+from .devices.master import DeviceMaster
+from global_tools.callback_registry import callbackRegistry
 
 
 class Timer:
@@ -67,13 +71,10 @@ class Window(DrawInterface, GlyphInterface):
         self.__num_draw_frame = None
         self.__frame_count = 0
 
-        # managers
-        self.__pane_manager = PaneManager(self)
-        self.__camera_manager = CameraManager(self)
-        self.__device_manager = DeviceManager(self)
-
         # default camera
-        self.__camera_manager[0].body.builder.in3_aspect_ratio = self.__pane_manager[0].glyph.aspect_ratio
+        # FIXME: this is bad bad
+        self.__device_manager = DeviceMaster(self)
+        self.devices.cameras[0].body.builder.in3_aspect_ratio = self.devices.panes[0].glyph.aspect_ratio
 
     @property
     def glyph(self) -> GlyphNode:
@@ -82,27 +83,27 @@ class Window(DrawInterface, GlyphInterface):
         :return:
         """
         return self.__glyph
+    #
+    # @property
+    # def cameras(self) -> CameraManager:
+    #     """
+    #     return CameraManager which handles cameras of this window
+    #
+    #     :return:
+    #     """
+    #     return self.__camera_manager
+    #
+    # @property
+    # def panes(self) -> PaneManager:
+    #     """
+    #     return PaneManager which handles view areas on the window
+    #     :return:
+    #     """
+    #
+    #     return self.__pane_manager
 
     @property
-    def cameras(self) -> CameraManager:
-        """
-        return CameraManager which handles cameras of this window
-
-        :return:
-        """
-        return self.__camera_manager
-
-    @property
-    def panes(self) -> PaneManager:
-        """
-        return PaneManager which handles view areas on the window
-        :return:
-        """
-
-        return self.__pane_manager
-
-    @property
-    def devices(self) -> DeviceManager:
+    def devices(self) -> DeviceMaster:
         """
         return DeviceManager which handles keyboard and mouse operation
 
@@ -248,7 +249,6 @@ class Window(DrawInterface, GlyphInterface):
 
 
 if __name__ == '__main__':
-    window1 = Windows.new_window(400, 400, 'main window')
-    window2 = Windows.new_window(500, 500, 'second')
-    Windows.run()
-    # glfw.create_window(100,100,'1',None,None)/
+    window1 = Window(400, 400, 'main window')
+    window2 = Window(500, 500, 'second')
+    Window.run_all()

@@ -1,6 +1,7 @@
 from JINTFP import *
 from gkernel.dtype.geometric.primitive import Pln, Vec
-from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, TrnsfMats, ViewMatrix, ProjectionMatrix
+from gkernel.dtype.nongeometric.matrix.primitive import MoveMat, RotZMat, TrnsfMats
+from gkernel.dtype.nongeometric.matrix.complex import ViewMatrix, ProjectionMatrix
 from global_tools import Singleton
 
 
