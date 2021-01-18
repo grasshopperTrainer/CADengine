@@ -12,7 +12,7 @@ def _hook(obj):
         # lazy import
         if not _context:
             _context.append(getattr(importlib.import_module('ckernel.render_context.opengl_context.context_stack'),
-                                    'OpenglContextStack'))
+                                    'OGLContextStack'))
 
         # translate entities into ogl id
         # TODO remove acceptance of raw id when structure is mature enough

@@ -83,24 +83,6 @@ class Window(DrawInterface, GlyphInterface):
         :return:
         """
         return self.__glyph
-    #
-    # @property
-    # def cameras(self) -> CameraManager:
-    #     """
-    #     return CameraManager which handles cameras of this window
-    #
-    #     :return:
-    #     """
-    #     return self.__camera_manager
-    #
-    # @property
-    # def panes(self) -> PaneManager:
-    #     """
-    #     return PaneManager which handles view areas on the window
-    #     :return:
-    #     """
-    #
-    #     return self.__pane_manager
 
     @property
     def devices(self) -> DeviceMaster:

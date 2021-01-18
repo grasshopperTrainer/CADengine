@@ -6,7 +6,7 @@ import ckernel.render_context.opengl_context.opengl_hooker as gl
 from .error import *
 from .entity_factory import OGLEntityFactory
 from .bffr_cache import BffrCache
-
+import ctypes
 
 """
 these are most likely intended to be used as descriptors
@@ -100,17 +100,18 @@ class BffrFactory(OGLEntityFactory):
         return obj
 
     @property
-    def interleave_props(self):
+    def field_props(self):
         """
         set of property describing interleaveness of the array
 
         :return: list(namedtuple(),...)
         """
         tuples = []
-        np = namedtuple('interleave_prop', 'name, size, dtype, stride')
-        for name, (dtype, stride) in self.__attr_desc.fields.items():
+        ntuple = namedtuple('interleave_prop', 'name, size, dtype, stride, offset')
+        stride = self.__attr_desc.itemsize
+        for name, (dtype, offset) in self.__attr_desc.fields.items():
             dtype, shape = dtype.subdtype
-            tuples.append(np(name, shape[0], dtype, stride))
+            tuples.append(ntuple(name, shape[0], dtype, stride, offset))
         return tuple(tuples)
 
 
@@ -145,18 +146,20 @@ class VrtxArryFactory(OGLEntityFactory):
             # for each buffer, bind attribute pointer in order
             for bffr_fct in self.__bffr_facs:
                 with bffr_fct.get_entity():
-                    for _, size, dtype, stride in bffr_fct.interleave_props:
+                    for _, size, dtype, stride, offset in bffr_fct.field_props:
+                        gl.glEnableVertexAttribArray(attr_idx)  # ! dont forget
                         gl.glVertexAttribPointer(index=attr_idx,
-                                                 size=size,
-                                                 type=self.numpy_dtype_translator(dtype),
-                                                 normalized=False,
+                                                 size=4,
+                                                 type=self.translate_ndtype(dtype),
+                                                 normalized=gl.GL_FALSE,
                                                  stride=stride,
-                                                 pointer=0)
+                                                 pointer=ctypes.c_void_p(offset))   # ! must feed c_void_p
                         attr_idx += 1
+
         return vao
 
     @staticmethod
-    def numpy_dtype_translator(dtype):
+    def translate_ndtype(dtype):
         """
         translates numpy dtype into OpenGL dtype
         :param dtype:

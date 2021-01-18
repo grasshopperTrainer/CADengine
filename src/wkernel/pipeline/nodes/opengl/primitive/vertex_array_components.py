@@ -40,7 +40,7 @@ class EnhanceVertexArray(VertexArrayComponent):
                     size=size,
                     type=dtype,
                     normalized=False,
-                    stride=stride,
+                    stride=0,
                     pointer=offset
                 )
                 idx += 1

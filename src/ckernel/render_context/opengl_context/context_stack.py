@@ -2,7 +2,7 @@ from .none_context import OpenglNoneContext
 
 
 # dont know context binding is a common thing so placing class for opengl
-class OpenglContextStack:
+class OGLContextStack:
     """
     Global gate class for tracking stack currency
     """
@@ -40,8 +40,8 @@ class OpenglContextStack:
             cls.__stack.pop()
 
 
-def get_current_context():
-    return OpenglContextStack.get_current()
+def get_current_ogl():
+    return OGLContextStack.get_current()
 
 
 class OpenglUnboundError(Exception):

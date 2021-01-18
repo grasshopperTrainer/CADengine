@@ -47,7 +47,7 @@ class _TypewiseRegistry:
 
     def __initget_subregistry(self, entity_cls):
         """
-        initget record per entity class
+        initiate or get record per entity class
 
         :param entity_cls:
         :return:
@@ -61,12 +61,8 @@ class _TypewiseRegistry:
         :param entity_cls:
         :return: generator
         """
-        if self.is_empty(entity_cls):
-            for i in ():
-                yield i
-        else:
-            for i in self.__registries[entity_cls]:
-                yield i
+        for i in self.__initget_subregistry(entity_cls):
+            yield i
 
     def get(self, entity_cls, idx):
         """
@@ -139,9 +135,28 @@ class _TypewiseStack:
             raise TypeError('data type for registry and stack should be dict-like')
         self.__stacks = stack_type()
 
+    def __getitem__(self, entity_type):
+        """
+        get stack of given entity type
+
+        :param entity_type:
+        :return: stack
+        """
+        # FIXME: this causes an unauthorized intrusion into stack
+        return self.__stacks[entity_type]
+
+    def __initset_substack(self, entity_type):
+        """
+        initiate or set stack per entity type
+
+        :param entity_type:
+        :return:
+        """
+        return self.__stacks.setdefault(entity_type, [])
+
     # stack methods
     def push(self, entity):
-        self.__stacks.setdefault(entity.__class__, []).append(entity)
+        self.__initset_substack(entity.__class__).append(entity)
 
     def pop(self, entity_cls):
         if not isinstance(entity_cls, type):
@@ -150,19 +165,20 @@ class _TypewiseStack:
             raise _EmptyStackError('cant pop from empty stack')
         return self.__stacks[entity_cls].pop()
 
-    def get_current(self, entity_cls):
-        if self.is_empty(entity_cls):
+    def get_current(self, entity_type):
+        if self.is_empty(entity_type):
             raise _EmptyStackError('no current from empty stack')
-        return self.__stacks.setdefault(entity_cls)[-1]
+        return self.__initset_substack(entity_type)[-1]
 
-    def get_current_byname(self, entity_cls_name):
+    def get_current_byname(self, entity_type_name):
         """
         get current entity
-        :param entity_cls_name:
+
+        :param entity_type_name:
         :return:
         """
         for key_cls in self.__stacks:
-            if key_cls.name == entity_cls_name:
+            if key_cls.name == entity_type_name:
                 return self.get_current(key_cls)
         raise _EmptyStackError('no current from empty stack')
 

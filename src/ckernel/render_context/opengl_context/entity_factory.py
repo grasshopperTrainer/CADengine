@@ -2,7 +2,7 @@ import weakref
 import abc
 
 from .ogl_entities import OGLEntity
-from .context_stack import OpenglContextStack, OpenglUnboundError
+from .context_stack import OGLContextStack, OpenglUnboundError
 from .error import *
 
 
@@ -54,7 +54,7 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
         If context is not given, entity of current context will be returned.
         :return: entity for current context
         """
-        context = OpenglContextStack.get_current()
+        context = OGLContextStack.get_current()
         if context.is_none:
             raise OpenglUnboundError
         # return if exists already

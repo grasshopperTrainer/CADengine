@@ -24,31 +24,29 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f68a635c-fd00-4334-a140-614904dd1a59" name="pyopengl2-40 implement rkernel" comment="">
-      <change afterPath="$PROJECT_DIR$/src/wkernel/devices/input/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/wkernel/devices/manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/wkernel/devices/render/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/wkernel/devices/tracker.py" afterDir="false" />
+    <list default="true" id="f68a635c-fd00-4334-a140-614904dd1a59" name="pyopengl2-40 implement rkernel" comment="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement OpenGL entity factory classes.&#10;Mechanism for retrieving OpenGL context wise Entities such as buffer, vertex array, program, array buffer(CPU side) has been writen and tested.&#10;However structured rendering is not working yet due to the lack of uniform pushing algorithm.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run/render model.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/doodler/basics.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/doodler/basics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/doodler/control.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/doodler/control.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/nongeometric/matrix/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/_callback_registry.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/callback_registry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/_singleton.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/singleton.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/components/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/components/bits.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/bits.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/components/cameraManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/cameras.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/components/deviceManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/input/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/components/glyph.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/glyph.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/components/paneManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/panes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/components/window_properties.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/_base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/env/window.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/window.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/context_nodes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/context_nodes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/context.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/context_stack.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/context_stack.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/entity_factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/entity_factory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_factories.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_factories.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/opengl_hooker.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/opengl_hooker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/uniform_pusher.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/uniform_pusher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/global_tools/trackers.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/trackers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/tgl_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/tgl_frgm_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/tgl_vrtx_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/tgl_vrtx_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/my_patterns.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/my_patterns.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/_base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/_base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/cameras.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/cameras.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/opengl/primitive/render_nodes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/opengl/primitive/render_nodes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/opengl/primitive/vertex_array_components.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/opengl/primitive/vertex_array_components.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/window/camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/window/camera.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/window.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/window.py" afterDir="false" />
     </list>
     <list id="244346dc-c4b7-4080-9029-2152216f4b46" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
@@ -129,27 +127,6 @@
     </key>
   </component>
   <component name="RunManager" selected="Python.render model">
-    <configuration name="duplicate buffer push test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pyopengl2" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/gl" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/gl/duplicate buffer push test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="looking for correct struct" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -213,6 +190,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="scratch_1" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyopengl2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_1.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="window" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -236,11 +234,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.window" />
-        <item itemvalue="Python.scratch" />
         <item itemvalue="Python.render model" />
+        <item itemvalue="Python.scratch_1" />
+        <item itemvalue="Python.scratch" />
+        <item itemvalue="Python.window" />
         <item itemvalue="Python.looking for correct struct" />
-        <item itemvalue="Python.duplicate buffer push test" />
       </list>
     </recent_temporary>
   </component>

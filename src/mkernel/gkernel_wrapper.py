@@ -7,7 +7,7 @@ import mkernel.shape as shp
 import ckernel.render_context.opengl_context.ogl_factories as ogl
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from ckernel.render_context.opengl_context.uniform_pusher import UniformPusher
-from ckernel.render_context.opengl_context.context_stack import get_current_context
+from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
 
 class Ray(pg.Ray, shp.Shape):
@@ -49,7 +49,7 @@ class Tgl(shp.Shape):
     # use dtype for uniform array
     __dtype = [('MM', 'f4', (4, 4)), ('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4))]
     __ufrm_cache = ogl.BffrCacheFactory(dtype=__dtype, size=1, is_descriptor=False).get_entity()
-    __ufrm_pshr = UniformPusher()
+    __ufrm_pshr = UniformPusher
 
     def __init__(self, v0, v1, v2):
         """
@@ -70,7 +70,7 @@ class Tgl(shp.Shape):
         self.__clr_stroke = None
 
         self.geo = pg.Tgl(v0, v1, v2)
-        self.clr_fill = ClrRGBA(1, 1, 1)
+        self.clr_fill = ClrRGBA(1, 1, 1, 1)
 
     @property
     def geo(self):
@@ -116,12 +116,19 @@ class Tgl(shp.Shape):
         :return:
         """
         cls.__vrtx_bffr.push_all(cls.__vrtx_cache)
-        with cls.__vao:
-            with cls.__gpu_prgrm as prgrm:
+        with cls.__gpu_prgrm as prgrm:
+            with cls.__vao:
+
+                # put transformation values
+                camera = get_current_ogl().manager.window.devices.cameras.current
+                vm = camera.tripod.VM.r
+                pm = camera.body.PM.r
+                cls.__ufrm_cache['VM'] = vm
+                cls.__ufrm_cache['PM'] = pm
+                cls.__ufrm_cache['MM'] = np.eye(4)
+
                 # update uniform data
                 cls.__ufrm_pshr.push_all(cls.__ufrm_cache, prgrm)
-                # need uniform pusher...
-                # need camera stack and view stack?...
 
                 gl.glDrawArrays(gl.GL_TRIANGLES,
                                 0,

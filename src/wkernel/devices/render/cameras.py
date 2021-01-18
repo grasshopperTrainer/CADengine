@@ -138,17 +138,17 @@ class CameraManager(RenderDeviceManager):
         self.__perspective_fac = CameraFactory(self)
 
         # self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
-        self.perspective_fac.prsp_from_hfov(hfov=np.radians(50),
-                                            ratio=self.window.glyph.aspect_ratio,
-                                            near=0.1,
-                                            far=10000)
+        self.factory.prsp_from_hfov(hfov=np.radians(50),
+                                    ratio=self.window.glyph.aspect_ratio,
+                                    near=0.1,
+                                    far=10000)
 
     @property
     def device_type(self):
         return Camera
 
     @property
-    def perspective_fac(self):
+    def factory(self):
         return self.__perspective_fac
 
     # TODO: need camera dolly connector? should it take all the responsibilities? who has to know about dolly?

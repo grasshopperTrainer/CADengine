@@ -27,14 +27,13 @@ class UniformPusher:
         :param prgrm: `_Prgrm`, data to push into ogl program
         :return:
         """
-        d = cls.__uniform_meta.setdefault(prgrm, cls.__getreg_uniform_loc(ufrm_data, prgrm))
-        for name, shape, dtype, _ in ufrm_data.field_props:
+        d = cls.__getreg_uniform_loc(ufrm_data, prgrm)
+        for name, shape, dtype, _, _ in ufrm_data.field_props:
             func, loc = d[name]
-            count = shape[0] if len(shape) == 1 else shape[0]*shape[1]
-            transpose = True
+            count = len(ufrm_data.array)
+            transpose = gl.GL_TRUE
             value = ufrm_data.array[name]
             is_matrix = len(shape) == 2
-
             if is_matrix:
                 func(loc, count, transpose, value)
             else:
@@ -48,11 +47,17 @@ class UniformPusher:
         :param prgrm: program to find location of uniforms
         :return:
         """
+        if prgrm in cls.__uniform_meta:
+            return cls.__uniform_meta[prgrm]
+
         d = {}
-        for name, shape, dtype, _ in cpu_bffr.field_props:
-            loc = gl.glGetAttribLocation(prgrm, name)   # or better store function too?
+        for name, shape, dtype, _, _ in cpu_bffr.field_props:
+            loc = gl.glGetUniformLocation(prgrm, name)   # or better store function too?
+            if loc == -1:
+                raise ValueError(loc)
             func = cls.parse_ufrm_func(shape, dtype)
             d[name] = (func, loc)
+        cls.__uniform_meta[prgrm] = d
         return d
 
     @staticmethod

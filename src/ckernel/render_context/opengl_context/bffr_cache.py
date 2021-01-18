@@ -44,6 +44,9 @@ class BffrCache(ArrayContainer):
         """
         return self.__array.__getitem__(item)
 
+    def __setitem__(self, key, value):
+        self.__array.__setitem__(key, value)
+
     def __expand_array(self):
         """
         double the size of the array
@@ -131,10 +134,11 @@ class BffrCache(ArrayContainer):
         :return: list(namedtuple(name, shape, dtype, stride),...)
         """
         tuples = []
-        np = namedtuple('interleave_prop', 'name, size, dtype, stride')
-        for name, (dtype, stride) in self.__array.dtype.fields.items():
+        ntuple = namedtuple('interleave_prop', 'name, size, dtype, stride, offset')
+        stride = self.array.itemsize
+        for name, (dtype, offset) in self.__array.dtype.fields.items():
             dtype, shape = dtype.subdtype
-            tuples.append(np(name, shape, dtype, stride))
+            tuples.append(ntuple(name, shape, dtype, stride, offset))
         return tuple(tuples)
 
     @classmethod

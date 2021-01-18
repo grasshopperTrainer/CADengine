@@ -240,8 +240,8 @@ class FamilyMember:
         self._typ_check(obj)
         if obj in self._relation_set[kind]:
             lst, st = self._relation_lst[kind], self._relation_set[kind]
-            lst.deregister(obj)
-            st.deregister(obj)
+            lst.remove(obj)
+            st.remove(obj)
 
     # bidirectional manipulator
     @classmethod

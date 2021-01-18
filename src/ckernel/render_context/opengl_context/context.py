@@ -1,18 +1,18 @@
 from ckernel.render_context._renderer import Renderer
 import ckernel.render_context.opengl_context.opengl_hooker as hooked_opengl
-from .context_stack import OpenglContextStack
+from .context_stack import OGLContextStack
 from global_tools.trackers import TypewiseTracker
 
 
-class OpenglContext(Renderer):
-    def __init__(self, context):
+class OGLSubContext(Renderer):
+    def __init__(self, cntxt_manager):
         """
 
         __entities: !not fully supported! better context know of its entities so
         those could be removed when context itself is removed
-        :param context:
+        :param cntxt_manager:
         """
-        self._cntxt_manager = context
+        self._cntxt_manager = cntxt_manager
         self.__entity_tracker = TypewiseTracker()
 
     def __enter__(self):
@@ -21,10 +21,10 @@ class OpenglContext(Renderer):
 
         :return:
         """
-        if OpenglContextStack.get_current() == self:    # remove duplicated binding
-            OpenglContextStack.put_current(self)
+        if OGLContextStack.get_current() == self:    # remove duplicated binding
+            OGLContextStack.put_current(self)
         else:
-            OpenglContextStack.put_current(self)
+            OGLContextStack.put_current(self)
             with self._cntxt_manager.glfw as glfw:
                 glfw.make_context_current()
 
@@ -39,9 +39,9 @@ class OpenglContext(Renderer):
         :param exc_tb:
         :return:
         """
-        OpenglContextStack.pop_current()
+        OGLContextStack.pop_current()
         # return binding
-        with OpenglContextStack.get_current()._cntxt_manager.glfw as glfw:
+        with OGLContextStack.get_current()._cntxt_manager.glfw as glfw:
             glfw.make_context_current()
 
     @property
@@ -53,5 +53,5 @@ class OpenglContext(Renderer):
         return self.__entity_tracker
 
     @property
-    def context(self):
+    def manager(self):
         return self._cntxt_manager

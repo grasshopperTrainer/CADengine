@@ -16,6 +16,7 @@ class RenderDevice(metaclass=abc.ABCMeta):
     # should provide context manager
     def __enter__(self):
         self.__manager.master._tracker.stack.push(self)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.__manager.master._tracker.stack.pop(self.__class__)
@@ -62,6 +63,10 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def device_type(self):
         return self.__device_type
+
+    @property
+    def current(self):
+        return self.__master._tracker.stack.get_current(self.device_type)
 
     @property
     def master(self):

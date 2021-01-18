@@ -79,4 +79,4 @@ class RenderArray(DrawArrayComponent):
         if prgrm is not None:
             gl.glUseProgram(prgrm.id)
         gl.glBindVertexArray(vrtx_arry.id)
-        gl.glDrawArrays(mode, idx_bound.start, idx_bound.len)
+        gl.glDrawArrays(mode, 0, 3)

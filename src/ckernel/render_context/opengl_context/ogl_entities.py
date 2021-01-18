@@ -5,7 +5,7 @@ common operations like binding, deleting
 """
 import abc
 import ckernel.render_context.opengl_context.opengl_hooker as gl
-from .context_stack import get_current_context
+from .context_stack import get_current_ogl
 
 
 class OGLEntity(metaclass=abc.ABCMeta):
@@ -57,7 +57,7 @@ class OGLEntity(metaclass=abc.ABCMeta):
 
     # binding context implement into context manager
     def __enter__(self):
-        entity_stack = get_current_context().entities.stack
+        entity_stack = get_current_ogl().entities.stack
         if not entity_stack.is_empty(self.__class__) and entity_stack.get_current(self.__class__) == self:
             entity_stack.push(self)
         else:
@@ -66,13 +66,13 @@ class OGLEntity(metaclass=abc.ABCMeta):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        entities = get_current_context().entities
+        entities = get_current_ogl().entities
         entities.stack.pop(self.__class__)
         # control over matryoshka context
         # follow bind-only policy
         if not entities.stack.is_empty(self.__class__):
-            entity = entities.stack.get_current_byclass(self.__class__)
-            entity.bind()
+            entity = entities.stack.get_current(self.__class__)
+            entity._bind()
         else:
             # only if there is no entity to return binding
             self._unbind()
@@ -163,6 +163,8 @@ class _Bffr(OGLEntity):
 class _VrtxArry(OGLEntity):
     def __init__(self, id):
         self.__id = id
+    def __str__(self):
+        return f"<VAO: {self.__id}>"
 
     def _bind(self):
         gl.glBindVertexArray(self.__id)
@@ -172,6 +174,3 @@ class _VrtxArry(OGLEntity):
 
     def delete(self):
         gl.glDeleteVertexArrays(1, self)
-
-    def __str__(self):
-        return f"<VAO: {self.__id}>"
