@@ -1,22 +1,29 @@
 from wkernel.devices.render.panes import PaneManager
 from wkernel.devices.render.cameras import CameraManager
 from wkernel.devices.input.base import Mouse, Keyboard
+from global_tools.trackers import TypewiseTracker
 
 
-class DeviceManager:
+class DeviceMaster:
     """
     Control group of devices
     """
 
     def __init__(self, window):
-        self._window = window
+        self.__window = window
+        # database
+        self._tracker = TypewiseTracker()
 
-        self.__mouse = Mouse(window, self)
-        self.__keyboard = Keyboard(window, self)
+        # of input
+        self.__mouse = Mouse(window)
+        self.__keyboard = Keyboard(window)
+        # of render
+        self.__panes = PaneManager(self)
+        self.__cameras = CameraManager(self)
 
-        # managers
-        self.__panes = PaneManager(window)
-        self.__cameras = CameraManager(window)
+    @property
+    def window(self):
+        return self.__window
 
     @property
     def mouse(self):

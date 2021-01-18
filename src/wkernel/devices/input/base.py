@@ -6,9 +6,8 @@ import ckernel.glfw_context.glfw_hooker as glfw
 
 
 class _InputDevice:
-    def __init__(self, window, manager):
+    def __init__(self, window):
         self.__window = window
-        self.__manager = manager
         self.__callback_wrapped = {}
 
     @property
@@ -20,20 +19,11 @@ class _InputDevice:
         """
         return self.__window
 
-    @property
-    def manager(self):
-        """
-        read only manager
-
-        :return: Manager instance
-        """
-        return self.__manager
-
 
 class Mouse(_InputDevice):
 
-    def __init__(self, window, manager):
-        super().__init__(window, manager)
+    def __init__(self, window):
+        super().__init__(window)
         with window.context.glfw as glfw:
             glfw.set_cursor_pos_callback(self.__master_cursor_pos_callback)
 
@@ -72,7 +62,7 @@ class Mouse(_InputDevice):
         :return:
         """
         transform_matrix = view.glyph.trnsf_matrix.r.I.M
-        w, h = self.__manager.__window.glyph.size
+        w, h = self.window.glyph.size
         unitize_matrix = ScaleMat(1 / w, 1 / h)
         pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos)
         if not normalize:
@@ -209,8 +199,8 @@ class Keyboard(_InputDevice):
     __callback_signature = glfw.set_key_callback
     __glfw_key_dict = GLFWCharDict()
 
-    def __init__(self, window, manager):
-        super().__init__(window, manager)
+    def __init__(self, window):
+        super().__init__(window)
         # build key press dict
         # what i want to record is... press status and time
         self.__key_press_dict = self.__glfw_key_dict.get_copied_dict()

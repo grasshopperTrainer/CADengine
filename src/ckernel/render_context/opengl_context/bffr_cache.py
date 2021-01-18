@@ -97,7 +97,7 @@ class BffrCache(ArrayContainer):
         if idx == self.__block_vacant_pointer-1:
             self.__block_vacant_pointer -= 1
         else:
-            self.__block_returned.append(idx)
+            self.__block_returned.register(idx)
 
     @property
     def array(self):

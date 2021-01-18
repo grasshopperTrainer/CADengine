@@ -29,7 +29,7 @@ for i in dir(gl):
 def __creator(func):
     def __wrapper(*args, **kwargs):
         obj = func(*args, **kwargs)
-        _context[0].get_current().entities.append(obj)
+        _context[0].get_current().entities.registry.register(obj)
         return obj
     return __wrapper
 

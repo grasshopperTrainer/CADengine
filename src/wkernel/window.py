@@ -6,7 +6,7 @@ from numbers import Number
 from wkernel.devices.bits import DrawInterface
 from ckernel.context_nodes import ContextManager
 from .glyph import GlyphNode, GlyphInterface
-from .devices.manager import DeviceManager
+from .devices.master import DeviceMaster
 from global_tools.callback_registry import callbackRegistry
 
 
@@ -73,7 +73,7 @@ class Window(DrawInterface, GlyphInterface):
 
         # default camera
         # FIXME: this is bad bad
-        self.__device_manager = DeviceManager(self)
+        self.__device_manager = DeviceMaster(self)
         self.devices.cameras[0].body.builder.in3_aspect_ratio = self.devices.panes[0].glyph.aspect_ratio
 
     @property
@@ -103,7 +103,7 @@ class Window(DrawInterface, GlyphInterface):
     #     return self.__pane_manager
 
     @property
-    def devices(self) -> DeviceManager:
+    def devices(self) -> DeviceMaster:
         """
         return DeviceManager which handles keyboard and mouse operation
 

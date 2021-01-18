@@ -3,6 +3,9 @@ from .none_context import OpenglNoneContext
 
 # dont know context binding is a common thing so placing class for opengl
 class OpenglContextStack:
+    """
+    Global gate class for tracking stack currency
+    """
     # reserve None context as first element
     __stack = [OpenglNoneContext()]
 

@@ -44,20 +44,11 @@ class Pane(RenderDevice, GlyphInterface):
         Open view
         :return:
         """
+        super().__enter__()  # <- must for putting in binding stack
         with self.manager.window.context.gl as gl:
             gl.glScissor(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
             gl.glViewport(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
         return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        Close view
-        :param exc_type:
-        :param exc_val:
-        :param exc_tb:
-        :return:
-        """
-        return
 
     def clear(self, r=0, g=0, b=0, a=0):
         """
@@ -97,18 +88,18 @@ class PaneManager(RenderDeviceManager):
     implements global functionalities among Pane
     """
 
-    def __init__(self, window):
-        super().__init__(window)
+    def __init__(self, device_master):
+        super().__init__(device_master)
         # default device
-        self._appendnew_device(Pane(x_exp=0,
-                                    y_exp=0,
-                                    w_exp=1.0,
-                                    h_exp=1.0,
-                                    parent=window,
-                                    manager=self))
+        self.new_pane(x_exp=0,
+                      y_exp=0,
+                      w_exp=1.,
+                      h_exp=1.,
+                      parent=device_master.window)
 
-    def __getitem__(self, item) -> Pane:
-        return self._devices[item]
+    @property
+    def device_type(self):
+        return Pane
 
     def new_pane(self, x_exp, y_exp, w_exp, h_exp, parent: GlyphInterface):
         """
@@ -121,9 +112,11 @@ class PaneManager(RenderDeviceManager):
         :param parent: parent implementing GlyphInterface
         :return:
         """
-        self._appendnew_device(Pane(x_exp,
-                                    y_exp,
-                                    w_exp,
-                                    h_exp,
-                                    parent=parent,
-                                    manager=self))
+        pane = Pane(x_exp,
+                    y_exp,
+                    w_exp,
+                    h_exp,
+                    parent=parent,
+                    manager=self)
+        self.appendnew_device(pane)
+        return pane
