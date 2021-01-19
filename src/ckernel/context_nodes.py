@@ -1,7 +1,7 @@
 from collections import deque
 import glfw as raw_glfw
 import OpenGL.GL as gl
-from .render_context.opengl_context.context import OGLSubContext
+from .render_context.opengl_context.base import OGLSubContext
 from ckernel.glfw_context.context import GLFWContext
 from .glfw_context.none_context import GLFWNoneContext
 
@@ -373,7 +373,7 @@ class ContextManager:
         pass
 
     @property
-    def gl(self):
+    def gl(self) -> gl:
         return self.__renderer_context
 
     @property

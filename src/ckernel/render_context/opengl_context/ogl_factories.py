@@ -7,6 +7,7 @@ from .error import *
 from .entity_factory import OGLEntityFactory
 from .bffr_cache import BffrCache
 import ctypes
+import abc
 
 """
 these are most likely intended to be used as descriptors
@@ -15,18 +16,19 @@ these are most likely intended to be used as descriptors
 
 class PrgrmFactory(OGLEntityFactory):
 
-    def __init__(self, vrtx_path=None, frgm_path=None, is_descriptor=True):
+    def __init__(self, vrtx_src=None, frgm_src=None, is_descriptor=True):
         """
         currently only supporsts vertex and fragment shaders
 
         When other shaders are needed, attribute has to be appended.
-        :param vrtx_path:
-        :param frgm_path:
+        :param vrtx_src:
+        :param frgm_src:
         """
-        super().__init__(is_descriptor)
         self.__shdr_srcs = defaultdict(None)
-        self.__read_source(vrtx_path, gl.GL_VERTEX_SHADER)
-        self.__read_source(frgm_path, gl.GL_FRAGMENT_SHADER)
+        if vrtx_src is not None:
+            self.__read_source(vrtx_src, gl.GL_VERTEX_SHADER)
+        if frgm_src is not None:
+            self.__read_source(frgm_src, gl.GL_FRAGMENT_SHADER)
 
     def __read_source(self, file_path, shdr_type):
         """
@@ -44,6 +46,9 @@ class PrgrmFactory(OGLEntityFactory):
         compile shaders and create program
         :return:
         """
+        if not self.__shdr_srcs:
+            raise ShaderCompileError('no shaders to compile')
+
         prgrm = gl.glCreateProgram()
 
         # create, compile, attach shaders
@@ -60,36 +65,56 @@ class PrgrmFactory(OGLEntityFactory):
 
         gl.glLinkProgram(prgrm)
         if not gl.glGetProgramiv(prgrm, gl.GL_LINK_STATUS):
-            raise PrgrmLinkError()
+            raise PrgrmLinkError(shdrs)
 
         # deleted used shaders
         for shdr in shdrs:
             gl.glDeleteShader(shdr)
         return prgrm
 
+    def attach_vrtx_shdr(self, shader_path):
+        self.__read_source(shader_path, gl.GL_VERTEX_SHADER)
 
-class BffrFactory(OGLEntityFactory):
+    def attach_frgm_shdr(self, shader_path):
+        self.__read_source(shader_path, gl.GL_FRAGMENT_SHADER)
 
-    def __init__(self, attr_desc, is_descriptor=True):
+
+class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
+
+    def __init__(self, attr_desc, attr_loc):
         """
 
         :param attr_desc: attribute description for ogl program in ndarray dtype format
                           ! use same dtype of CPUBffr cooperating
-
-        :param is_descriptor: bool, determine whether to create entity per context
-                               ! If False, it is likely returned entity will cause context error.
-                               Make it False under provision of user-controlled context binding.
+        :param attr_loc: (Int, ...), describe each field's attribute location in glsl program
         """
-        super().__init__(is_descriptor)
+        # check attribute description
         try:
-            np.dtype(attr_desc)
+            self.__attr_desc = np.dtype(attr_desc)
         except Exception as e:
             raise e
-        self.__attr_desc = np.dtype(attr_desc)  # normalize
+        # check attribute location
+        if not (isinstance(attr_loc, (tuple, list)) and all(isinstance(l, int) for l in attr_loc)):
+            raise TypeError('attr_loc should be (tuple, list) of int value')
+        if len(set(attr_loc)) != len(attr_loc):
+            raise ValueError('attr_loc has to have unique values')
+        if len(self.__attr_desc.fields) != len(attr_loc):
+            raise ValueError('all attribute has to have location value')
+        self.__attr_loc = attr_loc
 
     @property
+    @abc.abstractmethod
     def target(self):
-        return getattr(self, f"_{self.__class__.__name__}__target")
+        """
+        ! abstract attribute
+
+        :return: gl render target constant, ex) gl.GL_ARRAY_BUFFER, gl.GL_ELEMENT_ARRAY_BUFFER
+        """
+        pass
+
+    @property
+    def attr_loc(self):
+        return self.__attr_loc
 
     def _create_entity(self):
         """
@@ -100,18 +125,18 @@ class BffrFactory(OGLEntityFactory):
         return obj
 
     @property
-    def field_props(self):
+    def attr_props(self):
         """
         set of property describing interleaveness of the array
 
         :return: list(namedtuple(),...)
         """
         tuples = []
-        ntuple = namedtuple('interleave_prop', 'name, size, dtype, stride, offset')
+        ntuple = namedtuple('interleave_prop', 'name, loc, size, dtype, stride, offset')
         stride = self.__attr_desc.itemsize
-        for name, (dtype, offset) in self.__attr_desc.fields.items():
+        for (name, (dtype, offset)), loc in zip(self.__attr_desc.fields.items(), self.__attr_loc):
             dtype, shape = dtype.subdtype
-            tuples.append(ntuple(name, shape[0], dtype, stride, offset))
+            tuples.append(ntuple(name, loc, shape[0], dtype, stride, offset))
         return tuple(tuples)
 
 
@@ -121,40 +146,39 @@ class ArryBffrFactory(BffrFactory):
 
     Buffer of GL_ARRAY_BUFFER target
     """
-    __target = gl.GL_ARRAY_BUFFER
+    @property
+    def target(self):
+        return gl.GL_ARRAY_BUFFER
 
 
 class VrtxArryFactory(OGLEntityFactory):
 
-    def __init__(self, *bffr_facs, is_descriptor=True):
+    def __init__(self, *bffr_facs):
         """
 
         :param bffr_facs: ! OGLBffrFactory not OGLBffr
-        :param is_descriptor:
         """
-        super().__init__(is_descriptor)
-        self.__bffr_facs = bffr_facs
+        self.__bffr_factories = []
+        self.__bffr_factories += list(bffr_facs)
 
     def _create_entity(self):
         """
         create vertex array and bind attribute pointers
         :return:
         """
-        attr_idx = 0
         vao = gl.glGenVertexArrays(1)
         with vao:
             # for each buffer, bind attribute pointer in order
-            for bffr_fct in self.__bffr_facs:
+            for bffr_fct in self.__bffr_factories:
                 with bffr_fct.get_entity():
-                    for _, size, dtype, stride, offset in bffr_fct.field_props:
-                        gl.glEnableVertexAttribArray(attr_idx)  # ! dont forget
-                        gl.glVertexAttribPointer(index=attr_idx,
+                    for _,loc, size, dtype, stride, offset in bffr_fct.attr_props:
+                        gl.glEnableVertexAttribArray(loc)  # ! dont forget
+                        gl.glVertexAttribPointer(index=loc,
                                                  size=4,
                                                  type=self.translate_ndtype(dtype),
                                                  normalized=gl.GL_FALSE,
                                                  stride=stride,
                                                  pointer=ctypes.c_void_p(offset))   # ! must feed c_void_p
-                        attr_idx += 1
 
         return vao
 
@@ -195,6 +219,9 @@ class VrtxArryFactory(OGLEntityFactory):
         else:
             raise ValueError('incomprehensible numpy dtype')
 
+    def attach_arry_bffr(self, bffr):
+        self.__bffr_factories.append(bffr)
+
 
 class BffrCacheFactory(OGLEntityFactory):
     """
@@ -208,7 +235,6 @@ class BffrCacheFactory(OGLEntityFactory):
         :param dtype: (list, tuple), numpy structured dtype description
         :param is_descriptor:
         """
-        super().__init__(is_descriptor)
         # check dtype description
         try:
             self.__dtype = np.dtype(dtype)

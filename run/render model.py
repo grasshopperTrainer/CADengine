@@ -14,29 +14,31 @@ class MyWindow(Window):
 
         # create model
         self.model = Model()
+        # create triangles
         e = 50
         t0 = Tgl([0, 0, 0], [e, 0, 0], [0, e, 0])
         t1 = Tgl([0, 0, 0], [0, e, 0], [0, 0, e])
         t2 = Tgl([0, 0, 0], [e, 0, 0], [0, 0, e])
+        # set fill color
         i, a = 1, .5
         t0.clr_fill = i, 0, 0, a
         t1.clr_fill = 0, i, 0, a
         t2.clr_fill = 0, 0, i, a
+        # set edge color
+        for t in (t0, t1, t2):
+            t.clr_edge = 0, 0, 0, 1
+        # build model
         self.model.append_shape(t0)
         self.model.append_shape(t1)
         self.model.append_shape(t2)
 
     def draw(self, frame_count=None):
-        with self.devices.panes[0] as v:
+        with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
-                pass
-                v.clear(.5, .5, .5, 1)
+                p.clear(.5, .5, .5, 1)
                 # e = 100
-                # triangle([0, 0, 0], [0, e, 0], [0, 0, e])
                 self.model.test_render()
-                # triangle([0, 0, 0], [e, 0, 0], [0, e, 0])
-                # triangle([0, 0, 0], [e, 0, 0], [0, 0, e])
                 # self.model.intersect(c.frusrum_ray(*v.local_cursor()))
 
 
-MyWindow().run_all(1)
+MyWindow().run_all()

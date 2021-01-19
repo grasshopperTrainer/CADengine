@@ -55,7 +55,7 @@ class BffrCache(ArrayContainer):
         """
         raise NotImplementedError
 
-    def request_block_vacant(self, size):
+    def request_vacant(self, size):
         """
         :return: ndarray, consecutive vacant vertices from array of given size
         """
@@ -119,7 +119,7 @@ class BffrCache(ArrayContainer):
         return self.__array.size * self.__array.itemsize
 
     @property
-    def num_vertex_inuse(self):
+    def count_used_vrtx(self):
         """
 
         :return: int, number of vertex in use

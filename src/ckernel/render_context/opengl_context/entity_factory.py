@@ -3,7 +3,6 @@ import abc
 
 from .ogl_entities import OGLEntity
 from .context_stack import OGLContextStack, OpenglUnboundError
-from .error import *
 
 
 class OGLEntityFactory(metaclass=abc.ABCMeta):
@@ -16,35 +15,30 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
     Factory class for creating entities in relationship with a given OpenGL context.
     ! 'OGLEntity' doesnt mean that the Factory only has to provide OpenGL entity, ex) vao, vbo, ibo.
     Its more like a logical description. 'OGLEntity' describes any object dependent to OGL context.
+
+    This class can be used as descriptor and not.
+
+    as a descriptor:
+    entity of context at the calling moment will be created lazily, if nonexistent, and returned
+    through __get__.
+
+    as a none descriptor:
+    Instance will function as a simple factory class. Use `get_entity` to retrieve unique entity.
     """
-    def __init__(self, is_descriptor):
+
+    @property
+    def __context_entity(self):
         """
-        ! inheritor must call this method to initiate base members
+        lazy parameter assignment
 
-        :param is_descriptor: bool, determines the functionality of the class. There can be four cases in combination of
-                            'is_descriptor' value and whether instance of this class is a class, or instance member of
-                            another class. 3 out of 4 cases has usage while 1 is a contradictory definition and is not
-                            guaranteed to function.
-
-                            Case1 `is_descriptor` == True and 'class member' == True:
-                            entity of context at the calling moment will be created lazily, if nonexistent, and returned
-                            through __get__.
-
-                            Case2 'is_descriptor' == True and 'class member' == False:
-                            Contradiction. Will through Error when `create_entity` is called.
-
-                            Case3 `is_descriptor` == False and 'class member' == True:
-                            Instance will function as a simple factory method. Use `get entity` to retrieve entity.
-                            If willing to use single Entity as a class member, simply chain instantiation and
-                            `create_entity` to assign Entity, not Factory.
-                            ex) class Foo:
-                                entity = EntityFactory().create_entity()    # `entity` member has an Entity not Factory
-
-                            Case4 `is_descriptor` == False and `class member` == False:
-                            Instance will function as a simple factory method. Use `get entity` to retrieve entity.
+        this removes obligation of super().__init__()
+        whilst creating entity storage when needed
+        :return:
         """
-        self.__is_descriptor = is_descriptor
-        self.__context_entity = weakref.WeakKeyDictionary()
+        name = '__context_entity'
+        if not hasattr(self, name):
+            setattr(self, name, weakref.WeakKeyDictionary())
+        return self.__getattribute__(name)
 
     def __get_unique_entity(self):
         """
@@ -76,8 +70,6 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
         :return:
         """
         # is a factory if not a descriptor
-        if not self.__is_descriptor:
-            return self
         return self.__get_unique_entity()
 
     def __set__(self, instance, value):
@@ -105,7 +97,4 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
         `ckernel.render_context.opengl_context.ogl_factories.OGLVrtxArryFactory`
         :return:
         """
-        if self.__is_descriptor:
-            return self.__get_unique_entity()
-        else:
-            return self._create_entity()
+        return self.__get_unique_entity()

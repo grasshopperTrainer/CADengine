@@ -64,6 +64,7 @@ class Pane(RenderDevice, GlyphInterface):
         with self.manager.window.context.gl as gl:
             gl.glClearColor(r, g, b, a)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+            gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
 
     def local_cursor(self):
         """

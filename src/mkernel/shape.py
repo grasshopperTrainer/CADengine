@@ -17,13 +17,39 @@ class Shape(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def render_all(cls):
+    def render_face(cls):
         """
-        render all instance of a class
+        render shape face
 
         :return:
         """
 
+    @classmethod
+    @abc.abstractmethod
+    def render_line(cls):
+        """
+        render shape edge
+
+        :return:
+        """
+
+    @classmethod
+    @abc.abstractmethod
+    def render_point(cls):
+        """
+        render shape vertex
+
+        :return:
+        """
+
+    @classmethod
+    @abc.abstractmethod
+    def render_default(cls):
+        """
+        render default expression
+
+        :return:
+        """
 
     @abc.abstractmethod
     def intersect(self, ray):
