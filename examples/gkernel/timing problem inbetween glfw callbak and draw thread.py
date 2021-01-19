@@ -45,4 +45,4 @@ class MyWindow(Window):
                 print(Vec() == 0)
 
 
-MyWindow().run(1)
+MyWindow().run_all(1)

@@ -1,5 +1,7 @@
-from gkernel.dtype.geometric.primitive import Pln
 from gkernel.tools.intersector import Intersector as intx
+import mkernel.gkernel_wrapper as gw
+from .shape import Shape
+
 
 class ModelIterator:
     def __init__(self, shapes):
@@ -17,7 +19,7 @@ class ModelIterator:
 class Model:
     def __init__(self):
         self._shapes = []
-        self._plane = Pln()
+        self._plane = gw.Pln()
 
     def append_shape(self, shape):
         self._shapes.append(shape)
@@ -49,5 +51,12 @@ class Model:
         """
         redner all shaped inside model
 
+        call all renderer defined in shaped inside gkernel_wrapper
         :return:
         """
+        for k, v in gw.__dict__.items():
+            if isinstance(v, type) and issubclass(v, Shape):    # find shape class
+                v.get_cls_renderer().run_all()
+
+    def test_render(self):
+        gw.Tgl.render_all()

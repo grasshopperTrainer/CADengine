@@ -7,12 +7,25 @@
 ! distinction: 'native shape, nonnative shape'
 """
 
+import abc
 
-class Shape:
+
+class Shape(metaclass=abc.ABCMeta):
     """
     Interface for a shape object.
     """
 
+    @classmethod
+    @abc.abstractmethod
+    def render_all(cls):
+        """
+        render all instance of a class
+
+        :return:
+        """
+
+
+    @abc.abstractmethod
     def intersect(self, ray):
         """
         shape is responsible for intersecting with ray
@@ -21,8 +34,21 @@ class Shape:
         """
         raise NotImplementedError
 
+    @property
+    @abc.abstractmethod
+    def geo(self):
+        """
+        return geometry object of the shape
+
+        Geometry object is a object that stores goemetric data.
+        Geometric calculation has to be done using this object and set with resulted to make it updated.
+        :return:
+        """
+        return self.__geo
+
     def triangulated(self):
         """
         return triangulated form?
         :return:
         """
+

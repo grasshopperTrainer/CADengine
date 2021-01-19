@@ -1,8 +1,9 @@
 from JINTFP import *
 from gkernel.dtype.geometric.primitive import Pln, Vec
-from gkernel.dtype.nongeometric.matrix import MoveMat, RotZMat, TrnsfMats, ViewMatrix, ProjectionMatrix
+from gkernel.dtype.nongeometric.matrix.primitive import MoveMat, RotZMat, TrnsfMats
+from gkernel.dtype.nongeometric.matrix.complex import ViewMatrix, ProjectionMatrix
 from global_tools import Singleton
-
+from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
 class CameraNode(NodeBody):
     """
@@ -37,11 +38,11 @@ class FovCamera(_CameraBodyBuilder):
     ratio of width/height of near cliping plane
     """
     hfov = Input()
+    aspect_ratio = Input()
     near = Input()
     far = Input()
-    aspect_ratio = Input()
 
-    def calculate(self, hfov, near, far, ratio):
+    def calculate(self, hfov, ratio, near, far):
         r = near * np.tan(hfov / 2)
         l = -r
         t = r / ratio
@@ -307,6 +308,7 @@ class CameraCurrentStack(CameraNode):
         super().__init__()
 
     def calculate(self):
+        return get_current_ogl().manager.window.devices.cameras.current
         if self._current_stack:
             return self._current_stack[-1]
         return None

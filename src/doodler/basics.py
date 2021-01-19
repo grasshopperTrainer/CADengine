@@ -1,7 +1,8 @@
-import wkernel.hooked.openglHooked as gl
+import OpenGL.GL as gl
+
 import wkernel.pipeline.nodes as node
 from global_tools import Singleton
-from wkernel.env.windowing.bits import DrawInterface
+from wkernel.devices.bits import DrawInterface
 
 
 @Singleton

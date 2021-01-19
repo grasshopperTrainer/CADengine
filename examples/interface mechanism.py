@@ -103,7 +103,7 @@ class NodeSpvr:
                 for out, rights in dist_rels['rels'].items():
                     for right, inps in rights.items():
                         if intf in inps:
-                            inps.remove(intf)
+                            inps.deregister(intf)
                             if not inps:
                                 del rights[right]
                             break

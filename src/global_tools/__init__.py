@@ -1,2 +1,2 @@
-from ._callback_registry import callbackRegistry
-from ._singleton import Singleton
+from .callback_registry import callbackRegistry
+from .singleton import Singleton

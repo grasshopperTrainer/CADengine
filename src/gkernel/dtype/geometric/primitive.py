@@ -6,8 +6,8 @@ from numbers import Number
 import numpy as np
 
 from gkernel.constants import DTYPE
-from gkernel.dtype.nongeometric.matrix import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
-from .._DataType import ArrayLikeData
+from gkernel.dtype.nongeometric.matrix.primitive import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
+from gkernel.array_like import ArrayLikeData
 
 
 class Mat1(ArrayLikeData):
@@ -601,10 +601,9 @@ class Pnt(Mat1, VecConv, PntConv):
     """
 
     def __new__(cls, x=0, y=0, z=0):
-        return np.array([[x],
-                         [y],
-                         [z],
-                         [1]], dtype=DTYPE).view(cls)
+        obj = super().__new__(cls, shape=(4, 1), dtype=DTYPE)
+        obj[:4, 0] = x, y, z, 1
+        return obj
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -1027,10 +1026,11 @@ class Tgl(ArrayLikeData):
         :param v1:
         :param v2:
         """
-        obj = np.array([[v0[0], v1[0], v2[0]],
-                        [v0[1], v1[1], v2[1]],
-                        [v0[2], v1[2], v2[2]],
-                        [1, 1, 1]], dtype=DTYPE).view(cls)
+        obj = super().__new__(cls, shape=(4, 3), dtype=DTYPE)
+        obj[:] = [[v0[0], v1[0], v2[0]],
+                  [v0[1], v1[1], v2[1]],
+                  [v0[2], v1[2], v2[2]],
+                  [1, 1, 1]]
         return obj
 
     @property
