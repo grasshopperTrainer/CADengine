@@ -25,8 +25,9 @@ renderer holds program and global uniform cache
 program structure:
 ! follow fixed attribute location
 layout(location = 0) in vtx;
-layout(location = 1) in clr_edge;
-layout(location = 2) in clr_fill;
+layout(location = 1) in edge_thk;
+layout(location = 2) in edge_clr;
+layout(location = 3) in clr_fill;
 
 """
 
@@ -52,9 +53,9 @@ class PointRenderer:
 
 
 class LineRenderer:
-    __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'lin_vrtx_shdr.glsl')
-    __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'lin_frgm_shdr.glsl')
-    __prgrm = ogl.PrgrmFactory(vrtx_src=__vrtx_shdr_path, frgm_src=__frgm_shdr_path)
+    __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/lin_vrtx_shdr.glsl')
+    __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/lin_frgm_shdr.glsl')
+    __prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
 
     __ufrm_cache = BffrCache(dtype=[('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4)), ('MM', 'f4', (4, 4))],
                              size=1)
@@ -82,9 +83,40 @@ class LineRenderer:
 
 
 class TriangleRenderer(_PrimitiveRenderer):
-    __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'tgl_vrtx_shdr.glsl')
-    __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'tgl_frgm_shdr.glsl')
-    __prgrm = ogl.PrgrmFactory(vrtx_src=__vrtx_shdr_path, frgm_src=__frgm_shdr_path)
+    __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglFill_vrtx_shdr.glsl')
+    __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglFill_frgm_shdr.glsl')
+    __prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
+
+    __ufrm_cache = BffrCache(dtype=[('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4)), ('MM', 'f4', (4, 4))],
+                             size=1)
+
+    @classmethod
+    def render(cls, vao, vrtx_count):
+        with vao:
+            with cls.__prgrm:
+                camera = get_current_ogl().manager.window.devices.cameras.current
+                vm = camera.tripod.VM.r
+                pm = camera.body.PM.r
+                cls.__ufrm_cache['VM'] = vm
+                cls.__ufrm_cache['PM'] = pm
+                cls.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                          [0, 1, 0, 0],
+                                          [0, 0, 1, 0],
+                                          [0, 0, 0, 1]]
+
+                # update uniform data
+                UniformPusher.push_all(cls.__ufrm_cache, cls.__prgrm)
+
+                gl.glDrawArrays(gl.GL_TRIANGLES,
+                                0,
+                                vrtx_count)
+
+
+class TriangleEdgeRenderer(_PrimitiveRenderer):
+    __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl')
+    __geom_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl')
+    __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl')
+    __prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, geom_path=__geom_shdr_path, frgm_path=__frgm_shdr_path)
 
     __ufrm_cache = BffrCache(dtype=[('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4)), ('MM', 'f4', (4, 4))],
                              size=1)

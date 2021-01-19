@@ -45,10 +45,13 @@ class Pln(pg.Pln, shp.Shape):
 
 class Tgl(shp.Shape):
     # array buffer and vao
-    __dtype = [('vtx', 'f4', 4), ('clr_edge', 'f4', 4), ('clr_fill', 'f4', 4)]
-    __vrtx_bffr = ogl.ArryBffrFactory(attr_desc=__dtype, attr_loc=(0, 1, 2))
+    __dtype = [('vtx', 'f4', 4), ('edge_thk', 'f4', 1), ('edge_clr', 'f4', 4), ('fill_clr', 'f4', 4)]
+    __vrtx_bffr = ogl.ArryBffrFactory(attr_desc=__dtype, attr_loc=(0, 1, 2, 3))
     __vrtx_cache = BffrCache(dtype=__dtype, size=32)
     __vao = ogl.VrtxArryFactory(__vrtx_bffr)
+
+    # global settin
+    __is_render_edge = True;
 
     def __init__(self, v0, v1, v2):
         """
@@ -65,8 +68,9 @@ class Tgl(shp.Shape):
         """
         self.__block = self.__vrtx_cache.request_vacant(3)
         self.__geo = pg.Tgl()
-        self.__clr_fill = ClrRGBA(1, 1, 1, 1)
-        self.__clr_edge = ClrRGBA(0, 0, 0, 1)
+        self.__fill_clr = ClrRGBA(1, 1, 1, 1)
+        self.__edge_clr = ClrRGBA(0, 0, 0, 1)
+        self.__edge_thk = 1
 
         self.geo = pg.Tgl(v0, v1, v2)
         self.clr_fill = ClrRGBA(1, 1, 1, 1)
@@ -84,7 +88,7 @@ class Tgl(shp.Shape):
 
     @property
     def clr_fill(self):
-        return self.__clr_fill
+        return self.__fill_clr
 
     @clr_fill.setter
     def clr_fill(self, v):
@@ -97,15 +101,15 @@ class Tgl(shp.Shape):
         """
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__block['clr_fill'][..., :len(v)] = v
-        self.__clr_fill[:len(v)] = v
+        self.__block['fill_clr'][..., :len(v)] = v
+        self.__fill_clr[:len(v)] = v
 
     @property
-    def clr_edge(self):
-        return self.__clr_edge
+    def edge_clr(self):
+        return self.__edge_clr
 
-    @clr_edge.setter
-    def clr_edge(self, v):
+    @edge_clr.setter
+    def edge_clr(self, v):
         """
         set edge color
 
@@ -113,27 +117,30 @@ class Tgl(shp.Shape):
         """
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__block['clr_edge'][..., :len(v)] = v
-        self.__clr_fill[:len(v)] = v
+        self.__block['edge_clr'][..., :len(v)] = v
+        self.__fill_clr[:len(v)] = v
+
+    @property
+    def edge_thk(self):
+        return self.__edge_thk
+
+    @edge_thk.setter
+    def edge_thk(self, v):
+        self.__block['edge_thk'][:] = v
+        self.__edge_thk = v
 
     def intersect(self, ray):
         raise NotImplementedError
 
     @classmethod
-    def render_face(cls):
+    def set_render_edge(cls, b):
+        if not isinstance(b, bool):
+            raise TypeError
+        cls.__render_edge = b
+
+    @classmethod
+    def render(cls):
         cls.__vrtx_bffr.push_all(cls.__vrtx_cache)
         TriangleRenderer.render(vao=cls.__vao, vrtx_count=cls.__vrtx_cache.count_used_vrtx)
-
-    @classmethod
-    def render_line(cls):
-        cls.__vrtx_bffr.push_all(cls.__vrtx_cache)
-        LineRenderer.render(vao=cls.__vao, vrtx_count=cls.__vrtx_cache.count_used_vrtx)
-
-    @classmethod
-    def render_point(cls):
-        raise NotImplementedError
-
-    @classmethod
-    def render_default(cls):
-        cls.render_face()
-        cls.render_line()
+        if cls.__is_render_edge:
+            TriangleEdgeRenderer.render(vao=cls.__vao, vrtx_count=cls.__vrtx_cache.count_used_vrtx)

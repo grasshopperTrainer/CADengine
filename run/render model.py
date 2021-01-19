@@ -20,17 +20,18 @@ class MyWindow(Window):
         t1 = Tgl([0, 0, 0], [0, e, 0], [0, 0, e])
         t2 = Tgl([0, 0, 0], [e, 0, 0], [0, 0, e])
         # set fill color
-        i, a = 1, .5
+        i, a = 1, 1
         t0.clr_fill = i, 0, 0, a
         t1.clr_fill = 0, i, 0, a
         t2.clr_fill = 0, 0, i, a
         # set edge color
         for t in (t0, t1, t2):
-            t.clr_edge = 0, 0, 0, 1
+            t.edge_clr = 1, 1, 1, 1
+            t.edge_thk = 3
         # build model
-        self.model.append_shape(t0)
-        self.model.append_shape(t1)
-        self.model.append_shape(t2)
+        # self.model.append_shape(t0)
+        # self.model.append_shape(t1)
+        # self.model.append_shape(t2)
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:
@@ -40,5 +41,4 @@ class MyWindow(Window):
                 self.model.test_render()
                 # self.model.intersect(c.frusrum_ray(*v.local_cursor()))
 
-
-MyWindow().run_all()
+MyWindow().run_all(1)

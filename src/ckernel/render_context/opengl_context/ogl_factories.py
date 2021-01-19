@@ -16,19 +16,21 @@ these are most likely intended to be used as descriptors
 
 class PrgrmFactory(OGLEntityFactory):
 
-    def __init__(self, vrtx_src=None, frgm_src=None, is_descriptor=True):
+    def __init__(self, vrtx_path=None, geom_path=None, frgm_path=None):
         """
         currently only supporsts vertex and fragment shaders
 
         When other shaders are needed, attribute has to be appended.
-        :param vrtx_src:
-        :param frgm_src:
+        :param vrtx_path:
+        :param frgm_path:
         """
         self.__shdr_srcs = defaultdict(None)
-        if vrtx_src is not None:
-            self.__read_source(vrtx_src, gl.GL_VERTEX_SHADER)
-        if frgm_src is not None:
-            self.__read_source(frgm_src, gl.GL_FRAGMENT_SHADER)
+        if vrtx_path is not None:
+            self.__read_source(vrtx_path, gl.GL_VERTEX_SHADER)
+        if geom_path is not None:
+            self.__read_source(geom_path, gl.GL_GEOMETRY_SHADER)
+        if frgm_path is not None:
+            self.__read_source(frgm_path, gl.GL_FRAGMENT_SHADER)
 
     def __read_source(self, file_path, shdr_type):
         """
@@ -59,7 +61,7 @@ class PrgrmFactory(OGLEntityFactory):
                 gl.glShaderSource(shdr, src)
                 gl.glCompileShader(shdr)
                 if not gl.glGetShaderiv(shdr, gl.GL_COMPILE_STATUS):
-                    raise ShaderCompileError()
+                    raise ShaderCompileError(shdr_type)
                 gl.glAttachShader(prgrm, shdr)
                 shdrs.append(shdr)
 
@@ -72,11 +74,15 @@ class PrgrmFactory(OGLEntityFactory):
             gl.glDeleteShader(shdr)
         return prgrm
 
+    # attachers
     def attach_vrtx_shdr(self, shader_path):
         self.__read_source(shader_path, gl.GL_VERTEX_SHADER)
 
     def attach_frgm_shdr(self, shader_path):
         self.__read_source(shader_path, gl.GL_FRAGMENT_SHADER)
+
+    def attach_geom_shdr(self, shader_path):
+        self.__read_source(shader_path, gl.GL_GEOMETRY_SHADER)
 
 
 class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
@@ -135,7 +141,11 @@ class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
         ntuple = namedtuple('interleave_prop', 'name, loc, size, dtype, stride, offset')
         stride = self.__attr_desc.itemsize
         for (name, (dtype, offset)), loc in zip(self.__attr_desc.fields.items(), self.__attr_loc):
-            dtype, shape = dtype.subdtype
+            # for shape 1 not having subdtype
+            if dtype.subdtype is not None:
+                dtype, shape = dtype.subdtype
+            else:
+                shape = (1,)
             tuples.append(ntuple(name, loc, shape[0], dtype, stride, offset))
         return tuple(tuples)
 
@@ -146,6 +156,7 @@ class ArryBffrFactory(BffrFactory):
 
     Buffer of GL_ARRAY_BUFFER target
     """
+
     @property
     def target(self):
         return gl.GL_ARRAY_BUFFER
@@ -171,14 +182,14 @@ class VrtxArryFactory(OGLEntityFactory):
             # for each buffer, bind attribute pointer in order
             for bffr_fct in self.__bffr_factories:
                 with bffr_fct.get_entity():
-                    for _,loc, size, dtype, stride, offset in bffr_fct.attr_props:
+                    for _, loc, size, dtype, stride, offset in bffr_fct.attr_props:
                         gl.glEnableVertexAttribArray(loc)  # ! dont forget
                         gl.glVertexAttribPointer(index=loc,
                                                  size=4,
                                                  type=self.translate_ndtype(dtype),
                                                  normalized=gl.GL_FALSE,
                                                  stride=stride,
-                                                 pointer=ctypes.c_void_p(offset))   # ! must feed c_void_p
+                                                 pointer=ctypes.c_void_p(offset))  # ! must feed c_void_p
 
         return vao
 
@@ -217,7 +228,7 @@ class VrtxArryFactory(OGLEntityFactory):
             return gl.GL_DOUBLE
 
         else:
-            raise ValueError('incomprehensible numpy dtype')
+            raise ValueError('incomprehensible numpy dtype', dtype)
 
     def attach_arry_bffr(self, bffr):
         self.__bffr_factories.append(bffr)

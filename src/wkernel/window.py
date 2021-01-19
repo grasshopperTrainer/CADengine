@@ -56,6 +56,7 @@ class Window(DrawInterface, GlyphInterface):
         with self.__context.gl as gl:
             gl.glEnable(gl.GL_SCISSOR_TEST)
             gl.glEnable(gl.GL_DEPTH_TEST)
+            gl.glDepthFunc(gl.GL_LESS)
             gl.glEnable(gl.GL_BLEND)
         with self.__context.glfw as glfw:
             glfw.set_window_close_callback(self.__close_window)

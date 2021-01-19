@@ -51,13 +51,14 @@ class UniformPusher:
             return cls.__uniform_meta[prgrm]
 
         d = {}
-        for name, shape, dtype, _, _ in cpu_bffr.field_props:
-            loc = gl.glGetUniformLocation(prgrm, name)   # or better store function too?
-            if loc == -1:
-                raise ValueError(loc)
-            func = cls.parse_ufrm_func(shape, dtype)
-            d[name] = (func, loc)
-        cls.__uniform_meta[prgrm] = d
+        with prgrm:
+            for name, shape, dtype, _, _ in cpu_bffr.field_props:
+                loc = gl.glGetUniformLocation(prgrm, name)   # or better store function too?
+                if loc == -1:
+                    raise ValueError(loc, name)
+                func = cls.parse_ufrm_func(shape, dtype)
+                d[name] = (func, loc)
+            cls.__uniform_meta[prgrm] = d
         return d
 
     @staticmethod
