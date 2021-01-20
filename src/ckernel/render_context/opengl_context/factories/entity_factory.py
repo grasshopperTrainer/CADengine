@@ -1,8 +1,8 @@
 import weakref
 import abc
 
-from .ogl_entities import OGLEntity
-from .context_stack import OGLContextStack, OpenglUnboundError
+from ckernel.render_context.opengl_context.ogl_entities import OGLEntity
+from ckernel.render_context.opengl_context.context_stack import OGLContextStack, OpenglUnboundError
 
 
 class OGLEntityFactory(metaclass=abc.ABCMeta):

@@ -1,15 +1,10 @@
-import os
 import numpy as np
 
 import gkernel.dtype.geometric.primitive as pg
 from gkernel.color.primitive import ClrRGBA
 import mkernel.shape as shp
-import ckernel.render_context.opengl_context.ogl_factories as ogl
-import ckernel.render_context.opengl_context.opengl_hooker as gl
-from ckernel.render_context.opengl_context.uniform_pusher import UniformPusher
-from ckernel.render_context.opengl_context.context_stack import get_current_ogl
-from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 from .primitive_renderer import *
+import ckernel.render_context.opengl_context.factories as ogl
 
 
 class Ray(pg.Ray, shp.Shape):
@@ -36,6 +31,13 @@ class Vec(pg.Vec, shp.Shape):
 
 
 class Lin(pg.Lin, shp.Shape):
+    __dtype = [('vtx', 'f4', 2), ('edge_thk', 'f4', 1), ('edge_clr', 'f4', 4)]
+    __vrtx_bffr = ogl.ArryBffrFactory(attr_desc=__dtype, attr_loc=(0, 1, 2))
+    __vrtx_cache = BffrCache(dtype=__dtype, size=32)
+    __vao = ogl.VrtxArryFactory(__vrtx_bffr)
+
+
+class Plin(shp.Shape):
     pass
 
 
@@ -51,7 +53,7 @@ class Tgl(shp.Shape):
     __vao = ogl.VrtxArryFactory(__vrtx_bffr)
 
     # global settin
-    __is_render_edge = True;
+    __is_render_edge = True
 
     def __init__(self, v0, v1, v2):
         """

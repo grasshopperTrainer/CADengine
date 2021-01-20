@@ -60,3 +60,4 @@ class Model:
 
     def test_render(self):
         gw.Tgl.render()
+        gw.Lin.render()

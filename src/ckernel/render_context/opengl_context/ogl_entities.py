@@ -82,10 +82,15 @@ class OGLEntity(metaclass=abc.ABCMeta):
 class _Prgrm(OGLEntity):
     def __init__(self, id):
         self.__id = id
+        self.__vrtxattr_skema = None
+        self.__ufrm_skema = None
+
+    def __str__(self):
+        return f"<Program: {self.__id}>"
 
     def _bind(self):
         """
-        bind program
+        bind prgrm
 
         Use after ogl context binding
         :return:
@@ -95,8 +100,41 @@ class _Prgrm(OGLEntity):
     def delete(self):
         gl.glDeleteProgram(self)
 
-    def __str__(self):
-        return f"<Program: {self.__id}>"
+    def attach_vrtxattr_skema(self, vrtxattr_skema):
+        """
+        store skema of vertex attribute of the program
+
+        :param vrtxattr_skema: VrtxAttrSkema,
+        :return:
+        """
+        self.__vrtxattr_skema = vrtxattr_skema
+
+    def attach_ufrm_skema(self, ufrm_skema):
+        """
+        store skema of uniforms of the program
+
+        :param ufrm_skema: UfrmSkema,
+        :return:
+        """
+        self.__ufrm_skema = ufrm_skema
+
+    def create_vrtxattr_cache(self, size):
+        """
+        create buffer cache for vertex attributes
+
+        :param size:
+        :return:
+        """
+        return self.__vrtxattr_skema.create_bffr_cache(size)
+
+    def create_ufrm_cache(self, size):
+        """
+        create uniform cache for uniforms
+
+        :param size:
+        :return:
+        """
+        return self.__ufrm_skema.create_bffr_cache(size)
 
 
 class _Shdr(OGLEntity):
@@ -115,7 +153,7 @@ class _Shdr(OGLEntity):
     def delete(self):
         """
         delete
-        If shader is only for a single program, deletion is advised after successful program link.
+        If shader is only for a single prgrm, deletion is advised after successful prgrm link.
         :return:
         """
         gl.glDeleteShader(self)

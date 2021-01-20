@@ -3,8 +3,11 @@
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 8) out;
 
+layout (location = 0) uniform mat4 MM = mat4(1.0);
+layout (location = 1) uniform mat4 VM = mat4(1.0);
+layout (location = 2) uniform mat4 PM = mat4(1.0);
+
 in vsOut {
-    mat4 trnsf_mat;
     float edgeThk;
     vec4 edgeClr;
 } vs_in[];
@@ -33,7 +36,7 @@ void emit(vec3 p, mat4 tm, float zOff) {
 }
 
 void main() {
-    mat4 trnsf_mat = vs_in[0].trnsf_mat;
+    mat4 trnsf_mat = PM*VM*MM;
     float thk = vs_in[0].edgeThk;
     float zOff = -0.01;   // closer to camera. prevent z fighting
 

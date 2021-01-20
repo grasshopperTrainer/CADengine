@@ -8,7 +8,7 @@ import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 class UniformPusher:
     """
-    Pushed array into OpenGL program to given location
+    Pushed array into OpenGL prgrm to given location
     """
     # (OGLPrgrm, {name:loc}) caching
     # weak ref is enough -> loosing cache is not critical, can be restored.
@@ -21,10 +21,10 @@ class UniformPusher:
     @classmethod
     def push_all(cls, ufrm_data, prgrm):
         """
-        push data into bound ogl program
+        push data into bound ogl prgrm
 
-        :param ufrm_data: `_BffrCache`, data to push into ogl program
-        :param prgrm: `_Prgrm`, data to push into ogl program
+        :param ufrm_data: `_BffrCache`, data to push into ogl prgrm
+        :param prgrm: `_Prgrm`, data to push into ogl prgrm
         :return:
         """
         d = cls.__getreg_uniform_loc(ufrm_data, prgrm)
@@ -42,9 +42,9 @@ class UniformPusher:
     @classmethod
     def __getreg_uniform_loc(cls, cpu_bffr, prgrm):
         """
-        get, or reg and get, uniform location of a program
+        get, or reg and get, uniform location of a prgrm
 
-        :param prgrm: program to find location of uniforms
+        :param prgrm: prgrm to find location of uniforms
         :return:
         """
         if prgrm in cls.__uniform_meta:

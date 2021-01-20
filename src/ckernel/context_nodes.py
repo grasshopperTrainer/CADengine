@@ -108,7 +108,7 @@ class ContextMaster:
             raw_glfw.make_context_current(win)  # objects below belongs to this window
             dic['buffer'] = gl.glGenBuffers(1)
             dic['vertex_array'] = gl.glGenVertexArrays(1)
-            dic['program'] = gl.glCreateProgram()  # program and shader share ID
+            dic['prgrm'] = gl.glCreateProgram()  # prgrm and shader share ID
             dic['shader'] = gl.glCreateShader(gl.GL_VERTEX_SHADER)  # so this results 2
             dic['texture'] = gl.glGenTextures(1)
             dic['render_buffer'] = gl.glGenRenderbuffers(1)

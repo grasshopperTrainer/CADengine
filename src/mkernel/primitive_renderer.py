@@ -1,10 +1,8 @@
 import os
 import abc
 
-import ckernel.render_context.opengl_context.ogl_factories as ogl
-from ckernel.render_context.opengl_context.uniform_pusher import UniformPusher
 import ckernel.render_context.opengl_context.opengl_hooker as gl
-import ckernel.render_context.opengl_context.ogl_factories as ogl
+import ckernel.render_context.opengl_context.factories as fac
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 from ckernel.render_context.opengl_context.uniform_pusher import UniformPusher
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
@@ -20,9 +18,9 @@ This is why three renderers are atomic.
 
 Shape holdes buffer, buffer cache and vertex array(vao)
 , while,
-renderer holds program and global uniform cache
+renderer holds prgrm and global uniform cache
 
-program structure:
+prgrm structure:
 ! follow fixed attribute location
 layout(location = 0) in vtx;
 layout(location = 1) in edge_thk;
@@ -55,10 +53,9 @@ class PointRenderer:
 class LineRenderer:
     __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/lin_vrtx_shdr.glsl')
     __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/lin_frgm_shdr.glsl')
-    __prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
+    __prgrm = fac.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
 
-    __ufrm_cache = BffrCache(dtype=[('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4)), ('MM', 'f4', (4, 4))],
-                             size=1)
+    __ufrm_cache = __prgrm.ufrm_skema.create_bffr_cache(size=1)
 
     @classmethod
     def render(cls, vao, vrtx_count):
@@ -85,10 +82,9 @@ class LineRenderer:
 class TriangleRenderer(_PrimitiveRenderer):
     __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglFill_vrtx_shdr.glsl')
     __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglFill_frgm_shdr.glsl')
-    __prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
+    __prgrm = fac.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
 
-    __ufrm_cache = BffrCache(dtype=[('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4)), ('MM', 'f4', (4, 4))],
-                             size=1)
+    __ufrm_cache = __prgrm.ufrm_skema.create_bffr_cache(size=1)
 
     @classmethod
     def render(cls, vao, vrtx_count):
@@ -116,10 +112,9 @@ class TriangleEdgeRenderer(_PrimitiveRenderer):
     __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl')
     __geom_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl')
     __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl')
-    __prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, geom_path=__geom_shdr_path, frgm_path=__frgm_shdr_path)
+    __prgrm = fac.PrgrmFactory(vrtx_path=__vrtx_shdr_path, geom_path=__geom_shdr_path, frgm_path=__frgm_shdr_path)
 
-    __ufrm_cache = BffrCache(dtype=[('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4)), ('MM', 'f4', (4, 4))],
-                             size=1)
+    __ufrm_cache = __prgrm.ufrm_skema.create_bffr_cache(size=1)
 
     @classmethod
     def render(cls, vao, vrtx_count):
