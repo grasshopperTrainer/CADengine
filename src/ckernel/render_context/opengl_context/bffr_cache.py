@@ -27,7 +27,14 @@ class BffrCache(ArrayContainer):
     """
     # initial size of array for placeholder
 
-    def __init__(self, dtype, size):
+    def __init__(self, dtype, locs, size):
+        # extra location data
+        if not isinstance(locs, (list, tuple)):
+            raise TypeError
+        if len(locs) != len(dtype.fields):
+            raise ValueError('each field has to have location values')
+        self.__locs = {n:l for n, l in zip(dtype.fields, locs)}
+
         self.__array = np.ndarray(size, dtype=dtype)
         self.__array_len = size
         # for first fit allocation free space record, (idx, size)
@@ -55,7 +62,7 @@ class BffrCache(ArrayContainer):
         """
         raise NotImplementedError
 
-    def request_vacant(self, size):
+    def request_block(self, size):
         """
         :return: ndarray, consecutive vacant vertices from array of given size
         """
@@ -134,11 +141,12 @@ class BffrCache(ArrayContainer):
         :return: list(namedtuple(name, shape, dtype, stride),...)
         """
         tuples = []
-        ntuple = namedtuple('interleave_prop', 'name, size, dtype, stride, offset')
+        ntuple = namedtuple('interleave_prop', 'name, loc, size, dtype, stride, offset')
         stride = self.array.itemsize
         for name, (dtype, offset) in self.__array.dtype.fields.items():
             dtype, shape = dtype.subdtype
-            tuples.append(ntuple(name, shape, dtype, stride, offset))
+            loc = self.__locs[name]
+            tuples.append(ntuple(name, loc, shape, dtype, stride, offset))
         return tuple(tuples)
 
     @classmethod

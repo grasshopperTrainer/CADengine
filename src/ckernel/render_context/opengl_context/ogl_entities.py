@@ -4,6 +4,7 @@ these are simple wrappers for OpenGL objects purposed for abstraction of
 common operations like binding, deleting
 """
 import abc
+import numpy as np
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from .context_stack import get_current_ogl
 
@@ -100,6 +101,83 @@ class _Prgrm(OGLEntity):
     def delete(self):
         gl.glDeleteProgram(self)
 
+
+    def push_ufrms(cls, bffr_cache):
+        """
+        push data into bound ogl prgrm
+
+        :param bffr_cache: `_BffrCache`, data to push into ogl prgrm
+        :param prgrm: `_Prgrm`, data to push into ogl prgrm
+        :return:
+        """
+        for name, loc, shape, dtype, _, _ in bffr_cache.field_props:
+            func = cls.parse_ufrm_func(shape, dtype)
+            count = len(bffr_cache.array)
+            transpose = gl.GL_TRUE
+            value = bffr_cache.array[name]
+            is_matrix = len(shape) == 2
+            if is_matrix:
+                func(loc, count, transpose, value)
+            else:
+                func(loc, count, value)
+
+    @staticmethod
+    def parse_ufrm_func(shape, dtype):
+        """
+        translated ndarray dtype into OpenGL uniform function
+
+        :param shape: shape of uniform data
+        :param dtype: type of uniform data
+        :return: Opengl uniform pusher method
+        """
+        # parse matrix
+        if len(shape) == 1:
+            m = ''
+        else:
+            m = 'Matrix'
+
+        # parse dimension
+        if shape == (1,):
+            d = '1'
+        elif shape == (2,):
+            d = '2'
+        elif shape == (3,):
+            d = '3'
+        elif shape == (4,):
+            d = '4'
+
+        elif shape == (2, 2):
+            d = '2'
+        elif shape == (3, 3):
+            d = '3'
+        elif shape == (4, 4):
+            d = '4'
+
+        elif shape == (3, 2):
+            d = '2x3'
+        elif shape == (2, 3):
+            d = '3x2'
+        elif shape == (4, 2):
+            d = '2x4'
+        elif shape == (2, 4):
+            d = '4x2'
+        elif shape == (4, 3):
+            d = '3x4'
+        elif shape == (3, 4):
+            d = '4x3'
+        else:
+            raise NotImplementedError
+
+        # parse dtype
+        if dtype == np.float32:
+            t = 'f'
+        elif dtype == np.int32:
+            t = 'i'
+        else:
+            raise NotImplementedError
+
+        return eval(f"gl.glUniform{m}{d}{t}v")
+
     def attach_vrtxattr_skema(self, vrtxattr_skema):
         """
         store skema of vertex attribute of the program
@@ -117,24 +195,24 @@ class _Prgrm(OGLEntity):
         :return:
         """
         self.__ufrm_skema = ufrm_skema
-
-    def create_vrtxattr_cache(self, size):
-        """
-        create buffer cache for vertex attributes
-
-        :param size:
-        :return:
-        """
-        return self.__vrtxattr_skema.create_bffr_cache(size)
-
-    def create_ufrm_cache(self, size):
-        """
-        create uniform cache for uniforms
-
-        :param size:
-        :return:
-        """
-        return self.__ufrm_skema.create_bffr_cache(size)
+    #
+    # def create_vrtxattr_cache(self, size):
+    #     """
+    #     create buffer cache for vertex attributes
+    #
+    #     :param size:
+    #     :return:
+    #     """
+    #     return self.__vrtxattr_skema.create_bffr_cache(size)
+    #
+    # def create_ufrm_cache(self, size):
+    #     """
+    #     create uniform cache for uniforms
+    #
+    #     :param size:
+    #     :return:
+    #     """
+    #     return self.__ufrm_skema.create_bffr_cache(size)
 
 
 class _Shdr(OGLEntity):
@@ -201,6 +279,7 @@ class _Bffr(OGLEntity):
 class _VrtxArry(OGLEntity):
     def __init__(self, id):
         self.__id = id
+
     def __str__(self):
         return f"<VAO: {self.__id}>"
 

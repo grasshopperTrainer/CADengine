@@ -1,8 +1,7 @@
 import re
 import numpy as np
-import abc
 
-from ckernel.render_context.opengl_context.bffr_cache import BffrCache
+from .schemas import *
 
 
 class SimpleShdrParser:
@@ -123,7 +122,7 @@ class SimpleShdrParser:
         if args:
             args = sorted(args.values())
             locs, dtype = zip(*args)
-            return VrtxAttrSkema(np.dtype(list(dtype)), locs)
+            return VrtxAttrSchema(np.dtype(list(dtype)), locs)
         else:
             return None
 
@@ -166,7 +165,7 @@ class SimpleShdrParser:
             # align by layout location
             args = sorted(args.values())
             locs, vals, dtype = zip(*args)
-            return UfrmSkema(np.dtype(list(dtype)), locs, vals)
+            return UfrmSchema(np.dtype(list(dtype)), locs, vals)
         else:
             return None
 
@@ -180,6 +179,18 @@ class SimpleShdrParser:
         """
         dtype, shape = re.match(cls.__dtype_patt, dtype).groups()
         if shape is None:
+            if dtype == 'bool':
+                dtype = 'bool'
+            elif dtype == 'int':
+                dtype = 'int'
+            elif dtype == 'uint':
+                dtype = 'uint'
+            elif dtype == 'float':
+                dtype = 'f4'
+            elif dtype == 'double':
+                dtype = 'f8'
+            else:
+                raise TypeError
             shape = (1,)
         else:
             shape = shape.replace('x', ',')
@@ -206,53 +217,3 @@ class SimpleShdrParser:
         # field description
         return name, dtype, shape
 
-
-class _GLSLParamSkema:
-    pass
-
-
-class VrtxAttrSkema(_GLSLParamSkema):
-    """
-    Vertex attribute skema
-    """
-    def __init__(self, dtype, locs):
-        self.__dtype = dtype
-        self.__locs = locs
-
-    def __str__(self):
-        return f"<{self.__class__.__name__}: {self._dtype}>"
-
-    def create_bffr_cache(self, size):
-        """
-        create buffer cache for vertex attributes
-
-        :param size: size o
-        :return:
-        """
-        cache = BffrCache(self.__dtype, size)
-        return cache
-
-
-class UfrmSkema(_GLSLParamSkema):
-    """
-    Uniform skema
-
-    """
-    def __init__(self, dtype, locs, def_val):
-        self.__dtype = dtype
-        self.__locs = locs
-        self.__def_val = def_val
-
-    def __str__(self):
-        return f"<{self.__class__.__name__}: {self._dtype}>"
-
-    def create_bffr_cache(self, size):
-        """
-        create buffer cache for uniform values
-
-        :return:
-        """
-        cache = BffrCache(self.__dtype, size)
-        for name, val in zip(self.__dtype.fields, self.__def_val):
-            cache.array[name][...] = val
-        return cache

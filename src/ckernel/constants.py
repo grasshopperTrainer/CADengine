@@ -1,0 +1,1 @@
+DEF_RENDER_FLOAT_STR = 'f4'

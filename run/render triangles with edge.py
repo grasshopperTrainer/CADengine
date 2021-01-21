@@ -27,7 +27,7 @@ class MyWindow(Window):
         # set edge color
         for t in (t0, t1, t2):
             t.edge_clr = 1, 1, 1, 1
-            t.edge_thk = 3
+            t.edge_thk = 5
         # build model
         # self.model.append_shape(t0)
         # self.model.append_shape(t1)

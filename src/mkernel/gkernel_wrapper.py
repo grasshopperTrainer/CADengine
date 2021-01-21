@@ -6,6 +6,21 @@ from gkernel.color.primitive import ClrRGBA
 import mkernel.shape as shp
 from .primitive_renderer import *
 import ckernel.render_context.opengl_context.factories as ogl
+from global_tools.singleton import Singleton
+
+
+class Form:
+    pass
+
+
+@Singleton
+class CircleForm(Form):
+    pass
+
+
+@Singleton
+class SquareForm(Form):
+    pass
 
 
 class Ray(rg.Ray, shp.Shape):
@@ -16,6 +31,11 @@ class Ray(rg.Ray, shp.Shape):
 
 
 class Pnt(rg.Pnt, shp.Shape):
+    __schema = PointRenderer().vrtx_attr_schema
+    __vrtx_bffr = ogl.VrtxBffrFactory(__schema.dtype, __schema.locs)
+    __vrtx_cache = __schema.create_bffr_cache(size=32)
+
+    __vao = ogl.VrtxArryFactory(__vrtx_bffr)
 
     def __init__(self, x, y, z):
         """
@@ -24,7 +44,73 @@ class Pnt(rg.Pnt, shp.Shape):
         :param y: Number, coordinate value y
         :param z: Number, coordinate value z
         """
-        pass
+        self.__block = self.__vrtx_cache.request_block(size=1)
+        self.__geo = rg.Pnt()
+        self.geo = rg.Pnt(x, y, z)
+
+        self.__clr = ClrRGBA()
+        self.clr = ClrRGBA(1, 1, 1, 1)
+        self.__dia = 3
+        self.__frm = SquareForm()
+
+    # form constants
+    @property
+    def FORM_SQUARE(self):
+        return SquareForm()
+
+    @property
+    def FORM_CIRCLE(self):
+        return CircleForm()
+
+    @property
+    def geo(self):
+        return self.__geo
+
+    @geo.setter
+    def geo(self, v):
+        if not isinstance(v, (tuple, list, rg.Pnt)):
+            raise TypeError
+        self.__block['vtx'][:] = v.T if isinstance(v, rg.Pnt) else v
+        self.__geo = v
+
+    @property
+    def clr(self):
+        return self.__clr
+
+    @clr.setter
+    def clr(self, v):
+        if not isinstance(v, (tuple, list, np.ndarray)):
+            raise TypeError
+        self.__block['clr'][..., :len(v)] = v
+        self.__clr[:] = v
+
+    @property
+    def dia(self):
+        return self.__dia
+
+    @dia.setter
+    def dia(self, v):
+        if not isinstance(v, Number):
+            raise TypeError
+        self.__block['dia'][:] = v
+        self.__dia = v
+
+    @property
+    def frm(self):
+        return self.__frm
+
+    @frm.setter
+    def frm(self, v):
+        if not isinstance(v, (CircleForm, SquareForm)):
+            raise TypeError
+        self.__frm = v
+
+    @classmethod
+    def render(cls):
+        cls.__vrtx_bffr.get_entity().push_all(cls.__vrtx_cache)
+        vao = cls.__vao.get_entity()
+        with vao:
+            PointRenderer().render_square(cls.__vrtx_cache.num_used_vrtx)
 
 
 class Vec(rg.Vec, shp.Shape):
@@ -32,13 +118,13 @@ class Vec(rg.Vec, shp.Shape):
 
 
 class Lin(shp.Shape):
-    __dtype = [('vtx', 'f4', 4), ('thk', 'f4', (1, )), ('clr', 'f4', 4)]
-    __vrtx_bffr = ogl.ArryBffrFactory(attr_desc=__dtype, attr_loc=(0, 1, 2))
-    __vrtx_cache = BffrCache(dtype=__dtype, size=32)
+    __schema = LineRenderer().vrtx_attr_schema
+    __vrtx_bffr = __schema.create_vrtx_bffr_fac()
+    __vrtx_cache = __schema.create_bffr_cache(size=32)
     __vao = ogl.VrtxArryFactory(__vrtx_bffr)
 
     def __init__(self, s=(0, 0, 0), e=(0, 1, 0)):
-        self.__block = self.__vrtx_cache.request_vacant(2)
+        self.__block = self.__vrtx_cache.request_block(2)
         self.__geo = rg.Lin(s, e)
         self.geo = rg.Lin(s, e)
 
@@ -52,7 +138,7 @@ class Lin(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, (list, tuple, np.ndarray)):
+        if not isinstance(v, rg.Lin):
             raise TypeError
         self.__block['vtx'][:] = v.T
         self.__geo[:] = v
@@ -65,7 +151,7 @@ class Lin(shp.Shape):
     def clr(self, v):
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__block['clr'][..., :len(v)] = v   # to accept as much as possible
+        self.__block['clr'][..., :len(v)] = v  # to accept as much as possible
         self.__clr[:] = v
 
     @property
@@ -85,9 +171,9 @@ class Lin(shp.Shape):
 
         :return:
         """
-        with cls.__vao:
-            cls.__vrtx_bffr.push_all(cls.__vrtx_cache)
-            LineRenderer.render(cls.__vrtx_cache.num_used_vrtx)
+        cls.__vrtx_bffr.get_entity().push_all(cls.__vrtx_cache)
+        with cls.__vao.get_entity():
+            LineRenderer().render_sharp(cls.__vrtx_cache.num_used_vrtx)
 
 
 class Plin(shp.Shape):
@@ -100,10 +186,10 @@ class Pln(rg.Pln, shp.Shape):
 
 class Tgl(shp.Shape):
     # array buffer and vao
-    __dtype = [('vtx', 'f4', 4), ('edge_thk', 'f4', 1), ('edge_clr', 'f4', 4), ('fill_clr', 'f4', 4)]
-    __vrtx_bffr = ogl.ArryBffrFactory(attr_desc=__dtype, attr_loc=(0, 1, 2, 3))
-    __vrtx_cache = BffrCache(dtype=__dtype, size=32)
-    __vao = ogl.VrtxArryFactory(__vrtx_bffr)
+    __schema = TriangleRenderer().vrtx_attr_schema
+    __vrtx_bffr = __schema.create_vrtx_bffr_fac()
+    __vrtx_cache = __schema.create_bffr_cache(size=32)
+    __vao_fac = ogl.VrtxArryFactory(__vrtx_bffr)
 
     # global settin
     __is_render_edge = True
@@ -121,7 +207,7 @@ class Tgl(shp.Shape):
         :param __geo: exposed geometric data
                       ! always a copy of __block to prevent undesired value contamination
         """
-        self.__block = self.__vrtx_cache.request_vacant(3)
+        self.__block = self.__vrtx_cache.request_block(3)
         self.__geo = rg.Tgl()
         self.__fill_clr = ClrRGBA(1, 1, 1, 1)
         self.__edge_clr = ClrRGBA(0, 0, 0, 1)
@@ -195,8 +281,8 @@ class Tgl(shp.Shape):
 
     @classmethod
     def render(cls):
-        with cls.__vao:
-            cls.__vrtx_bffr.push_all(cls.__vrtx_cache)
-            TriangleRenderer.render(vrtx_count=cls.__vrtx_cache.num_used_vrtx)
+        cls.__vrtx_bffr.get_entity().push_all(cls.__vrtx_cache)
+        with cls.__vao_fac.get_entity():
+            TriangleRenderer().render_fill(vrtx_count=cls.__vrtx_cache.num_used_vrtx)
             if cls.__is_render_edge:
-                TriangleEdgeRenderer.render(vrtx_count=cls.__vrtx_cache.num_used_vrtx)
+                TriangleRenderer().render_edge(vrtx_count=cls.__vrtx_cache.num_used_vrtx)

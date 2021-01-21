@@ -1,11 +1,11 @@
 from collections import defaultdict
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 
-from ..entity_factory import OGLEntityFactory
+from ..base import OGLEntityFactory
 from ..error import *
 
 from .shdr_parser import SimpleShdrParser
-from .shdr_parser import VrtxAttrSkema, UfrmSkema
+from .shdr_parser import VrtxAttrSchema, UfrmSchema
 
 
 class PrgrmFactory(OGLEntityFactory):
@@ -30,11 +30,11 @@ class PrgrmFactory(OGLEntityFactory):
         self.__uf_skema = None
 
     @property
-    def vrtxarry_skema(self) -> VrtxAttrSkema:
+    def vrtxattr_schema(self) -> VrtxAttrSchema:
         return self.__initget_prgrm_params()[0]
 
     @property
-    def ufrm_skema(self) -> UfrmSkema:
+    def ufrm_schema(self) -> UfrmSchema:
         return self.__initget_prgrm_params()[1]
 
     def __initget_prgrm_params(self):

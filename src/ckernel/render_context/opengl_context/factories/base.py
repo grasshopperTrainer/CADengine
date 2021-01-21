@@ -1,8 +1,11 @@
 import weakref
 import abc
 
+import numpy as np
+
 from ckernel.render_context.opengl_context.ogl_entities import OGLEntity
 from ckernel.render_context.opengl_context.context_stack import OGLContextStack, OpenglUnboundError
+from .error import *
 
 
 class OGLEntityFactory(metaclass=abc.ABCMeta):
@@ -62,19 +65,6 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
             self.__context_entity[context] = entity
         return entity
 
-    def __get__(self, instance, owner):
-        """
-
-        :param instance:
-        :param owner:
-        :return:
-        """
-        # is a factory if not a descriptor
-        return self.__get_unique_entity()
-
-    def __set__(self, instance, value):
-        raise Exception('no setting allowed')
-
     @abc.abstractmethod
     def _create_entity(self):
         """
@@ -86,7 +76,7 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
         :return: newly created entity
         """
 
-    def get_entity(self):
+    def get_entity(self) -> OGLEntity:
         """
         creator for non descriptive instance else, explicit getter for unique entity
 

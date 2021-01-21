@@ -4,7 +4,7 @@ from collections import namedtuple
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 from ckernel.render_context.opengl_context.factories.error import *
-from ckernel.render_context.opengl_context.factories.entity_factory import OGLEntityFactory
+from ckernel.render_context.opengl_context.factories.base import OGLEntityFactory
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 import ctypes
 import abc
@@ -24,11 +24,11 @@ class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
                           ! use same dtype of CPUBffr cooperating
         :param attr_loc: (Int, ...), describe each field's attribute location in glsl prgrm
         """
-        # check attribute description
-        try:
-            self.__attr_desc = np.dtype(attr_desc)
-        except Exception as e:
-            raise e
+        # check attribute description being numpy dtype
+        if not (isinstance(attr_desc, np.dtype) and attr_desc.fields is not None):
+            raise StructuredDtypeError
+        self.__attr_desc = attr_desc
+
         # check attribute location
         if not (isinstance(attr_loc, (tuple, list)) and all(isinstance(l, int) for l in attr_loc)):
             raise TypeError('attr_loc should be (tuple, list) of int value')
@@ -80,7 +80,7 @@ class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
         return tuple(tuples)
 
 
-class ArryBffrFactory(BffrFactory):
+class VrtxBffrFactory(BffrFactory):
     """
     Descriptor
 
@@ -115,12 +115,11 @@ class VrtxArryFactory(OGLEntityFactory):
                     for _, loc, size, dtype, stride, offset in bffr_fct.attr_props:
                         gl.glEnableVertexAttribArray(loc)  # ! dont forget
                         gl.glVertexAttribPointer(index=loc,
-                                                 size=4,
+                                                 size=size,
                                                  type=self.translate_ndtype(dtype),
                                                  normalized=gl.GL_FALSE,
                                                  stride=stride,
                                                  pointer=ctypes.c_void_p(offset))  # ! must feed c_void_p
-
         return vao
 
     @staticmethod
@@ -169,20 +168,16 @@ class BffrCacheFactory(OGLEntityFactory):
     Provide `_CPUBffr` object
     """
 
-    def __init__(self, dtype, size, is_descriptor=True):
+    def __init__(self, dtype, size):
         """
         create master array
 
         :param dtype: (list, tuple), numpy structured dtype description
-        :param is_descriptor:
         """
         # check dtype description
-        try:
-            self.__dtype = np.dtype(dtype)
-            if self.__dtype.fields is None:
-                raise StructuredDtypeError
-        except:
+        if not (isinstance(dtype, np.dtype) and dtype.fields is not None):
             raise StructuredDtypeError
+        self.__dtype = dtype
         self.__cache_size = size
 
     def _create_entity(self):
