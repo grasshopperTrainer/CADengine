@@ -7,6 +7,7 @@ from ..error import *
 from .shdr_parser import SimpleShdrParser
 from .shdr_parser import VrtxAttrSkema, UfrmSkema
 
+
 class PrgrmFactory(OGLEntityFactory):
 
     def __init__(self, vrtx_path=None, geom_path=None, frgm_path=None):
@@ -43,7 +44,8 @@ class PrgrmFactory(OGLEntityFactory):
         :return: (VrtxAttrSkema, UfrmSkema)
         """
         if self.__va_skema is None:
-            self.__va_skema, self.__uf_skema = SimpleShdrParser.validate_vrtx_shdr(self.__shdr_srcs[gl.GL_VERTEX_SHADER])
+            self.__va_skema = SimpleShdrParser.parse_vrtx_attrs(self.__shdr_srcs[gl.GL_VERTEX_SHADER][1])
+            self.__uf_skema = SimpleShdrParser.parse_uniforms(*[s for n, s in self.__shdr_srcs.values()])
         return self.__va_skema, self.__uf_skema
 
     def __read_source(self, file_path, shdr_type):
@@ -55,7 +57,7 @@ class PrgrmFactory(OGLEntityFactory):
         :return:
         """
         with open(file_path, mode='r') as file:
-            self.__shdr_srcs[shdr_type] = file.read()
+            self.__shdr_srcs[shdr_type] = (file.name, file.read())
 
     def _create_entity(self):
         """
@@ -69,13 +71,13 @@ class PrgrmFactory(OGLEntityFactory):
 
         # create, compile, attach shaders
         shdrs = []
-        for shdr_type, src in self.__shdr_srcs.items():
+        for shdr_type, (name, src) in self.__shdr_srcs.items():
             if src:
                 shdr = gl.glCreateShader(shdr_type)
                 gl.glShaderSource(shdr, src)
                 gl.glCompileShader(shdr)
                 if not gl.glGetShaderiv(shdr, gl.GL_COMPILE_STATUS):
-                    raise ShaderCompileError(shdr_type)
+                    raise ShaderCompileError(name, shdr_type)
                 gl.glAttachShader(prgrm, shdr)
                 shdrs.append(shdr)
         # validate prgrm

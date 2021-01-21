@@ -7,7 +7,6 @@ from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 from ckernel.render_context.opengl_context.uniform_pusher import UniformPusher
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 
-
 """
 Three renderers of dimensional primitives.
 
@@ -40,8 +39,10 @@ class _PrimitiveRenderer(metaclass=abc.ABCMeta):
         labor division:
         1. render call does nothing with buffer updating.
         It has to be dealt prior calling this method.
-        2. vao is bound inside the method.
-        Program cant render with its own. Vertex Array has to be present
+        2. render call does nothing with vao binding.
+        Program cant render with its own. It is also true that multiple glDraw
+        can be called with single vao and multiple program binding.
+        Thus Vertex Array has to be bound before, outside method call.
         :return:
         """
 
@@ -51,32 +52,31 @@ class PointRenderer:
 
 
 class LineRenderer:
-    __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/lin_vrtx_shdr.glsl')
-    __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'shaders/lin_frgm_shdr.glsl')
-    __prgrm = fac.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path)
+    _prgrm_sharp = fac.PrgrmFactory(vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_vrtx_shdr.glsl'),
+                                    geom_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_geom_shdr.glsl'),
+                                    frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
 
-    __ufrm_cache = __prgrm.ufrm_skema.create_bffr_cache(size=1)
+    __ufrm_cache = _prgrm_sharp.ufrm_skema.create_bffr_cache(size=1)
 
     @classmethod
-    def render(cls, vao, vrtx_count):
-        with vao:
-            with cls.__prgrm:
-                camera = get_current_ogl().manager.window.devices.cameras.current
-                vm = camera.tripod.VM.r
-                pm = camera.body.PM.r
-                cls.__ufrm_cache['VM'] = vm
-                cls.__ufrm_cache['PM'] = pm
-                cls.__ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                          [0, 1, 0, 0],
-                                          [0, 0, 1, 0],
-                                          [0, 0, 0, 1]]
+    def render(cls, vrtx_count):
+        with cls._prgrm_sharp:
+            camera = get_current_ogl().manager.window.devices.cameras.current
+            vm = camera.tripod.VM.r
+            pm = camera.body.PM.r
+            cls.__ufrm_cache['VM'] = vm
+            cls.__ufrm_cache['PM'] = pm
+            cls.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                      [0, 1, 0, 0],
+                                      [0, 0, 1, 0],
+                                      [0, 0, 0, 1]]
 
-                # update uniform data
-                UniformPusher.push_all(cls.__ufrm_cache, cls.__prgrm)
+            # update uniform data
+            UniformPusher.push_all(cls.__ufrm_cache, cls._prgrm_sharp)
 
-                gl.glDrawArrays(gl.GL_LINE_LOOP,
-                                0,
-                                vrtx_count)
+            gl.glDrawArrays(gl.GL_LINES,
+                            0,
+                            vrtx_count)
 
 
 class TriangleRenderer(_PrimitiveRenderer):
@@ -87,25 +87,24 @@ class TriangleRenderer(_PrimitiveRenderer):
     __ufrm_cache = __prgrm.ufrm_skema.create_bffr_cache(size=1)
 
     @classmethod
-    def render(cls, vao, vrtx_count):
-        with vao:
-            with cls.__prgrm:
-                camera = get_current_ogl().manager.window.devices.cameras.current
-                vm = camera.tripod.VM.r
-                pm = camera.body.PM.r
-                cls.__ufrm_cache['VM'] = vm
-                cls.__ufrm_cache['PM'] = pm
-                cls.__ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                          [0, 1, 0, 0],
-                                          [0, 0, 1, 0],
-                                          [0, 0, 0, 1]]
+    def render(cls, vrtx_count):
+        with cls.__prgrm:
+            camera = get_current_ogl().manager.window.devices.cameras.current
+            vm = camera.tripod.VM.r
+            pm = camera.body.PM.r
+            cls.__ufrm_cache['VM'] = vm
+            cls.__ufrm_cache['PM'] = pm
+            cls.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                      [0, 1, 0, 0],
+                                      [0, 0, 1, 0],
+                                      [0, 0, 0, 1]]
 
-                # update uniform data
-                UniformPusher.push_all(cls.__ufrm_cache, cls.__prgrm)
+            # update uniform data
+            UniformPusher.push_all(cls.__ufrm_cache, cls.__prgrm)
 
-                gl.glDrawArrays(gl.GL_TRIANGLES,
-                                0,
-                                vrtx_count)
+            gl.glDrawArrays(gl.GL_TRIANGLES,
+                            0,
+                            vrtx_count)
 
 
 class TriangleEdgeRenderer(_PrimitiveRenderer):
@@ -117,22 +116,21 @@ class TriangleEdgeRenderer(_PrimitiveRenderer):
     __ufrm_cache = __prgrm.ufrm_skema.create_bffr_cache(size=1)
 
     @classmethod
-    def render(cls, vao, vrtx_count):
-        with vao:
-            with cls.__prgrm:
-                camera = get_current_ogl().manager.window.devices.cameras.current
-                vm = camera.tripod.VM.r
-                pm = camera.body.PM.r
-                cls.__ufrm_cache['VM'] = vm
-                cls.__ufrm_cache['PM'] = pm
-                cls.__ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                          [0, 1, 0, 0],
-                                          [0, 0, 1, 0],
-                                          [0, 0, 0, 1]]
+    def render(cls, vrtx_count):
+        with cls.__prgrm:
+            camera = get_current_ogl().manager.window.devices.cameras.current
+            vm = camera.tripod.VM.r
+            pm = camera.body.PM.r
+            cls.__ufrm_cache['VM'] = vm
+            cls.__ufrm_cache['PM'] = pm
+            cls.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                      [0, 1, 0, 0],
+                                      [0, 0, 1, 0],
+                                      [0, 0, 0, 1]]
 
-                # update uniform data
-                UniformPusher.push_all(cls.__ufrm_cache, cls.__prgrm)
+            # update uniform data
+            UniformPusher.push_all(cls.__ufrm_cache, cls.__prgrm)
 
-                gl.glDrawArrays(gl.GL_TRIANGLES,
-                                0,
-                                vrtx_count)
+            gl.glDrawArrays(gl.GL_TRIANGLES,
+                            0,
+                            vrtx_count)

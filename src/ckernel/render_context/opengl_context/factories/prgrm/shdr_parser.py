@@ -89,59 +89,86 @@ class SimpleShdrParser:
         pass
 
     @classmethod
-    def __parse_vrtx_attrs(cls, src):
+    def parse_vrtx_attrs(cls, vrtx_shdr_src):
         """
         parse vertex attribues into dtype
 
-        ! uniforms must have layout declaration
-        :param src: str, vertex shader source
+        ! vertex attributes must have layout declaration
+        :param vrtx_shdr_src: str, vertex shader sources
         :return: (numpy structured dtype, locations)
         """
-        args = []
-        # check layout declaration and arguments
-        for m in re.finditer(cls.__vrtx_attr_patt, src):
+        unique = set()
+        args = {}
+        for m in re.finditer(cls.__vrtx_attr_patt, vrtx_shdr_src):
+            # check layout declaration
             d = m.groupdict()
             if d['layout'] is None:
                 raise SyntaxError(f"{m.group()} <- vertex attribute's layout not declared")
-            args.append([int(d['loc']), cls.__translate_dtype(d['name'], d['dtype'])])
+
+            # location
+            loc = int(d['loc'])
+            pair = (d['name'], loc)
+            for u in unique:
+                if sum([i == j for i, j in zip(pair, u)]) == 1:  # XOR
+                    raise ValueError('location values has to be unique')
+            unique.add(pair)
+
+            # attribute
+            dtype = cls.__translate_dtype(d['name'], d['dtype'])
+            if d['name'] in args:
+                raise Exception('attribute contradictory')
+            args[d['name']] = (loc, dtype)
+
         # align by layout location
-        args.sort()
-        locs, dtype = zip(*args)
-        return np.dtype(list(dtype)), locs
+        if args:
+            args = sorted(args.values())
+            locs, dtype = zip(*args)
+            return VrtxAttrSkema(np.dtype(list(dtype)), locs)
+        else:
+            return None
 
     @classmethod
-    def __parse_uniforms(cls, src):
+    def parse_uniforms(cls, *sources):
         """
         parse uniforms into dtype
 
         ! uniforms must have layout declaration
-        :param src: str, vertex shader source
+        :param sources: (str, ...), vertex shader sources
         :return: (numpy structured dtype, locations, default values)
         """
-        args = []
-        # check layout declaration and arguments
-        for m in re.finditer(cls.__layout_ufrm_patt, src):
-            d = m.groupdict()
-            if d['layout'] is None:
-                raise SyntaxError(f"{m.group()} <- uniform's layout not declared")
-            loc = int(d['loc'])
-            dtype = cls.__translate_dtype(d['name'], d['dtype'])
-            val = eval(d['val'])
-            args.append([loc, dtype, val])
-        # align by layout location
-        args.sort()
-        locs, dtype, vals = zip(*args)
-        return np.dtype(list(dtype)), locs, vals
+        unique = set()
+        args = {}
+        for src in sources:
+            for m in re.finditer(cls.__layout_ufrm_patt, src):
+                # check layout declaration
+                d = m.groupdict()
+                if d['layout'] is None:
+                    raise SyntaxError(f"{m.group()} <- uniform's layout not declared")
 
-    @classmethod
-    def validate_vrtx_shdr(cls, src):
-        """
-        check for enforced layout principle in src
+                # location
+                loc = int(d['loc'])
+                pair = (d['name'], loc)
+                for u in unique:
+                    if sum([i == j for i, j in zip(pair, u)]) == 1: # XOR
+                        raise ValueError('location values has to be unique')
+                unique.add(pair)
 
-        :param src: str, vertex shader source
-        :return: (VrtxAttrs, Uniforms)
-        """
-        return VrtxAttrSkema(*cls.__parse_vrtx_attrs(src)), UfrmSkema(*cls.__parse_uniforms(src))
+                # value
+                val = eval(d['val'])
+
+                # attribute
+                dtype = cls.__translate_dtype(d['name'], d['dtype'])
+                if d['name'] in args and args[d['name']] != (loc, val, dtype):
+                    raise Exception('attribute contradictory')
+                args[d['name']] = (loc, val, dtype)
+
+        if args:
+            # align by layout location
+            args = sorted(args.values())
+            locs, vals, dtype = zip(*args)
+            return UfrmSkema(np.dtype(list(dtype)), locs, vals)
+        else:
+            return None
 
     @classmethod
     def __translate_dtype(cls, name, dtype):

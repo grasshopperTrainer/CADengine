@@ -51,14 +51,14 @@ class Shape(metaclass=abc.ABCMeta):
     #     :return:
     #     """
 
-    @abc.abstractmethod
-    def intersect(self, ray):
-        """
-        shape is responsible for intersecting with ray
-        :param ray: to intersect with
-        :return:
-        """
-        raise NotImplementedError
+    # @abc.abstractmethod
+    # def intersect(self, ray):
+    #     """
+    #     shape is responsible for intersecting with ray
+    #     :param ray: to intersect with
+    #     :return:
+    #     """
+    #     raise NotImplementedError
 
     @property
     @abc.abstractmethod

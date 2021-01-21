@@ -119,7 +119,7 @@ class BffrCache(ArrayContainer):
         return self.__array.size * self.__array.itemsize
 
     @property
-    def count_used_vrtx(self):
+    def num_used_vrtx(self):
         """
 
         :return: int, number of vertex in use
