@@ -153,7 +153,10 @@ class SimpleShdrParser:
                 unique.add(pair)
 
                 # value
-                val = eval(d['val'])
+                if d['val'] is not None:
+                    val = eval(d['val'])
+                else:
+                    val = None
 
                 # attribute
                 dtype = cls.__translate_dtype(d['name'], d['dtype'])

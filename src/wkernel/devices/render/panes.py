@@ -50,6 +50,14 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glViewport(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
         return self
 
+    @property
+    def glyph(self):
+        return self._glyph
+
+    @property
+    def size(self):
+        return self._glyph.size
+
     def clear(self, r=0, g=0, b=0, a=0):
         """
         fill with given color
@@ -76,10 +84,6 @@ class Pane(RenderDevice, GlyphInterface):
         unitize_matrix = ScaleMat(1 / w, 1 / h)
         pos = unitize_matrix * self.glyph.trnsf_matrix.r.I * Pnt(*self.manager.window.devices.mouse.cursor_pos)
         return pos.x, pos.y
-
-    @property
-    def glyph(self):
-        return self._glyph
 
 
 class PaneManager(RenderDeviceManager):

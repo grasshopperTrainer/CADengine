@@ -20,7 +20,7 @@ class MyWindow(Window):
         l1 = Lin([0, 0, 0], [0, e, 0])
         l2 = Lin([0, 0, 0], [0, 0, e])
         # set edge color
-        i, a = 1, 1
+        i, a = 1, 0.5
         l0.clr = i, 0, 0, a
         l1.clr = 0, i, 0, a
         l2.clr = 0, 0, i, a

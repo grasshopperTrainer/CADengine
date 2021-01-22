@@ -35,22 +35,6 @@ class _PrimitiveRenderer(metaclass=abc.ABCMeta):
         """
         pass
 
-    def _update_trnsf_ufrm(self, prgrm):
-        """
-        update transformation uniforms
-        :return:
-        """
-        camera = get_current_ogl().manager.window.devices.cameras.current
-        vm = camera.tripod.VM.r
-        pm = camera.body.PM.r
-        self._trnsf_ufrm_cache['VM'] = vm
-        self._trnsf_ufrm_cache['PM'] = pm
-        self._trnsf_ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                        [0, 1, 0, 0],
-                                        [0, 0, 1, 0],
-                                        [0, 0, 0, 1]]
-        prgrm.push_ufrms(self._trnsf_ufrm_cache)
-
 
 # better use singleton for flexibility like adding @property; better protection
 @Singleton
@@ -64,11 +48,16 @@ class PointRenderer(_PrimitiveRenderer):
 
         """
         self.__square_prgrm = fac.PrgrmFactory(
-            vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntRect_vrtx_shdr.glsl'),
-            geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntRect_geom_shdr.glsl'),
-            frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntRect_frgm_shdr.glsl'))
+            vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_vrtx_shdr.glsl'),
+            geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_geom_shdr.glsl'),
+            frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_frgm_shdr.glsl'))
 
-        self._trnsf_ufrm_cache = self.__square_prgrm.ufrm_schema.create_bffr_cache(size=1)
+        self.__circle_prgrm = fac.PrgrmFactory(
+            vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_vrtx_shdr.glsl'),
+            frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_frgm_shdr.glsl'))
+
+        self.__square_ufrm = self.__square_prgrm.ufrm_schema.create_bffr_cache(size=1)
+        self.__circle_ufrm = self.__circle_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
     @property
     def vrtx_attr_schema(self):
@@ -89,7 +78,33 @@ class PointRenderer(_PrimitiveRenderer):
     def render_square(self, vrtx_count):
         prgrm = self.__square_prgrm.get_entity()
         with prgrm:
-            self._update_trnsf_ufrm(prgrm)
+            # update uniforms
+            camera = get_current_ogl().manager.window.devices.cameras.current
+            self.__square_ufrm['PM'] = camera.body.PM.r
+            self.__square_ufrm['VM'] = camera.tripod.VM.r
+            self.__square_ufrm['MM'] = [[1, 0, 0, 0],
+                                        [0, 1, 0, 0],
+                                        [0, 0, 1, 0],
+                                        [0, 0, 0, 1]]
+            prgrm.push_ufrms(self.__square_ufrm)
+
+            gl.glDrawArrays(gl.GL_POINTS, 0, vrtx_count)
+
+    def render_circle(self, vrtx_count):
+        prgrm = self.__circle_prgrm.get_entity()
+        with prgrm:
+            # update uniforms
+            camera = get_current_ogl().manager.window.devices.cameras.current
+
+            self.__circle_ufrm['PM'] = camera.body.PM.r
+            self.__circle_ufrm['VM'] = camera.tripod.VM.r
+            self.__circle_ufrm['MM'] = [[1, 0, 0, 0],
+                                        [0, 1, 0, 0],
+                                        [0, 0, 1, 0],
+                                        [0, 0, 0, 1]]
+            self.__circle_ufrm['VS'] = get_current_ogl().manager.window.devices.panes.current.size
+            prgrm.push_ufrms(self.__circle_ufrm)
+
             gl.glDrawArrays(gl.GL_POINTS, 0, vrtx_count)
 
 
@@ -106,7 +121,7 @@ class LineRenderer(_PrimitiveRenderer):
             geom_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_geom_shdr.glsl'),
             frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
 
-        self._trnsf_ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
+        self.__global_ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
     @property
     def vrtx_attr_schema(self):
@@ -123,10 +138,26 @@ class LineRenderer(_PrimitiveRenderer):
             dtype=np.dtype([('vtx', RF, 4), ('thk', RF, (1,)), ('clr', RF, 4)]),
             locs=(0, 1, 2))
 
+    def __update_global_ufrm(self, prgrm):
+        """
+        update transformation uniforms
+        :return:
+        """
+        camera = get_current_ogl().manager.window.devices.cameras.current
+        vm = camera.tripod.VM.r
+        pm = camera.body.PM.r
+        self.__global_ufrm_cache['VM'] = vm
+        self.__global_ufrm_cache['PM'] = pm
+        self.__global_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                          [0, 1, 0, 0],
+                                          [0, 0, 1, 0],
+                                          [0, 0, 0, 1]]
+        prgrm.push_ufrms(self.__global_ufrm_cache)
+
     def render_sharp(self, vrtx_count):
         prgrm = self.__sharp_prgrm.get_entity()
         with prgrm:
-            self._update_trnsf_ufrm(prgrm)
+            self.__update_global_ufrm(prgrm)
             gl.glDrawArrays(gl.GL_LINES, 0, vrtx_count)
 
 
@@ -147,7 +178,7 @@ class TriangleRenderer(_PrimitiveRenderer):
             vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl'),
             geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl'),
             frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl'))
-        self._trnsf_ufrm_cache = self.__fill_prgrm.ufrm_schema.create_bffr_cache(size=1)
+        self.__global_ufrm_cache = self.__fill_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
     @property
     def vrtx_attr_schema(self):
@@ -168,14 +199,30 @@ class TriangleRenderer(_PrimitiveRenderer):
             dtype=np.dtype([('vtx', RF, 4), ('edge_thk', RF, (1,)), ('edge_clr', RF, 4), ('fill_clr', RF, 4)]),
             locs=(0, 1, 2, 3))
 
+    def __update_global_ufrm(self, prgrm):
+        """
+        update transformation uniforms
+        :return:
+        """
+        camera = get_current_ogl().manager.window.devices.cameras.current
+        vm = camera.tripod.VM.r
+        pm = camera.body.PM.r
+        self.__global_ufrm_cache['VM'] = vm
+        self.__global_ufrm_cache['PM'] = pm
+        self.__global_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                          [0, 1, 0, 0],
+                                          [0, 0, 1, 0],
+                                          [0, 0, 0, 1]]
+        prgrm.push_ufrms(self.__global_ufrm_cache)
+
     def render_fill(self, vrtx_count):
         prgrm = self.__fill_prgrm.get_entity()
         with prgrm:
-            self._update_trnsf_ufrm(prgrm)
+            self.__update_global_ufrm(prgrm)
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, vrtx_count)
 
     def render_edge(self, vrtx_count):
         prgrm = self.__edge_prgrm.get_entity()
         with prgrm:
-            self._update_trnsf_ufrm(prgrm)
+            self.__update_global_ufrm(prgrm)
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, vrtx_count)

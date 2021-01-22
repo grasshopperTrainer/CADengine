@@ -14,7 +14,6 @@ these are most likely intended to be used as descriptors
 """
 
 
-
 class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
 
     def __init__(self, attr_desc, attr_loc):

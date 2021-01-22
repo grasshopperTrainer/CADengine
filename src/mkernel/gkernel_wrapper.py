@@ -50,7 +50,8 @@ class Pnt(rg.Pnt, shp.Shape):
 
         self.__clr = ClrRGBA()
         self.clr = ClrRGBA(1, 1, 1, 1)
-        self.__dia = 3
+        self.__dia = 5
+        self.dia = 5
         self.__frm = SquareForm()
 
     # form constants
@@ -110,7 +111,8 @@ class Pnt(rg.Pnt, shp.Shape):
         cls.__vrtx_bffr.get_entity().push_all(cls.__vrtx_cache)
         vao = cls.__vao.get_entity()
         with vao:
-            PointRenderer().render_square(cls.__vrtx_cache.num_used_vrtx)
+            PointRenderer().render_circle(cls.__vrtx_cache.num_used_vrtx)
+            # PointRenderer().render_square(cls.__vrtx_cache.num_used_vrtx)
 
 
 class Vec(rg.Vec, shp.Shape):

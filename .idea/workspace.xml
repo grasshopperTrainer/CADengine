@@ -24,30 +24,22 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f68a635c-fd00-4334-a140-614904dd1a59" name="pyopengl2-40 implement rkernel" comment="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement fancy line renderer&#10;Now line rendering has property of shape sharp, and thickness property. Important feature is that thickness is drawn perpendicular to camera normal, meaning line rectangle is always facing viewport center. This can be checked by running 'render lines with edge.py'. Farther implementation can include capping.">
-      <change afterPath="$PROJECT_DIR$/run/render rectangular points.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/ckernel/constants.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/prgrm/schemas.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntRect_frgm_shdr.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntRect_geom_shdr.glsl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntRect_vrtx_shdr.glsl" afterDir="false" />
+    <list default="true" id="f68a635c-fd00-4334-a140-614904dd1a59" name="pyopengl2-40 implement rkernel" comment="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;&#10;append render functionality:&#10;    implement `PointRenderer.render_square`:&#10;        Point has dia(diameter), clr(color), frm(form) render properties.&#10;&#10;refine OpenGL program build, entity enhancement prosedure:&#10;    seperate `factory`, `PrgrmFactory` into separate module&#10;        resolve #54&#10;    &#10;    refactor `_PrimitiveRenderer`&#10;        Done whilst handling problems below;&#10;        &#10;    dump descriptor functionality of `OGLEntityFactory`:&#10;        Usage becomes confusing. Better seperate it into something like `OGLEntityDispenser`&#10;        &#10;    append `dtype` property and `create_vrtx_bffr` in `_GLSLParamSchema` instead of :&#10;        Vertex buffer doesn't match one to one with program's vertex attribute schema. One would want to store vertex attribute in many buffers and weave it using VAO. So better provide access to 'dtype'. On the other hand, using one vertex buffer to store all vertex attribute values is a common practice. In this case, one can use `create_vrtxbffr_fac` to be returned with `VrtxAttrFactory`&#10;        &#10;    remove `UfrmPusher`&#10;        Now program has enough information about its inputs and can handle uniform pushing. But such a 'Pusher' may appear again when uniform buffer is being implemented.">
+      <change afterPath="$PROJECT_DIR$/run/render circle points.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntSqr_frgm_shdr.glsl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntSqr_vrtx_shdr.glsl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run/render triangles with edge.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render triangles with edge.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/entity_factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/ogl_factories.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/other_factories.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/prgrm/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/prgrm/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/prgrm/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/prgrm/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run/render lines with edge.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render lines with edge.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/other_factories.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/other_factories.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/prgrm/shdr_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/factories/prgrm/shdr_parser.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/uniform_pusher.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mkernel/primitive_renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/primitive_renderer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/shaders/tglFill_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shaders/tglFill_frgm_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/shaders/tglFill_vrtx_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shaders/tglFill_vrtx_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/shaders/pntRect_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntCir_frgm_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/shaders/pntRect_geom_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntSqr_geom_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/shaders/pntRect_vrtx_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shaders/pntCir_vrtx_shdr.glsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/panes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/panes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/window.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/window.py" afterDir="false" />
     </list>
     <list id="244346dc-c4b7-4080-9029-2152216f4b46" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
@@ -106,15 +98,15 @@
     <property name="ToolWindowRun.ShowToolbar" value="false" />
     <property name="add_unversioned_files" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/mkernel/shaders" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/run" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="start.from.branch" value="origin/pyopengl2-39" />
     <property name="tasks.open.task.update.state.enabled" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shaders" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\run" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shaders" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\numpy" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\env\components" />
@@ -127,7 +119,7 @@
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\devices\render" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.render lines with edge">
+  <component name="RunManager" selected="Python.render circle points">
     <configuration name="model" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -141,6 +133,27 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/mkernel/model.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="render circle points" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyopengl2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render circle points.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -212,34 +225,13 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="scratch_4" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pyopengl2" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_4.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.render circle points" />
         <item itemvalue="Python.render lines with edge" />
         <item itemvalue="Python.render rectangular points" />
         <item itemvalue="Python.render triangles with edge" />
         <item itemvalue="Python.model" />
-        <item itemvalue="Python.scratch_4" />
       </list>
     </recent_temporary>
   </component>
@@ -539,7 +531,7 @@
       <option name="presentableId" value="pyopengl2-39" />
       <option name="project" value="pyopengl2" />
       <option name="type" value="BUG" />
-      <updated>1611198141511</updated>
+      <updated>1611231868477</updated>
     </task>
     <task id="pyopengl2-40" summary="implement rkernel">
       <branch name="origin/pyopengl2-39" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
@@ -631,7 +623,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="pyopengl2-15 uniform update node&#10;&#10;* matrix can be pushed via `PushUniform` - now view_matrix and projection_matrix is pushed into shader.&#10;resolved : #15" />
     <MESSAGE value="pyopengl2-16 implement camera dolly&#10;&#10;* tried abstracting connection inbetween callback handler and callback listener? but not convinced" />
     <MESSAGE value="pyopengl2-16 implement camera dolly&#10;&#10;* temp save for fixing noding" />
     <MESSAGE value="remove node-group&#10;&#10;refactoring to simplify" />
@@ -656,6 +647,7 @@
     <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement triangle sharp edge renderer&#10;Learn writing geometry kernel." />
     <MESSAGE value="pyopengl2-46 parse variable names from glsl source&#10;&#10;implement `SimpleShdrParser` and 'VrtxAttrSkema', `UfrmSkema`&#10;Simplified mechanism for reading parameters from shader source. Instead of fullspec including lexer, token, parser, it uses regex pattern to figure out layout location values. This mechanism forces all shader's parameter have layout declaration.&#10;'VrtxAttrSkema' and 'UfrmSkema' objects hold necessary information for creating buffer cache that can be used to push data into the program.&#10;! notice that buffer cache can't have one to one relationship with program. Program is independent from buffers and so are buffers.&#10;resolve #46" />
     <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement fancy line renderer&#10;Now line rendering has property of shape sharp, and thickness property. Important feature is that thickness is drawn perpendicular to camera normal, meaning line rectangle is always facing viewport center. This can be checked by running 'render lines with edge.py'. Farther implementation can include capping." />
-    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement fancy line renderer&#10;Now line rendering has property of shape sharp, and thickness property. Important feature is that thickness is drawn perpendicular to camera normal, meaning line rectangle is always facing viewport center. This can be checked by running 'render lines with edge.py'. Farther implementation can include capping." />
+    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;&#10;append render functionality:&#10;    implement `PointRenderer.render_square`:&#10;        Point has dia(diameter), clr(color), frm(form) render properties.&#10;&#10;refine OpenGL program build, entity enhancement prosedure:&#10;    seperate `factory`, `PrgrmFactory` into separate module&#10;        resolve #54&#10;    &#10;    refactor `_PrimitiveRenderer`&#10;        Done whilst handling problems below;&#10;        &#10;    dump descriptor functionality of `OGLEntityFactory`:&#10;        Usage becomes confusing. Better seperate it into something like `OGLEntityDispenser`&#10;        &#10;    append `dtype` property and `create_vrtx_bffr` in `_GLSLParamSchema` instead of :&#10;        Vertex buffer doesn't match one to one with program's vertex attribute schema. One would want to store vertex attribute in many buffers and weave it using VAO. So better provide access to 'dtype'. On the other hand, using one vertex buffer to store all vertex attribute values is a common practice. In this case, one can use `create_vrtxbffr_fac` to be returned with `VrtxAttrFactory`&#10;        &#10;    remove `UfrmPusher`&#10;        Now program has enough information about its inputs and can handle uniform pushing. But such a 'Pusher' may appear again when uniform buffer is being implemented." />
+    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;&#10;append render functionality:&#10;    implement `PointRenderer.render_square`:&#10;        Point has dia(diameter), clr(color), frm(form) render properties.&#10;&#10;refine OpenGL program build, entity enhancement prosedure:&#10;    seperate `factory`, `PrgrmFactory` into separate module&#10;        resolve #54&#10;    &#10;    refactor `_PrimitiveRenderer`&#10;        Done whilst handling problems below;&#10;        &#10;    dump descriptor functionality of `OGLEntityFactory`:&#10;        Usage becomes confusing. Better seperate it into something like `OGLEntityDispenser`&#10;        &#10;    append `dtype` property and `create_vrtx_bffr` in `_GLSLParamSchema` instead of :&#10;        Vertex buffer doesn't match one to one with program's vertex attribute schema. One would want to store vertex attribute in many buffers and weave it using VAO. So better provide access to 'dtype'. On the other hand, using one vertex buffer to store all vertex attribute values is a common practice. In this case, one can use `create_vrtxbffr_fac` to be returned with `VrtxAttrFactory`&#10;        &#10;    remove `UfrmPusher`&#10;        Now program has enough information about its inputs and can handle uniform pushing. But such a 'Pusher' may appear again when uniform buffer is being implemented." />
   </component>
 </project>
