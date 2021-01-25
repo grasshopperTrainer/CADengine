@@ -1,14 +1,10 @@
 import os
-import abc
-import numpy as np
-import ctypes
 
-import ckernel.render_context.opengl_context.opengl_hooker as gl
 import ckernel.render_context.opengl_context.factories as fac
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 from ckernel.render_context.opengl_context.factories.prgrm.schemas import VrtxAttrSchema
 from ckernel.render_context.opengl_context.factories import *
-from ckernel.constants import DEF_RENDER_FLOAT_STR as RF
+from ckernel.constants import RENDER_DEFAULT_FLOAT as RDF
 
 from global_tools.singleton import Singleton
 
@@ -28,14 +24,7 @@ renderer holds prgrm and global uniform cache
 
 
 class _PrimitiveRenderer(metaclass=abc.ABCMeta):
-
-    @property
-    @abc.abstractmethod
-    def vrtx_attr_schema(self):
-        """
-        :return: full spec vertex attribute schema
-        """
-        pass
+    pass
 
 
 # better use singleton for flexibility like adding @property; better protection
@@ -47,6 +36,15 @@ class PointRenderer(_PrimitiveRenderer):
 
     def __init__(self):
         """
+        prgrm parameter layout:
+
+        ! follow fixed attribute location
+        layout (location = 0) in vec4 vtx;
+        layout (location = 1) in vec4 clr;
+        layout (location = 2) in float dia;
+        ... add more to expand render possibility
+        :return:
+
         :param self.__~_prgrm: program rendering sized square points
         :param self.__~_indx_bffr: index buffer storing drawing index of its type
         :param self.__~_ufrm_cache: buffer cache of transformation matrices
@@ -62,50 +60,50 @@ class PointRenderer(_PrimitiveRenderer):
         self.__circle_prgrm = fac.PrgrmFactory(
             vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_vrtx_shdr.glsl'),
             frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_frgm_shdr.glsl'))
-        self.__circle_ufrm = self.__circle_prgrm.ufrm_schema.create_bffr_cache(size=1)
+        self.__circle_ufrm_cache = self.__circle_prgrm.ufrm_schema.create_bffr_cache(size=1)
+
+        self.__triangle_prgrm = fac.PrgrmFactory(
+            vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_vrtx_shdr.glsl'),
+            geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_geom_shdr.glsl'),
+            frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_frgm_shdr.glsl'))
+        self.__triangle_ufrm_cache = self.__triangle_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
         # shared vertex buffer
-        schema = VrtxAttrSchema(dtype=np.dtype([('vtx', RF, 4), ('clr', RF, 4), ('dia', RF, 1)]), locs=(0, 1, 2))
-        self.__vrtx_bffr = VrtxBffrFactory(schema.dtype, schema.locs)
+        schema = VrtxAttrSchema(dtype=np.dtype([('vtx', RDF, 4), ('clr', RDF, 4), ('dia', RDF)]), locs=(0, 1, 2))
+        self.__vbo = VrtxBffrFactory(schema.dtype, schema.locs)
 
         self.__circle_ibo = IndxBffrFactory('uint')
-        self.__circle_vao = VrtxArryFactory(self.__vrtx_bffr, indx_bffr=self.__circle_ibo)
+        self.__circle_vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__circle_ibo)
         self.__square_ibo = IndxBffrFactory('uint')
-        self.__square_vao = VrtxArryFactory(self.__vrtx_bffr, indx_bffr=self.__square_ibo)
+        self.__square_vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__square_ibo)
+        self.__triangle_ibo = IndxBffrFactory('uint')
+        self.__triangle_vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__triangle_ibo)
 
     @property
-    def vrtx_attr_schema(self):
-        """
-        prgrm parameter layout:
-
-        ! follow fixed attribute location
-        layout (location = 0) in vec4 vtx;
-        layout (location = 1) in vec4 clr;
-        layout (location = 2) in float dia;
-        ... add more to expand render possibility
-        :return:
-        """
-        return VrtxAttrSchema(
-            dtype=np.dtype([('vtx', RF, 4), ('clr', RF, 4), ('dia', RF, 1)]),
-            locs=(0, 1, 2))
+    def vbo(self):
+        return self.__vbo
 
     @property
-    def vrtx_bffr(self):
-        return self.__vrtx_bffr
-
-    @property
-    def circls_indx_bffr(self):
+    def circle_ibo(self):
         return self.__circle_ibo
 
     @property
-    def square_indx_bffr(self):
+    def square_ibo(self):
         return self.__square_ibo
 
-    def render_square(self):
-        vao = self.__square_vao.get_entity()
-        prgrm = self.__square_prgrm.get_entity()
-        with vao:
-            with prgrm:
+    @property
+    def triangle_ibo(self):
+        return self.__triangle_ibo
+
+    def render(self):
+        PointRenderer().vbo.get_entity().push_cache()
+        self.__render_square()
+        self.__render_circle()
+        self.__render_triangle()
+
+    def __render_square(self):
+        with self.__square_vao:
+            with self.__square_prgrm as prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
                 self.__square_ufrm['PM'] = camera.body.PM.r
@@ -122,34 +120,58 @@ class PointRenderer(_PrimitiveRenderer):
                                   self.__circle_ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
-    def render_circle(self):
-        vao = self.__circle_vao.get_entity()
-        prgrm = self.__circle_prgrm.get_entity()
-        with vao:
-            with prgrm:
+    def __render_circle(self):
+        with self.__circle_vao:
+            with self.__circle_prgrm as prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__circle_ufrm['PM'] = camera.body.PM.r
-                self.__circle_ufrm['VM'] = camera.tripod.VM.r
-                self.__circle_ufrm['MM'] = [[1, 0, 0, 0],
-                                            [0, 1, 0, 0],
-                                            [0, 0, 1, 0],
-                                            [0, 0, 0, 1]]
-                self.__circle_ufrm['VS'] = get_current_ogl().manager.window.devices.panes.current.size
-                prgrm.push_ufrms(self.__circle_ufrm)
+                self.__circle_ufrm_cache['PM'] = camera.body.PM.r
+                self.__circle_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__circle_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                                  [0, 1, 0, 0],
+                                                  [0, 0, 1, 0],
+                                                  [0, 0, 0, 1]]
+                self.__circle_ufrm_cache['VS'] = get_current_ogl().manager.window.devices.panes.current.size
+                prgrm.push_ufrms(self.__circle_ufrm_cache)
                 self.__circle_ibo.get_entity().push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   len(self.__circle_ibo.cache),
                                   self.__circle_ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
+    def __render_triangle(self):
+        with self.__triangle_vao:
+            with self.__triangle_prgrm as prgrm:
+                # update uniforms
+                camera = get_current_ogl().manager.window.devices.cameras.current
+
+                self.__triangle_ufrm_cache['PM'] = camera.body.PM.r
+                self.__triangle_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__triangle_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                                    [0, 1, 0, 0],
+                                                    [0, 0, 1, 0],
+                                                    [0, 0, 0, 1]]
+                prgrm.push_ufrms(self.__triangle_ufrm_cache)
+                self.__triangle_ibo.get_entity().push_cache()
+                gl.glDrawElements(gl.GL_POINTS,
+                                  len(self.__triangle_ibo.cache),
+                                  self.__triangle_ibo.cache.gldtype[0],
+                                  ctypes.c_void_p(0))
 
 @Singleton
 class LineRenderer(_PrimitiveRenderer):
 
     def __init__(self):
         """
+        prgrm parameter layout:
+
+        ! programs should follow fixed attribute locations
+        layout (location = 0) in vec4 vtx;
+        layout (location = 1) in float thk;
+        layout (location = 2) in vec4 clr;
+        ... add more to expand render possibility
+
         :param self.__sharp_prgrm: program rendering thick sharp line
         :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
         """
@@ -160,42 +182,44 @@ class LineRenderer(_PrimitiveRenderer):
 
         self.__global_ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
+        self.__vbo = VrtxBffrFactory(
+            attr_desc=np.dtype([('vtx', RDF, 4), ('thk', RDF), ('clr', RDF, 4)]),
+            attr_locs=(0, 1, 2))
+        self.__ibo = IndxBffrFactory(dtype='uint')
+        self.__vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__ibo)
+
     @property
-    def vrtx_attr_schema(self):
-        """
-        prgrm parameter layout:
+    def vbo(self):
+        return self.__vbo
 
-        ! programs should follow fixed attribute locations
-        layout (location = 0) in vec4 vtx;
-        layout (location = 1) in float thk;
-        layout (location = 2) in vec4 clr;
-        ... add more to expand render possibility
-        """
-        return VrtxAttrSchema(
-            dtype=np.dtype([('vtx', RF, 4), ('thk', RF, (1,)), ('clr', RF, 4)]),
-            locs=(0, 1, 2))
+    @property
+    def ibo(self):
+        return self.__ibo
 
-    def __update_global_ufrm(self, prgrm):
-        """
-        update transformation uniforms
-        :return:
-        """
-        camera = get_current_ogl().manager.window.devices.cameras.current
-        vm = camera.tripod.VM.r
-        pm = camera.body.PM.r
-        self.__global_ufrm_cache['VM'] = vm
-        self.__global_ufrm_cache['PM'] = pm
-        self.__global_ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                          [0, 1, 0, 0],
-                                          [0, 0, 1, 0],
-                                          [0, 0, 0, 1]]
-        prgrm.push_ufrms(self.__global_ufrm_cache)
+    def render(self):
+        self.__vbo.get_entity().push_cache()
+        self.__render_sharp()
 
-    def render_sharp(self, vrtx_count):
+    def __render_sharp(self):
+        vao = self.__vao.get_entity()
         prgrm = self.__sharp_prgrm.get_entity()
-        with prgrm:
-            self.__update_global_ufrm(prgrm)
-            gl.glDrawArrays(gl.GL_LINES, 0, vrtx_count)
+        with vao:
+            with prgrm:
+                camera = get_current_ogl().manager.window.devices.cameras.current
+                vm = camera.tripod.VM.r
+                pm = camera.body.PM.r
+                self.__global_ufrm_cache['VM'] = vm
+                self.__global_ufrm_cache['PM'] = pm
+                self.__global_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                                  [0, 1, 0, 0],
+                                                  [0, 0, 1, 0],
+                                                  [0, 0, 0, 1]]
+                prgrm.push_ufrms(self.__global_ufrm_cache)
+                self.__ibo.get_entity().push_cache()
+                gl.glDrawElements(gl.GL_LINES,
+                                  len(self.__ibo.cache),
+                                  self.__ibo.cache.gldtype[0],
+                                  ctypes.c_void_p(0))
 
 
 @Singleton
@@ -203,6 +227,17 @@ class TriangleRenderer(_PrimitiveRenderer):
 
     def __init__(self):
         """
+        full spec schema of triangle object.
+
+        use this schema as programs are not obliged to implement all attributes
+
+        ! programs should follow fixed attribute name and locations
+        layout(location = 0) in vtx;
+        layout(location = 1) in edge_thk;
+        layout(location = 2) in edge_clr;
+        layout(location = 3) in fill_clr;
+        ... add more to expand render possibility
+
         :param self.__fill_prgrm: for rendering triangle fill
         :param self.__edge_prgrm: for rendering triangle thick edge
         :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
@@ -215,26 +250,21 @@ class TriangleRenderer(_PrimitiveRenderer):
             vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl'),
             geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl'),
             frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl'))
-        self.__global_ufrm_cache = self.__fill_prgrm.ufrm_schema.create_bffr_cache(size=1)
+        self.__ufrm_cache = self.__fill_prgrm.ufrm_schema.create_bffr_cache(size=1)
+
+        self.__vbo = VrtxBffrFactory(
+            attr_desc=np.dtype([('vtx', RDF, 4), ('edge_thk', RDF), ('edge_clr', RDF, 4), ('fill_clr', RDF, 4)]),
+            attr_locs=(0, 1, 2, 3))
+        self.__ibo = IndxBffrFactory('uint')
+        self.__vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__ibo)
 
     @property
-    def vrtx_attr_schema(self):
-        """
-        full spec schema of triangle object.
+    def vbo(self):
+        return self.__vbo
 
-        use this schema as programs are not obliged to implement all attributes
-
-        ! programs should follow fixed attribute name and locations
-        layout(location = 0) in vtx;
-        layout(location = 1) in edge_thk;
-        layout(location = 2) in edge_clr;
-        layout(location = 3) in fill_clr;
-        ... add more to expand render possibility
-        :return:
-        """
-        return VrtxAttrSchema(
-            dtype=np.dtype([('vtx', RF, 4), ('edge_thk', RF, (1,)), ('edge_clr', RF, 4), ('fill_clr', RF, 4)]),
-            locs=(0, 1, 2, 3))
+    @property
+    def ibo(self):
+        return self.__ibo
 
     def __update_global_ufrm(self, prgrm):
         """
@@ -244,22 +274,39 @@ class TriangleRenderer(_PrimitiveRenderer):
         camera = get_current_ogl().manager.window.devices.cameras.current
         vm = camera.tripod.VM.r
         pm = camera.body.PM.r
-        self.__global_ufrm_cache['VM'] = vm
-        self.__global_ufrm_cache['PM'] = pm
-        self.__global_ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                          [0, 1, 0, 0],
-                                          [0, 0, 1, 0],
-                                          [0, 0, 0, 1]]
-        prgrm.push_ufrms(self.__global_ufrm_cache)
+        self.__ufrm_cache['VM'] = vm
+        self.__ufrm_cache['PM'] = pm
+        self.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                   [0, 1, 0, 0],
+                                   [0, 0, 1, 0],
+                                   [0, 0, 0, 1]]
+        prgrm.push_ufrms(self.__ufrm_cache)
 
-    def render_fill(self, vrtx_count):
-        prgrm = self.__fill_prgrm.get_entity()
-        with prgrm:
-            self.__update_global_ufrm(prgrm)
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, vrtx_count)
+    def render(self, is_render_edge):
+        """
 
-    def render_edge(self, vrtx_count):
-        prgrm = self.__edge_prgrm.get_entity()
-        with prgrm:
+        :param is_render_edge: bool, do render edge?
+        :return:
+        """
+        self.__vbo.get_entity().push_cache()
+        self.__ibo.get_entity().push_cache()
+        with self.__vao:
+            self.__render_fill()
+            if is_render_edge:
+                self.__render_edge()
+
+    def __render_fill(self):
+        with self.__fill_prgrm as prgrm:
             self.__update_global_ufrm(prgrm)
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, vrtx_count)
+            gl.glDrawElements(gl.GL_TRIANGLES,
+                              len(self.__ibo.cache),
+                              self.__ibo.cache.gldtype[0],
+                              ctypes.c_void_p(0))
+
+    def __render_edge(self):
+        with self.__edge_prgrm as prgrm:
+            self.__update_global_ufrm(prgrm)
+            gl.glDrawElements(gl.GL_TRIANGLES,
+                              len(self.__ibo.cache),
+                              self.__ibo.cache.gldtype[0],
+                              ctypes.c_void_p(0))

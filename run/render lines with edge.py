@@ -34,4 +34,4 @@ class MyWindow(Window):
                 p.clear(.5, .5, .5, 1)
                 self.model.test_render()
 
-MyWindow().run_all()
+MyWindow().run_all(1)

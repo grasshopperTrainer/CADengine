@@ -36,10 +36,12 @@ class MyWindow(Window):
             c += 0.05
 
         for i, p in enumerate(pnts):
-            if i % 2 == 0:
+            if i % 3 == 0:
                 p.frm = p.FORM_SQUARE
-            else:
+            elif i % 3 == 1:
                 p.frm = p.FORM_CIRCLE
+            else:
+                p.frm = p.FORM_TRIANGLE
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:

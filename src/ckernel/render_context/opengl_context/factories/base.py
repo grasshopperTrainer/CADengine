@@ -88,3 +88,9 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
         :return:
         """
         return self.__get_unique_entity()
+
+    def __enter__(self):
+        return self.get_entity().__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.get_entity().__exit__(exc_type, exc_val, exc_tb)

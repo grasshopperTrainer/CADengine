@@ -101,7 +101,6 @@ class _Prgrm(OGLEntity):
     def delete(self):
         gl.glDeleteProgram(self)
 
-
     def push_ufrms(cls, bffr_cache):
         """
         push data into bound ogl prgrm
@@ -195,24 +194,6 @@ class _Prgrm(OGLEntity):
         :return:
         """
         self.__ufrm_skema = ufrm_skema
-    #
-    # def create_vrtxattr_cache(self, size):
-    #     """
-    #     create buffer cache for vertex attributes
-    #
-    #     :param size:
-    #     :return:
-    #     """
-    #     return self.__vrtxattr_skema.create_bffr_cache(size)
-    #
-    # def create_ufrm_cache(self, size):
-    #     """
-    #     create uniform cache for uniforms
-    #
-    #     :param size:
-    #     :return:
-    #     """
-    #     return self.__ufrm_skema.create_bffr_cache(size)
 
 
 class _Shdr(OGLEntity):

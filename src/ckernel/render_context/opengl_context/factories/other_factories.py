@@ -36,12 +36,12 @@ class VrtxBffrFactory(BffrFactory):
     Buffer of GL_ARRAY_BUFFER target
     """
 
-    def __init__(self, attr_desc: np.dtype, attr_loc: (list, tuple)):
+    def __init__(self, attr_desc: np.dtype, attr_locs: (list, tuple)):
         """
 
         :param attr_desc: attribute description for ogl prgrm in ndarray dtype format
                           ! use same dtype of CPUBffr cooperating
-        :param attr_loc: (Int, ...), describe each field's attribute location in glsl prgrm
+        :param attr_locs: (Int, ...), describe each field's attribute location of glsl prgrm
         """
         # check attribute description being numpy dtype
         if not (isinstance(attr_desc, np.dtype) and attr_desc.fields is not None):
@@ -49,17 +49,17 @@ class VrtxBffrFactory(BffrFactory):
         self.__attr_desc = attr_desc
 
         # check attribute location
-        if not (isinstance(attr_loc, (tuple, list)) and all(isinstance(l, int) for l in attr_loc)):
+        if not (isinstance(attr_locs, (tuple, list)) and all(isinstance(l, int) for l in attr_locs)):
             raise TypeError('attr_loc should be (tuple, list) of int value')
-        if len(set(attr_loc)) != len(attr_loc):
+        if len(set(attr_locs)) != len(attr_locs):
             raise ValueError('attr_loc has to have unique values')
-        if len(self.__attr_desc.fields) != len(attr_loc):
+        if len(self.__attr_desc.fields) != len(attr_locs):
             raise ValueError('all attribute has to have location value')
-        self.__attr_loc = attr_loc
+        self.__attr_loc = attr_locs
 
         # cache shareness
         # decide whether to use single cache for all entities per context
-        self.__cache = BffrCache(attr_desc, attr_loc)
+        self.__cache = BffrCache(attr_desc, attr_locs)
 
     @property
     def target(self):
@@ -81,11 +81,14 @@ class VrtxBffrFactory(BffrFactory):
         stride = self.__attr_desc.itemsize
         for (name, (dtype, offset)), loc in zip(self.__attr_desc.fields.items(), self.__attr_loc):
             # for shape 1 not having subdtype
-            if dtype.subdtype is not None:
-                dtype, shape = dtype.subdtype
+            if dtype.subdtype is None:
+                size = 1
             else:
-                shape = (1,)
-            tuples.append(ntuple(name, loc, shape[0], dtype, stride, offset))
+                dtype, shape = dtype.subdtype
+                size = 1
+                for s in shape:
+                    size *= s
+            tuples.append(ntuple(name, loc, size, dtype, stride, offset))
         return tuple(tuples)
 
     @property

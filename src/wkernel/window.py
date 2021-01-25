@@ -63,6 +63,9 @@ class Window(DrawInterface, GlyphInterface):
             gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
             gl.glEnable(gl.GL_PROGRAM_POINT_SIZE)
+
+            gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
+
         with self.__context.glfw as glfw:
             glfw.set_window_close_callback(self.__close_window)
 

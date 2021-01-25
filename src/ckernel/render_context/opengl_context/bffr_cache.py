@@ -200,7 +200,7 @@ class BffrCache(ArrayContainer):
 
         def __init__(self, array_container, indices):
             self.__cache = array_container
-            self.__indices = indices
+            self.__indices = list(indices)
 
         def __getitem__(self, item):
             """
@@ -210,9 +210,21 @@ class BffrCache(ArrayContainer):
             :param item:
             :return:
             """
-            return self.__cache.array[item][tuple(self.__indices)]
+            return self.__cache.array[item][self.__indices]
 
         def __setitem__(self, key, value):
+            """
+            ex) block['vtx'] = 10, 10, 10, 1
+
+            :param key:
+            :param value:
+            :return:
+            """
+            # for 1D setitem
+            shape = self.__cache.array[key][self.__indices].shape
+            if len(shape) == 2 and shape[1] == 1:
+                if isinstance(value, (list, tuple)):
+                    value = np.array(value).reshape(shape)
             self.__cache.array[key][self.__indices] = value
 
         def __str__(self):
