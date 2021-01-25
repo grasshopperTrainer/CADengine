@@ -1,22 +1,42 @@
-import numpy as np
+import ctypes
+import abc
 from collections import namedtuple
 
-import ckernel.render_context.opengl_context.opengl_hooker as gl
+import numpy as np
 
+import ckernel.render_context.opengl_context.opengl_hooker as gl
 from ckernel.render_context.opengl_context.factories.error import *
 from ckernel.render_context.opengl_context.factories.base import OGLEntityFactory
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
-import ctypes
-import abc
-
-"""
-these are most likely intended to be used as descriptors
-"""
+from ..translators import npdtype_to_gldtype
 
 
 class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
 
-    def __init__(self, attr_desc, attr_loc):
+    @property
+    @abc.abstractmethod
+    def target(self):
+        """
+        ! abstract attribute
+
+        :return: gl render target constant, ex) gl.GL_ARRAY_BUFFER, gl.GL_ELEMENT_ARRAY_BUFFER
+        """
+        pass
+
+    @property
+    @abc.abstractmethod
+    def cache(self):
+        """
+        :return: cache instance.
+        """
+
+
+class VrtxBffrFactory(BffrFactory):
+    """
+    Buffer of GL_ARRAY_BUFFER target
+    """
+
+    def __init__(self, attr_desc: np.dtype, attr_loc: (list, tuple)):
         """
 
         :param attr_desc: attribute description for ogl prgrm in ndarray dtype format
@@ -37,27 +57,17 @@ class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
             raise ValueError('all attribute has to have location value')
         self.__attr_loc = attr_loc
 
-    @property
-    @abc.abstractmethod
-    def target(self):
-        """
-        ! abstract attribute
+        # cache shareness
+        # decide whether to use single cache for all entities per context
+        self.__cache = BffrCache(attr_desc, attr_loc)
 
-        :return: gl render target constant, ex) gl.GL_ARRAY_BUFFER, gl.GL_ELEMENT_ARRAY_BUFFER
-        """
-        pass
+    @property
+    def target(self):
+        return gl.GL_ARRAY_BUFFER
 
     @property
     def attr_loc(self):
         return self.__attr_loc
-
-    def _create_entity(self):
-        """
-        :return:
-        """
-        obj = gl.glGenBuffers(1)
-        obj.set_target(self.target)
-        return obj
 
     @property
     def attr_props(self):
@@ -78,28 +88,61 @@ class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
             tuples.append(ntuple(name, loc, shape[0], dtype, stride, offset))
         return tuple(tuples)
 
+    @property
+    def cache(self):
+        return self.__cache
 
-class VrtxBffrFactory(BffrFactory):
-    """
-    Descriptor
+    def _create_entity(self):
+        """
+        :return:
+        """
+        bffr = gl.glGenBuffers(1)
+        bffr.set_target(self.target)
+        bffr.set_cache(self.__cache)
+        return bffr
 
-    Buffer of GL_ARRAY_BUFFER target
+
+class IndxBffrFactory(BffrFactory):
     """
+    Buffer of GL_ELEMENT_ARRAY_BUFFER
+    """
+
+    def __init__(self, dtype: str):
+        """
+
+        :param dtype: str, describe IBO dtype, one of (uint, ushort, ubyte)
+        """
+        self.__cache = BffrCache(np.dtype([('idx', 'uint', (1,))]), (0,))
+        self.__cache[:] = 0xff_ff_ff_ff
 
     @property
     def target(self):
-        return gl.GL_ARRAY_BUFFER
+        return gl.GL_ELEMENT_ARRAY_BUFFER
+
+    @property
+    def cache(self):
+        return self.__cache
+
+    def _create_entity(self):
+        """
+        :return:
+        """
+        bffr = gl.glGenBuffers(1)
+        bffr.set_target(self.target)
+        bffr.set_cache(self.__cache)
+        return bffr
 
 
 class VrtxArryFactory(OGLEntityFactory):
 
-    def __init__(self, *bffr_facs):
+    def __init__(self, *bffr_facs, indx_bffr=None):
         """
 
         :param bffr_facs: ! OGLBffrFactory not OGLBffr
         """
         self.__bffr_factories = []
         self.__bffr_factories += list(bffr_facs)
+        self.__indx_bffr_factory = indx_bffr
 
     def _create_entity(self):
         """
@@ -115,48 +158,15 @@ class VrtxArryFactory(OGLEntityFactory):
                         gl.glEnableVertexAttribArray(loc)  # ! dont forget
                         gl.glVertexAttribPointer(index=loc,
                                                  size=size,
-                                                 type=self.translate_ndtype(dtype),
+                                                 type=npdtype_to_gldtype(dtype),
                                                  normalized=gl.GL_FALSE,
                                                  stride=stride,
                                                  pointer=ctypes.c_void_p(offset))  # ! must feed c_void_p
+            # bind ibo with vao
+            if self.__indx_bffr_factory:
+                ibo = self.__indx_bffr_factory.get_entity()
+                ibo.bind()
         return vao
-
-    @staticmethod
-    def translate_ndtype(dtype):
-        """
-        translates numpy dtype into OpenGL dtype
-        :param dtype:
-        :return:
-        """
-        if not isinstance(dtype, np.dtype):
-            raise TypeError
-
-        if dtype == np.bool:
-            return gl.GL_BOOL
-
-        elif dtype == np.byte:
-            return gl.GL_BYTE
-        elif dtype == np.ubyte:
-            return gl.GL_UNSIGNED_BYTE
-
-        elif dtype in (np.short, np.int16):
-            return gl.GL_SHORT
-        elif dtype in (np.ushort, np.uint16):
-            return gl.GL_UNSIGNED_SHORT
-        elif dtype in (np.int, np.int32):
-            return gl.GL_INT
-        elif dtype in (np.uint, np.uint32):
-            return gl.GL_UNSIGNED_INT
-
-        elif dtype == np.float16:
-            return gl.GL_HALF_FLOAT
-        elif dtype == np.float32:
-            return gl.GL_FLOAT
-        elif dtype == np.float64:
-            return gl.GL_DOUBLE
-
-        else:
-            raise ValueError('incomprehensible numpy dtype', dtype)
 
     def attach_arry_bffr(self, bffr):
         self.__bffr_factories.append(bffr)

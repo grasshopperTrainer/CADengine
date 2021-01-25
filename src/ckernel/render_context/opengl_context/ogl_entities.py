@@ -30,7 +30,7 @@ class OGLEntity(metaclass=abc.ABCMeta):
 
 
     @abc.abstractmethod
-    def _bind(self):
+    def bind(self):
         """
         bind ogl object
         :return:
@@ -38,7 +38,7 @@ class OGLEntity(metaclass=abc.ABCMeta):
         pass
 
     # not abstractmethod
-    def _unbind(self):
+    def unbind(self):
         """
         unbind ogl object
 
@@ -63,7 +63,7 @@ class OGLEntity(metaclass=abc.ABCMeta):
             entity_stack.push(self)
         else:
             entity_stack.push(self)
-            self._bind()
+            self.bind()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -73,10 +73,10 @@ class OGLEntity(metaclass=abc.ABCMeta):
         # follow bind-only policy
         if not entities.stack.is_empty(self.__class__):
             entity = entities.stack.get_current(self.__class__)
-            entity._bind()
+            entity.bind()
         else:
             # only if there is no entity to return binding
-            self._unbind()
+            self.unbind()
 
 
 # use under bar
@@ -89,7 +89,7 @@ class _Prgrm(OGLEntity):
     def __str__(self):
         return f"<Program: {self.__id}>"
 
-    def _bind(self):
+    def bind(self):
         """
         bind prgrm
 
@@ -220,7 +220,7 @@ class _Shdr(OGLEntity):
         self.__id = id
         self.__typ = typ
 
-    def _bind(self):
+    def bind(self):
         """
         no bind
 
@@ -245,27 +245,34 @@ class _Bffr(OGLEntity):
         self.__id = id
         self.__target = None
         self.__usage = gl.GL_DYNAMIC_DRAW
+        self.__cache = None
 
     def __str__(self):
         return f"<Buffer: {self.__id}>"
 
-    def _bind(self):
+    # @property
+    # def cache(self):
+    #     return self.__cache
+
+    def bind(self):
         gl.glBindBuffer(self.__target, self.__id)
 
     def delete(self):
         gl.glDeleteBuffers(1, self)
 
-    def push_all(self, cpu_bffr):
+    def push_cache(self):
         """
         push whole data of given array into ogl buffer
 
-        :param cpu_bffr: `_CPUBffr`, data to push into ogl buffer
         :return:
         """
+        if self.__cache is None:
+            raise NotImplementedError
+
         with self as bffr:
             gl.glBufferData(target=bffr.__target,
-                            size=cpu_bffr.bytesize,
-                            data=cpu_bffr.array,
+                            size=self.__cache.bytesize,
+                            data=self.__cache.array,
                             usage=bffr.__usage)
             # unbinding needed? does vao affected by vbo binding before its binding?
 
@@ -275,6 +282,9 @@ class _Bffr(OGLEntity):
     def set_usage(self, usage):
         self.__usage = usage
 
+    def set_cache(self, cache):
+        self.__cache = cache
+
 
 class _VrtxArry(OGLEntity):
     def __init__(self, id):
@@ -283,10 +293,10 @@ class _VrtxArry(OGLEntity):
     def __str__(self):
         return f"<VAO: {self.__id}>"
 
-    def _bind(self):
+    def bind(self):
         gl.glBindVertexArray(self.__id)
 
-    def _unbind(self):
+    def unbind(self):
         gl.glBindVertexArray(0)
 
     def delete(self):
