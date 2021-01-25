@@ -17,7 +17,7 @@ class MyWindow(Window):
         self.model.append_shape(Tgl([0, 0, 0], [e, 0, 0], [0, e, 0]))
         self.model.append_shape(Tgl([0, 0, 0], [0, e, 0], [0, 0, e]))
         self.model.append_shape(Tgl([0, 0, 0], [e, 0, 0], [0, 0, e]))
-    #
+
     def draw(self, frame_count=None):
         with self.panes[0] as v:
             with self.cameras[0] as c:

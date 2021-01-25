@@ -1,9 +1,9 @@
 import os
 
-import ckernel.render_context.opengl_context.factories as fac
+import ckernel.render_context.opengl_context.meta_entities as fac
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
-from ckernel.render_context.opengl_context.factories.prgrm.schemas import VrtxAttrSchema
-from ckernel.render_context.opengl_context.factories import *
+from ckernel.render_context.opengl_context.meta_entities.prgrm.schemas import VrtxAttrSchema
+from ckernel.render_context.opengl_context.meta_entities import *
 from ckernel.constants import RENDER_DEFAULT_FLOAT as RDF
 
 from global_tools.singleton import Singleton
@@ -70,14 +70,14 @@ class PointRenderer(_PrimitiveRenderer):
 
         # shared vertex buffer
         schema = VrtxAttrSchema(dtype=np.dtype([('vtx', RDF, 4), ('clr', RDF, 4), ('dia', RDF)]), locs=(0, 1, 2))
-        self.__vbo = VrtxBffrFactory(schema.dtype, schema.locs)
+        self.__vbo = MetaVrtxBffr(schema.dtype, schema.locs)
 
-        self.__circle_ibo = IndxBffrFactory('uint')
-        self.__circle_vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__circle_ibo)
-        self.__square_ibo = IndxBffrFactory('uint')
-        self.__square_vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__square_ibo)
-        self.__triangle_ibo = IndxBffrFactory('uint')
-        self.__triangle_vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__triangle_ibo)
+        self.__circle_ibo = MetaIndxBffr('uint')
+        self.__circle_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__circle_ibo)
+        self.__square_ibo = MetaIndxBffr('uint')
+        self.__square_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__square_ibo)
+        self.__triangle_ibo = MetaIndxBffr('uint')
+        self.__triangle_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__triangle_ibo)
 
     @property
     def vbo(self):
@@ -96,7 +96,7 @@ class PointRenderer(_PrimitiveRenderer):
         return self.__triangle_ibo
 
     def render(self):
-        PointRenderer().vbo.get_entity().push_cache()
+        PointRenderer().vbo.get_concrete().push_cache()
         self.__render_square()
         self.__render_circle()
         self.__render_triangle()
@@ -113,7 +113,7 @@ class PointRenderer(_PrimitiveRenderer):
                                             [0, 0, 1, 0],
                                             [0, 0, 0, 1]]
                 prgrm.push_ufrms(self.__square_ufrm)
-                self.__square_ibo.get_entity().push_cache()
+                self.__square_ibo.get_concrete().push_cache()
                 # mode, count, type, indices
                 gl.glDrawElements(gl.GL_POINTS,
                                   len(self.__circle_ibo.cache),
@@ -134,7 +134,7 @@ class PointRenderer(_PrimitiveRenderer):
                                                   [0, 0, 0, 1]]
                 self.__circle_ufrm_cache['VS'] = get_current_ogl().manager.window.devices.panes.current.size
                 prgrm.push_ufrms(self.__circle_ufrm_cache)
-                self.__circle_ibo.get_entity().push_cache()
+                self.__circle_ibo.get_concrete().push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   len(self.__circle_ibo.cache),
                                   self.__circle_ibo.cache.gldtype[0],
@@ -153,7 +153,7 @@ class PointRenderer(_PrimitiveRenderer):
                                                     [0, 0, 1, 0],
                                                     [0, 0, 0, 1]]
                 prgrm.push_ufrms(self.__triangle_ufrm_cache)
-                self.__triangle_ibo.get_entity().push_cache()
+                self.__triangle_ibo.get_concrete().push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   len(self.__triangle_ibo.cache),
                                   self.__triangle_ibo.cache.gldtype[0],
@@ -182,11 +182,11 @@ class LineRenderer(_PrimitiveRenderer):
 
         self.__global_ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
-        self.__vbo = VrtxBffrFactory(
+        self.__vbo = MetaVrtxBffr(
             attr_desc=np.dtype([('vtx', RDF, 4), ('thk', RDF), ('clr', RDF, 4)]),
             attr_locs=(0, 1, 2))
-        self.__ibo = IndxBffrFactory(dtype='uint')
-        self.__vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__ibo)
+        self.__ibo = MetaIndxBffr(dtype='uint')
+        self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
     @property
     def vbo(self):
@@ -197,12 +197,12 @@ class LineRenderer(_PrimitiveRenderer):
         return self.__ibo
 
     def render(self):
-        self.__vbo.get_entity().push_cache()
+        self.__vbo.get_concrete().push_cache()
         self.__render_sharp()
 
     def __render_sharp(self):
-        vao = self.__vao.get_entity()
-        prgrm = self.__sharp_prgrm.get_entity()
+        vao = self.__vao.get_concrete()
+        prgrm = self.__sharp_prgrm.get_concrete()
         with vao:
             with prgrm:
                 camera = get_current_ogl().manager.window.devices.cameras.current
@@ -215,7 +215,7 @@ class LineRenderer(_PrimitiveRenderer):
                                                   [0, 0, 1, 0],
                                                   [0, 0, 0, 1]]
                 prgrm.push_ufrms(self.__global_ufrm_cache)
-                self.__ibo.get_entity().push_cache()
+                self.__ibo.get_concrete().push_cache()
                 gl.glDrawElements(gl.GL_LINES,
                                   len(self.__ibo.cache),
                                   self.__ibo.cache.gldtype[0],
@@ -252,11 +252,11 @@ class TriangleRenderer(_PrimitiveRenderer):
             frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl'))
         self.__ufrm_cache = self.__fill_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
-        self.__vbo = VrtxBffrFactory(
+        self.__vbo = MetaVrtxBffr(
             attr_desc=np.dtype([('vtx', RDF, 4), ('edge_thk', RDF), ('edge_clr', RDF, 4), ('fill_clr', RDF, 4)]),
             attr_locs=(0, 1, 2, 3))
-        self.__ibo = IndxBffrFactory('uint')
-        self.__vao = VrtxArryFactory(self.__vbo, indx_bffr=self.__ibo)
+        self.__ibo = MetaIndxBffr('uint')
+        self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
     @property
     def vbo(self):
@@ -288,8 +288,8 @@ class TriangleRenderer(_PrimitiveRenderer):
         :param is_render_edge: bool, do render edge?
         :return:
         """
-        self.__vbo.get_entity().push_cache()
-        self.__ibo.get_entity().push_cache()
+        self.__vbo.get_concrete().push_cache()
+        self.__ibo.get_concrete().push_cache()
         with self.__vao:
             self.__render_fill()
             if is_render_edge:

@@ -297,5 +297,5 @@ class Tgl(shp.Shape):
 
     @classmethod
     def render(cls):
-        TriangleRenderer().vbo.get_entity().push_cache()
+        TriangleRenderer().vbo.get_concrete().push_cache()
         TriangleRenderer().render(cls.__is_render_edge)

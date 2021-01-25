@@ -1,14 +1,14 @@
 from collections import defaultdict
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 
-from ..base import OGLEntityFactory
+from ..base import OGLMetaEntity
 from ..error import *
 
 from .shdr_parser import SimpleShdrParser
 from .shdr_parser import VrtxAttrSchema, UfrmSchema
 
 
-class PrgrmFactory(OGLEntityFactory):
+class PrgrmFactory(OGLMetaEntity):
 
     def __init__(self, vrtx_path=None, geom_path=None, frgm_path=None):
         """

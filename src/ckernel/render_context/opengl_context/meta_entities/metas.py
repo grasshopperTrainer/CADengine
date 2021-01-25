@@ -5,13 +5,13 @@ from collections import namedtuple
 import numpy as np
 
 import ckernel.render_context.opengl_context.opengl_hooker as gl
-from ckernel.render_context.opengl_context.factories.error import *
-from ckernel.render_context.opengl_context.factories.base import OGLEntityFactory
+from ckernel.render_context.opengl_context.meta_entities.error import *
+from ckernel.render_context.opengl_context.meta_entities.base import OGLMetaEntity
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 from ..translators import npdtype_to_gldtype
 
 
-class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
+class MetaBffr(OGLMetaEntity, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
@@ -31,7 +31,7 @@ class BffrFactory(OGLEntityFactory, metaclass=abc.ABCMeta):
         """
 
 
-class VrtxBffrFactory(BffrFactory):
+class MetaVrtxBffr(MetaBffr):
     """
     Buffer of GL_ARRAY_BUFFER target
     """
@@ -105,7 +105,7 @@ class VrtxBffrFactory(BffrFactory):
         return bffr
 
 
-class IndxBffrFactory(BffrFactory):
+class MetaIndxBffr(MetaBffr):
     """
     Buffer of GL_ELEMENT_ARRAY_BUFFER
     """
@@ -136,7 +136,7 @@ class IndxBffrFactory(BffrFactory):
         return bffr
 
 
-class VrtxArryFactory(OGLEntityFactory):
+class MetaVrtxArry(OGLMetaEntity):
 
     def __init__(self, *bffr_facs, indx_bffr=None):
         """
@@ -156,7 +156,7 @@ class VrtxArryFactory(OGLEntityFactory):
         with vao:
             # for each buffer, bind attribute pointer in order
             for bffr_fct in self.__bffr_factories:
-                with bffr_fct.get_entity():
+                with bffr_fct.get_concrete():
                     for _, loc, size, dtype, stride, offset in bffr_fct.attr_props:
                         gl.glEnableVertexAttribArray(loc)  # ! dont forget
                         gl.glVertexAttribPointer(index=loc,
@@ -167,30 +167,9 @@ class VrtxArryFactory(OGLEntityFactory):
                                                  pointer=ctypes.c_void_p(offset))  # ! must feed c_void_p
             # bind ibo with vao
             if self.__indx_bffr_factory:
-                ibo = self.__indx_bffr_factory.get_entity()
+                ibo = self.__indx_bffr_factory.get_concrete()
                 ibo.bind()
         return vao
 
     def attach_arry_bffr(self, bffr):
         self.__bffr_factories.append(bffr)
-
-
-class BffrCacheFactory(OGLEntityFactory):
-    """
-    Provide `_CPUBffr` object
-    """
-
-    def __init__(self, dtype, size):
-        """
-        create master array
-
-        :param dtype: (list, tuple), numpy structured dtype description
-        """
-        # check dtype description
-        if not (isinstance(dtype, np.dtype) and dtype.fields is not None):
-            raise StructuredDtypeError
-        self.__dtype = dtype
-        self.__cache_size = size
-
-    def _create_entity(self):
-        return BffrCache(self.__dtype, size=self.__cache_size)

@@ -1,5 +1,5 @@
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
-from ckernel.render_context.opengl_context.factories.other_factories import VrtxBffrFactory
+from ckernel.render_context.opengl_context.meta_entities.metas import MetaVrtxBffr
 """
 Schemas describes data structure of shader parameters
 and has methods for creating buffer cache.
@@ -36,12 +36,12 @@ class VrtxAttrSchema(_GLSLParamSchema):
         cache = BffrCache(self._dtype, self._locs, size)
         return cache
 
-    def create_vrtx_bffr_fac(self) -> VrtxBffrFactory:
+    def create_vrtx_bffr_fac(self) -> MetaVrtxBffr:
         """
         create vertex buffer factory that describes entire vertex attribute set
         :return:
         """
-        return VrtxBffrFactory(self._dtype, self._locs)
+        return MetaVrtxBffr(self._dtype, self._locs)
 
 
 class UfrmSchema(_GLSLParamSchema):

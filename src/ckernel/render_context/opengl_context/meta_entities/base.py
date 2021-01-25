@@ -8,25 +8,19 @@ from ckernel.render_context.opengl_context.context_stack import OGLContextStack,
 from .error import *
 
 
-class OGLEntityFactory(metaclass=abc.ABCMeta):
+class OGLMetaEntity(metaclass=abc.ABCMeta):
     """
     ! descriptor compatible : read instruction inside __init__
     ! inherit must
     ! abstractmethod:
         `_create_entity`    : method should create an Entity and return
 
-    Factory class for creating entities in relationship with a given OpenGL context.
-    ! 'OGLEntity' doesnt mean that the Factory only has to provide OpenGL entity, ex) vao, vbo, ibo.
-    Its more like a logical description. 'OGLEntity' describes any object dependent to OGL context.
+    This class hides concrete context-wise entity, abstracting entity as application dependent not context.
+    To work so, it implements factory like functionalities for creating concrete entities in relationship with a
+    given(currently bound) OpenGL context.
 
-    This class can be used as descriptor and not.
-
-    as a descriptor:
-    entity of context at the calling moment will be created lazily, if nonexistent, and returned
-    through __get__.
-
-    as a none descriptor:
-    Instance will function as a simple factory class. Use `get_entity` to retrieve unique entity.
+    ! 'OGLEntity' doesnt mean the class only has to provide OpenGL entity, ex) vao, vbo, ibo.
+    It's more like a logical description. 'OGLEntity' describes any object dependent to OGL context.
     """
 
     @property
@@ -34,7 +28,7 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
         """
         lazy parameter assignment
 
-        this removes obligation of super().__init__()
+        this removes obligatory super().__init__()
         whilst creating entity storage when needed
         :return:
         """
@@ -43,7 +37,7 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
             setattr(self, name, weakref.WeakKeyDictionary())
         return self.__getattribute__(name)
 
-    def __get_unique_entity(self):
+    def get_concrete(self):
         """
         return correct entity for the context
 
@@ -68,7 +62,7 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def _create_entity(self):
         """
-        ! internal only : called by self.__get_entity()
+        ! internal only : called by self.__get_concrete_entity()
 
         create new entity for a current context
 
@@ -76,21 +70,21 @@ class OGLEntityFactory(metaclass=abc.ABCMeta):
         :return: newly created entity
         """
 
-    def get_entity(self) -> OGLEntity:
+    def __enter__(self):
         """
-        creator for non descriptive instance else, explicit getter for unique entity
+        connector method, access entity through context manager patter when binding is needed
 
-        ! This method seems to be redundant as Descriptor's method is not accessible through
-        `__get__`. Yet in case of other Factory object accepting another Factory as a member,
-        can detour `__get__` and make use of unique Entity.
-
-        `ckernel.render_context.opengl_context.ogl_factories.OGLVrtxArryFactory`
         :return:
         """
-        return self.__get_unique_entity()
-
-    def __enter__(self):
-        return self.get_entity().__enter__()
+        return self.get_concrete().__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        return self.get_entity().__exit__(exc_type, exc_val, exc_tb)
+        """
+        connector method
+
+        :param exc_type:
+        :param exc_val:
+        :param exc_tb:
+        :return:
+        """
+        return self.get_concrete().__exit__(exc_type, exc_val, exc_tb)

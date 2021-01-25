@@ -134,7 +134,7 @@ class CameraManager(RenderDeviceManager):
         super().__init__(device_master)
         r, t = self.window.glyph.width.r / 2, self.window.glyph.height.r / 2
 
-        # factories
+        # meta_entities
         self.__perspective_fac = CameraFactory(self)
 
         # self.append_new_orthogonal(-r, r, -t, t, 1, 10000)
