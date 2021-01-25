@@ -1,11 +1,13 @@
 import os
 import abc
 import numpy as np
+import ctypes
 
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 import ckernel.render_context.opengl_context.factories as fac
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 from ckernel.render_context.opengl_context.factories.prgrm.schemas import VrtxAttrSchema
+from ckernel.render_context.opengl_context.factories import *
 from ckernel.constants import DEF_RENDER_FLOAT_STR as RF
 
 from global_tools.singleton import Singleton
@@ -39,25 +41,37 @@ class _PrimitiveRenderer(metaclass=abc.ABCMeta):
 # better use singleton for flexibility like adding @property; better protection
 @Singleton
 class PointRenderer(_PrimitiveRenderer):
+    """
+    this is not an expandable, simple functionality wrapper
+    """
 
     def __init__(self):
         """
-        :param self.__square_prgrm: program rendering sized square points
-        :param self.__circle_prgrm: program rendering sized circle points
-        :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
+        :param self.__~_prgrm: program rendering sized square points
+        :param self.__~_indx_bffr: index buffer storing drawing index of its type
+        :param self.__~_ufrm_cache: buffer cache of transformation matrices
 
         """
+
         self.__square_prgrm = fac.PrgrmFactory(
             vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_vrtx_shdr.glsl'),
             geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_geom_shdr.glsl'),
             frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_frgm_shdr.glsl'))
+        self.__square_ufrm = self.__square_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
         self.__circle_prgrm = fac.PrgrmFactory(
             vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_vrtx_shdr.glsl'),
             frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_frgm_shdr.glsl'))
-
-        self.__square_ufrm = self.__square_prgrm.ufrm_schema.create_bffr_cache(size=1)
         self.__circle_ufrm = self.__circle_prgrm.ufrm_schema.create_bffr_cache(size=1)
+
+        # shared vertex buffer
+        schema = VrtxAttrSchema(dtype=np.dtype([('vtx', RF, 4), ('clr', RF, 4), ('dia', RF, 1)]), locs=(0, 1, 2))
+        self.__vrtx_bffr = VrtxBffrFactory(schema.dtype, schema.locs)
+
+        self.__circle_ibo = IndxBffrFactory('uint')
+        self.__circle_vao = VrtxArryFactory(self.__vrtx_bffr, indx_bffr=self.__circle_ibo)
+        self.__square_ibo = IndxBffrFactory('uint')
+        self.__square_vao = VrtxArryFactory(self.__vrtx_bffr, indx_bffr=self.__square_ibo)
 
     @property
     def vrtx_attr_schema(self):
@@ -75,37 +89,60 @@ class PointRenderer(_PrimitiveRenderer):
             dtype=np.dtype([('vtx', RF, 4), ('clr', RF, 4), ('dia', RF, 1)]),
             locs=(0, 1, 2))
 
-    def render_square(self, vrtx_count):
+    @property
+    def vrtx_bffr(self):
+        return self.__vrtx_bffr
+
+    @property
+    def circls_indx_bffr(self):
+        return self.__circle_ibo
+
+    @property
+    def square_indx_bffr(self):
+        return self.__square_ibo
+
+    def render_square(self):
+        vao = self.__square_vao.get_entity()
         prgrm = self.__square_prgrm.get_entity()
-        with prgrm:
-            # update uniforms
-            camera = get_current_ogl().manager.window.devices.cameras.current
-            self.__square_ufrm['PM'] = camera.body.PM.r
-            self.__square_ufrm['VM'] = camera.tripod.VM.r
-            self.__square_ufrm['MM'] = [[1, 0, 0, 0],
-                                        [0, 1, 0, 0],
-                                        [0, 0, 1, 0],
-                                        [0, 0, 0, 1]]
-            prgrm.push_ufrms(self.__square_ufrm)
+        with vao:
+            with prgrm:
+                # update uniforms
+                camera = get_current_ogl().manager.window.devices.cameras.current
+                self.__square_ufrm['PM'] = camera.body.PM.r
+                self.__square_ufrm['VM'] = camera.tripod.VM.r
+                self.__square_ufrm['MM'] = [[1, 0, 0, 0],
+                                            [0, 1, 0, 0],
+                                            [0, 0, 1, 0],
+                                            [0, 0, 0, 1]]
+                prgrm.push_ufrms(self.__square_ufrm)
+                self.__square_ibo.get_entity().push_cache()
+                # mode, count, type, indices
+                gl.glDrawElements(gl.GL_POINTS,
+                                  len(self.__circle_ibo.cache),
+                                  self.__circle_ibo.cache.gldtype[0],
+                                  ctypes.c_void_p(0))
 
-            gl.glDrawArrays(gl.GL_POINTS, 0, vrtx_count)
-
-    def render_circle(self, vrtx_count):
+    def render_circle(self):
+        vao = self.__circle_vao.get_entity()
         prgrm = self.__circle_prgrm.get_entity()
-        with prgrm:
-            # update uniforms
-            camera = get_current_ogl().manager.window.devices.cameras.current
+        with vao:
+            with prgrm:
+                # update uniforms
+                camera = get_current_ogl().manager.window.devices.cameras.current
 
-            self.__circle_ufrm['PM'] = camera.body.PM.r
-            self.__circle_ufrm['VM'] = camera.tripod.VM.r
-            self.__circle_ufrm['MM'] = [[1, 0, 0, 0],
-                                        [0, 1, 0, 0],
-                                        [0, 0, 1, 0],
-                                        [0, 0, 0, 1]]
-            self.__circle_ufrm['VS'] = get_current_ogl().manager.window.devices.panes.current.size
-            prgrm.push_ufrms(self.__circle_ufrm)
-
-            gl.glDrawArrays(gl.GL_POINTS, 0, vrtx_count)
+                self.__circle_ufrm['PM'] = camera.body.PM.r
+                self.__circle_ufrm['VM'] = camera.tripod.VM.r
+                self.__circle_ufrm['MM'] = [[1, 0, 0, 0],
+                                            [0, 1, 0, 0],
+                                            [0, 0, 1, 0],
+                                            [0, 0, 0, 1]]
+                self.__circle_ufrm['VS'] = get_current_ogl().manager.window.devices.panes.current.size
+                prgrm.push_ufrms(self.__circle_ufrm)
+                self.__circle_ibo.get_entity().push_cache()
+                gl.glDrawElements(gl.GL_POINTS,
+                                  len(self.__circle_ibo.cache),
+                                  self.__circle_ibo.cache.gldtype[0],
+                                  ctypes.c_void_p(0))
 
 
 @Singleton

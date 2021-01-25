@@ -59,6 +59,6 @@ class Model:
                 v.get_cls_renderer().run_all()
 
     def test_render(self):
-        gw.Tgl.render()
-        gw.Lin.render()
+        # gw.Tgl.render()
+        # gw.Lin.render()
         gw.Pnt.render()

@@ -22,10 +22,9 @@ void main() {
     // ! PM will squach vector in relative with viewport ratio
     vec4 csRadVec = PM*vec4(dia/2, dia/2, csPnt.z, 0);
     // size from unit to pixel
-    radVec = (csRadVec.xy/csRadVec.w)*VS;
-    gl_PointSize = max(radVec.x, radVec.y);
-    // size from pixel to ndc
-    radVec = radVec/VS;
+    gl_PointSize = csRadVec.x/csRadVec.w*VS.x;
+    // size from projection space to ndc
+    radVec = csRadVec.xy/csRadVec.w;
     // projection space point
     vec4 psPnt = PM*csPnt;
 

@@ -35,19 +35,19 @@ def __creator(func):
 
 # creator wrappers
 @__creator
-def glCreateProgram():
+def glCreateProgram() -> _Prgrm:
     return _Prgrm(gl.glCreateProgram())
 
 @__creator
-def glCreatShader(typ):
+def glCreatShader(typ) -> _Shdr:
     return _Shdr(gl.glCreateShader(typ))
 
 @__creator
-def glGenBuffers(n):
+def glGenBuffers(n) -> _Bffr:
     return _Bffr(gl.glGenBuffers(n))
 
 @__creator
-def glGenVertexArrays(n):
+def glGenVertexArrays(n) -> _VrtxArry:
     return _VrtxArry(gl.glGenVertexArrays(n))
 
 # def __deleter(func):

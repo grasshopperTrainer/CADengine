@@ -2,7 +2,6 @@
 // viewport size
 layout (location = 4) uniform vec2 VS;
 
-layout (pixel_center_integer) in vec4 gl_FragCoord;
 in vec4 fclr;
 in vec2 radVec;
 in vec2 center;
