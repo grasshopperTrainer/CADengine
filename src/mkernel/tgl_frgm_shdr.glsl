@@ -1,9 +1,0 @@
-#version 430 core
-
-in vec4 vclr;
-
-out vec4 FragColor;
-
-void main() {
-    FragColor = vclr;
-}

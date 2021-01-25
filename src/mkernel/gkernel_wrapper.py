@@ -1,56 +1,210 @@
-import os
 import numpy as np
+from numbers import Number
 
-import gkernel.dtype.geometric.primitive as pg
+import gkernel.dtype.geometric.primitive as rg
 from gkernel.color.primitive import ClrRGBA
 import mkernel.shape as shp
-import ckernel.render_context.opengl_context.ogl_factories as ogl
-import ckernel.render_context.opengl_context.opengl_hooker as gl
-from ckernel.render_context.opengl_context.uniform_pusher import UniformPusher
-from ckernel.render_context.opengl_context.context_stack import get_current_ogl
+from .primitive_renderer import *
+from global_tools.singleton import Singleton
+from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
-
-class Ray(pg.Ray, shp.Shape):
+class Ray(rg.Ray, shp.Shape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
 
-class Pnt(pg.Pnt, shp.Shape):
+class Pnt(rg.Pnt, shp.Shape):
+
+    def __init__(self, x, y, z):
+        """
+
+        :param x: Number, coordinate value x
+        :param y: Number, coordinate value y
+        :param z: Number, coordinate value z
+        """
+        # set vertex attributes
+        self.__vrtx_block = PointRenderer().vbo.cache.request_block(size=1)
+        # set index buffer
+        self.__indx_block = PointRenderer().square_ibo.cache.request_block(size=1)
+        self.__indx_block['idx'] = self.__vrtx_block.indices
+
+        self.__frm = self.FORM_SQUARE
+        self.__geo = rg.Pnt()
+        self.__clr = ClrRGBA()
+        self.__dia = 5
+
+        self.geo = rg.Pnt(x, y, z)
+        self.clr = ClrRGBA(1, 1, 1, 1)
+        self.dia = 5
+
+
+    # form constants
+    @property
+    def FORM_SQUARE(self):
+        return self.__SquareForm()
+
+    @property
+    def FORM_CIRCLE(self):
+        return self.__CircleForm()
+
+    @property
+    def FORM_TRIANGLE(self):
+        return self.__TriangleForm()
+
+    @property
+    def geo(self):
+        return self.__geo
+
+    @geo.setter
+    def geo(self, v):
+        if not isinstance(v, (tuple, list, rg.Pnt)):
+            raise TypeError
+        self.__vrtx_block['vtx'] = v.T
+        self.__geo = v
+
+
+    @property
+    def clr(self):
+        return self.__clr
+
+    @clr.setter
+    def clr(self, v):
+        if not isinstance(v, (tuple, list, np.ndarray)):
+            raise TypeError
+        self.__vrtx_block['clr'] = v
+        self.__clr[:] = v
+
+    @property
+    def dia(self):
+        return self.__dia
+
+    @dia.setter
+    def dia(self, v):
+        if not isinstance(v, Number):
+            raise TypeError
+        self.__vrtx_block['dia'] = v
+        self.__dia = v
+
+    @property
+    def frm(self):
+        return self.__frm
+
+    @frm.setter
+    def frm(self, v):
+        """
+        register at corresponding index buffer
+
+        :param v:
+        :return:
+        """
+        if not isinstance(v, self.__Form):
+            raise TypeError
+        # ignore if setting is redundant
+        if self.__frm == v:
+            return
+        # swap
+        self.__indx_block.release(PRV)
+        self.__indx_block = v.ibo.cache.request_block(size=1)
+        self.__indx_block['idx'] = self.__vrtx_block.indices
+        self.__frm = v
+
+    @classmethod
+    def render(cls):
+        PointRenderer().render()
+
+    class __Form:
+        @property
+        def ibo(self):
+            return getattr(self, f"_{self.__class__.__name__.replace('_', '')}__ibo")
+
+    @Singleton
+    class __CircleForm(__Form):
+        def __init__(self):
+            self.__ibo = PointRenderer().circle_ibo
+
+    @Singleton
+    class __SquareForm(__Form):
+        def __init__(self):
+            self.__ibo = PointRenderer().square_ibo
+
+    @Singleton
+    class __TriangleForm(__Form):
+        def __init__(self):
+            self.__ibo = PointRenderer().triangle_ibo
+
+
+class Vec(rg.Vec, shp.Shape):
     pass
 
 
-class Vec(pg.Vec, shp.Shape):
+class Lin(shp.Shape):
+
+    def __init__(self, s=(0, 0, 0), e=(0, 1, 0)):
+        self.__vrtx_block = LineRenderer().vbo.cache.request_block(size=2)
+
+        self.__geo = rg.Lin()
+        self.__clr = ClrRGBA()
+        self.__thk = 2
+        self.geo = rg.Lin(s, e)
+        self.clr = ClrRGBA(0, 0, 0, 1)
+        # set index
+        self.__indx_block = LineRenderer().ibo.cache.request_block(size=2)
+        self.__indx_block['idx'] = self.__vrtx_block.indices
+
+    @property
+    def geo(self):
+        return self.__geo
+
+    @geo.setter
+    def geo(self, v):
+        if not isinstance(v, rg.Lin):
+            raise TypeError
+        self.__vrtx_block['vtx'] = v.T
+        self.__geo[:] = v
+
+    @property
+    def clr(self):
+        return self.__clr
+
+    @clr.setter
+    def clr(self, v):
+        if not isinstance(v, (list, tuple, np.ndarray)):
+            raise TypeError
+        self.__vrtx_block['clr'] = v  # to accept as much as possible
+        self.__clr[:] = v
+
+    @property
+    def thk(self):
+        return self.__thk
+
+    @thk.setter
+    def thk(self, v):
+        if not isinstance(v, Number):
+            raise TypeError
+        self.__vrtx_block['thk'] = v
+        self.__thk = v
+
+    @classmethod
+    def render(cls):
+        """
+        passer
+        :return:
+        """
+        LineRenderer().render()
+
+
+class Plin(shp.Shape):
     pass
 
 
-class Lin(pg.Lin, shp.Shape):
-    pass
-
-
-class Pln(pg.Pln, shp.Shape):
+class Pln(rg.Pln, shp.Shape):
     pass
 
 
 class Tgl(shp.Shape):
-    # below is creation of entities for rendering
-    # path of shaders relative to current dir
-    __vrtx_shdr_path = os.path.join(os.path.dirname(__file__), 'tgl_vrtx_shdr.glsl')
-    __frgm_shdr_path = os.path.join(os.path.dirname(__file__), 'tgl_frgm_shdr.glsl')
-
-    # use same dtype to push data cpu -> gpu
-    __dtype = [('vtx', 'f4', 4), ('clr', 'f4', 4)]
-    __vrtx_bffr = ogl.ArryBffrFactory(attr_desc=__dtype, is_descriptor=True)
-    __vrtx_cache = ogl.BffrCacheFactory(dtype=__dtype, size=32, is_descriptor=False).get_entity()
-    # create vao and program
-    __vao = ogl.VrtxArryFactory(__vrtx_bffr, is_descriptor=True)
-    __gpu_prgrm = ogl.PrgrmFactory(vrtx_path=__vrtx_shdr_path, frgm_path=__frgm_shdr_path, is_descriptor=True)
-    # use dtype for uniform array
-    __dtype = [('MM', 'f4', (4, 4)), ('VM', 'f4', (4, 4)), ('PM', 'f4', (4, 4))]
-    __ufrm_cache = ogl.BffrCacheFactory(dtype=__dtype, size=1, is_descriptor=False).get_entity()
-    __ufrm_pshr = UniformPusher
-
+    __is_render_edge = True
     def __init__(self, v0, v1, v2):
         """
 
@@ -64,13 +218,19 @@ class Tgl(shp.Shape):
         :param __geo: exposed geometric data
                       ! always a copy of __block to prevent undesired value contamination
         """
-        self.__block = self.__vrtx_cache.request_block_vacant(3)
-        self.__geo = pg.Tgl()
-        self.__clr_fill = ClrRGBA()
-        self.__clr_stroke = None
-
-        self.geo = pg.Tgl(v0, v1, v2)
+        self.__vrtx_block = TriangleRenderer().vbo.cache.request_block(size=3)
+        # registering at ibo
+        self.__indx_block = TriangleRenderer().ibo.cache.request_block(size=3)
+        self.__indx_block['idx'] = self.__vrtx_block.indices
+        # just filling correct placeholder
+        self.__geo = rg.Tgl()
+        self.__fill_clr = ClrRGBA()
+        self.__edge_clr = ClrRGBA()
+        self.__edge_thk = 1
+        # actual value assignment
+        self.geo = rg.Tgl(v0, v1, v2)
         self.clr_fill = ClrRGBA(1, 1, 1, 1)
+        self.edge_clr = ClrRGBA(0, 0, 0, 1)
 
     @property
     def geo(self):
@@ -78,14 +238,14 @@ class Tgl(shp.Shape):
 
     @geo.setter
     def geo(self, value):
-        if not isinstance(value, pg.Tgl):
+        if not isinstance(value, rg.Tgl):
             raise TypeError
-        self.__block['vtx'][:] = value.T
+        self.__vrtx_block['vtx'] = value.T
         self.__geo[:] = value
 
     @property
     def clr_fill(self):
-        return self.__clr_fill
+        return self.__fill_clr
 
     @clr_fill.setter
     def clr_fill(self, v):
@@ -98,38 +258,44 @@ class Tgl(shp.Shape):
         """
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__block['clr'][..., :len(v)] = v
-        self.__clr_fill[:len(v)] = v
+        self.__vrtx_block['fill_clr'] = v
+        self.__fill_clr[:] = v
 
     @property
-    def clr_stroke(self):
-        raise NotImplementedError
+    def edge_clr(self):
+        return self.__edge_clr
+
+    @edge_clr.setter
+    def edge_clr(self, v):
+        """
+        set edge color
+
+        :return:
+        """
+        if not isinstance(v, (list, tuple, np.ndarray)):
+            raise TypeError
+        self.__vrtx_block['edge_clr'] = v
+        self.__fill_clr[:] = v
+
+    @property
+    def edge_thk(self):
+        return self.__edge_thk
+
+    @edge_thk.setter
+    def edge_thk(self, v):
+        self.__vrtx_block['edge_thk'] = v
+        self.__edge_thk = v
 
     def intersect(self, ray):
         raise NotImplementedError
 
     @classmethod
-    def render_all(cls):
-        """
-        render all triangles
+    def set_render_edge(cls, b):
+        if not isinstance(b, bool):
+            raise TypeError
+        cls.__render_edge = b
 
-        :return:
-        """
-        cls.__vrtx_bffr.push_all(cls.__vrtx_cache)
-        with cls.__gpu_prgrm as prgrm:
-            with cls.__vao:
-
-                # put transformation values
-                camera = get_current_ogl().manager.window.devices.cameras.current
-                vm = camera.tripod.VM.r
-                pm = camera.body.PM.r
-                cls.__ufrm_cache['VM'] = vm
-                cls.__ufrm_cache['PM'] = pm
-                cls.__ufrm_cache['MM'] = np.eye(4)
-
-                # update uniform data
-                cls.__ufrm_pshr.push_all(cls.__ufrm_cache, prgrm)
-
-                gl.glDrawArrays(gl.GL_TRIANGLES,
-                                0,
-                                cls.__vrtx_cache.num_vertex_inuse)
+    @classmethod
+    def render(cls):
+        TriangleRenderer().vbo.get_entity().push_cache()
+        TriangleRenderer().render(cls.__is_render_edge)

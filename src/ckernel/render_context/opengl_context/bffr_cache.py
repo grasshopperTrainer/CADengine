@@ -1,5 +1,6 @@
 import numpy as np
 from collections import namedtuple
+from .translators import npdtype_to_gldtype
 
 
 class ArrayContainer:
@@ -27,12 +28,18 @@ class BffrCache(ArrayContainer):
     """
     # initial size of array for placeholder
 
-    def __init__(self, dtype, size):
+    def __init__(self, dtype, locs, size=32):
+        # extra location data
+        if not isinstance(locs, (list, tuple)):
+            raise TypeError
+        if len(locs) != len(dtype.fields):
+            raise ValueError('each field has to have location values')
+        self.__locs = {n:l for n, l in zip(dtype.fields, locs)}
+
         self.__array = np.ndarray(size, dtype=dtype)
-        self.__array_len = size
         # for first fit allocation free space record, (idx, size)
-        self.__block_pool = [(0, self.__array_len)]
-        self.__blocks = []
+        self.__block_pool = [(0, len(self.__array))]
+        self.__block_inuse = set()
         self.__num_vertex_inuse = 0
 
     def __getitem__(self, item):
@@ -47,6 +54,9 @@ class BffrCache(ArrayContainer):
     def __setitem__(self, key, value):
         self.__array.__setitem__(key, value)
 
+    def __len__(self):
+        return len(self.__array)
+
     def __expand_array(self):
         """
         double the size of the array
@@ -55,13 +65,43 @@ class BffrCache(ArrayContainer):
         """
         raise NotImplementedError
 
-    def request_block_vacant(self, size):
+    def request_block(self, size):
         """
         :return: ndarray, consecutive vacant vertices from array of given size
         """
         block = self.__aloc_firstfit(size)
         self.__num_vertex_inuse += size
         return block
+
+    def _release_block(self, block, reset_val=None):
+        """
+        return block, release ownership of subarray
+
+        ! block of returned idx can be overridden at any time
+        :param block: block to release ownership
+        :param reset_val: value to fill released block with
+        :return:
+        """
+        if block not in self.__block_inuse:
+            raise ValueError('block not of this cache, please access via block.release()')
+        self.__block_inuse.remove(block)
+        # add into pool, is there good way of merging pools?
+        s, e = None, None
+        for i in sorted(block.indices):
+            # fill released value with reset_val
+            if reset_val is not None:
+                self.array[i] = reset_val
+
+            if s is None:
+                s, e = i, i
+            elif i == e+1:
+                e = i
+            else:   # reset consecutive
+                self.__block_pool.append((s, e-s+1))    # start, size
+                s, e = i
+        self.__block_pool.append((s, e-s+1))            # dont forget remaining
+        # count vertex in use
+        self.__num_vertex_inuse -= len(block.indices)
 
     def __aloc_firstfit(self, size):
         """
@@ -74,33 +114,28 @@ class BffrCache(ArrayContainer):
         if size == 0:
             raise ValueError
 
-        for i, (sidx, block_size) in enumerate(self.__block_pool):
+        # find vacant indices
+        indices = []
+        while self.__block_pool:
+            sidx, block_size = self.__block_pool[-1]
             leftover = block_size - size
             if 0 <= leftover:
-                if leftover == 0:
-                    self.__block_pool.pop(i)
-                else:
-                    self.__block_pool[i] = (sidx+size, leftover)  # append new free space
-                # TODO: think of memory freeing mechanism
-                block = self.__Block(self, sidx, sidx+size)
-                self.__blocks.append(block)
-                return block
+                if leftover == 0: # all taken
+                    self.__block_pool.pop(-1)
+                else:   # some left
+                    self.__block_pool[-1] = (sidx+size, leftover)  # append new free space
+                indices = list(range(sidx, sidx+size))
+                break
+            else:   # take all of current and continue searching
+                self.__block_pool.pop(-1)
+                indices += list(range(sidx, sidx+size))
 
-        raise NotImplementedError('overflow')
+        if len(indices) != size:
+            raise NotImplementedError('overflow')
 
-    def __set_idx_vacant(self, idx):
-        """
-        ! block of returned idx can be overridden at any time
-
-        When block is not used anymore it can be returned to be reused.
-        But how to check not-used is yet unknown.
-        :param idx: int, returned block index
-        :return:
-        """
-        if idx == self.__block_vacant_pointer-1:
-            self.__block_vacant_pointer -= 1
-        else:
-            self.__block_returned.register(idx)
+        block = self.__Block(self, indices)
+        self.__block_inuse.add(block)
+        return block
 
     @property
     def array(self):
@@ -119,7 +154,11 @@ class BffrCache(ArrayContainer):
         return self.__array.size * self.__array.itemsize
 
     @property
-    def num_vertex_inuse(self):
+    def gldtype(self):
+        return npdtype_to_gldtype(self.__array.dtype)
+
+    @property
+    def num_vrtx_inuse(self):
         """
 
         :return: int, number of vertex in use
@@ -134,11 +173,12 @@ class BffrCache(ArrayContainer):
         :return: list(namedtuple(name, shape, dtype, stride),...)
         """
         tuples = []
-        ntuple = namedtuple('interleave_prop', 'name, size, dtype, stride, offset')
+        ntuple = namedtuple('interleave_prop', 'name, loc, size, dtype, stride, offset')
         stride = self.array.itemsize
         for name, (dtype, offset) in self.__array.dtype.fields.items():
             dtype, shape = dtype.subdtype
-            tuples.append(ntuple(name, shape, dtype, stride, offset))
+            loc = self.__locs[name]
+            tuples.append(ntuple(name, loc, shape, dtype, stride, offset))
         return tuple(tuples)
 
     @classmethod
@@ -158,10 +198,9 @@ class BffrCache(ArrayContainer):
         Syncs value update between sliced array and master array
         """
 
-        def __init__(self, array_container, start_idx, stop_idx):
-            self.__array_container = array_container
-            self.__start = start_idx
-            self.__stop = stop_idx
+        def __init__(self, array_container, indices):
+            self.__cache = array_container
+            self.__indices = list(indices)
 
         def __getitem__(self, item):
             """
@@ -171,16 +210,48 @@ class BffrCache(ArrayContainer):
             :param item:
             :return:
             """
-            return self.__array_container.array[self.__start:self.__stop].__getitem__(item)
+            return self.__cache.array[item][self.__indices]
+
+        def __setitem__(self, key, value):
+            """
+            ex) block['vtx'] = 10, 10, 10, 1
+
+            :param key:
+            :param value:
+            :return:
+            """
+            # for 1D setitem
+            shape = self.__cache.array[key][self.__indices].shape
+            if len(shape) == 2 and shape[1] == 1:
+                if isinstance(value, (list, tuple)):
+                    value = np.array(value).reshape(shape)
+            self.__cache.array[key][self.__indices] = value
 
         def __str__(self):
-            return f"<Block [{self.__start}:{self.__stop}]>"
+            return f"<Block {self.__indices}]>"
 
         @property
-        def block_loc(self):
+        def indices(self):
             """
-            block location in raw array
+            :return: tuple of array indices
+            """
+            return tuple(self.__indices)
 
-            :return: tuple, (start index, block size)
+        @property
+        def arr(self):
             """
-            return self.__start, self.__stop
+            debug access
+            :return:
+            """
+            return self.__cache.array
+
+        def release(self, reset_val=None):
+            """
+            end of usage, release memory
+
+            :param reset_val: value to fill released block with
+            :return:
+            """
+            self.__cache._release_block(self, reset_val)
+            self.__cache = None
+            self.__indices = None

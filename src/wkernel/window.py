@@ -47,7 +47,6 @@ class Window(DrawInterface, GlyphInterface):
 
     def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):
         super().__init__()
-        # ContextManager.init_glfw()
         # in case shared window exists, need to get context from it
         if shared is not None and isinstance(shared, Window):
             self.__context = shared.get_context()
@@ -56,7 +55,17 @@ class Window(DrawInterface, GlyphInterface):
 
         with self.__context.gl as gl:
             gl.glEnable(gl.GL_SCISSOR_TEST)
+            gl.glEnable(gl.GL_DEPTH_TEST)
+            gl.glDepthFunc(gl.GL_LESS)
+
             gl.glEnable(gl.GL_BLEND)
+            gl.glBlendEquation(gl.GL_FUNC_ADD)
+            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
+            gl.glEnable(gl.GL_PROGRAM_POINT_SIZE)
+
+            gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
+
         with self.__context.glfw as glfw:
             glfw.set_window_close_callback(self.__close_window)
 
