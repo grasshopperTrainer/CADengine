@@ -24,12 +24,10 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a3499ba1-dc0a-42c5-b463-7e2e3496ac29" name="pyopengl2-58 implement bffr cache compaction, merge algorithm" comment="">
-      <change afterPath="$PROJECT_DIR$/src/global_tools/linked_list.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/global_tools/skip_list.py" afterDir="false" />
+    <list default="true" id="a3499ba1-dc0a-42c5-b463-7e2e3496ac29" name="pyopengl2-58 implement bffr cache compaction, merge algorithm" comment="pyopengl2-58 implement bffr cache compaction, merge algorithm&#10;&#10;implement `SkipList`&#10;    Basic `SkipList` written. Skip list is chosen as a data structure for storing vacant, occupied `BffrCache` Blocks. It is chosen for it having benefits of both array list and linked list, which are, fast binary searching and fast insertion.">
+      <change afterPath="$PROJECT_DIR$/examples/gl/benchmark point consecutive indexing.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/gl/benchmark triangle consecutive indexing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/ListSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/list_set.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/trackers.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/trackers.py" afterDir="false" />
     </list>
     <list id="244346dc-c4b7-4080-9029-2152216f4b46" name="Default Changelist" comment="" />
     <list id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="some refactoring before writing ray-traingle intersection" />
@@ -89,18 +87,18 @@
     <property name="ToolWindowRun.ShowToolbar" value="false" />
     <property name="add_unversioned_files" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/mkernel/shaders" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/examples/gl" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="start.from.branch" value="origin/pyopengl2-39" />
     <property name="tasks.open.task.update.state.enabled" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\gl" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shaders" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\run" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\numpy" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\env\components" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\ckernel\render_context\opengl_context\factories\prgrm" />
@@ -110,8 +108,8 @@
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\devices\render" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.skip_list">
-    <configuration name="intersect model" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.benchmark triangle consecutive indexing">
+    <configuration name="benchmark point consecutive indexing" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -119,11 +117,32 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/gl" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/intersect model.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\gl\benchmark point consecutive indexing.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="benchmark triangle consecutive indexing" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyopengl2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/gl" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/gl/benchmark triangle consecutive indexing.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -174,27 +193,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render triangles with edge" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pyopengl2" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render triangles with edge.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="skip_list" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -218,11 +216,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.benchmark triangle consecutive indexing" />
+        <item itemvalue="Python.benchmark point consecutive indexing" />
         <item itemvalue="Python.skip_list" />
         <item itemvalue="Python.render lines with edge" />
         <item itemvalue="Python.render points form" />
-        <item itemvalue="Python.intersect model" />
-        <item itemvalue="Python.render triangles with edge" />
       </list>
     </recent_temporary>
   </component>
@@ -594,7 +592,7 @@
       <option name="presentableId" value="pyopengl2-58" />
       <option name="project" value="pyopengl2" />
       <option name="type" value="BUG" />
-      <updated>1611575164163</updated>
+      <updated>1611641107021</updated>
     </task>
     <option name="localTasksCounter" value="27" />
     <option name="clearContext" value="false" />
@@ -659,7 +657,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="pyopengl2-16 implement camera dolly&#10;&#10;* hurrah!!! fps dolly responds to keyboard" />
     <MESSAGE value="pyopengl2-16 implement camera dolly&#10;&#10;* hurrah!!! fps dolly responds to mouse. yet turns out that fps reaction is not pitching, yawing camera" />
     <MESSAGE value="pyopengl2-16 implement camera dolly&#10;&#10;* hurrah!!! fps dolly responds to mouse and keyboard. Need to try out with perspective camera" />
     <MESSAGE value="pyopengl2-16 implement camera dolly&#10;&#10;* checked with ortho, perspective camera need refactoring with `RenderTargetPool`, 'RenderTarget' but good for now.&#10;* resolved #16" />
@@ -684,6 +681,7 @@
     <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement perspective circle point render&#10;    Smooth circle using vertex and fragment shader only." />
     <MESSAGE value="pyopengl2-53 implement element array buffer in Shape&#10;&#10;enhance line triangle renderer&#10;    Now following pattern of `PointRenderer`.&#10;    &#10;implement triangle point render&#10;    Perspective point render of shape circumcircle triangle." />
     <MESSAGE value="pyopengl2-56 fix name 'EntityFactory'&#10;&#10;refactor 'Factory' into 'Meta'&#10;   The class has 'Factory' functionalities but 'Meta' fits better. 'Meta' class is a class that moves dependency of entity from context to application(holder). Inheritor should implement none-context specific functions at Meta instead of Concrete, such as caching. In the same manner 'Meta' provides python builtin context manager pattern." />
-    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-56 fix name 'EntityFactory'&#10;&#10;refactor 'Factory' into 'Meta'&#10;   The class has 'Factory' functionalities but 'Meta' fits better. 'Meta' class is a class that moves dependency of entity from context to application(holder). Inheritor should implement none-context specific functions at Meta instead of Concrete, such as caching. In the same manner 'Meta' provides python builtin context manager pattern." />
+    <MESSAGE value="pyopengl2-58 implement bffr cache compaction, merge algorithm&#10;&#10;implement `SkipList`&#10;    Basic `SkipList` written. Skip list is chosen as a data structure for storing vacant, occupied `BffrCache` Blocks. It is chosen for it having benefits of both array list and linked list, which are, fast binary searching and fast insertion." />
+    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-58 implement bffr cache compaction, merge algorithm&#10;&#10;implement `SkipList`&#10;    Basic `SkipList` written. Skip list is chosen as a data structure for storing vacant, occupied `BffrCache` Blocks. It is chosen for it having benefits of both array list and linked list, which are, fast binary searching and fast insertion." />
   </component>
 </project>
