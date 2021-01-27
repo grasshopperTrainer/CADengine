@@ -34,7 +34,7 @@ class MyWindow(Window):
             p.dia = 5
             p.clr = 1, 1, c, 1
             c += 0.05
-
+            p.frm = p.FORM_CIRCLE
         # to check sizing
         Tgl([0, 0, 0], [100, 0, 0], [0, 100, 0])
         cp = Pnt(0, 0, 0)

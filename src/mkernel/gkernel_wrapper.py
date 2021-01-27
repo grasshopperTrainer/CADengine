@@ -104,8 +104,8 @@ class Pnt(rg.Pnt, shp.Shape):
         # ignore if setting is redundant
         if self.__frm == v:
             return
-        # swap
-        self.__indx_block.release(PRV)
+        # swap, index cache can be always tightly packed so refill
+        self.__indx_block.release_refill(PRV)
         self.__indx_block = v.ibo.cache.request_block(size=1)
         self.__indx_block['idx'] = self.__vrtx_block.indices
         self.__frm = v

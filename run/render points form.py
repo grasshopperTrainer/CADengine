@@ -17,23 +17,19 @@ class MyWindow(Window):
         # create triangles
         e = 50
         pnts = []
-        pnts.append(Pnt(e, 0, 0))
-        pnts.append(Pnt(0, e, 0))
-        pnts.append(Pnt(0, 0, e))
+        # pnts.append(Pnt(e, 0, 0))
+        # pnts.append(Pnt(0, e, 0))
+        # pnts.append(Pnt(0, 0, e))
         for i in range(20):
             e += 20
             pnts.append(Pnt(e, 0, 0))
-        # set edge color
-        i, a = 1, 1
-        pnts[0].clr = i, 0, 0, a
-        pnts[1].clr = 0, i, 0, a
-        pnts[2].clr = 0, 0, i, a
-        # set thickness
-        c = 0.05
-        for p in pnts[3:]:
+        # # set edge color
+        # i, a = 1, 1
+        # pnts[0].clr = i, 0, 0, a
+        # pnts[1].clr = 0, i, 0, a
+        # pnts[2].clr = 0, 0, i, a
+        for p in pnts:
             p.dia = 10
-            p.clr = 1, 1, c, 1
-            c += 0.05
 
         for i, p in enumerate(pnts):
             if i % 3 == 0:
@@ -50,4 +46,4 @@ class MyWindow(Window):
                 self.model.test_render()
 
 
-MyWindow().run_all()
+MyWindow().run_all(1)
