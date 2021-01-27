@@ -102,6 +102,8 @@ class PointRenderer(_PrimitiveRenderer):
         self.__render_triangle()
 
     def __render_square(self):
+        if not self.__square_ibo.cache.highest_indx:
+            return
         with self.__square_vao:
             with self.__square_prgrm as prgrm:
                 # update uniforms
@@ -116,11 +118,13 @@ class PointRenderer(_PrimitiveRenderer):
                 self.__square_ibo.get_concrete().push_cache()
                 # mode, count, type, indices
                 gl.glDrawElements(gl.GL_POINTS,
-                                  len(self.__circle_ibo.cache),
-                                  self.__circle_ibo.cache.gldtype[0],
+                                  self.__square_ibo.cache.highest_indx + 1,
+                                  self.__square_ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
     def __render_circle(self):
+        if not self.__circle_ibo.cache.highest_indx:
+            return
         with self.__circle_vao:
             with self.__circle_prgrm as prgrm:
                 # update uniforms
@@ -136,11 +140,13 @@ class PointRenderer(_PrimitiveRenderer):
                 prgrm.push_ufrms(self.__circle_ufrm_cache)
                 self.__circle_ibo.get_concrete().push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
-                                  len(self.__circle_ibo.cache),
+                                  self.__circle_ibo.cache.highest_indx + 1,
                                   self.__circle_ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
     def __render_triangle(self):
+        if not self.__triangle_ibo.cache.highest_indx:
+            return
         with self.__triangle_vao:
             with self.__triangle_prgrm as prgrm:
                 # update uniforms
@@ -155,7 +161,7 @@ class PointRenderer(_PrimitiveRenderer):
                 prgrm.push_ufrms(self.__triangle_ufrm_cache)
                 self.__triangle_ibo.get_concrete().push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
-                                  len(self.__triangle_ibo.cache),
+                                  self.__triangle_ibo.cache.highest_indx + 1,
                                   self.__triangle_ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
@@ -201,6 +207,8 @@ class LineRenderer(_PrimitiveRenderer):
         self.__render_sharp()
 
     def __render_sharp(self):
+        if not self.__ibo.cache.highest_indx:
+            return
         vao = self.__vao.get_concrete()
         prgrm = self.__sharp_prgrm.get_concrete()
         with vao:
@@ -217,7 +225,7 @@ class LineRenderer(_PrimitiveRenderer):
                 prgrm.push_ufrms(self.__global_ufrm_cache)
                 self.__ibo.get_concrete().push_cache()
                 gl.glDrawElements(gl.GL_LINES,
-                                  len(self.__ibo.cache),
+                                  self.__ibo.cache.highest_indx + 1,
                                   self.__ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
@@ -296,17 +304,21 @@ class TriangleRenderer(_PrimitiveRenderer):
                 self.__render_edge()
 
     def __render_fill(self):
+        if not self.__ibo.cache.highest_indx:
+            return
         with self.__fill_prgrm as prgrm:
             self.__update_global_ufrm(prgrm)
             gl.glDrawElements(gl.GL_TRIANGLES,
-                              len(self.__ibo.cache),
+                              self.__ibo.cache.highest_indx + 1,
                               self.__ibo.cache.gldtype[0],
                               ctypes.c_void_p(0))
 
     def __render_edge(self):
+        if not self.__ibo.cache.highest_indx:
+            return
         with self.__edge_prgrm as prgrm:
             self.__update_global_ufrm(prgrm)
             gl.glDrawElements(gl.GL_TRIANGLES,
-                              len(self.__ibo.cache),
+                              self.__ibo.cache.highest_indx + 1,
                               self.__ibo.cache.gldtype[0],
                               ctypes.c_void_p(0))

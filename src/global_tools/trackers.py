@@ -1,6 +1,6 @@
 import weakref
 from collections import OrderedDict
-from global_tools.ListSet import ListSet
+from global_tools.list_set import ListSet
 
 
 class TypewiseTracker:
