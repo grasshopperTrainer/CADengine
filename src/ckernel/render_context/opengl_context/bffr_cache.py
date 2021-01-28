@@ -124,6 +124,7 @@ class BffrCache(ArrayContainer):
         :param reset_val: value to fill released block with
         :return:
         """
+
         if block not in self.__block_inuse:
             raise ValueError('block not of this cache, please access via block.release()')
         # stop tracking
@@ -160,9 +161,11 @@ class BffrCache(ArrayContainer):
         :param reset_val: value to fill into released vertex
         :return: mapping info tuple((from indices...), (to indices...))
         """
+
         # size can differ, last can be bigger than to fill and smaller or equal
         if self.__block_pool[0][0] < self.highest_indx:  # cant be equal
-            src_block = self.__block_inuse.pop()
+            src_block = self.__block_inuse[-1]
+            self._release_block(src_block)
             src_idxs = src_block.indices
             src_size = len(src_idxs)
             # collect indicies
@@ -196,13 +199,13 @@ class BffrCache(ArrayContainer):
         return self.__array
 
     @property
-    def bytesize(self):
+    def active_bytesize(self):
         """
         size of whole array in bytes
 
         :return:
         """
-        return self.__array.size * self.__array.itemsize
+        return self.highest_indx  * self.__array.itemsize
 
     @property
     def gldtype(self):

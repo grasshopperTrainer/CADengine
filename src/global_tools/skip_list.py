@@ -26,7 +26,7 @@ class SkipList:
         :param item: item to search for
         :return:
         """
-        node = self.__search_bisect_left(item, return_path=False)
+        node = self.__search_bisect_left(item, return_path=False).get_right(level=0)[0]
         for nn, _ in node.iter_level(level=0):
             if self.__key_provider(nn.val) <= self.__key_provider(item):
                 if nn.val is item:
@@ -41,7 +41,6 @@ class SkipList:
     def __getitem__(self, item):
         """
         binary searching by width
-
         1. move right untile steps are too big
         2. go down
         3. repeat from 1
