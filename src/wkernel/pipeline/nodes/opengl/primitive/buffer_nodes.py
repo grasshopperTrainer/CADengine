@@ -58,7 +58,7 @@ class PushBufferData(BufferComponent):
     def calculate(self, bffr, data):
         gl.glBindBuffer(bffr.kind, bffr.id)
         gl.glBufferData(bffr.kind,
-                        data.bytesize,
+                        data.active_bytesize,
                         data.data,
                         gl.GL_STATIC_DRAW)
         return DataBufferObject(bffr, data)

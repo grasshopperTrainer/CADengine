@@ -252,7 +252,7 @@ class _Bffr(OGLEntity):
 
         with self as bffr:
             gl.glBufferData(target=bffr.__target,
-                            size=self.__cache.bytesize,
+                            size=self.__cache.active_bytesize,
                             data=self.__cache.array,
                             usage=bffr.__usage)
             # unbinding needed? does vao affected by vbo binding before its binding?

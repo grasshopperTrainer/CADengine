@@ -25,13 +25,69 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a3499ba1-dc0a-42c5-b463-7e2e3496ac29" name="pyopengl2-58 implement bffr cache compaction, merge algorithm" comment="pyopengl2-58 implement bffr cache compaction, merge algorithm&#10;&#10;benchmark index rendering&#10;    vocabulary:&#10;        array    : memory consecutive data&#10;        buffer   : array of GPU&#10;        subarray : consecutive sub data of an array that is not in use&#10;        block    : consecutive sub data in use&#10;        gap      : vacant subarray inbetween blocks&#10;        refilling: activity of filling gaps with blocks&#10;        tightly packed: array that has no subarray but only blocks&#10;    &#10;    about tightly packing array&#10;        ? Buffer that has no gap is beneficial as glDraw can look through only necessary data. On the other hand, buffer that has many gaps are inefficient as it has to look through all subarray that is not in use. So refilling seems to be beneficial at first glance, yet, it is not always true. For example, time used to refill can exceed time saved be rendering tightly packed buffer(or pushing tightly packed data into buffer).&#10;        ? refilling can be done by moving very last block into returned indices. But tight packing is not guaranteed with single filling operation. If size of a returned array is bigger then the last block, smaller gap will remain despite refilling.&#10;        ! Compromised can be made by simply refilling just once, despite possibly remaining gap. This way array is not guaranteed to be tightly packed, but has tendency of becoming tightly packed as returned block is always refilled with very last block thus back-padaling last index.&#10;        ! Refilling shouldnt be called automatically. For example if point vertex is moved to refill, index buffer block pointing at it looses correct index. Method caller has to handle this problem.&#10;        &#10;    about too many shattered subarray&#10;        ? It is bad to have too many shattered subarray. Just having it consumes memory(having one (0, 256) vs having 256 (0, 1), (1, 2)...). It can also slow down various functions that has to do something with a list of vacant subarrays.  &#10;        ! However, merging is automatically done throughout execution cycle. New block request always consumes vertex by front -&gt; back order. So even block pool is harshly shattered, newly created block tend to have consecutive indices(if it consumed more then one blocks from the pool). So, merging is executed when block is returned. By wrapping consecutive indices as single subarray and returning it.">
+      <change afterPath="$PROJECT_DIR$/etc/201224 test plane ray intersection.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/201227 vector from 2 points.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/201229 named vector.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/201229 pln function addition.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/bench/PRV vs consecutive index rendering.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/bench/PRVed vs shortened.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/bench/benchmark point consecutive indexing.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/bench/benchmark triangle consecutive indexing.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/bench/refilling analysis.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/casting dict to dict.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/default message decorator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/descriptor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/201230 line intersection test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/201231 triangle intersection test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/flat to vertical view.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/multiply transformation matrix to plane.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/test named vectors.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/test plane standarization.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/testing vector amplify.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gkernel/timing problem inbetween glfw callbak and draw thread.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gl/array nested array byte stream test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gl/chained view.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gl/draw bonding.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gl/duplicate buffer push test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gl/single buffer draw triangle.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gl/single frame triangle drawing with element array.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/gl/single frame triangle drawing.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/heap generator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/inherit instance.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/init inherit.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/init none-ing.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/interface mechanism.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/isinstance check.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/memory firstfit alocating test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/meta redirecting.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/noding/example.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/noding/getting explained.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/noding/refreshing.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/noding/setting explained.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/numpy/is column vector good.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/numpy/looking for correct struct.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/numpy/pointer slice.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/numpy/single structured array.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/numpy/store array into structured array.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/numpy/struct array apply tm bench.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/numpy/struct array self power bench.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/pipeline example.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/python/chained.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/python/new generator from used generator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/python/singleton.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/ref or proxy.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/scrible.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/structured numpy array.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/transformatioin into array.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/view/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/etc/wrapper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-06__10_58__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-06__10_58__Default_Changelist_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-17__1_35__Default_Changelist_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2020-08-17__1_35__Default_Changelist_.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run/render circle points.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render circle points.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run/render points form.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render points form.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/global_tools/skip_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/skip_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/gkernel_wrapper.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/primitive_renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/primitive_renderer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/opengl/primitive/buffer_nodes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/pipeline/nodes/opengl/primitive/buffer_nodes.py" afterDir="false" />
     </list>
     <list id="244346dc-c4b7-4080-9029-2152216f4b46" name="Default Changelist" comment="" />
     <list id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="some refactoring before writing ray-traingle intersection" />
@@ -64,6 +120,7 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="HARD" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="GitSEFilterConfiguration">
@@ -91,29 +148,29 @@
     <property name="ToolWindowRun.ShowToolbar" value="false" />
     <property name="add_unversioned_files" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/examples/gl" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/etc/bench" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="start.from.branch" value="origin/pyopengl2-39" />
     <property name="tasks.open.task.update.state.enabled" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\etc\bench" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\gl" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shaders" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\run" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\examples\numpy" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\etc\bench" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\etc" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\ckernel\render_context\opengl_context\factories\prgrm" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\ckernel\render_context\opengl_context\factories" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shaders" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\devices\input" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\devices\render" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.render points form">
-    <configuration name="render circle points" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.refilling analysis">
+    <configuration name="PRV vs consecutive index rendering (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -121,11 +178,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/etc/bench" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render circle points.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/etc/bench/PRV vs consecutive index rendering.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -134,7 +191,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render lines with edge" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="PRVed vs shortened" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -142,11 +199,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/etc/bench" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render lines with edge.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/etc/bench/PRVed vs shortened.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -155,7 +212,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render points form" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="benchmark point consecutive indexing" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -163,11 +220,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/etc/bench" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render points form.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/etc/bench/benchmark point consecutive indexing.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -176,7 +233,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render rectangular points" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="benchmark triangle consecutive indexing" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -184,11 +241,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/etc/bench" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render rectangular points.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/etc/bench/benchmark triangle consecutive indexing.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -197,7 +254,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render triangles with edge" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="refilling analysis" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -205,11 +262,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/etc/bench" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render triangles with edge.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/etc/bench/refilling analysis.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -220,11 +277,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.render points form" />
-        <item itemvalue="Python.render circle points" />
-        <item itemvalue="Python.render lines with edge" />
-        <item itemvalue="Python.render triangles with edge" />
-        <item itemvalue="Python.render rectangular points" />
+        <item itemvalue="Python.refilling analysis" />
+        <item itemvalue="Python.PRVed vs shortened" />
+        <item itemvalue="Python.PRV vs consecutive index rendering (1)" />
+        <item itemvalue="Python.benchmark point consecutive indexing" />
+        <item itemvalue="Python.benchmark triangle consecutive indexing" />
       </list>
     </recent_temporary>
   </component>
