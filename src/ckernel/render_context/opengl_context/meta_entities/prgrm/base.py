@@ -8,7 +8,7 @@ from .shdr_parser import SimpleShdrParser
 from .shdr_parser import VrtxAttrSchema, UfrmSchema
 
 
-class PrgrmFactory(OGLMetaEntity):
+class MetaPrgrm(OGLMetaEntity):
 
     def __init__(self, vrtx_path=None, geom_path=None, frgm_path=None):
         """
