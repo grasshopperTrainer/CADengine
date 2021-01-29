@@ -28,7 +28,7 @@ class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
     # not working
     @classmethod
     @abc.abstractmethod
-    def is_array_like(cls, arr):
+    def is_compatible_array(cls, arr):
         pass
 
     @property

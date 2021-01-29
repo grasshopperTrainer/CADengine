@@ -851,7 +851,7 @@ class Pln(ArrayLikeData, PntConv):
             self.__standardize()
         elif isinstance(obj, np.ndarray):
             # self already has resulting value, need to check array correctness
-            if self.is_array_like(self):
+            if self.is_compatible_array(self):
                 self.__standardize()
             else:
                 raise ValueError('given is not Pln-like')
@@ -859,7 +859,7 @@ class Pln(ArrayLikeData, PntConv):
             raise
 
     @classmethod
-    def is_array_like(cls, arr):
+    def is_compatible_array(cls, arr):
         """
         check if raw array is Pln like
 

@@ -26,7 +26,7 @@ class MyWindow(Window):
         l2.clr = 0, 0, i, a
         # set thickness
         for l in (l0, l1, l2):
-            l.thk = 10
+            l.thk = 5
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:
@@ -34,4 +34,4 @@ class MyWindow(Window):
                 p.clear(.5, .5, .5, 1)
                 self.model.test_render()
 
-MyWindow().run_all(1)
+MyWindow().run_all()

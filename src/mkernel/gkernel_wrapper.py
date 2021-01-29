@@ -1,21 +1,22 @@
 import numpy as np
 from numbers import Number
 
-import gkernel.dtype.geometric.primitive as rg
-from gkernel.color.primitive import ClrRGBA
+import gkernel.dtype.geometric as geo
+from gkernel.color.primitive import ClrRGBA, Clr
 import mkernel.shape as shp
 from .primitive_renderer import *
 from global_tools.singleton import Singleton
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
-class Ray(rg.Ray, shp.Shape):
+
+class Ray(geo.Ray, shp.Shape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
 
-class Pnt(rg.Pnt, shp.Shape):
+class Pnt(geo.Pnt, shp.Shape):
 
     def __init__(self, x, y, z):
         """
@@ -31,11 +32,11 @@ class Pnt(rg.Pnt, shp.Shape):
         self.__indx_block['idx'] = self.__vrtx_block.indices
 
         self.__frm = self.FORM_SQUARE
-        self.__geo = rg.Pnt()
+        self.__geo = geo.Pnt()
         self.__clr = ClrRGBA()
         self.__dia = 5
 
-        self.geo = rg.Pnt(x, y, z)
+        self.geo = geo.Pnt(x, y, z)
         self.clr = ClrRGBA(1, 1, 1, 1)
         self.dia = 5
 
@@ -59,7 +60,7 @@ class Pnt(rg.Pnt, shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, (tuple, list, rg.Pnt)):
+        if not isinstance(v, (tuple, list, geo.Pnt)):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         self.__geo = v
@@ -135,7 +136,7 @@ class Pnt(rg.Pnt, shp.Shape):
             self.__ibo = PointRenderer().triangle_ibo
 
 
-class Vec(rg.Vec, shp.Shape):
+class Vec(geo.Vec, shp.Shape):
     pass
 
 
@@ -144,10 +145,10 @@ class Lin(shp.Shape):
     def __init__(self, s=(0, 0, 0), e=(0, 1, 0)):
         self.__vrtx_block = LineRenderer().vbo.cache.request_block(size=2)
 
-        self.__geo = rg.Lin()
+        self.__geo = geo.Lin()
         self.__clr = ClrRGBA()
         self.__thk = 2
-        self.geo = rg.Lin(s, e)
+        self.geo = geo.Lin(s, e)
         self.clr = ClrRGBA(0, 0, 0, 1)
         # set index
         self.__indx_block = LineRenderer().ibo.cache.request_block(size=2)
@@ -159,7 +160,7 @@ class Lin(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, rg.Lin):
+        if not isinstance(v, geo.Lin):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         self.__geo[:] = v
@@ -196,10 +197,65 @@ class Lin(shp.Shape):
 
 
 class Plin(shp.Shape):
-    pass
+    def __init__(self, *vs):
+        """
+
+        :param vs: number of vertices coordinate that form polyline
+        """
+        # this will check input validity
+        self.__geo = geo.Plin(*vs)
+        self.__clr = ClrRGBA()
+        self.__thk = 3
+
+        self.__vrtx_block = PolylineRenderer().vbo.cache.request_block(size=len(vs))
+        # +1 for primitive restart value
+        self.__indx_block = PolylineRenderer().ibo.cache.request_block(size=len(vs)+1)
+        self.__indx_block['idx', :-1] = self.__vrtx_block.indices
+        self.__indx_block['idx', -1] = PRV
+
+        self.geo = geo.Plin(*vs)
+        self.clr = ClrRGBA(0, 0, 0, 1)
+        self.thk = 5
+
+    @property
+    def geo(self):
+        return self.__geo
+
+    @geo.setter
+    def geo(self, v):
+        if not isinstance(v, geo.Plin):
+            raise TypeError
+        self.__vrtx_block['vtx'] = v.T
+        self.__geo[:] = v
+
+    @property
+    def clr(self):
+        return self.__clr
+
+    @clr.setter
+    def clr(self, v):
+        if not isinstance(v, Clr):
+            raise TypeError
+        self.__vrtx_block['clr'] = v
+        self.__clr[:] = v
+
+    @property
+    def thk(self):
+        return self.__thk
+
+    @thk.setter
+    def thk(self, v):
+        if not isinstance(v, Number):
+            raise TypeError
+        self.__vrtx_block['thk'] = v
+        self.__thk = v
+
+    @classmethod
+    def render(cls):
+        PolylineRenderer().render()
 
 
-class Pln(rg.Pln, shp.Shape):
+class Pln(geo.Pln, shp.Shape):
     pass
 
 
@@ -223,12 +279,12 @@ class Tgl(shp.Shape):
         self.__indx_block = TriangleRenderer().ibo.cache.request_block(size=3)
         self.__indx_block['idx'] = self.__vrtx_block.indices
         # just filling correct placeholder
-        self.__geo = rg.Tgl()
+        self.__geo = geo.Tgl()
         self.__fill_clr = ClrRGBA()
         self.__edge_clr = ClrRGBA()
         self.__edge_thk = 1
         # actual value assignment
-        self.geo = rg.Tgl(v0, v1, v2)
+        self.geo = geo.Tgl(v0, v1, v2)
         self.clr_fill = ClrRGBA(1, 1, 1, 1)
         self.edge_clr = ClrRGBA(0, 0, 0, 1)
 
@@ -237,11 +293,11 @@ class Tgl(shp.Shape):
         return self.__geo
 
     @geo.setter
-    def geo(self, value):
-        if not isinstance(value, rg.Tgl):
+    def geo(self, v):
+        if not isinstance(v, geo.Tgl):
             raise TypeError
-        self.__vrtx_block['vtx'] = value.T
-        self.__geo[:] = value
+        self.__vrtx_block['vtx'] = v.T
+        self.__geo[:] = v
 
     @property
     def clr_fill(self):
@@ -297,5 +353,4 @@ class Tgl(shp.Shape):
 
     @classmethod
     def render(cls):
-        TriangleRenderer().vbo.get_concrete().push_cache()
         TriangleRenderer().render(cls.__is_render_edge)

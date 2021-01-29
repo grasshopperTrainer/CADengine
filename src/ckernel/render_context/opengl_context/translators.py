@@ -19,7 +19,7 @@ def npdtype_to_gldtype(dtype):
         is_simple = False
         dtypes = []
         for _, (dtype, _) in dtype.fields.items():
-            dtypes.append(dtype.subdtype[0])
+            dtypes.append(dtype)
 
     results = []
     for dt in dtypes:

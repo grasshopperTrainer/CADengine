@@ -275,11 +275,10 @@ class BffrCache(ArrayContainer):
             :return:
             """
             # for 1D setitem
-            shape = self.__cache.array[key][self.__indices].shape
-            if len(shape) == 2 and shape[1] == 1:
-                if isinstance(value, (list, tuple)):
-                    value = np.array(value).reshape(shape)
-            self.__cache.array[key][self.__indices] = value
+            if not isinstance(key, tuple):
+                self.__cache.array[key][self.__indices] = value
+            else:
+                self.__cache.array[key[0]][self.__indices[key[1]]] = value
 
         def __str__(self):
             return f"<Block {self.__indices}]>"

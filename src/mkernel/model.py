@@ -62,3 +62,4 @@ class Model:
         gw.Tgl.render()
         gw.Lin.render()
         gw.Pnt.render()
+        gw.Plin.render()
