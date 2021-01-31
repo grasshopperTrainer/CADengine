@@ -71,17 +71,14 @@ class BffrCache(ArrayContainer):
         raise NotImplementedError
 
     @property
-    def highest_indx(self):
+    def active_size(self):
         """
-        highest index of a vertex in use
+        size of array in use
 
-        if no vertex is in use return None
+        ! this doesnt mean given size is tightly packed
         :return: None or int
         """
-        if not self.__block_inuse:
-            return None
-        else:
-            return self.__highest_indx
+        return self.__highest_indx + 1
 
     def request_block(self, size):
         """
@@ -149,7 +146,10 @@ class BffrCache(ArrayContainer):
         self.__num_vertex_inuse -= block.size
         # update highest index
         if block.indices[-1] == self.__highest_indx:
-            self.__highest_indx = self.__block_inuse[-1].high_indx
+            if self.__block_inuse:
+                self.__highest_indx = self.__block_inuse[-1].high_indx
+            else:
+                self.__highest_indx = -1    # 0 size
 
     def refill_foremost(self, reset_val=None):
         """
@@ -163,7 +163,7 @@ class BffrCache(ArrayContainer):
         """
 
         # size can differ, last can be bigger than to fill and smaller or equal
-        if self.__block_pool[0][0] < self.highest_indx:  # cant be equal
+        if self.__block_pool[0][0] < self.active_size:  # cant be equal
             src_block = self.__block_inuse[-1]
             self._release_block(src_block)
             src_idxs = src_block.indices
@@ -188,7 +188,11 @@ class BffrCache(ArrayContainer):
             setattr(src_block, f"_{src_block.__class__.__name__[2:]}__indices", trg_idxs)   # bad hidden access
             # relocated source block with new indices
             self.__block_inuse.push(src_block)
-            self.__highest_indx = self.__block_inuse[-1].high_indx
+            if self.__block_inuse:
+                self.__highest_indx = self.__block_inuse[-1].high_indx
+            else:
+                self.__highest_indx = -1
+
             return tuple(src_idxs), tuple(trg_idxs)
 
     @property
@@ -205,7 +209,7 @@ class BffrCache(ArrayContainer):
 
         :return:
         """
-        return self.highest_indx  * self.__array.itemsize
+        return self.active_size * self.__array.itemsize
 
     @property
     def gldtype(self):

@@ -1,5 +1,9 @@
 from gkernel.tools.intersector import Intersector as intx
 import mkernel.gkernel_wrapper as gw
+import gkernel.dtype.geometric as gt
+import mkernel.gkernel_wrapper as st
+import mkernel.primitive_renderer as pr
+
 from .shape import Shape
 
 
@@ -20,9 +24,13 @@ class Model:
     def __init__(self):
         self._shapes = []
         self._plane = gw.Pln()
+        self.__renderers = {}
 
-    def append_shape(self, shape):
-        self._shapes.append(shape)
+    def add_pnt(self, x, y, z):
+        geo = gt.Pnt(x, y, z)
+        renderer = self.__renderers.setdefault('pnt', pr.PointRenderer())
+        shp = st.Pnt(geo, renderer)
+        return shp
 
     def iterator(self):
         """
@@ -48,15 +56,8 @@ class Model:
                 print(i, x)
 
     def render(self):
-        """
-        redner all shaped inside model
-
-        call all renderer defined in shaped inside gkernel_wrapper
-        :return:
-        """
-        for k, v in gw.__dict__.items():
-            if isinstance(v, type) and issubclass(v, Shape):    # find shape class
-                v.get_cls_renderer().run_all()
+        for r in self.__renderers.values():
+            r.render()
 
     def test_render(self):
         gw.Tgl.render()

@@ -15,51 +15,6 @@ class Shape(metaclass=abc.ABCMeta):
     Interface for a shape object.
     """
 
-    @classmethod
-    @abc.abstractmethod
-    def render(cls):
-        """
-        render shape face
-
-        :return:
-        """
-    #
-    # @classmethod
-    # @abc.abstractmethod
-    # def render_line(cls):
-    #     """
-    #     render shape edge
-    #
-    #     :return:
-    #     """
-    #
-    # @classmethod
-    # @abc.abstractmethod
-    # def render_point(cls):
-    #     """
-    #     render shape vertex
-    #
-    #     :return:
-    #     """
-    #
-    # @classmethod
-    # @abc.abstractmethod
-    # def render_default(cls):
-    #     """
-    #     render default expression
-    #
-    #     :return:
-    #     """
-
-    # @abc.abstractmethod
-    # def intersect(self, ray):
-    #     """
-    #     shape is responsible for intersecting with ray
-    #     :param ray: to intersect with
-    #     :return:
-    #     """
-    #     raise NotImplementedError
-
     @property
     @abc.abstractmethod
     def geo(self):

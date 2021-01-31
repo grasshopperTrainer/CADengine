@@ -165,7 +165,7 @@ for _ in range(num_test):
     # render
     gl.glBeginQuery(gl.GL_TIME_ELAPSED, qid)
     gl.glDrawElements(gl.GL_POINTS,
-                      test1_idx.highest_indx + 1,
+                      test1_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
     gl.glEndQuery(gl.GL_TIME_ELAPSED)
@@ -192,7 +192,7 @@ for _ in range(num_test):
     # re render
     gl.glBeginQuery(gl.GL_TIME_ELAPSED, qid)
     gl.glDrawElements(gl.GL_POINTS,
-                      test1_idx.highest_indx + 1,
+                      test1_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
     gl.glEndQuery(gl.GL_TIME_ELAPSED)

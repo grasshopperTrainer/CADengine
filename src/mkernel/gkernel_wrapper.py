@@ -15,27 +15,29 @@ class Ray(rg.Ray, shp.Shape):
         return None
 
 
-class Pnt(rg.Pnt, shp.Shape):
+class Pnt(shp.Shape):
 
-    def __init__(self, x, y, z):
+    def __init__(self, geo, renderer):
         """
 
-        :param x: Number, coordinate value x
-        :param y: Number, coordinate value y
-        :param z: Number, coordinate value z
         """
+        # enums
+        self.__form_square = self.__Form(renderer.square_ibo, 'SQUARE')
+        self.__form_circle = self.__Form(renderer.circle_ibo, 'CIRCLE')
+        self.__form_tirangle = self.__Form(renderer.triangle_ibo, 'TRIANGLE')
+
         # set vertex attributes
-        self.__vrtx_block = PointRenderer().vbo.cache.request_block(size=1)
+        self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
+
         # set index buffer
-        self.__indx_block = PointRenderer().square_ibo.cache.request_block(size=1)
-        self.__indx_block['idx'] = self.__vrtx_block.indices
+        self.__indx_block = None
+        self.__frm = None
+        self.__geo = None
+        self.__clr = None
+        self.__dia = None
 
-        self.__frm = self.FORM_SQUARE
-        self.__geo = rg.Pnt()
-        self.__clr = ClrRGBA()
-        self.__dia = 5
-
-        self.geo = rg.Pnt(x, y, z)
+        self.frm = self.FORM_SQUARE
+        self.geo = geo
         self.clr = ClrRGBA(1, 1, 1, 1)
         self.dia = 5
 
@@ -43,15 +45,15 @@ class Pnt(rg.Pnt, shp.Shape):
     # form constants
     @property
     def FORM_SQUARE(self):
-        return self.__SquareForm()
+        return self.__form_square
 
     @property
     def FORM_CIRCLE(self):
-        return self.__CircleForm()
+        return self.__form_circle
 
     @property
     def FORM_TRIANGLE(self):
-        return self.__TriangleForm()
+        return self.__form_tirangle
 
     @property
     def geo(self):
@@ -62,7 +64,8 @@ class Pnt(rg.Pnt, shp.Shape):
         if not isinstance(v, (tuple, list, rg.Pnt)):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
-        self.__geo = v
+        if self.__geo is not None:
+            self.__geo[:] = v
 
 
     @property
@@ -74,7 +77,8 @@ class Pnt(rg.Pnt, shp.Shape):
         if not isinstance(v, (tuple, list, np.ndarray)):
             raise TypeError
         self.__vrtx_block['clr'] = v
-        self.__clr[:] = v
+        if self.__clr is not None:
+            self.__clr[:] = v
 
     @property
     def dia(self):
@@ -105,34 +109,23 @@ class Pnt(rg.Pnt, shp.Shape):
         if self.__frm == v:
             return
         # swap, index cache can be always tightly packed so refill
-        self.__indx_block.release_refill(PRV)
+        if self.__indx_block is not None:
+            self.__indx_block.release(PRV)
         self.__indx_block = v.ibo.cache.request_block(size=1)
         self.__indx_block['idx'] = self.__vrtx_block.indices
         self.__frm = v
 
-    @classmethod
-    def render(cls):
-        PointRenderer().render()
-
     class __Form:
+        def __init__(self, ibo, name):
+            self.__ibo = ibo
+            self.__name = name
+
         @property
         def ibo(self):
-            return getattr(self, f"_{self.__class__.__name__.replace('_', '')}__ibo")
+            return self.__ibo
 
-    @Singleton
-    class __CircleForm(__Form):
-        def __init__(self):
-            self.__ibo = PointRenderer().circle_ibo
-
-    @Singleton
-    class __SquareForm(__Form):
-        def __init__(self):
-            self.__ibo = PointRenderer().square_ibo
-
-    @Singleton
-    class __TriangleForm(__Form):
-        def __init__(self):
-            self.__ibo = PointRenderer().triangle_ibo
+        def __str__(self):
+            return f"<ENUM {self.__name}>"
 
 
 class Vec(rg.Vec, shp.Shape):
