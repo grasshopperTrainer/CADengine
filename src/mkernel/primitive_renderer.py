@@ -1,6 +1,6 @@
 import os
 
-import ckernel.render_context.opengl_context.meta_entities as fac
+import ckernel.render_context.opengl_context.meta_entities as meta
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 from ckernel.render_context.opengl_context.meta_entities.prgrm.schemas import VrtxAttrSchema
 from ckernel.render_context.opengl_context.meta_entities import *
@@ -21,6 +21,11 @@ Shape holdes buffer, buffer cache and vertex array(vao)
 renderer holds prgrm and global uniform cache
 
 """
+
+
+THIS_PATH = os.path.dirname(__file__)
+def _get_fullpath(rel_path):
+    return os.path.join(THIS_PATH, rel_path)
 
 
 class _PrimitiveRenderer(metaclass=abc.ABCMeta):
@@ -222,6 +227,55 @@ class LineRenderer(_PrimitiveRenderer):
                                   self.__ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
+@Singleton
+class PolylineRenderer(_PrimitiveRenderer):
+    def __init__(self):
+        self.__sharp_prgrm = meta.MetaPrgrm(
+            vrtx_path=_get_fullpath('shaders/plinSharp_vrtx_shdr.glsl'),
+            geom_path=_get_fullpath('shaders/plinSharp_geom_shdr.glsl'),
+            frgm_path=_get_fullpath('shaders/plinSharp_frgm_shdr.glsl')
+        )
+        self.__vbo = MetaVrtxBffr(
+            attr_desc=np.dtype([('vtx', 'f4', 4), ('thk', 'f4'), ('clr', 'f4', 4)]),
+            attr_locs=(0, 1, 2)
+        )
+        self.__ibo = MetaIndxBffr(dtype='uint')
+        self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
+
+        self.__ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
+
+    @property
+    def vbo(self):
+        return self.__vbo
+
+    @property
+    def ibo(self):
+        return self.__ibo
+
+    def render(self):
+        self.__vbo.push_cache()
+        self.__ibo.push_cache()
+        self.__render_sharp()
+
+    def __render_sharp(self):
+        if not self.__ibo.cache.active_size:
+            return
+        with self.__vao:
+            with self.__sharp_prgrm as prgrm:
+                # uniforms
+                camera = get_current_ogl().manager.window.devices.cameras.current
+                self.__ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__ufrm_cache['PM'] = camera.body.PM.r
+                self.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                           [0, 1, 0, 0],
+                                           [0, 0, 1, 0],
+                                           [0, 0, 0, 1]]
+                prgrm.push_ufrms(self.__ufrm_cache)
+
+                gl.glDrawElements(gl.GL_LINE_STRIP,
+                                  self.__ibo.cache.active_size,
+                                  self.__ibo.cache.gldtype[0],
+                                  ctypes.c_void_p(0))
 
 class TriangleRenderer(_PrimitiveRenderer):
     """

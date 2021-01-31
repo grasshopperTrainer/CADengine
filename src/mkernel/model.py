@@ -114,3 +114,4 @@ class Model:
     def render(self):
         for r in self.__renderers.values():
             r.render()
+

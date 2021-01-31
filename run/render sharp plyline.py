@@ -1,5 +1,5 @@
 from doodler import *
-from mkernel import Model, Pnt, Tgl
+from mkernel import Model, Pnt, Tgl, Plin
 from wkernel import Window
 
 
@@ -14,21 +14,10 @@ class MyWindow(Window):
 
         # create model
         self.model = Model()
-        e = 50
-        pnts = []
-        for i in range(20):
-            e += 20
-            pnts.append(Pnt(e, 0, 0))
-        for p in pnts:
-            p.dia = 10
-
-        for i, p in enumerate(pnts):
-            if i % 3 == 0:
-                p.frm = p.FORM_SQUARE
-            elif i % 3 == 1:
-                p.frm = p.FORM_CIRCLE
-            else:
-                p.frm = p.FORM_TRIANGLE
+        l = 100
+        Plin([0, 0, 0], [l, 0, 0], [0, l, l], [l, l, l])
+        k = 50
+        Plin([k, 0, k], [0, k, k], [k, k, k*2])
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:

@@ -1,2 +1,2 @@
-from .prgrm.base import PrgrmFactory
+from .prgrm.base import MetaPrgrm
 from .metas import *

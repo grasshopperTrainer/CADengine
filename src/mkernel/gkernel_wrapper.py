@@ -1,20 +1,21 @@
 import numpy as np
 from numbers import Number
 
-import gkernel.dtype.geometric.primitive as rg
-from gkernel.color.primitive import ClrRGBA
+import gkernel.dtype.geometric as geo
+from gkernel.color.primitive import ClrRGBA, Clr
 import mkernel.shape as shp
 from .primitive_renderer import *
 from global_tools.singleton import Singleton
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
-class Ray(rg.Ray, shp.Shape):
+
+class Ray(shp.Shape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
-
+      
 class Pnt(shp.Shape):
 
     def __init__(self, geo, renderer):
@@ -61,7 +62,7 @@ class Pnt(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, (tuple, list, rg.Pnt)):
+        if not isinstance(v, (tuple, list, geo.Pnt)):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         if self.__geo is None:
@@ -132,14 +133,14 @@ class Pnt(shp.Shape):
             return f"<ENUM {self.__name}>"
 
 
-class Vec(rg.Vec, shp.Shape):
+class Vec(shp.Shape):
     pass
 
 
 class Lin(shp.Shape):
-
     def __init__(self, geo, renderer):
         self.__vrtx_block = renderer.vbo.cache.request_block(size=2)
+      
         # set index
         self.__indx_block = renderer.ibo.cache.request_block(size=2)
         self.__indx_block['idx'] = self.__vrtx_block.indices
@@ -159,7 +160,7 @@ class Lin(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, rg.Lin):
+        if not isinstance(v, geo.Lin):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         if self.__geo is None:
@@ -194,10 +195,65 @@ class Lin(shp.Shape):
 
 
 class Plin(shp.Shape):
-    pass
+    def __init__(self, *vs):
+        """
+
+        :param vs: number of vertices coordinate that form polyline
+        """
+        # this will check input validity
+        self.__geo = geo.Plin(*vs)
+        self.__clr = ClrRGBA()
+        self.__thk = 3
+
+        self.__vrtx_block = PolylineRenderer().vbo.cache.request_block(size=len(vs))
+        # +1 for primitive restart value
+        self.__indx_block = PolylineRenderer().ibo.cache.request_block(size=len(vs)+1)
+        self.__indx_block['idx', :-1] = self.__vrtx_block.indices
+        self.__indx_block['idx', -1] = PRV
+
+        self.geo = geo.Plin(*vs)
+        self.clr = ClrRGBA(0, 0, 0, 1)
+        self.thk = 5
+
+    @property
+    def geo(self):
+        return self.__geo
+
+    @geo.setter
+    def geo(self, v):
+        if not isinstance(v, geo.Plin):
+            raise TypeError
+        self.__vrtx_block['vtx'] = v.T
+        self.__geo[:] = v
+
+    @property
+    def clr(self):
+        return self.__clr
+
+    @clr.setter
+    def clr(self, v):
+        if not isinstance(v, Clr):
+            raise TypeError
+        self.__vrtx_block['clr'] = v
+        self.__clr[:] = v
+
+    @property
+    def thk(self):
+        return self.__thk
+
+    @thk.setter
+    def thk(self, v):
+        if not isinstance(v, Number):
+            raise TypeError
+        self.__vrtx_block['thk'] = v
+        self.__thk = v
+
+    @classmethod
+    def render(cls):
+        PolylineRenderer().render()
 
 
-class Pln(rg.Pln, shp.Shape):
+class Pln(shp.Shape):
     pass
 
 
@@ -240,6 +296,7 @@ class Tgl(shp.Shape):
             self.__geo = v
         else:
             self.__geo[:] = v
+
 
     @property
     def clr_fill(self):
@@ -298,3 +355,4 @@ class Tgl(shp.Shape):
         if not isinstance(b, bool):
             raise TypeError
         cls.__render_edge = b
+
