@@ -225,7 +225,7 @@ def set_PRV_render_full_length():
     # print(test1_idx.highest_indx, test1_idx.active_bytesize)
     # render
     gl.glDrawElements(gl.GL_POINTS,
-                      test1_idx.highest_indx + 1,
+                      test1_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
     # reset
@@ -239,7 +239,7 @@ def set_PRV_render_full_length():
                     gl.GL_DYNAMIC_DRAW)
     # re render
     gl.glDrawElements(gl.GL_POINTS,
-                      test1_idx.highest_indx + 1,
+                      test1_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
 
@@ -264,7 +264,7 @@ def remove_render_tightly_packed():
     # print(test3_idx.highest_indx, test3_idx.active_bytesize)
     # render
     gl.glDrawElements(gl.GL_POINTS,
-                      test3_idx.highest_indx + 1,
+                      test3_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
 
@@ -281,7 +281,7 @@ def remove_render_tightly_packed():
                     gl.GL_DYNAMIC_DRAW)
     # re render
     gl.glDrawElements(gl.GL_POINTS,
-                      test3_idx.highest_indx + 1,
+                      test3_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
 
@@ -307,7 +307,7 @@ def release_no_pack():
     # print(test2_idx.highest_indx, test2_idx.active_bytesize)
     # render
     gl.glDrawElements(gl.GL_POINTS,
-                      test2_idx.highest_indx + 1,
+                      test2_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
     # reset
@@ -322,7 +322,7 @@ def release_no_pack():
                     gl.GL_DYNAMIC_DRAW)
     # re render
     gl.glDrawElements(gl.GL_POINTS,
-                      test2_idx.highest_indx + 1,
+                      test2_idx.active_size + 1,
                       gl.GL_UNSIGNED_INT,
                       ctypes.c_void_p(0))
 

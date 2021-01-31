@@ -64,6 +64,15 @@ class MetaVrtxBffr(MetaBffr):
         # decide whether to use single cache for all entities per context
         self.__cache = BffrCache(attr_desc, attr_locs)
 
+    def _create_entity(self):
+        """
+        :return:
+        """
+        bffr = gl.glGenBuffers(1)
+        bffr.set_target(self.target)
+        bffr.set_cache(self.__cache)
+        return bffr
+
     @property
     def target(self):
         return gl.GL_ARRAY_BUFFER
@@ -98,14 +107,6 @@ class MetaVrtxBffr(MetaBffr):
     def cache(self):
         return self.__cache
 
-    def _create_entity(self):
-        """
-        :return:
-        """
-        bffr = gl.glGenBuffers(1)
-        bffr.set_target(self.target)
-        bffr.set_cache(self.__cache)
-        return bffr
 
 
 class MetaIndxBffr(MetaBffr):
