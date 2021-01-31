@@ -1,7 +1,7 @@
 import numpy as np
 from numbers import Number
 
-import gkernel.dtype.geometric as geo
+import gkernel.dtype.geometric as gt
 from gkernel.color.primitive import ClrRGBA, Clr
 import mkernel.shape as shp
 from .primitive_renderer import *
@@ -254,7 +254,9 @@ class Plin(shp.Shape):
 
 
 class Pln(shp.Shape):
-    pass
+    @property
+    def geo(self):
+        raise NotImplementedError
 
 
 class Tgl(shp.Shape):
@@ -289,7 +291,7 @@ class Tgl(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, rg.Tgl):
+        if not isinstance(v, geo.Tgl):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         if self.__geo is None:

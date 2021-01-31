@@ -50,16 +50,16 @@ class PointRenderer(_PrimitiveRenderer):
     :param self.__~_ufrm_cache: buffer cache of transformation matrices
 
     """
-    __square_prgrm = fac.PrgrmFactory(
+    __square_prgrm = meta.MetaPrgrm(
         vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_vrtx_shdr.glsl'),
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_frgm_shdr.glsl'))
 
-    __circle_prgrm = fac.PrgrmFactory(
+    __circle_prgrm = meta.MetaPrgrm(
         vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_vrtx_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_frgm_shdr.glsl'))
 
-    __triangle_prgrm = fac.PrgrmFactory(
+    __triangle_prgrm = meta.MetaPrgrm(
         vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_vrtx_shdr.glsl'),
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_frgm_shdr.glsl'))
@@ -182,7 +182,7 @@ class LineRenderer(_PrimitiveRenderer):
     :param self.__sharp_prgrm: program rendering thick sharp line
     :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
     """
-    __sharp_prgrm = fac.PrgrmFactory(
+    __sharp_prgrm = meta.MetaPrgrm(
         vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_vrtx_shdr.glsl'),
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
@@ -294,11 +294,11 @@ class TriangleRenderer(_PrimitiveRenderer):
     :param self.__edge_prgrm: for rendering triangle thick edge
     :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
     """
-    __fill_prgrm = fac.PrgrmFactory(
+    __fill_prgrm = meta.MetaPrgrm(
         vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_vrtx_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_frgm_shdr.glsl'))
 
-    __edge_prgrm = fac.PrgrmFactory(
+    __edge_prgrm = meta.MetaPrgrm(
         vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl'),
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl'))
