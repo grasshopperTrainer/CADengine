@@ -64,7 +64,9 @@ class Pnt(shp.Shape):
         if not isinstance(v, (tuple, list, rg.Pnt)):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
-        if self.__geo is not None:
+        if self.__geo is None:
+            self.__geo = v
+        else:
             self.__geo[:] = v
 
 
@@ -77,7 +79,9 @@ class Pnt(shp.Shape):
         if not isinstance(v, (tuple, list, np.ndarray)):
             raise TypeError
         self.__vrtx_block['clr'] = v
-        if self.__clr is not None:
+        if self.__clr is None:
+            self.__clr = v
+        else:
             self.__clr[:] = v
 
     @property
@@ -134,17 +138,20 @@ class Vec(rg.Vec, shp.Shape):
 
 class Lin(shp.Shape):
 
-    def __init__(self, s=(0, 0, 0), e=(0, 1, 0)):
-        self.__vrtx_block = LineRenderer().vbo.cache.request_block(size=2)
-
-        self.__geo = rg.Lin()
-        self.__clr = ClrRGBA()
-        self.__thk = 2
-        self.geo = rg.Lin(s, e)
-        self.clr = ClrRGBA(0, 0, 0, 1)
+    def __init__(self, geo, renderer):
+        self.__vrtx_block = renderer.vbo.cache.request_block(size=2)
         # set index
-        self.__indx_block = LineRenderer().ibo.cache.request_block(size=2)
+        self.__indx_block = renderer.ibo.cache.request_block(size=2)
         self.__indx_block['idx'] = self.__vrtx_block.indices
+
+        self.__geo = None
+        self.__clr = None
+        self.__thk = None
+
+        self.geo = geo
+        self.clr = ClrRGBA(0, 0, 0, 1)
+        self.thk = 1
+
 
     @property
     def geo(self):
@@ -155,7 +162,10 @@ class Lin(shp.Shape):
         if not isinstance(v, rg.Lin):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
-        self.__geo[:] = v
+        if self.__geo is None:
+            self.__geo = v
+        else:
+            self.__geo[:] = v
 
     @property
     def clr(self):
@@ -166,7 +176,10 @@ class Lin(shp.Shape):
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
         self.__vrtx_block['clr'] = v  # to accept as much as possible
-        self.__clr[:] = v
+        if self.__clr is None:
+            self.__clr = v
+        else:
+            self.__clr[:] = v
 
     @property
     def thk(self):
@@ -179,14 +192,6 @@ class Lin(shp.Shape):
         self.__vrtx_block['thk'] = v
         self.__thk = v
 
-    @classmethod
-    def render(cls):
-        """
-        passer
-        :return:
-        """
-        LineRenderer().render()
-
 
 class Plin(shp.Shape):
     pass
@@ -198,12 +203,8 @@ class Pln(rg.Pln, shp.Shape):
 
 class Tgl(shp.Shape):
     __is_render_edge = True
-    def __init__(self, v0, v1, v2):
+    def __init__(self, geo, renderer):
         """
-
-        :param v0:
-        :param v1:
-        :param v2:
 
         :param __block: this is merely a container for block location in raw array
                         used when shape is deleted thus has to free space in raw array
@@ -211,30 +212,34 @@ class Tgl(shp.Shape):
         :param __geo: exposed geometric data
                       ! always a copy of __block to prevent undesired value contamination
         """
-        self.__vrtx_block = TriangleRenderer().vbo.cache.request_block(size=3)
+        self.__vrtx_block = renderer.vbo.cache.request_block(size=3)
         # registering at ibo
-        self.__indx_block = TriangleRenderer().ibo.cache.request_block(size=3)
+        self.__indx_block = renderer.ibo.cache.request_block(size=3)
         self.__indx_block['idx'] = self.__vrtx_block.indices
         # just filling correct placeholder
-        self.__geo = rg.Tgl()
-        self.__fill_clr = ClrRGBA()
-        self.__edge_clr = ClrRGBA()
-        self.__edge_thk = 1
+        self.__geo = None
+        self.__fill_clr = None
+        self.__edge_clr = None
+        self.__edge_thk = None
         # actual value assignment
-        self.geo = rg.Tgl(v0, v1, v2)
+        self.geo = geo
         self.clr_fill = ClrRGBA(1, 1, 1, 1)
         self.edge_clr = ClrRGBA(0, 0, 0, 1)
+        self.edge_thk = 1
 
     @property
     def geo(self):
         return self.__geo
 
     @geo.setter
-    def geo(self, value):
-        if not isinstance(value, rg.Tgl):
+    def geo(self, v):
+        if not isinstance(v, rg.Tgl):
             raise TypeError
-        self.__vrtx_block['vtx'] = value.T
-        self.__geo[:] = value
+        self.__vrtx_block['vtx'] = v.T
+        if self.__geo is None:
+            self.__geo = v
+        else:
+            self.__geo[:] = v
 
     @property
     def clr_fill(self):
@@ -252,7 +257,10 @@ class Tgl(shp.Shape):
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
         self.__vrtx_block['fill_clr'] = v
-        self.__fill_clr[:] = v
+        if self.__fill_clr is None:
+            self.__fill_clr = v
+        else:
+            self.__fill_clr[:] = v
 
     @property
     def edge_clr(self):
@@ -268,7 +276,10 @@ class Tgl(shp.Shape):
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
         self.__vrtx_block['edge_clr'] = v
-        self.__fill_clr[:] = v
+        if self.__edge_clr is None:
+            self.__edge_clr = v
+        else:
+            self.__edge_clr[:] = v
 
     @property
     def edge_thk(self):
@@ -287,8 +298,3 @@ class Tgl(shp.Shape):
         if not isinstance(b, bool):
             raise TypeError
         cls.__render_edge = b
-
-    @classmethod
-    def render(cls):
-        TriangleRenderer().vbo.get_concrete().push_cache()
-        TriangleRenderer().render(cls.__is_render_edge)

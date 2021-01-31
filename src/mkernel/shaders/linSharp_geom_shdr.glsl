@@ -23,7 +23,12 @@ void main() {
     vec3 p0 = (VM*MM*gl_in[0].gl_Position).xyz;
     vec3 p1 = (VM*MM*gl_in[1].gl_Position).xyz;
     // line vector crossed with camera pointing yields perpendicular to nv
-    vec3 perp = cross(p1 - p0, vec3(0, 0, -1));
+    vec3 perp;
+    if (length(p0) > length(p1)) {
+        perp = cross(p1-p0, vec3(0, 0, 1));
+    } else {
+        perp = cross(p0-p1, vec3(0, 0, 1));
+    }
     // amplify to correct thikness
     perp = normalize(perp) * (thk/2);
     // move and apply projection matrix to finish transformation

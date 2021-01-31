@@ -157,39 +157,37 @@ class PointRenderer(_PrimitiveRenderer):
                                                     [0, 0, 1, 0],
                                                     [0, 0, 0, 1]]
                 prgrm.push_ufrms(self.__triangle_ufrm_cache)
-                self.__triangle_ibo.get_concrete().push_cache()
+                self.__triangle_ibo.push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   self.__triangle_ibo.cache.active_size,
                                   self.__triangle_ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
 
-@Singleton
 class LineRenderer(_PrimitiveRenderer):
+    """
+    prgrm parameter layout:
+
+    ! programs should follow fixed attribute locations
+    layout (location = 0) in vec4 vtx;
+    layout (location = 1) in float thk;
+    layout (location = 2) in vec4 clr;
+    ... add more to expand render possibility
+
+    :param self.__sharp_prgrm: program rendering thick sharp line
+    :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
+    """
+    __sharp_prgrm = fac.PrgrmFactory(
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_vrtx_shdr.glsl'),
+        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_geom_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
+
+    __vbo = MetaVrtxBffr(
+        attr_desc=np.dtype([('vtx', RDF, 4), ('thk', RDF), ('clr', RDF, 4)]),
+        attr_locs=(0, 1, 2))
 
     def __init__(self):
-        """
-        prgrm parameter layout:
-
-        ! programs should follow fixed attribute locations
-        layout (location = 0) in vec4 vtx;
-        layout (location = 1) in float thk;
-        layout (location = 2) in vec4 clr;
-        ... add more to expand render possibility
-
-        :param self.__sharp_prgrm: program rendering thick sharp line
-        :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
-        """
-        self.__sharp_prgrm = fac.PrgrmFactory(
-            vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_vrtx_shdr.glsl'),
-            geom_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_geom_shdr.glsl'),
-            frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
-
-        self.__global_ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
-
-        self.__vbo = MetaVrtxBffr(
-            attr_desc=np.dtype([('vtx', RDF, 4), ('thk', RDF), ('clr', RDF, 4)]),
-            attr_locs=(0, 1, 2))
+        self.__ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
         self.__ibo = MetaIndxBffr(dtype='uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -202,66 +200,61 @@ class LineRenderer(_PrimitiveRenderer):
         return self.__ibo
 
     def render(self):
-        self.__vbo.get_concrete().push_cache()
+        self.__vbo.push_cache()
         self.__render_sharp()
 
     def __render_sharp(self):
         if not self.__ibo.cache.active_size:
             return
-        vao = self.__vao.get_concrete()
-        prgrm = self.__sharp_prgrm.get_concrete()
-        with vao:
-            with prgrm:
+        with self.__vao:
+            with self.__sharp_prgrm as prgrm:
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                vm = camera.tripod.VM.r
-                pm = camera.body.PM.r
-                self.__global_ufrm_cache['VM'] = vm
-                self.__global_ufrm_cache['PM'] = pm
-                self.__global_ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                                  [0, 1, 0, 0],
-                                                  [0, 0, 1, 0],
-                                                  [0, 0, 0, 1]]
-                prgrm.push_ufrms(self.__global_ufrm_cache)
-                self.__ibo.get_concrete().push_cache()
+                self.__ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__ufrm_cache['PM'] = camera.body.PM.r
+                self.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                                           [0, 1, 0, 0],
+                                           [0, 0, 1, 0],
+                                           [0, 0, 0, 1]]
+                prgrm.push_ufrms(self.__ufrm_cache)
+                self.__ibo.push_cache()
                 gl.glDrawElements(gl.GL_LINES,
                                   self.__ibo.cache.active_size,
                                   self.__ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
 
-@Singleton
 class TriangleRenderer(_PrimitiveRenderer):
+    """
+    full spec schema of triangle object.
+
+    use this schema as programs are not obliged to implement all attributes
+
+    ! programs should follow fixed attribute name and locations
+    layout(location = 0) in vtx;
+    layout(location = 1) in edge_thk;
+    layout(location = 2) in edge_clr;
+    layout(location = 3) in fill_clr;
+    ... add more to expand render possibility
+
+    :param self.__fill_prgrm: for rendering triangle fill
+    :param self.__edge_prgrm: for rendering triangle thick edge
+    :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
+    """
+    __fill_prgrm = fac.PrgrmFactory(
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_vrtx_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_frgm_shdr.glsl'))
+
+    __edge_prgrm = fac.PrgrmFactory(
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl'),
+        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl'))
+
+    __vbo = MetaVrtxBffr(
+        attr_desc=np.dtype([('vtx', RDF, 4), ('edge_thk', RDF), ('edge_clr', RDF, 4), ('fill_clr', RDF, 4)]),
+        attr_locs=(0, 1, 2, 3))
 
     def __init__(self):
-        """
-        full spec schema of triangle object.
-
-        use this schema as programs are not obliged to implement all attributes
-
-        ! programs should follow fixed attribute name and locations
-        layout(location = 0) in vtx;
-        layout(location = 1) in edge_thk;
-        layout(location = 2) in edge_clr;
-        layout(location = 3) in fill_clr;
-        ... add more to expand render possibility
-
-        :param self.__fill_prgrm: for rendering triangle fill
-        :param self.__edge_prgrm: for rendering triangle thick edge
-        :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
-        """
-        self.__fill_prgrm = fac.PrgrmFactory(
-            vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_vrtx_shdr.glsl'),
-            frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_frgm_shdr.glsl'))
-
-        self.__edge_prgrm = fac.PrgrmFactory(
-            vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl'),
-            geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl'),
-            frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl'))
         self.__ufrm_cache = self.__fill_prgrm.ufrm_schema.create_bffr_cache(size=1)
-
-        self.__vbo = MetaVrtxBffr(
-            attr_desc=np.dtype([('vtx', RDF, 4), ('edge_thk', RDF), ('edge_clr', RDF, 4), ('fill_clr', RDF, 4)]),
-            attr_locs=(0, 1, 2, 3))
         self.__ibo = MetaIndxBffr('uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -289,7 +282,7 @@ class TriangleRenderer(_PrimitiveRenderer):
                                    [0, 0, 0, 1]]
         prgrm.push_ufrms(self.__ufrm_cache)
 
-    def render(self, is_render_edge):
+    def render(self, is_render_edge=True):
         """
 
         :param is_render_edge: bool, do render edge?

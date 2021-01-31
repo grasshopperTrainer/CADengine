@@ -16,14 +16,15 @@ class MyWindow(Window):
         model1 = Model()
         model2 = Model()
 
-        model1.add_pnt(0, 0, 0)
-        model1.add_pnt(0, 10, 10)
+        # model1.add_pnt(0, 0, 0)
+        # model1.add_pnt(0, 10, 10)
 
         for i in range(10):
-            pnt = model2.add_pnt(0, i*10, i*10)
+            pnt = model2.add_pnt(0, i * 10, i * 10)
             pnt.frm = pnt.FORM_CIRCLE
             pnt.dia = i
-
+        model1.add_lin([0, 0, 0], [-20, 20, 20])
+        model1.add_tgl([0, 0, 0], [10, 0, 0], [0, 10, 0])
         self.model1 = model1
         self.model2 = model2
 
@@ -35,4 +36,5 @@ class MyWindow(Window):
                 self.model1.render()
                 self.model2.render()
 
-MyWindow().run_all(1)
+
+MyWindow().run_all()

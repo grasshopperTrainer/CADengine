@@ -22,14 +22,70 @@ class ModelIterator:
 
 class Model:
     def __init__(self):
-        self._shapes = []
+        self._shapes = {}
         self._plane = gw.Pln()
         self.__renderers = {}
 
+    def add_geo(self, geo):
+        """
+        add given geometry
+
+        :return:
+        """
+        if isinstance(geo, gt.Pnt):
+            renderer = self.__renderers.setdefault('pnt', pr.PointRenderer())
+            shp = st.Pnt(geo, renderer)
+            self._shapes.setdefault(gt.Pnt, []).append(shp)
+            return shp
+        elif isinstance(geo, gt.Lin):
+            pass
+        elif isinstance(geo, gt.Tgl):
+            pass
+        else:
+            raise NotImplementedError
+
     def add_pnt(self, x, y, z):
+        """
+        add point
+
+        :param x: Number, coordinate x
+        :param y: Number, coordinate y
+        :param z: Number, coordinate z
+        :return: Pnt shape
+        """
         geo = gt.Pnt(x, y, z)
         renderer = self.__renderers.setdefault('pnt', pr.PointRenderer())
         shp = st.Pnt(geo, renderer)
+        self._shapes.setdefault(gt.Pnt, []).append(shp)
+        return shp
+
+    def add_lin(self, vs, ve):
+        """
+        add line
+
+        :param vs: (x, y, z), vertex start
+        :param ve: (x, y, z), vertex end
+        :return: Lin shape
+        """
+        geo = gt.Lin(vs, ve)
+        renderer = self.__renderers.setdefault('lin', pr.LineRenderer())
+        shp = st.Lin(geo, renderer)
+        self._shapes.setdefault(gt.Lin, []).append(shp)
+        return shp
+
+    def add_tgl(self, v0, v1, v2):
+        """
+        add triangle
+
+        :param v0: (x, y, z), vertex 0
+        :param v1: (x, y, z), vertex 1
+        :param v2: (x, y, z), vertex 2
+        :return:
+        """
+        geo = gt.Tgl(v0, v1, v2)
+        renderer = self.__renderers.setdefault('tgl', pr.TriangleRenderer())
+        shp = st.Tgl(geo, renderer)
+        self._shapes.setdefault(gt.Tgl, []).append(shp)
         return shp
 
     def iterator(self):
@@ -58,8 +114,3 @@ class Model:
     def render(self):
         for r in self.__renderers.values():
             r.render()
-
-    def test_render(self):
-        gw.Tgl.render()
-        gw.Lin.render()
-        gw.Pnt.render()
