@@ -277,6 +277,7 @@ class PolylineRenderer(_PrimitiveRenderer):
                                   self.__ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
+
 class TriangleRenderer(_PrimitiveRenderer):
     """
     full spec schema of triangle object.

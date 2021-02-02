@@ -263,12 +263,6 @@ class Tgl(shp.Shape):
     __is_render_edge = True
     def __init__(self, geo, renderer):
         """
-
-        :param __block: this is merely a container for block location in raw array
-                        used when shape is deleted thus has to free space in raw array
-                        ! need to be updated when local value is updated
-        :param __geo: exposed geometric data
-                      ! always a copy of __block to prevent undesired value contamination
         """
         self.__vrtx_block = renderer.vbo.cache.request_block(size=3)
         # registering at ibo
@@ -283,7 +277,7 @@ class Tgl(shp.Shape):
         self.geo = geo
         self.clr_fill = ClrRGBA(1, 1, 1, 1)
         self.edge_clr = ClrRGBA(0, 0, 0, 1)
-        self.edge_thk = 1
+        self.edge_thk = 0.5
 
     @property
     def geo(self):

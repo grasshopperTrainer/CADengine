@@ -37,8 +37,8 @@ void emit(vec3 p, mat4 tm, float zOff) {
 
 void main() {
     mat4 trnsf_mat = PM*VM*MM;
-    float thk = vs_in[0].edgeThk;
-    float zOff = -0.01;   // closer to camera. prevent z fighting
+    float thk = vs_in[0].edgeThk/2;
+    float zOff = -0.001;   // closer to camera. prevent z fighting
 
     vec3 p0 = gl_in[0].gl_Position.xyz;
     vec3 p1 = gl_in[1].gl_Position.xyz;
@@ -48,12 +48,12 @@ void main() {
     vec3 v02 = normalize(vec_pnts(p0, p2));
     vec3 v12 = normalize(vec_pnts(p1, p2));
 
-    vec3 inner0 = pnt_offset(p0, v01, v02, thk/2);
-    vec3 inner1 = pnt_offset(p1, v12, -v01, thk/2);
-    vec3 inner2 = pnt_offset(p2, -v02, -v12, thk/2);
-    vec3 outer0 = pnt_offset(p0, v01, v02, -thk/2);
-    vec3 outer1 = pnt_offset(p1, v12, -v01, -thk/2);
-    vec3 outer2 = pnt_offset(p2, -v02, -v12, -thk/2);
+    vec3 inner0 = pnt_offset(p0, v01, v02, thk);
+    vec3 inner1 = pnt_offset(p1, v12, -v01, thk);
+    vec3 inner2 = pnt_offset(p2, -v02, -v12, thk);
+    vec3 outer0 = pnt_offset(p0, v01, v02, -thk);
+    vec3 outer1 = pnt_offset(p1, v12, -v01, -thk);
+    vec3 outer2 = pnt_offset(p2, -v02, -v12, -thk);
 
     edgeClr = vs_in[0].edgeClr;
     emit(inner0, trnsf_mat, zOff);

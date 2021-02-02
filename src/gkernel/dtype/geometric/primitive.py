@@ -2,9 +2,9 @@ import abc
 import warnings
 from math import sqrt
 from numbers import Number
-
 import numpy as np
 
+from global_tools.singleton import Singleton
 from gkernel.constants import DTYPE
 from gkernel.dtype.nongeometric.matrix.primitive import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
 from gkernel.array_like import ArrayLikeData
@@ -678,7 +678,7 @@ class _NamedVec(Vec):
         """
         return obj.view(Vec)
 
-
+@Singleton
 class ZeroVec(_NamedVec):
     """
     Zero Vector
@@ -687,7 +687,7 @@ class ZeroVec(_NamedVec):
     def __new__(cls):
         return super().__new__(cls, 0, 0, 0)
 
-
+@Singleton
 class XVec(_NamedVec):
     """
     x unit vector
@@ -696,7 +696,7 @@ class XVec(_NamedVec):
     def __new__(cls):
         return super().__new__(cls, 1, 0, 0)
 
-
+@Singleton
 class YVec(_NamedVec):
     """
     y unit vector
@@ -705,7 +705,7 @@ class YVec(_NamedVec):
     def __new__(cls):
         return super().__new__(cls, 0, 1, 0)
 
-
+@Singleton
 class ZVec(_NamedVec):
     """
     z unit vector
