@@ -37,7 +37,7 @@ class MyWindow(Window):
                 # glitch
                 zoff = -50
                 e = 10
-                tm = c.tripod.in_plane.r.trnsf_mat
+                tm = c.tripod.in_plane.r.TM
                 p0 = tm * Pnt(e, 0, zoff)
                 p1 = tm * Pnt(0, e, zoff)
                 p2 = tm * Pnt(0, 0, zoff)

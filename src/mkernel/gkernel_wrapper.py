@@ -3,20 +3,20 @@ from numbers import Number
 
 import gkernel.dtype.geometric as gt
 from gkernel.color.primitive import ClrRGBA, Clr
-import mkernel.shape as shp
+from mkernel.shape import Shape
 from .primitive_renderer import *
 from global_tools.singleton import Singleton
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
 
-class Ray(shp.Shape):
+class Ray(Shape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
       
-class Pnt(shp.Shape):
+class Pnt(Shape):
 
     def __init__(self, geo, renderer):
         """
@@ -133,11 +133,11 @@ class Pnt(shp.Shape):
             return f"<ENUM {self.__name}>"
 
 
-class Vec(shp.Shape):
+class Vec(Shape):
     pass
 
 
-class Lin(shp.Shape):
+class Lin(Shape):
     def __init__(self, geo, renderer):
         self.__vrtx_block = renderer.vbo.cache.request_block(size=2)
       
@@ -194,7 +194,7 @@ class Lin(shp.Shape):
         self.__thk = v
 
 
-class Plin(shp.Shape):
+class Plin(Shape):
     def __init__(self, *vs):
         """
 
@@ -253,13 +253,13 @@ class Plin(shp.Shape):
         PolylineRenderer().render()
 
 
-class Pln(shp.Shape):
+class Pln(Shape):
     @property
     def geo(self):
         raise NotImplementedError
 
 
-class Tgl(shp.Shape):
+class Tgl(Shape):
     __is_render_edge = True
     def __init__(self, geo, renderer):
         """
@@ -352,3 +352,42 @@ class Tgl(shp.Shape):
             raise TypeError
         cls.__render_edge = b
 
+
+class Pgon(Shape):
+    def __init__(self, geo, renderer):
+        pass
+    #     self.__vrtx_block = renderer.vbo.cache.request_block(size=len(geo))
+    #     # registering at ibo
+    #     self.__indx_block = renderer.ibo.cache.request_block(size=len(geo))
+    #     self.__indx_block['idx'] = self.__vrtx_block.indices
+    #     # just filling correct placeholder
+    #     self.__geo = None
+    #     self.__clr = None
+    #     # actual value assignment
+    #     self.geo = geo
+    #     self.clr = ClrRGBA(1, 1, 1, 1)
+    #
+    @property
+    def geo(self):
+        return self.__geo
+    #
+    # @geo.setter
+    # def geo(self, v):
+    #     if not isinstance(v, gt.Pgon):
+    #         raise TypeError
+    #     if len(self.__vrtx_block) != v.shape[1]:
+    #         raise NotImplementedError
+    #     else:
+    #         self.__vrtx_block['vtx'] = v
+    #     self.update_array_member('__geo', v)
+    #
+    # @property
+    # def clr(self):
+    #     return self.__clr
+    #
+    # @clr.setter
+    # def clr(self, v):
+    #     if not isinstance(v, Clr):
+    #         raise TypeError
+    #     self.__vrtx_block['clr'] = v
+    #     self.update_array_member('__clr', v)

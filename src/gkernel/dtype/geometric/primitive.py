@@ -592,7 +592,7 @@ class Vec(Mat1, VecConv, PntConv):
         return Pnt(*self.xyz)
 
     def as_lin(self):
-        return Lin(p0=(0, 0, 0), p1=self.xyz)
+        return Lin(s=(0, 0, 0), e=self.xyz)
 
 
 class Pnt(Mat1, VecConv, PntConv):
@@ -607,6 +607,12 @@ class Pnt(Mat1, VecConv, PntConv):
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __hash__(self):
+        return object.__hash__(self)
 
     @classmethod
     def cast(self, v):
@@ -851,7 +857,7 @@ class Pln(ArrayLikeData, PntConv):
             self.__standardize()
         elif isinstance(obj, np.ndarray):
             # self already has resulting value, need to check array correctness
-            if self.is_compatible_array(self):
+            if self.validate_array(self):
                 self.__standardize()
             else:
                 raise ValueError('given is not Pln-like')
@@ -859,7 +865,7 @@ class Pln(ArrayLikeData, PntConv):
             raise
 
     @classmethod
-    def is_compatible_array(cls, arr):
+    def validate_array(cls, arr):
         """
         check if raw array is Pln like
 
@@ -906,7 +912,7 @@ class Pln(ArrayLikeData, PntConv):
         return self.origin, self.axis_x, self.axis_y, self.axis_z
 
     @property
-    def trnsf_mat(self):
+    def TM(self):
         """
         return transformation matrix(origin -> plane)
         :return:
@@ -1108,26 +1114,29 @@ class Tgl(ArrayLikeData):
 
 class Lin(ArrayLikeData, VecConv):
 
-    def __new__(cls, p0=(0, 0, 0), p1=(0, 0, 1)):
+    def __new__(cls, s=(0, 0, 0), e=(0, 0, 1)):
         """
         define line from two coordinate
-        :param p0: xyz coord of starting vertex
-        :param p1: xyz coord of ending vertex
+        :param s: xyz coord of starting vertex
+        :param e: xyz coord of ending vertex
         """
-        return np.array([[p0[0], p1[0]],
-                         [p0[1], p1[1]],
-                         [p0[2], p1[2]],
+        return np.array([[s[0], e[0]],
+                         [s[1], e[1]],
+                         [s[2], e[2]],
                          [1, 1]], dtype=DTYPE).view(cls)
 
+    def __str__(self):
+        return f"<Lin,{self.length}>"
+
     @classmethod
-    def from_pnts(cls, start: Pnt, end: Pnt):
+    def from_pnts(cls, s: Pnt, e: Pnt):
         """
         create line using start, end vertex
-        :param start: starting vertex of line
-        :param end: ending vertex of line
+        :param s: starting vertex of line
+        :param e: ending vertex of line
         :return:
         """
-        return Lin(start.xyz, end.xyz)
+        return Lin(s.xyz, e.xyz)
 
     @classmethod
     def from_pnt_vec(cls, start: Pnt, direction: Vec):

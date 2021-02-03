@@ -33,3 +33,8 @@ class Shape(metaclass=abc.ABCMeta):
         :return:
         """
 
+    def update_array_member(self, mname: str, arr):
+        if getattr(self, mname) is None:
+            setattr(self, mname, arr)
+        else:
+            getattr(self, mname)[:] = arr

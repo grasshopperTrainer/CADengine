@@ -24,12 +24,16 @@ renderer holds prgrm and global uniform cache
 
 
 THIS_PATH = os.path.dirname(__file__)
+
 def _get_fullpath(rel_path):
     return os.path.join(THIS_PATH, rel_path)
 
 
 class _PrimitiveRenderer(metaclass=abc.ABCMeta):
-    pass
+
+    @abc.abstractmethod
+    def render(self):
+        pass
 
 
 class PointRenderer(_PrimitiveRenderer):
@@ -369,3 +373,23 @@ class TriangleRenderer(_PrimitiveRenderer):
                               self.__ibo.cache.active_size,
                               self.__ibo.cache.gldtype[0],
                               ctypes.c_void_p(0))
+
+
+class PolygonRenderer(_PrimitiveRenderer):
+    """
+
+    """
+    # __fill_prgrm = meta.MetaPrgrm(vrtx_path=, geom_path=, frgm_path=)
+    def __init__(self):
+        pass
+
+    @property
+    def vbo(self):
+        pass
+
+    @property
+    def ibo(self):
+        pass
+
+    def render(self):
+        pass

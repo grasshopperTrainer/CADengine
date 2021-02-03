@@ -125,7 +125,7 @@ class Camera(RenderDevice):
         offset = MoveMat(-.5, -.5)  # to compensate origin difference between OpenGL space and pane space
         frustum_point = mm * sm * offset * Pnt(x=param_x, y=param_y, z=0)
         ray = Ray([0, 0, 0], frustum_point.xyz)
-        return self.tripod.in_plane.r.trnsf_mat * ray
+        return self.tripod.in_plane.r.TM * ray
 
 
 class CameraManager(RenderDeviceManager):

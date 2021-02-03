@@ -11,8 +11,14 @@ class RedBlackTree:
                             ! for multi dimensional sort provide that yields multiple keys (key1, key2, ...)
         """
         self.__root = None
-        self.__kp = lambda x: x if key_provider is None else key_provider
+        if key_provider is None:
+            self.__kp = lambda x: x
+        elif callable(key_provider):
+            self.__kp = key_provider
+        else:
+            raise TypeError
         self.__size = 0
+        self.__itercount = 0
 
     def __contains__(self, val):
         """
@@ -28,8 +34,35 @@ class RedBlackTree:
         except:
             raise Exception('unknown')
 
+    def __str__(self):
+        return f"<RBTree,{self.__size}>"
+
     def __len__(self):
         return self.__size
+
+    def __iter__(self):
+        """
+        traverse inorder
+
+        :return:
+        """
+        if not self.__size:
+            return ()
+
+        def traverse(node):
+            if node.is_null:
+                return
+            else:
+                yield from traverse(node.left)
+                yield node.val
+                yield from traverse(node.right)
+        return traverse(self.__root)
+
+    def __getitem__(self, item):
+        for i, node in enumerate(self):
+            if i == item:
+                return node.val
+        raise IndexError
 
     def __search_parent(self, val):
         """
@@ -263,7 +296,7 @@ class RedBlackTree:
                 else:
                     self.__restructure(parent, me)
 
-    def push(self, val):
+    def insert(self, val):
         # initiation
         if self.__root is None:
             root = self.__Node(val, parent=None)
@@ -473,12 +506,14 @@ class RedBlackTree:
 if __name__ == '__main__':
     rb = RedBlackTree()
     for i in range(20):
-        rb.push(i)
+        rb.insert(i)
     print('removing')
-    for i in reversed(range(20)):
-        print('index', i)
-        rb.delete(i)
-        rb.uprint()
+    # for i in reversed(range(20)):
+    #     print('index', i)
+    #     rb.delete(i)
+    #     rb.uprint()
+    for i in rb:
+        print(i)
     # rb.push(10)
     # rb.push(20)
     # rb.push(30)
