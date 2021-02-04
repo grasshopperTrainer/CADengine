@@ -1,4 +1,5 @@
 from numbers import Number
+from math import inf
 
 import numpy as np
 
@@ -123,9 +124,18 @@ class Trapezoidator:
     LEFT, NONE, RIGHT, BOTH = range(-1, 3)
 
     def run(self, arr):
-        d = self.__stage_one(arr)
-        for i in d:
-            print(i)
+        vrtxs, far_x = self.__stage_one(arr)
+        self.__stage_two(vrtxs, far_x)
+
+    @staticmethod
+    def __vertex_comparator(obj, sbj):
+        ok, sk = obj.sort_key, sbj.sort_key
+        if ok == sk:
+            return 0
+        if ok < sk:
+            return -1
+        else:
+            return 1
 
     def __stage_one(self, arr):
         """
@@ -136,7 +146,8 @@ class Trapezoidator:
         :param arr:
         :return:
         """
-        rb = RedBlackTree(key_provider=lambda x: x.sort_key)  # sort by y,x
+
+        rb = RedBlackTree(comparator=self.__vertex_comparator)  # sort by y,x
         # prepare for the first
         prev_v = Pnt(*arr[:3, -1])
         this_v = Pnt(*arr[:3, 0])
@@ -146,6 +157,9 @@ class Trapezoidator:
         last_v = prev_v
         first_v = this_v
         last_e = prev_e
+
+        # find far x for further research
+        far_x = -inf
 
         for i in range(len(arr)):
             next_v = Pnt(*arr[:3, (i + 1) % len(arr)])
@@ -159,6 +173,10 @@ class Trapezoidator:
                 next_v = first_v
                 next_e = last_e
 
+            # update far x
+            if far_x < this_v.x + 100:
+                far_x = this_v.x + 100
+
             vrtx = self.__Vrtx(this_v)
             # determine category and edge connection
             if prev_v.y < this_v.y:  # left below current
@@ -169,6 +187,7 @@ class Trapezoidator:
                 elif next_v.y == this_v.y:  # right horizontal
                     vrtx.set_category(self.HMAX)
                     vrtx.add_ending_edge(prev_e)
+                    # not adding horizontal
                 else:  # right above
                     vrtx.set_category(self.INTR)
                     vrtx.add_starting_edge(next_e)
@@ -179,6 +198,7 @@ class Trapezoidator:
                     vrtx.add_ending_edge(next_e)
                 elif next_v.y == this_v.y:  # right horizontal
                     vrtx.set_category(self.HORI)
+                    # not adding horizontal
                 else:  # right upper
                     vrtx.set_category(self.HMIN)
                     vrtx.add_starting_edge(next_e)
@@ -190,6 +210,7 @@ class Trapezoidator:
                 elif next_v.y == this_v.y:  # right horizontal
                     vrtx.set_category(self.HMIN)
                     vrtx.add_starting_edge(prev_e)
+                    # not adding horizontal
                 else:  # right upper
                     vrtx.set_category(self.MIN)
                     vrtx.add_starting_edge(prev_e)
@@ -226,11 +247,38 @@ class Trapezoidator:
 
             # record point
             rb.insert(vrtx)
-        return rb
+        return rb, Pnt(x=far_x, y=0, z=0)
 
-    def __stage_two(self):
+    def __stage_two(self, vrtxs, far_x):
+
+        # def comparator(obj, sbj):
+        #     # check side for inserting edge's vertex and far_x
+        #
+        #     # if side differs search left, -1
+        #
+        #     # else search right, +1
+        #
+        #     # 0 cant occur
+
+
         edges = RedBlackTree()
-        raise NotImplementedError
+        # first vertex of normalized is always [0, 0, 0]
+        # first edge of normalized is always [x, 0, 0]
+        # prepare fisrt edge
+        # there are 3 initial cases
+        for v in vrtxs:
+            # discreet searching needed
+            # update edges
+            for e in v.ending_edges:
+                edges.delete(e)
+            for e in v.starting_edges:
+                edges.insert()
+            print(v)
+            print(v.starting_edges)
+            print(v.ending_edges)
+
+        #     raise
+        # raise NotImplementedError
 
     class __Vrtx:
         """
@@ -268,3 +316,10 @@ class Trapezoidator:
         @property
         def cat(self):
             return self.__category
+
+        @property
+        def starting_edges(self):
+            return self.__starting_edges
+        @property
+        def ending_edges(self):
+            return self.__ending_edges

@@ -4,19 +4,20 @@ from global_tools.singleton import Singleton
 
 class RedBlackTree:
 
-    def __init__(self, key_provider=None):
+    def __init__(self, comparator=None):
         """
 
-        :param key_provider: lambda, function that returns key value for comparison
-                            ! for multi dimensional sort provide that yields multiple keys (key1, key2, ...)
+        :param comparator: function that returns comparison between object(value being inserted) and
+                            subject(value in list being compared).
+                            ! First argument of the function has to be object and second should be subject.
+                            ! Equal should return, terminate search, 0
+                            ! if object less than subject, continue search left, return -1
+                            ! if object greater than subject, continue search right, return +1
         """
         self.__root = None
-        if key_provider is None:
-            self.__kp = lambda x: x
-        elif callable(key_provider):
-            self.__kp = key_provider
-        else:
+        if not (comparator is None or callable(comparator)):
             raise TypeError
+        self.__comparator = comparator
         self.__size = 0
         self.__itercount = 0
 
@@ -103,13 +104,15 @@ class RedBlackTree:
         raise ValueError('no value')
 
     def __compare_value(self, obj, subj):
-        # multidimensional comparison
-        obj, subj = self.__kp(obj), self.__kp(subj)
-        if obj == subj:
-            return 0
+        if self.__comparator is None:
+            if obj == subj:
+                return 0
+            elif obj < subj:
+                return -1
+            else:
+                return 1
         else:
-            keys = sorted([obj, subj])
-            return -1 if keys[0] == obj else 1
+            return self.__comparator(obj, subj)
 
     def __transplant(self, old, new):
         """
