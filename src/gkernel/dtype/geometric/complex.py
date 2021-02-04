@@ -249,6 +249,11 @@ class Trapezoidator:
             rb.insert(vrtx)
         return rb, Pnt(x=far_x, y=0, z=0)
 
+    @staticmethod
+    def __edge_comparator():
+        pass
+
+
     def __stage_two(self, vrtxs, far_x):
 
         # def comparator(obj, sbj):

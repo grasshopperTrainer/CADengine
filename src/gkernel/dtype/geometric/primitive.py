@@ -1120,10 +1120,12 @@ class Lin(ArrayLikeData, VecConv):
         :param s: xyz coord of starting vertex
         :param e: xyz coord of ending vertex
         """
-        return np.array([[s[0], e[0]],
-                         [s[1], e[1]],
-                         [s[2], e[2]],
-                         [1, 1]], dtype=DTYPE).view(cls)
+        cls.validate_3d_coordinate(s, e)
+        obj = super().__new__(cls, shape=(4, 2), dtype=DTYPE)
+        obj[:3, 0] = s
+        obj[:3, 1] = e
+        obj[3] = 1, 1
+        return obj
 
     def __str__(self):
         return f"<Lin,{self.length}>"
@@ -1178,6 +1180,19 @@ class Lin(ArrayLikeData, VecConv):
             summed += pow(self[i, 0] - self[i, 1], 2)
         return sqrt(summed)
 
+    @property
+    def start(self):
+        return Pnt(*self[:3, 0])
+
+    @property
+    def end(self):
+        return Pnt(*self[:3, 1])
+
+    @property
+    def vertices(self):
+        for i in range(len(self)):
+            yield Pnt(*self[:3, i])
+
     def reversed(self):
         """
         create new Lin reversed
@@ -1195,14 +1210,6 @@ class Lin(ArrayLikeData, VecConv):
         """
         self[:] = np.roll(self, shift=1, axis=1)
         return self
-
-    @property
-    def start(self):
-        return Pnt(*self[:3, 0])
-
-    @property
-    def end(self):
-        return Pnt(*self[:3, 1])
 
     def pnt_at(self, t):
         """
@@ -1235,6 +1242,28 @@ class Lin(ArrayLikeData, VecConv):
         a, b = a.as_lin(), b.as_lin()
         plane = Pln.from_lin_pnt(a, b.start)
         return plane.pnt_is_on(b.end)
+
+    def pnts_share_side(self, *pnts):
+        """
+        check if given points are on the same side
+
+        :param pnts: points to be tested
+        :return: bool or None - for odd result
+        """
+        rep = None
+        s, e = self.vertices
+        for pnt in pnts:
+            normal = Vec.cross(Vec.from_pnts(pnt, s), Vec.from_pnts(pnt, e))
+            # odd case, point on the border
+            if normal == 0:
+                return None
+
+            if rep is None:
+                rep = normal
+            else:
+                if Vec.dot(rep, normal) < 0:
+                    return False
+        return True
 
     def __str__(self):
         return f"<Lin {round(self.length, 5)}>"
