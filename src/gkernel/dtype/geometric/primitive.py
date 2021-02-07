@@ -12,60 +12,18 @@ from gkernel.array_like import ArrayLikeData
 
 class Mat1(ArrayLikeData):
 
-    @property
-    def x(self):
-        return self[0, 0]
-
-    @x.setter
-    def x(self, v):
+    def __getattribute__(self, item):
         """
-        setting coordinate x
-        :param v:
+        some additional attribute automation
+
+        :param item:
         :return:
         """
-        self[0, 0] = v
-
-    @property
-    def y(self):
-        return self[1, 0]
-
-    @y.setter
-    def y(self, v):
-        """
-        setting coordinate y
-        :param v:
-        :return:
-        """
-        self[1, 0] = v
-
-    @property
-    def z(self):
-        return self[2, 0]
-
-    @z.setter
-    def z(self, v):
-        """
-        setting coordinate z
-        :param v:
-        :return:
-        """
-        self[2, 0] = v
-
-    @property
-    def xyz(self):
-        return self.x, self.y, self.z
-
-    @xyz.setter
-    def xyz(self, coord):
-        """
-        modify coordinate of the instance
-
-        :param coord:
-        :return:
-        """
-        if not isinstance(coord, (tuple, list)) and len(coord) != 3:
-            raise ValueError('coord has to be iterable of len 3')
-        self[:3, 0] = coord
+        if not (set(item) - {'x', 'y', 'z', 'w'}):
+            d = dict(zip('xyzw', self[:, 0]))
+            vs = tuple(d[c] for c in item)
+            return vs[0] if len(vs) == 1 else vs
+        return super().__getattribute__(item)
 
     # as Pnt and Vec is closely related in arithmetic calculation
     # all is defined here in inherited class
@@ -684,6 +642,7 @@ class _NamedVec(Vec):
         """
         return obj.view(Vec)
 
+
 @Singleton
 class ZeroVec(_NamedVec):
     """
@@ -692,6 +651,7 @@ class ZeroVec(_NamedVec):
 
     def __new__(cls):
         return super().__new__(cls, 0, 0, 0)
+
 
 @Singleton
 class XVec(_NamedVec):
@@ -702,6 +662,7 @@ class XVec(_NamedVec):
     def __new__(cls):
         return super().__new__(cls, 1, 0, 0)
 
+
 @Singleton
 class YVec(_NamedVec):
     """
@@ -710,6 +671,7 @@ class YVec(_NamedVec):
 
     def __new__(cls):
         return super().__new__(cls, 0, 1, 0)
+
 
 @Singleton
 class ZVec(_NamedVec):
@@ -1127,6 +1089,13 @@ class Lin(ArrayLikeData, VecConv):
         obj[3] = 1, 1
         return obj
 
+    def __bool__(self):
+        """
+
+        :return:
+        """
+        return self.length != 0
+
     def __str__(self):
         return f"<Lin,{self.length}>"
 
@@ -1253,6 +1222,8 @@ class Lin(ArrayLikeData, VecConv):
         rep = None
         s, e = self.vertices
         for pnt in pnts:
+            if not isinstance(pnt, Pnt):
+                raise TypeError(pnt)
             normal = Vec.cross(Vec.from_pnts(pnt, s), Vec.from_pnts(pnt, e))
             # odd case, point on the border
             if normal == 0:

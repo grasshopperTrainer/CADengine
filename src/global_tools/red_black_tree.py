@@ -28,12 +28,11 @@ class RedBlackTree:
         :param val:
         :return:
         """
-        try:
-            self.__search_value(val)
-        except ValueError as e:
-            raise e
-        except:
-            raise Exception('unknown')
+        node = self.__bisect_left_node(val)
+        if not node:
+            return False
+        if not node.is_null:
+            return node.val == val
 
     def __str__(self):
         return f"<RBTree,{self.__size}>"
@@ -48,7 +47,7 @@ class RedBlackTree:
         :return:
         """
         if not self.__size:
-            return ()
+            return iter(())
 
         def traverse(node):
             if node.is_null:
@@ -57,37 +56,50 @@ class RedBlackTree:
                 yield from traverse(node.left)
                 yield node.val
                 yield from traverse(node.right)
+
         return traverse(self.__root)
 
     def __getitem__(self, item):
-        for i, node in enumerate(self):
+        for i, val in enumerate(self):
             if i == item:
-                return node.val
+                return val
         raise IndexError
 
-    def __search_parent(self, val):
+    def __bisect_left_node(self, val):
         """
-        return parent of given value
+        return node, closest node of given value
 
         :param val:
         :return:
         """
+        if not self.__size:
+            raise IndexError
+
         node = self.__root
-        while True:
+        while not node.is_null:
             comparison = self.__compare_value(obj=val, subj=node.val)
-            # continue search
-            if comparison == -1:
-                if node.left.is_null:
+            if comparison == 0:
+                if not node.left.is_null:
+                    if self.__compare_value(obj=val, subj=node.left.val) == 0:  # search for leftmost
+                        node = node.left
+                    else:
+                        return node
+                else:
                     return node
+
+            elif comparison == -1:
                 node = node.left
             else:
-                if node.right.is_null:
-                    return node
                 node = node.right
+        return node.greater_ancestor
 
-    def __search_value(self, val):
+    def __bisect_right_node(self, val):
         """
-        return node of given value
+        for given val is True:
+        all(node.val <= val for node in (first_node: node+1)
+        and
+        all(node.val > val for node in (node+1: last_node)
+
         :param val:
         :return:
         """
@@ -95,13 +107,70 @@ class RedBlackTree:
         while not node.is_null:
             comparison = self.__compare_value(obj=val, subj=node.val)
             if comparison == 0:
-                return node
-            # continue search
-            if comparison == -1:
+                successor = node.greater_successor
+                if successor:
+                    return successor
+                else:
+                    return node.greater_ancestor
+            elif comparison == -1:
                 node = node.left
             else:
                 node = node.right
-        raise ValueError('no value')
+        return node.greater_ancestor
+
+    def bisect_left(self, val):
+        if not self.__size:
+            raise IndexError
+        return self.__bisect_left_node(val).val
+
+    def bisect_right(self, val):
+        if not self.__size:
+            raise IndexError
+        node = self.__bisect_right_node(val)
+        return node.val if node else None
+
+    def search_lesser(self, val):
+        """
+        search closest lesser value
+
+        :return:
+        """
+        if not self.__size:
+            raise IndexError
+
+        node = self.__bisect_left_node(val)
+        if node:
+            successor = node.lesser_successor
+            if successor:
+                return successor.val
+            else:
+                return node.lesser_ancestor.val
+        else:  # return last
+            node = self.__root
+            while not node.right.is_null:
+                node = node.right
+            return node.val
+
+    def has_value(self, val):
+        node = self.__bisect_left_node(val)
+        if not node:
+            return False
+        else:
+            return self.__compare_value(val, node.val) == 0
+
+    def search_greater(self, val):
+        """
+        search closest greater value
+
+        :param val:
+        :return:
+        """
+        if not self.__size:
+            raise IndexError
+
+        node = self.__bisect_right_node(val)
+
+        return None if node is None else node.val
 
     def __compare_value(self, obj, subj):
         if self.__comparator is None:
@@ -145,7 +214,78 @@ class RedBlackTree:
         # clean old's relationship
         old.reset_parent()
 
+    def __rotate_left(self, pivot):
+        old_parent = pivot.parent
+        old_left = pivot.left
+        self.__transplant(old=pivot.parent, new=pivot)
+        self.__transplant(old=pivot.left, new=old_parent)
+        pivot.left.right, old_left.parent = old_left, pivot.left
+
+    def __rotate_right(self, pivot):
+        old_parent = pivot.parent
+        old_right = pivot.right
+        self.__transplant(old=pivot.parent, new=pivot)
+        self.__transplant(old=pivot.right, new=old_parent)
+        pivot.right.left, old_right.parent = old_right, pivot.right
+
+    def __delete_node(self, d):
+        """
+        delete given node
+
+        :param v:
+        :return:
+        """
+
+        if d.is_root and d.is_leaf:  # removing last
+            d.delete()
+            self.__root = None
+        else:
+            if d.left.is_null:
+                r = x = d.right
+                self.__transplant(old=d, new=x)
+            elif d.right.is_null:
+                r = x = d.left
+                self.__transplant(old=d, new=x)
+            else:
+                r = d.greater_successor
+                x = r.right
+                self.__transplant(old=r, new=x)
+                if not d.is_root:
+                    if d.is_left:
+                        r.parent, r.parent.left = d.parent, r
+                    else:
+                        r.parent, r.parent.right = d.parent, r
+                r.left, r.right = d.left, d.right
+                r.left.parent, r.right.parent = r, r
+            # fix
+            if d.is_red:  # deleted red
+                if r.is_null or r.is_red:
+                    pass
+                else:  # r.is_black
+                    r.color_red()
+                    self.__delete_fix(x)
+            else:  # deleted black
+                if r.is_null or r.is_black:
+                    self.__delete_fix(x)
+                else:  # replaced is red
+                    r.color_black()
+            # cleanup
+            d.delete()
+            if not self.__size:
+                self.__root = None
+                r.delete()
+            elif r.is_root:
+                self.__root = r
+        # ! dont forget to update size
+        self.__size -= 1
+
     def __delete_fix(self, x):
+        """
+        fixing after deletion
+
+        :param x:
+        :return:
+        """
         if x.is_root:
             x.color_black()
             return
@@ -195,64 +335,91 @@ class RedBlackTree:
                         s.left.color_black()
                         self.__rotate_right(pivot=s)
 
-    def __rotate_left(self, pivot):
-        old_parent = pivot.parent
-        old_left = pivot.left
-        self.__transplant(old=pivot.parent, new=pivot)
-        self.__transplant(old=pivot.left, new=old_parent)
-        pivot.left.right, old_left.parent = old_left, pivot.left
-
-    def __rotate_right(self, pivot):
-        old_parent = pivot.parent
-        old_right = pivot.right
-        self.__transplant(old=pivot.parent, new=pivot)
-        self.__transplant(old=pivot.right, new=old_parent)
-        pivot.right.left, old_right.parent = old_right, pivot.right
-
     def delete(self, v):
-        d = self.__search_value(v)
-        # removing last
-        if d.is_root and d.is_leaf:
-            d.delete()
-            self.__root = None
-            return
-        if d.left.is_null:
-            r = x = d.right
-            self.__transplant(old=d, new=x)
-        elif d.right.is_null:
-            r = x = d.left
-            self.__transplant(old=d, new=x)
-        else:
-            r = d.successor
-            x = r.right
-            self.__transplant(old=r, new=x)
-            if not d.is_root:
-                if d.is_left:
-                    r.parent, r.parent.left = d.parent, r
+        """
+        delete given value
+
+        ! if value does not exist, raise error
+        :param v:
+        :return:
+        """
+        d = self.__bisect_left_node(v)
+        if not d or self.__compare_value(obj=v, subj=d.val) != 0:
+            raise ValueError('value not in the list')
+        self.__delete_node(d)
+
+    def delete_try(self, val):
+        """
+        delete if value exist else pass
+
+        :param val:
+        :return:
+        """
+        try:
+            self.delete(val)
+            return True
+        except ValueError:
+            return False
+        except Exception as e:
+            raise e
+
+    def pop(self):
+        """
+        pop max(index -1)
+
+        :return:
+        """
+        node = self.__root
+        while not node.right.is_null:
+            node = node.right
+        val = node.val
+        self.__delete_node(node)
+        return val
+
+    def popleft(self):
+        """
+        pop min(index 0)
+
+        :return:
+        """
+        node = self.__root
+        while not node.left.is_null:
+            node = node.left
+        val = node.val
+        self.__delete_node(node)
+        return val
+
+    def pop_value(self, val):
+        """
+        pop given value?
+        :return:
+        """
+        node = self.__root
+        # search
+        while not node.is_null:
+            c = self.__compare_value(obj=val, subj=node.val)
+            if c == 1:
+                if node.right.is_null:
+                    node = None
+                    break
                 else:
-                    r.parent, r.parent.right = d.parent, r
-            r.left, r.right = d.left, d.right
-            r.left.parent, r.right.parent = r, r
-        # fix
-        if d.is_red:  # deleted red
-            if r.is_null or r.is_red:
-                pass
-            else:  # r.is_black
-                r.color_red()
-                self.__delete_fix(x)
-        else:  # deleted black
-            if r.is_null or r.is_black:
-                self.__delete_fix(x)
-            else:  # replaced is red
-                r.color_black()
-        # cleanup
-        self.__size -= 1
-        d.delete()
-        if not self.__size:
-            self.__root = None
-            r.delete()
-        elif r.is_root:
-            self.__root = r
+                    node = node.right
+            elif c == -1:
+                if node.left.is_null:
+                    node = None
+                    break
+                else:
+                    node = node.left
+            else:
+                break
+
+        if node:
+            val = node.val
+            self.__delete_node(node)
+            return val
+        else:
+            raise KeyError
+
 
     def __restructure(self, parent, me):
         # store grand grand parent
@@ -279,6 +446,7 @@ class RedBlackTree:
         x.left.color_red()
         x.right.color_red()
 
+
     def __recolor(self, parent):
         # store grand grand parent
         ggparent = parent.parent.parent
@@ -299,14 +467,63 @@ class RedBlackTree:
                 else:
                     self.__restructure(parent, me)
 
+
+    def get_max(self):
+        if not self.__size:
+            raise IndexError('tree empty')
+        node = self.__root
+        while not node.right.is_null:
+            node = node.right
+        return node
+
+
+    def get_min(self):
+        if not self.__size:
+            raise IndexError('tree empty')
+        node = self.__root
+        while not node.left.is_null:
+            node = node.left
+        return node
+
+
+    def __search_parent_node(self, val):
+        """
+        return parent node of given value
+
+        :param val:
+        :return:
+        """
+        if not self.__size:
+            raise IndexError
+
+        node = self.__root
+        while True:
+            comparison = self.__compare_value(obj=val, subj=node.val)
+            # continue search
+            if comparison == -1:
+                if node.left.is_null:
+                    return node
+                node = node.left
+            else:
+                if node.right.is_null:
+                    return node
+                node = node.right
+
+
     def insert(self, val):
+        """
+        basic insertion
+
+        :param val:
+        :return:
+        """
         # initiation
         if self.__root is None:
             root = self.__Node(val, parent=None)
             root.color_black()
             self.__root = root
         else:
-            parent = self.__search_parent(val)
+            parent = self.__search_parent_node(val)
             new_node = self.__Node(val, parent)
             comparison = self.__compare_value(obj=val, subj=parent.val)
             # set position
@@ -322,13 +539,46 @@ class RedBlackTree:
                     self.__recolor(parent)
         self.__size += 1
 
+
+    def insert_unique(self, val):
+        """
+        insert only if given value is unique
+
+        :param val:
+        :return: bool, insertion result
+        """
+        if self.__root is None:
+            root = self.__Node(val, parent=None)
+            root.color_black()
+            self.__root = root
+        else:
+            parent = self.__search_parent_node(val)
+            new_node = self.__Node(val, parent)
+            comparison = self.__compare_value(obj=val, subj=parent.val)
+            if comparison == 0:  # ! exceptional case
+                return False
+            # set position
+            elif comparison == -1:  # value less
+                parent.left = new_node
+            else:  # value bigger equal
+                parent.right = new_node
+
+            # check fix
+            if parent.is_red:
+                if parent.parent.has_black_child:
+                    self.__restructure(parent, new_node)
+                else:
+                    self.__recolor(parent)
+        self.__size += 1
+        return True
+
+
     def uprint(self):
         """
         ugly print for debugging
 
         :return:
         """
-
         if not self.__root:
             return
         parents = [self.__root]
@@ -346,8 +596,8 @@ class RedBlackTree:
             parents = new_ps
         print()
 
-    class __Node:
 
+    class __Node:
         class __NullNode:
             """
             Null indicator, single instance enough
@@ -385,6 +635,39 @@ class RedBlackTree:
                 if self.parent:
                     return self.parent.left if self.is_right else self.parent.right
                 return None
+
+            @property
+            def greater_ancestor(self):
+                if self.is_root:
+                    return None
+
+                node = self
+                if self.is_right:
+                    while True:
+                        if node.is_root:
+                            return None
+                        if node.is_left:
+                            return node.parent
+                        else:
+                            node = node.parent
+                else:
+                    return node.parent
+
+            @property
+            def lesser_ancestor(self):
+                if self.is_root:
+                    return None
+                node = self
+                if self.is_left:
+                    while True:
+                        if node.is_root:
+                            return None
+                        if node.is_right:
+                            return node.parent
+                        else:
+                            node = node.parent
+                else:
+                    return node.parent
 
             def delete(self):
                 """
@@ -424,10 +707,14 @@ class RedBlackTree:
 
         @property
         def is_left(self):
+            if not self.parent:
+                return False
             return self.parent.left is self
 
         @property
         def is_right(self):
+            if not self.parent:
+                return False
             return self.parent.right is self
 
         @property
@@ -452,18 +739,55 @@ class RedBlackTree:
             return not (self.right.is_red and self.left.is_red)
 
         @property
-        def successor(self):
+        def greater_successor(self):
             node = self.right
+            if node.is_null:
+                return None
             while not node.left.is_null:
                 node = node.left
             return node
 
         @property
-        def rightmost(self):
-            node = self
+        def lesser_successor(self):
+            node = self.left
+            if node.is_null:
+                return None
             while not node.right.is_null:
                 node = node.right
             return node
+
+        @property
+        def greater_ancestor(self):
+            if self.is_root:
+                return None
+
+            node = self
+            if self.is_right:
+                while True:
+                    if node.is_root:
+                        return None
+                    if node.is_left:
+                        return node.parent
+                    else:
+                        node = node.parent
+            else:
+                return node.parent
+
+        @property
+        def lesser_ancestor(self):
+            if self.is_root:
+                return None
+            node = self
+            if self.is_left:
+                while True:
+                    if node.is_root:
+                        return None
+                    if node.is_right:
+                        return node.parent
+                    else:
+                        node = node.parent
+            else:
+                return node.parent
 
         def color_red(self):
             self.__is_red = True
