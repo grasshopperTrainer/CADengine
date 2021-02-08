@@ -1,2 +1,2 @@
-from .gkernel_wrapper import *
+from .shapes import *
 from .model import Model

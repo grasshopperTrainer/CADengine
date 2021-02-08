@@ -38,9 +38,7 @@ class BffrCache(ArrayContainer):
         if len(locs) != len(dtype.fields):
             raise ValueError('each field has to have location values')
         self.__locs = {n: l for n, l in zip(dtype.fields, locs)}
-
         self.__array = np.ndarray(size, dtype=dtype)
-
         # for first fit allocation free space record,
         self.__block_pool = [(0, len(self.__array))]    # (start, stop) min heap
         self.__block_inuse = SkipList(key_provider=lambda x: x.indices[-1])
@@ -61,6 +59,9 @@ class BffrCache(ArrayContainer):
 
     def __len__(self):
         return len(self.__array)
+
+    def __str__(self):
+        return f"<BffrCache {tuple(ps[0] for ps in self.field_props)}>"
 
     def __expand_array(self):
         """

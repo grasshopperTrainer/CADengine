@@ -22,6 +22,7 @@ class MyWindow(Window):
         v5 = [-10, 30, 0]
         v6 = [-5, 12, 0]
         v7 = [-20, 5, 0]
+        vrtxs = [v0, v1, v2, v3, v4, v5, v6, v7, v0]
         # triangles draw
         model1.add_tgl(v0, v1, v4)
         model1.add_tgl(v1, v2, v4)
@@ -30,8 +31,10 @@ class MyWindow(Window):
         model1.add_tgl(v0, v6, v7)
         model1.add_tgl(v4, v5, v6)
 
-        model1.add_pgon(v0, v1, v2, v3, v4, v5, v6, v7)
-
+        for i in range(len(vrtxs)):
+            x, y, z = vrtxs[i]
+            vrtxs[i] = x, y+30, z
+        print(model1.add_pgon(*vrtxs))
 
         self.model1 = model1
 

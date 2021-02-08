@@ -1,10 +1,8 @@
 from gkernel.tools.intersector import Intersector as intx
-import mkernel.gkernel_wrapper as gw
+import mkernel.shapes.primitive_wrapper as gw
 import gkernel.dtype.geometric as gt
-import mkernel.gkernel_wrapper as st
-import mkernel.primitive_renderer as pr
-
-from .shape import Shape
+import mkernel.shapes as st
+import mkernel.renderers as pr
 
 
 class ModelIterator:
@@ -32,7 +30,6 @@ class Model:
         self._shapes.setdefault(geo_wrapper, []).append(shp)
         return shp
 
-
     def add_geo(self, geo):
         """
         add given geometry
@@ -40,14 +37,17 @@ class Model:
         :return:
         """
         if isinstance(geo, gt.Pnt):
-            self.__add_geo_helper(geo, geo_wrapper=gt.Pnt, renderer_type=pr.PointRenderer)
+            return self.__add_geo_helper(geo, geo_wrapper=gt.Pnt, renderer_type=pr.PointRenderer)
         elif isinstance(geo, gt.Lin):
-            self.__add_geo_helper(geo, geo_wrapper=gt.Lin, renderer_type=pr.LineRenderer)
+            return self.__add_geo_helper(geo, geo_wrapper=gt.Lin, renderer_type=pr.LineRenderer)
         elif isinstance(geo, gt.Tgl):
-            self.__add_geo_helper(geo, geo_wrapper=gt.Tgl, renderer_type=pr.TriangleRenderer)
+            return self.__add_geo_helper(geo, geo_wrapper=gt.Tgl, renderer_type=pr.TriangleRenderer)
+        elif isinstance(geo, gt.Pgon):
+            return self.__add_geo_helper(geo, geo_wrapper=gt.Pgon, renderer_type=pr.PolygonRenderer)
+        elif isinstance(geo, gt.Plin):
+            return self.__add_geo_helper(geo, geo_wrapper=st.Plin, renderer_type=pr.PolylineRenderer)
         else:
             raise NotImplementedError
-
 
     def add_pnt(self, x, y, z):
         """
@@ -80,6 +80,14 @@ class Model:
         :return:
         """
         return self.__add_geo_helper(geo=gt.Tgl(v0, v1, v2), geo_wrapper=st.Tgl, renderer_type=pr.TriangleRenderer)
+
+    def add_plin(self, *vs):
+        """
+        add polyline
+        :param vs:
+        :return:
+        """
+        return self.__add_geo_helper(geo=gt.Plin(*vs), geo_wrapper=st.Plin, renderer_type=pr.PolylineRenderer)
 
     def add_pgon(self, *vs):
         """
