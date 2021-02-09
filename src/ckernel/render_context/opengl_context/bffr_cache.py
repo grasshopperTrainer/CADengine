@@ -65,11 +65,16 @@ class BffrCache(ArrayContainer):
 
     def __expand_array(self):
         """
-        double the size of the array
+        in case of overflow double the size of the array
 
         :return:
         """
-        raise NotImplementedError
+        old_len = len(self.__array)
+        new_len = old_len * 2
+        new_arr = np.ndarray(shape=new_len, dtype=self.__array.dtype)
+        new_arr[:old_len] = self.__array
+        self.__block_pool.append((old_len, new_len))
+        self.__array = new_arr
 
     @property
     def active_size(self):
@@ -95,7 +100,7 @@ class BffrCache(ArrayContainer):
         indices = []
         while 0 < size:
             if not self.__block_pool:
-                raise NotImplementedError('overflow')
+                self.__expand_array()
 
             s, e = self.__block_pool[0]
             vacant_size = e - s
