@@ -51,8 +51,8 @@ class PolygonRenderer(_Renderer):
             with self.__fill_prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__fill_prgrm.ufrm_cache['PM'] = camera.body.PM.r
-                self.__fill_prgrm.ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__fill_prgrm.ufrm_cache['PM'] = camera.body.PM
+                self.__fill_prgrm.ufrm_cache['VM'] = camera.tripod.VM
                 self.__fill_prgrm.ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                       [0, 1, 0, 0],
                                                       [0, 0, 1, 0],
@@ -72,8 +72,8 @@ class PolygonRenderer(_Renderer):
                 # update uniforms
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__edge_prgrm.ufrm_cache['PM'] = camera.body.PM.r
-                self.__edge_prgrm.ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__edge_prgrm.ufrm_cache['PM'] = camera.body.PM
+                self.__edge_prgrm.ufrm_cache['VM'] = camera.tripod.VM
                 self.__edge_prgrm.ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                       [0, 1, 0, 0],
                                                       [0, 0, 1, 0],

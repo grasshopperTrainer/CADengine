@@ -105,8 +105,8 @@ class PointRenderer(_Renderer):
             with self.__square_prgrm as prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__square_ufrm_cache['PM'] = camera.body.PM.r
-                self.__square_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__square_ufrm_cache['PM'] = camera.body.PM
+                self.__square_ufrm_cache['VM'] = camera.tripod.VM
                 self.__square_ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                   [0, 1, 0, 0],
                                                   [0, 0, 1, 0],
@@ -127,14 +127,16 @@ class PointRenderer(_Renderer):
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__circle_ufrm_cache['PM'] = camera.body.PM.r
-                self.__circle_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__circle_ufrm_cache['PM'] = camera.body.PM
+                self.__circle_ufrm_cache['VM'] = camera.tripod.VM
                 self.__circle_ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                   [0, 1, 0, 0],
                                                   [0, 0, 1, 0],
                                                   [0, 0, 0, 1]]
-                self.__circle_ufrm_cache['VS'] = get_current_ogl().manager.window.devices.panes.current.size
+                pane = get_current_ogl().manager.window.devices.panes.current
+                self.__circle_ufrm_cache['VPP'] = *pane.pos, *pane.size
                 prgrm.push_ufrms(self.__circle_ufrm_cache)
+
                 self.__circle_ibo.push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   self.__circle_ibo.cache.active_size,
@@ -149,8 +151,8 @@ class PointRenderer(_Renderer):
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__triangle_ufrm_cache['PM'] = camera.body.PM.r
-                self.__triangle_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__triangle_ufrm_cache['PM'] = camera.body.PM
+                self.__triangle_ufrm_cache['VM'] = camera.tripod.VM
                 self.__triangle_ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                     [0, 1, 0, 0],
                                                     [0, 0, 1, 0],

@@ -28,7 +28,6 @@ class Pgon(Shape):
         # _Trapezoidator supports normalized array and returns normalized trapezoid
         # vertices are in normalized position so apply plane TM
         vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(geo)
-        print(edge_indxs)
         self.__renderer = renderer
         self.__vrtx_block = renderer.vbo.cache.request_block(size=len(vertices))
         self.__vrtx_block['vtx'] = vertices
