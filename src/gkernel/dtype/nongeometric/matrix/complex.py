@@ -69,7 +69,7 @@ class ProjectionMatrix(TrnsfMat):
                 proj_mat[1, (1, 2)] = 2 * n / (t - b), (t + b) / (t - b)
                 proj_mat[2, (2, 3)] = -(f + n) / (f - n), -2 * f * n / (f - n)
                 proj_mat[3] = 0, 0, -1, 0
-        else:
+        elif typ == 'o':
             if l == -r and b == -t:
                 proj_mat[0, 0] = 1 / r
                 proj_mat[1, 1] = 1 / t
@@ -80,5 +80,6 @@ class ProjectionMatrix(TrnsfMat):
                 proj_mat[1, (1, 3)] = 2 / (t - b), -(t + b) / (t - b)
                 proj_mat[2, (2, 3)] = -2 / (f - n), -(f + n) / (f - n)
                 proj_mat[3] = 0, 0, 0, 1
-
+        else:
+            raise
         return np.array(proj_mat, dtype=float).view(cls)

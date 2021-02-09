@@ -7,7 +7,7 @@ layout (location = 2) in float dia;
 layout (location = 0) uniform mat4 MM = mat4(1.0);
 layout (location = 1) uniform mat4 VM = mat4(1.0);
 layout (location = 2) uniform mat4 PM = mat4(1.0);
-layout (location = 4) uniform vec2 VS;
+layout (location = 4) uniform vec4 VPP;  // viewport pixel property (posx, posy, width, height)
 
 
 out vec4 fclr;
@@ -20,9 +20,9 @@ void main() {
     vec4 csPnt = VM*MM*vtx;
     // radius vector at normalized device coordinate
     // ! PM will squach vector in relative with viewport ratio
-    vec4 csRadVec = PM*vec4(dia/2, dia/2, csPnt.z, 0);
+    vec4 csRadVec = PM*vec4(dia/2, dia/2, csPnt.z, 1);
     // size from unit to pixel
-    gl_PointSize = csRadVec.x/csRadVec.w*VS.x;
+    gl_PointSize = ((csRadVec.x/csRadVec.w)*VPP.z);
     // size from projection space to ndc
     radVec = csRadVec.xy/csRadVec.w;
     // projection space point

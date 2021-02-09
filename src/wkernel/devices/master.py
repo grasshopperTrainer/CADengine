@@ -26,17 +26,17 @@ class DeviceMaster:
         return self.__window
 
     @property
-    def mouse(self):
+    def mouse(self) -> Mouse:
         return self.__mouse
 
     @property
-    def keyboard(self):
+    def keyboard(self) -> Keyboard:
         return self.__keyboard
 
     @property
-    def cameras(self):
+    def cameras(self) -> CameraManager:
         return self.__cameras
 
     @property
-    def panes(self):
+    def panes(self) -> PaneManager:
         return self.__panes

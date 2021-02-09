@@ -12,7 +12,7 @@ class W(Window):
     def setup(self):
         print('setting up')
         self.framerate = 2
-        self.panes.new_pane(0.25, 0.25, 0.5, 0.5)
+        self.panes.appendnew_pane(0.25, 0.25, 0.5, 0.5)
         # self.views.new_view(0, 0, 0.5, 0.5)
         self.cameras[0].tripod.lookat((100, 100, 100), (0, 0, 0), (0, 0, 1))
         # self.cameras[0].set_fps_dolly(self)
