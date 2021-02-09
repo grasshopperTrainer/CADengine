@@ -841,6 +841,15 @@ class Pln(ArrayLikeData, PntConv):
             return True
         return False
 
+    def orient(self, obj):
+        """
+        orient given geometric object to this plane
+
+        :param obj:
+        :return:
+        """
+        return self.TM * obj
+
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]
         v = Vec.from_row(self._data[:, sign:sign + 1])
