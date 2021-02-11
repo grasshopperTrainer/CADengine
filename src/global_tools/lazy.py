@@ -99,3 +99,61 @@ class lazyFunc:
             return r
         return __wrapper
 
+
+class lazyProp:
+    """
+    decorator
+    same usage lazyFunc has
+    """
+    def __init__(self, func):
+        self.__func = func
+        self.__cache = wr.WeakKeyDictionary()
+        self.__flags = wr.WeakKeyDictionary()
+
+    def __get__(self, instance, owner):
+        # init
+        if instance not in self.__cache:
+            # setattr(instance, f"_{owner.__name__.lstrip('_')}__lazyProp_{self.__func.__name__}", self)
+            self.__flags[instance] = True
+            self.__cache[instance] = None
+        # recalc
+        if self.__flags[instance]:
+            self.__cache[instance] = self.__func(instance)
+            self.__flags[instance] = False
+        return self.__cache[instance]
+
+    def __set__(self, instance, value):
+        """
+        reset cache switch
+
+        :param instance:
+        :param value: bool, set True to reset cache, False to disable gen. cache flag
+        :return:
+        """
+        if not isinstance(value, bool):
+            raise TypeError('use this interface to reset cache')
+        if value:
+            self.__flags[instance] = True
+            self.__cache[instance] = None
+        else:
+            self.__flags[instance] = False
+
+    # def reset(self, instance):
+    #     """
+    #     explicit cache reset accessed via '__lazyProp_{prop_name}' pattern
+    #     :param instance:
+    #     :return:
+    #     """
+    #     self.__flags[instance] = True
+
+    def resetter(self, func):
+        """
+        decorator for cache reset
+
+        reset to calculate
+        :return:
+        """
+        def __wrapper(instance, *args, **kwargs):
+            func(instance, *args, **kwargs)
+            self.__flags[instance] = True
+        return __wrapper

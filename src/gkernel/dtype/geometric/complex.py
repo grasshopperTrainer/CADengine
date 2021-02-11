@@ -1,6 +1,5 @@
 from numbers import Number
-from math import inf
-
+from collections import Counter
 import numpy as np
 
 from gkernel.array_like import ArrayLikeData
@@ -8,7 +7,7 @@ from gkernel.constants import DTYPE, DUNIT
 from global_tools.singleton import Singleton
 from global_tools.red_black_tree import RedBlackTree
 
-from .primitive import Pnt, Vec, Pln, Lin, ZVec
+from .primitive import Pnt, Vec, Pln, Lin, ZVec, ZeroVec
 
 
 class Plin(ArrayLikeData):
@@ -60,8 +59,13 @@ class Pgon(ArrayLikeData):
 
         :param vs: vertices
         """
-        if len(vs) < 3:
-            raise ValueError('at least 3 vertex needed')
+        if len(vs) < 4:
+            raise ValueError('at least 4 vertex with overlapping first, last, needed')
+        if not(vs[0] == vs[-1]):
+            raise ValueError('first last vertices has to overlap')
+        if len(set(map(tuple, vs))) != len(vs) - 1:
+            raise ValueError('no overlapping vertices allowed')
+
         # ? should provide coupling end vertex or not?
         if not cls.validate_3d_coordinate(*vs):
             raise ValueError
@@ -70,13 +74,17 @@ class Pgon(ArrayLikeData):
             obj[:3, i] = v
             obj[3, i] = 1
 
-        obj.__plane = None
-        obj.__normalized = None
-        obj.__normalize()
+        # obj.__plane = None
+        # obj.__normalized = None
+        # obj.__normalize()
         return obj
 
     def __str__(self):
         return f"<Pgon,{len(self)}>"
+
+    def __array_finalize__(self, obj):
+        self.__plane = None
+        self.__normalized = None
 
     @property
     def plane(self):
@@ -95,6 +103,7 @@ class Pgon(ArrayLikeData):
 
         :return:
         """
+        self.__normalize()
         return self.__normalized
 
     @staticmethod
@@ -108,6 +117,19 @@ class Pgon(ArrayLikeData):
         """
         raise NotImplementedError
 
+    def __calc_normal(self):
+        """
+        calculate normal vector
+
+        ref: https://stackoverflow.com/questions/22838071/robust-polygon-normal-calculation
+        :return:
+        """
+        norm = ZeroVec()
+        for a, b in zip(self[:3, :-1].T, self[:3, 1:].T):
+            norm += Vec.cross(Pnt(*a), Pnt(*b))
+
+        return norm.normalize()
+
     def __normalize(self):
         """
         store normalized
@@ -116,16 +138,20 @@ class Pgon(ArrayLikeData):
         """
         if not (self[:3, 0] == self[:3, -1]).all:
             raise ValueError('first and last vertex has to be identical')
-        # find plane
-        first = Pnt(*self[:3, 0])
-        second = Pnt(*self[:3, 1])
-        third = Pnt(*self[:3, 2])
+        # find z
+        axis_z = self.__calc_normal()
 
-        pln = Pln.from_lin_pnt(line=Lin.from_pnts(s=first, e=second), point=third, axis_of='x')
+        # find plane
+        origin = Pnt(*self[:3, 0])
+        axis_x = Vec(*(self[:3, 1] - self[:3, 0]))
+        axis_y = Vec.cross(axis_z, axis_x)
+        pln = Pln.from_ori_axies(origin, axis_x, axis_y, axis_z)
+
         self.__plane = pln
-        self.__normalized = pln.TM.I * self
+        self.__normalized = pln.TM.I * self.view(np.ndarray)
         if not self.__test_planarity():
             raise ValueError('given vertices not planar')
+
 
     def __test_planarity(self):
         """

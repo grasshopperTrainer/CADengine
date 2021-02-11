@@ -5,9 +5,11 @@ from numbers import Number
 import numpy as np
 
 from global_tools.singleton import Singleton
+from global_tools.lazy import lazyProp
 from gkernel.constants import DTYPE
 from gkernel.dtype.nongeometric.matrix.primitive import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
 from gkernel.array_like import ArrayLikeData
+from gkernel.constants import ATOL
 
 
 class Mat1(ArrayLikeData):
@@ -269,6 +271,7 @@ class Vec(Mat1, VecConv, PntConv):
         """
         self.__clean_cache = True
         self.__length = None
+        self.__s = Pnt(0, 0, 0)
 
     def __str__(self):
         return f"<{self.__class__.__name__} : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -299,6 +302,11 @@ class Vec(Mat1, VecConv, PntConv):
         """
         super().__setitem__(key, value)
         self.__clean_cache = True
+
+    @property
+    def vertices(self):
+        self.__e = self.as_pnt()
+        return self.__s, self.__e
 
     @classmethod
     def cross(cls, a, b):
@@ -350,6 +358,34 @@ class Vec(Mat1, VecConv, PntConv):
         """
         return vec.normalize().amplify(magnitude)
 
+    def pnts_share_side(self, *pnts):
+        """
+        check if given points are on the same side
+
+        :param pnts: points to be tested
+        :return: bool or None - for odd result
+        """
+        # cant define sideness
+        if np.isclose(0, self.length, atol=ATOL):
+            return None
+
+        rep = None
+        s, e = self.vertices
+        for pnt in pnts:
+            if not isinstance(pnt, Pnt):
+                raise TypeError(pnt)
+            normal = Vec.cross(Vec.from_pnts(pnt, s), Vec.from_pnts(pnt, e))
+            # odd case, point on the border
+            if normal == 0:
+                return None
+
+            if rep is None:
+                rep = normal
+            else:
+                if Vec.dot(rep, normal) < 0:
+                    return False
+        return True
+
     def amplify(self, magnitude):
         """
         amplify self
@@ -371,7 +407,7 @@ class Vec(Mat1, VecConv, PntConv):
         if self.is_zero():
             warnings.warn("zero vector cant be normalized")
             return self
-        self.xyz = (self / self.length).xyz
+        self[:] = self / self.length
         return self
 
     def is_zero(self):
@@ -560,7 +596,7 @@ class Pnt(Mat1, VecConv, PntConv):
 
     def __new__(cls, x=0, y=0, z=0):
         obj = super().__new__(cls, shape=(4, 1), dtype=DTYPE)
-        obj[:4, 0] = x, y, z, 1
+        obj[:, 0] = x, y, z, 1
         return obj
 
     def __str__(self):
@@ -568,9 +604,6 @@ class Pnt(Mat1, VecConv, PntConv):
 
     def __repr__(self):
         return self.__str__()
-
-    def __hash__(self):
-        return object.__hash__(self)
 
     @classmethod
     def cast(self, v):
@@ -729,10 +762,10 @@ class Pln(ArrayLikeData, PntConv):
         obj = super().__new__(cls, shape=(4, 4), dtype=DTYPE)
         obj[:3, (0, 1, 2, 3)] = np.array([o, x, y, z]).T
         obj[3] = 1, 0, 0, 0
-        obj.__standardize()
+        obj.__normalize()
         return obj
 
-    def __standardize(self):
+    def __normalize(self):
         """
         standarization? of plane
 
@@ -749,14 +782,14 @@ class Pln(ArrayLikeData, PntConv):
             # unit plane transformation matrix equals to eye(4) matrix
             self._trnsf_mat = TrnsfMats()
             return
-
         # make vectors normalized and perpendicular
         x, y = self.axis_x, self.axis_y
+        if Vec.cross(x, y) == 0:
+            raise ValueError('cant define plane with parallel axes')
         z = Vec.cross(x, y)  # find z
         y = Vec.cross(z, x)  # find y
         x, y, z = [v.normalize() for v in (x, y, z)]
         self[:, 1:] = np.array([x, y, z]).T
-
         # calculate 'plane to origin' rotation matrices
         # last rotation is of x so match axis x to unit x prior
         plane = np.array([[0, x.x, y.x, z.x],
@@ -906,8 +939,11 @@ class Pln(ArrayLikeData, PntConv):
         if point in (line.start, line.end):
             raise ValueError("point is the start or end of the line")
         if axis_of == 'x':
-            y_axis = point.as_vec()
-            return Pln.from_ori_axies(line.start, line.as_vec(), y_axis, Vec(0, 0, 1))
+            o, x = line.vertices
+            x = x - o
+            y = point - o
+
+            return Pln.from_ori_axies(o, x, y, ZVec())
         else:
             raise NotImplementedError
 
@@ -1096,6 +1132,9 @@ class Lin(ArrayLikeData, VecConv):
         obj[:3, 0] = s
         obj[:3, 1] = e
         obj[3] = 1, 1
+
+        obj.__s = None
+        obj.__e = None
         return obj
 
     def __bool__(self):
@@ -1116,7 +1155,13 @@ class Lin(ArrayLikeData, VecConv):
         :param e: ending vertex of line
         :return:
         """
-        return Lin(s.xyz, e.xyz)
+        obj = Lin(s.xyz, e.xyz)
+        # to maintain interior consistency
+        setattr(obj, f"_{cls.__name__}__s", s)
+        setattr(obj, f"_{cls.__name__}__e", e)
+        obj.start = False
+        obj.end = False
+        return obj
 
     @classmethod
     def from_pnt_vec(cls, start: Pnt, direction: Vec):
@@ -1147,7 +1192,7 @@ class Lin(ArrayLikeData, VecConv):
         if not p0 == p1:
             return
 
-    @property
+    @lazyProp
     def length(self):
         """
         of line
@@ -1158,18 +1203,19 @@ class Lin(ArrayLikeData, VecConv):
             summed += pow(self[i, 0] - self[i, 1], 2)
         return sqrt(summed)
 
-    @property
+    @lazyProp
     def start(self):
-        return Pnt(*self[:3, 0])
+        self.__s = Pnt(*self[:3, 0])
+        return self.__s
 
-    @property
+    @lazyProp
     def end(self):
-        return Pnt(*self[:3, 1])
+        self.__e = Pnt(*self[:3, 1])
+        return self.__e
 
     @property
     def vertices(self):
-        for i in range(len(self)):
-            yield Pnt(*self[:3, i])
+        return self.start, self.end
 
     def reversed(self):
         """
@@ -1228,6 +1274,10 @@ class Lin(ArrayLikeData, VecConv):
         :param pnts: points to be tested
         :return: bool or None - for odd result
         """
+        # cant define sideness
+        if np.isclose(0, self.length, atol=ATOL):
+            return None
+
         rep = None
         s, e = self.vertices
         for pnt in pnts:

@@ -37,19 +37,19 @@ class Model:
         :return:
         """
         if isinstance(geo, gt.Pnt):
-            return self.__add_geo_helper(geo, geo_wrapper=gt.Pnt, renderer_type=pr.PointRenderer)
+            return self.__add_geo_helper(geo, geo_wrapper=st.Pnt, renderer_type=pr.PointRenderer)
         elif isinstance(geo, gt.Lin):
-            return self.__add_geo_helper(geo, geo_wrapper=gt.Lin, renderer_type=pr.LineRenderer)
+            return self.__add_geo_helper(geo, geo_wrapper=st.Lin, renderer_type=pr.LineRenderer)
         elif isinstance(geo, gt.Tgl):
-            return self.__add_geo_helper(geo, geo_wrapper=gt.Tgl, renderer_type=pr.TriangleRenderer)
+            return self.__add_geo_helper(geo, geo_wrapper=st.Tgl, renderer_type=pr.TriangleRenderer)
         elif isinstance(geo, gt.Pgon):
-            return self.__add_geo_helper(geo, geo_wrapper=gt.Pgon, renderer_type=pr.PolygonRenderer)
+            return self.__add_geo_helper(geo, geo_wrapper=st.Pgon, renderer_type=pr.PolygonRenderer)
         elif isinstance(geo, gt.Plin):
             return self.__add_geo_helper(geo, geo_wrapper=st.Plin, renderer_type=pr.PolylineRenderer)
         else:
             raise NotImplementedError
 
-    def add_pnt(self, x, y, z):
+    def add_pnt(self, x, y, z) -> st.Pnt:
         """
         add point
 
@@ -60,7 +60,7 @@ class Model:
         """
         return self.__add_geo_helper(geo=gt.Pnt(x, y, z), geo_wrapper=st.Pnt, renderer_type=pr.PointRenderer)
 
-    def add_lin(self, vs, ve):
+    def add_lin(self, vs, ve) -> st.Lin:
         """
         add line
 
@@ -70,7 +70,7 @@ class Model:
         """
         return self.__add_geo_helper(geo=gt.Lin(vs, ve), geo_wrapper=st.Lin, renderer_type=pr.LineRenderer)
 
-    def add_tgl(self, v0, v1, v2):
+    def add_tgl(self, v0, v1, v2) -> st.Tgl:
         """
         add triangle
 
@@ -81,7 +81,7 @@ class Model:
         """
         return self.__add_geo_helper(geo=gt.Tgl(v0, v1, v2), geo_wrapper=st.Tgl, renderer_type=pr.TriangleRenderer)
 
-    def add_plin(self, *vs):
+    def add_plin(self, *vs) -> st.Plin:
         """
         add polyline
         :param vs:
@@ -89,7 +89,7 @@ class Model:
         """
         return self.__add_geo_helper(geo=gt.Plin(*vs), geo_wrapper=st.Plin, renderer_type=pr.PolylineRenderer)
 
-    def add_pgon(self, *vs):
+    def add_pgon(self, *vs) -> st.Pgon:
         """
         add polygon
 

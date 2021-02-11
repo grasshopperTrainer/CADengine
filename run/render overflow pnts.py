@@ -26,7 +26,6 @@ class MyWindow(Window):
                 p.frm = p.FORM_CIRCLE
                 p.dia = 10
 
-
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:

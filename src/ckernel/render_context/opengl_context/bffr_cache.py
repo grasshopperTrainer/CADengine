@@ -290,19 +290,21 @@ class BffrCache(ArrayContainer):
             else:
                 self.__cache.array[key[0]][self.__indices[key[1]]] = value
 
+        def __len__(self):
+            return len(self.__indices)
+
         def __str__(self):
             return f"<Block {self.__indices}]>"
-
         @property
         def indices(self):
             """
             :return: tuple of array indices
             """
             return tuple(self.__indices)
-
-        @property
-        def size(self):
-            return len(self.__indices)
+        #
+        # @property
+        # def size(self):
+        #     return len(self.__indices)
 
         @property
         def high_indx(self):

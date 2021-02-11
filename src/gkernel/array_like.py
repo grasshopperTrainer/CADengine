@@ -40,7 +40,11 @@ class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
             raise TypeError
 
     def __hash__(self):
-        return object.__hash__(self.tolist())
+        """
+        may be bad but leave it for now
+        :return:
+        """
+        return hash(self.tostring())
 
     def __repr__(self):
         return self.__str__()

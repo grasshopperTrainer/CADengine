@@ -5,10 +5,10 @@ import gkernel.dtype.geometric as gt
 
 class MyWindow(Window):
     def __init__(self):
-        super().__init__(500, 1000, 'my window 1', monitor=None, shared=None)
+        super().__init__(1000, 1000, 'my window 1', monitor=None, shared=None)
         self.framerate = 60
         # enable camera move
-        o = 75
+        o = 200
         self.devices.cameras[0].tripod.lookat(eye=(0, 0, o), at=(0, 0, 0), up=(0, 1, 0))
         self.devices.cameras.attach_fps_dolly(0)
 

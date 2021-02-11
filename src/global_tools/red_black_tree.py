@@ -77,10 +77,10 @@ class RedBlackTree:
 
         node = self.__root
         while not node.is_null:
-            comparison = self.__compare_value(obj=val, subj=node.val)
+            comparison = self.__compare_value(obj=val, sbj=node.val)
             if comparison == 0:
                 if not node.left.is_null:
-                    if self.__compare_value(obj=val, subj=node.left.val) == 0:  # search for leftmost
+                    if self.__compare_value(obj=val, sbj=node.left.val) == 0:  # search for leftmost
                         node = node.left
                     else:
                         return node
@@ -105,7 +105,7 @@ class RedBlackTree:
         """
         node = self.__root
         while not node.is_null:
-            comparison = self.__compare_value(obj=val, subj=node.val)
+            comparison = self.__compare_value(obj=val, sbj=node.val)
             if comparison == 0:
                 successor = node.greater_successor
                 if successor:
@@ -143,8 +143,10 @@ class RedBlackTree:
             successor = node.lesser_successor
             if successor:
                 return successor.val
-            else:
-                return node.lesser_ancestor.val
+            ancestor = node.lesser_ancestor
+            if ancestor:
+                return ancestor.val
+            return None
         else:  # return last
             node = self.__root
             while not node.right.is_null:
@@ -172,16 +174,16 @@ class RedBlackTree:
 
         return None if node is None else node.val
 
-    def __compare_value(self, obj, subj):
+    def __compare_value(self, obj, sbj):
         if self.__comparator is None:
-            if obj == subj:
+            if obj == sbj:
                 return 0
-            elif obj < subj:
+            elif obj < sbj:
                 return -1
             else:
                 return 1
         else:
-            return self.__comparator(obj, subj)
+            return self.__comparator(obj, sbj)
 
     def __transplant(self, old, new):
         """
@@ -343,10 +345,21 @@ class RedBlackTree:
         :param v:
         :return:
         """
-        d = self.__bisect_left_node(v)
-        if not d or self.__compare_value(obj=v, subj=d.val) != 0:
+        if self.__size == 0:
+            raise IndexError('no value in tree')
+        d = self.__bisect_right_node(v)
+        # None for bisect right means given v may be max
+        # this case include size 1
+        if d is None:
+            d = self.__search_max()
+        else:
+            d = d.closest_lesser
+
+        if d and self.__compare_value(obj=v, sbj=d.val) == 0:
+            self.__delete_node(d)
+        else:
             raise ValueError('value not in the list')
-        self.__delete_node(d)
+
 
     def delete_try(self, val):
         """
@@ -359,6 +372,8 @@ class RedBlackTree:
             self.delete(val)
             return True
         except ValueError:
+            return False
+        except IndexError:
             return False
         except Exception as e:
             raise e
@@ -397,7 +412,7 @@ class RedBlackTree:
         node = self.__root
         # search
         while not node.is_null:
-            c = self.__compare_value(obj=val, subj=node.val)
+            c = self.__compare_value(obj=val, sbj=node.val)
             if c == 1:
                 if node.right.is_null:
                     node = None
@@ -468,7 +483,7 @@ class RedBlackTree:
                     self.__restructure(parent, me)
 
 
-    def get_max(self):
+    def __search_max(self):
         if not self.__size:
             raise IndexError('tree empty')
         node = self.__root
@@ -477,7 +492,7 @@ class RedBlackTree:
         return node
 
 
-    def get_min(self):
+    def __search_min(self):
         if not self.__size:
             raise IndexError('tree empty')
         node = self.__root
@@ -498,7 +513,7 @@ class RedBlackTree:
 
         node = self.__root
         while True:
-            comparison = self.__compare_value(obj=val, subj=node.val)
+            comparison = self.__compare_value(obj=val, sbj=node.val)
             # continue search
             if comparison == -1:
                 if node.left.is_null:
@@ -525,7 +540,7 @@ class RedBlackTree:
         else:
             parent = self.__search_parent_node(val)
             new_node = self.__Node(val, parent)
-            comparison = self.__compare_value(obj=val, subj=parent.val)
+            comparison = self.__compare_value(obj=val, sbj=parent.val)
             # set position
             if comparison == -1:  # value less
                 parent.left = new_node
@@ -554,7 +569,7 @@ class RedBlackTree:
         else:
             parent = self.__search_parent_node(val)
             new_node = self.__Node(val, parent)
-            comparison = self.__compare_value(obj=val, subj=parent.val)
+            comparison = self.__compare_value(obj=val, sbj=parent.val)
             if comparison == 0:  # ! exceptional case
                 return False
             # set position
@@ -668,6 +683,14 @@ class RedBlackTree:
                             node = node.parent
                 else:
                     return node.parent
+
+            @property
+            def lesser_successor(self):
+                return None
+
+            @property
+            def closest_lesser(self):
+                return self.lesser_ancestor
 
             def delete(self):
                 """
@@ -788,6 +811,16 @@ class RedBlackTree:
                         node = node.parent
             else:
                 return node.parent
+
+        @property
+        def closest_lesser(self):
+            n = self.lesser_successor
+            if n:
+                return n
+            n = self.lesser_ancestor
+            if n:
+                return n
+            return None
 
         def color_red(self):
             self.__is_red = True
