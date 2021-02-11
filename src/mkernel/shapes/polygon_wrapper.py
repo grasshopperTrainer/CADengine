@@ -292,6 +292,8 @@ class _Trapezoidator:
             # check side for inserting edge's vertex and far_x
             if obj is sbj:
                 return 0
+            if obj.low == sbj.low and obj.high == sbj.high:
+                return 0
 
             far_pnt = gt.Pnt(far_x, obj.low.y, 0)
             is_same_side = sbj.pnts_share_side(obj.low, far_pnt)
@@ -323,7 +325,7 @@ class _Trapezoidator:
         edges = RedBlackTree(__edge_comparator)
         # find trapezoids
         for i, vrtx in enumerate(vrtxs):
-            # print(vrtx)
+            print(vrtx)
             if edges:
                 left_edge = None
                 right_edge = None
@@ -405,8 +407,8 @@ class _Trapezoidator:
                 if not e.is_zero:
                     edges.insert_unique(e)
             # if vrtx.sweep_dir != self.NONE:
-            # for g in trapezoids.geos:
-            #     print(g)
+            for g in trapezoids.geos:
+                print(g)
             # edges.uprint()
         return trapezoids
 

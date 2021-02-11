@@ -24,20 +24,10 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93e3d051-baab-4e5d-a1f6-0e63dea9bbee" name="pyopengl2-73 implement polygon" comment="pyopengl2-73 implement polygon&#10;&#10;implement Polygon normal calculator&#10;    Pgon.__calc_normal()&#10;    &#10;bugfix `Pln.from_lin_pnt`&#10;&#10;bugfix Polygon normalized&#10;    normalized is now stored as np.ndarray not Pgon&#10;    &#10;bugfix coordinate value equation&#10;    Comparison without np.isclose caused serious problem. This problem needs better handling.">
-      <change afterPath="$PROJECT_DIR$/run/render more polygons.py" afterDir="false" />
+    <list default="true" id="93e3d051-baab-4e5d-a1f6-0e63dea9bbee" name="pyopengl2-73 implement polygon" comment="pyopengl2-73 implement polygon&#10;&#10;generalize Polygon Trapezoidation&#10;    Not yet fully understanding core, implementation fragile. But good for now.&#10;&#10;implement Polygon normal calculator&#10;    Pgon.__calc_normal()&#10;    &#10;bugfix `Pln.from_lin_pnt`&#10;&#10;bugfix Polygon normalized&#10;    normalized is now stored as np.ndarray not Pgon&#10;    &#10;bugfix coordinate value equation&#10;    Comparison without np.isclose caused serious problem. This problem needs better handling.">
+      <change afterPath="$PROJECT_DIR$/run/render polygons alphabets.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run/render overflow pnts.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render overflow pnts.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run/render polygon.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render polygon.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/array_like.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/array_like.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/geometric/complex.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/complex.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/dtype/geometric/primitive.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/lazy.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/lazy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/red_black_tree.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/red_black_tree.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mkernel/shapes/polygon_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shapes/polygon_wrapper.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/shapes/primitive_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shapes/primitive_wrapper.py" afterDir="false" />
     </list>
     <list id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="some refactoring before writing ray-traingle intersection" />
     <option name="SHOW_DIALOG" value="false" />
@@ -118,7 +108,7 @@
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shapes" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.render more polygons">
+  <component name="RunManager" selected="Python.render polygons alphabets">
     <configuration name="render more polygons" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -161,7 +151,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render polygon" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="render polygons alphabets" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -173,7 +163,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render polygon.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render polygons alphabets.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -226,11 +216,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.render polygons alphabets" />
         <item itemvalue="Python.render more polygons" />
         <item itemvalue="Python.scratch_10" />
         <item itemvalue="Python.render overflow pnts" />
         <item itemvalue="Python.scratch_9" />
-        <item itemvalue="Python.render polygon" />
       </list>
     </recent_temporary>
   </component>
@@ -576,7 +566,7 @@
       <option name="presentableId" value="pyopengl2-73" />
       <option name="project" value="pyopengl2" />
       <option name="type" value="BUG" />
-      <updated>1612849482158</updated>
+      <updated>1613017258324</updated>
     </task>
     <task id="pyopengl2-75" summary="implement camera fit 2D space function">
       <branch name="pyopengl2-73" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
@@ -665,7 +655,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement `CompoundArray`&#10;This is an `ndarray` container which provides slices of the array to be used for updating the array.&#10;Purpose is to maintain singular array that maintains interweaved order thus ready to be pushed into OpenGL buffer.&#10;&#10;Next is connecting this array with OpenGL buffer, in vao context." />
     <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement OpenGL entity factory classes.&#10;Mechanism for retrieving OpenGL context wise Entities such as buffer, vertex array, program, array buffer(CPU side) has been writen and tested.&#10;However structured rendering is not working yet due to the lack of uniform pushing algorithm." />
     <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement `UniformPusher`&#10;Method for pushing uniform values of `BffrCache`." />
     <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement triangle renderer." />
@@ -690,6 +679,7 @@
     <MESSAGE value="pyopengl2-73 implement polygon&#10;&#10;implement `PolygonRenderer`&#10;    With edge rendering&#10;    &#10;? how to indicate 'render edge'. There are different methods. Some of them are: &#10;1. set edge color alpha 0 &#10;2. set edge thickness 0&#10;3. release edge index&#10;! rendering edge is cosmetic for now. Leave it for implicit method 1 or 2 for now." />
     <MESSAGE value="pyopengl2-75 implement camera fit 2D space function&#10;&#10;implement `Camera.focus_pane`&#10;    Function to tightly wrap 2D pane space at given focus&#10;    resolve #75&#10;&#10;refactor `Camera`&#10;    Objectified further.&#10;    resolve #31&#10;&#10;cleanup wkernel node module&#10;    Related to #41, Camera nodes removed.&#10;    &#10;bugfix `Pnt` circle render&#10;    Viewport position data needed to correctly measure distance between gl_FragCoord and point position in NDC." />
     <MESSAGE value="pyopengl2-74 implement `BffrCache` overflow operation&#10;&#10;implement `BffrCache.__expand_array`&#10;    Turned out to be very simple as Blocks were refering cache not array in it. Shrink is another story but that implementation is not urgent." />
-    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-74 implement `BffrCache` overflow operation&#10;&#10;implement `BffrCache.__expand_array`&#10;    Turned out to be very simple as Blocks were refering cache not array in it. Shrink is another story but that implementation is not urgent." />
+    <MESSAGE value="pyopengl2-73 implement polygon&#10;&#10;generalize Polygon Trapezoidation&#10;    Not yet fully understanding core, implementation fragile. But good for now.&#10;&#10;implement Polygon normal calculator&#10;    Pgon.__calc_normal()&#10;    &#10;bugfix `Pln.from_lin_pnt`&#10;&#10;bugfix Polygon normalized&#10;    normalized is now stored as np.ndarray not Pgon&#10;    &#10;bugfix coordinate value equation&#10;    Comparison without np.isclose caused serious problem. This problem needs better handling." />
+    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-73 implement polygon&#10;&#10;generalize Polygon Trapezoidation&#10;    Not yet fully understanding core, implementation fragile. But good for now.&#10;&#10;implement Polygon normal calculator&#10;    Pgon.__calc_normal()&#10;    &#10;bugfix `Pln.from_lin_pnt`&#10;&#10;bugfix Polygon normalized&#10;    normalized is now stored as np.ndarray not Pgon&#10;    &#10;bugfix coordinate value equation&#10;    Comparison without np.isclose caused serious problem. This problem needs better handling." />
   </component>
 </project>
