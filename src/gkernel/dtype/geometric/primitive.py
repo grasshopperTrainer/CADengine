@@ -2,70 +2,30 @@ import abc
 import warnings
 from math import sqrt
 from numbers import Number
-
 import numpy as np
 
+from global_tools.singleton import Singleton
+from global_tools.lazy import lazyProp
 from gkernel.constants import DTYPE
 from gkernel.dtype.nongeometric.matrix.primitive import TrnsfMats, RotXMat, RotYMat, RotZMat, MoveMat
 from gkernel.array_like import ArrayLikeData
+from gkernel.constants import ATOL
 
 
 class Mat1(ArrayLikeData):
 
-    @property
-    def x(self):
-        return self[0, 0]
-
-    @x.setter
-    def x(self, v):
+    def __getattribute__(self, item):
         """
-        setting coordinate x
-        :param v:
+        some additional attribute automation
+
+        :param item:
         :return:
         """
-        self[0, 0] = v
-
-    @property
-    def y(self):
-        return self[1, 0]
-
-    @y.setter
-    def y(self, v):
-        """
-        setting coordinate y
-        :param v:
-        :return:
-        """
-        self[1, 0] = v
-
-    @property
-    def z(self):
-        return self[2, 0]
-
-    @z.setter
-    def z(self, v):
-        """
-        setting coordinate z
-        :param v:
-        :return:
-        """
-        self[2, 0] = v
-
-    @property
-    def xyz(self):
-        return self.x, self.y, self.z
-
-    @xyz.setter
-    def xyz(self, coord):
-        """
-        modify coordinate of the instance
-
-        :param coord:
-        :return:
-        """
-        if not isinstance(coord, (tuple, list)) and len(coord) != 3:
-            raise ValueError('coord has to be iterable of len 3')
-        self[:3, 0] = coord
+        if not (set(item) - {'x', 'y', 'z', 'w'}):
+            d = dict(zip('xyzw', self[:, 0]))
+            vs = tuple(d[c] for c in item)
+            return vs[0] if len(vs) == 1 else vs
+        return super().__getattribute__(item)
 
     # as Pnt and Vec is closely related in arithmetic calculation
     # all is defined here in inherited class
@@ -311,6 +271,7 @@ class Vec(Mat1, VecConv, PntConv):
         """
         self.__clean_cache = True
         self.__length = None
+        self.__s = Pnt(0, 0, 0)
 
     def __str__(self):
         return f"<{self.__class__.__name__} : {[round(n, 3) for n in self[:3, 0]]}>"
@@ -341,6 +302,11 @@ class Vec(Mat1, VecConv, PntConv):
         """
         super().__setitem__(key, value)
         self.__clean_cache = True
+
+    @property
+    def vertices(self):
+        self.__e = self.as_pnt()
+        return self.__s, self.__e
 
     @classmethod
     def cross(cls, a, b):
@@ -392,6 +358,34 @@ class Vec(Mat1, VecConv, PntConv):
         """
         return vec.normalize().amplify(magnitude)
 
+    def pnts_share_side(self, *pnts):
+        """
+        check if given points are on the same side
+
+        :param pnts: points to be tested
+        :return: bool or None - for odd result
+        """
+        # cant define sideness
+        if np.isclose(0, self.length, atol=ATOL):
+            return None
+
+        rep = None
+        s, e = self.vertices
+        for pnt in pnts:
+            if not isinstance(pnt, Pnt):
+                raise TypeError(pnt)
+            normal = Vec.cross(Vec.from_pnts(pnt, s), Vec.from_pnts(pnt, e))
+            # odd case, point on the border
+            if normal == 0:
+                return None
+
+            if rep is None:
+                rep = normal
+            else:
+                if Vec.dot(rep, normal) < 0:
+                    return False
+        return True
+
     def amplify(self, magnitude):
         """
         amplify self
@@ -413,7 +407,7 @@ class Vec(Mat1, VecConv, PntConv):
         if self.is_zero():
             warnings.warn("zero vector cant be normalized")
             return self
-        self.xyz = (self / self.length).xyz
+        self[:] = self / self.length
         return self
 
     def is_zero(self):
@@ -592,7 +586,7 @@ class Vec(Mat1, VecConv, PntConv):
         return Pnt(*self.xyz)
 
     def as_lin(self):
-        return Lin(p0=(0, 0, 0), p1=self.xyz)
+        return Lin(s=(0, 0, 0), e=self.xyz)
 
 
 class Pnt(Mat1, VecConv, PntConv):
@@ -602,11 +596,14 @@ class Pnt(Mat1, VecConv, PntConv):
 
     def __new__(cls, x=0, y=0, z=0):
         obj = super().__new__(cls, shape=(4, 1), dtype=DTYPE)
-        obj[:4, 0] = x, y, z, 1
+        obj[:, 0] = x, y, z, 1
         return obj
 
     def __str__(self):
         return f"<Pnt : {[round(n, 3) for n in self[:3, 0]]}>"
+
+    def __repr__(self):
+        return self.__str__()
 
     @classmethod
     def cast(self, v):
@@ -679,6 +676,7 @@ class _NamedVec(Vec):
         return obj.view(Vec)
 
 
+@Singleton
 class ZeroVec(_NamedVec):
     """
     Zero Vector
@@ -688,6 +686,7 @@ class ZeroVec(_NamedVec):
         return super().__new__(cls, 0, 0, 0)
 
 
+@Singleton
 class XVec(_NamedVec):
     """
     x unit vector
@@ -697,6 +696,7 @@ class XVec(_NamedVec):
         return super().__new__(cls, 1, 0, 0)
 
 
+@Singleton
 class YVec(_NamedVec):
     """
     y unit vector
@@ -706,6 +706,7 @@ class YVec(_NamedVec):
         return super().__new__(cls, 0, 1, 0)
 
 
+@Singleton
 class ZVec(_NamedVec):
     """
     z unit vector
@@ -761,10 +762,10 @@ class Pln(ArrayLikeData, PntConv):
         obj = super().__new__(cls, shape=(4, 4), dtype=DTYPE)
         obj[:3, (0, 1, 2, 3)] = np.array([o, x, y, z]).T
         obj[3] = 1, 0, 0, 0
-        obj.__standardize()
+        obj.__normalize()
         return obj
 
-    def __standardize(self):
+    def __normalize(self):
         """
         standarization? of plane
 
@@ -781,14 +782,14 @@ class Pln(ArrayLikeData, PntConv):
             # unit plane transformation matrix equals to eye(4) matrix
             self._trnsf_mat = TrnsfMats()
             return
-
         # make vectors normalized and perpendicular
         x, y = self.axis_x, self.axis_y
+        if Vec.cross(x, y) == 0:
+            raise ValueError('cant define plane with parallel axes')
         z = Vec.cross(x, y)  # find z
         y = Vec.cross(z, x)  # find y
         x, y, z = [v.normalize() for v in (x, y, z)]
         self[:, 1:] = np.array([x, y, z]).T
-
         # calculate 'plane to origin' rotation matrices
         # last rotation is of x so match axis x to unit x prior
         plane = np.array([[0, x.x, y.x, z.x],
@@ -851,7 +852,7 @@ class Pln(ArrayLikeData, PntConv):
             self.__standardize()
         elif isinstance(obj, np.ndarray):
             # self already has resulting value, need to check array correctness
-            if self.is_compatible_array(self):
+            if self.validate_array(self):
                 self.__standardize()
             else:
                 raise ValueError('given is not Pln-like')
@@ -859,7 +860,7 @@ class Pln(ArrayLikeData, PntConv):
             raise
 
     @classmethod
-    def is_compatible_array(cls, arr):
+    def validate_array(cls, arr):
         """
         check if raw array is Pln like
 
@@ -872,6 +873,15 @@ class Pln(ArrayLikeData, PntConv):
         if isinstance(arr, np.ndarray) and arr.shape == (4, 4) and (arr[3] == (1, 0, 0, 0)).all():
             return True
         return False
+
+    def orient(self, obj):
+        """
+        orient given geometric object to this plane
+
+        :param obj:
+        :return:
+        """
+        return self.TM * obj
 
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]
@@ -906,7 +916,7 @@ class Pln(ArrayLikeData, PntConv):
         return self.origin, self.axis_x, self.axis_y, self.axis_z
 
     @property
-    def trnsf_mat(self):
+    def TM(self):
         """
         return transformation matrix(origin -> plane)
         :return:
@@ -929,8 +939,11 @@ class Pln(ArrayLikeData, PntConv):
         if point in (line.start, line.end):
             raise ValueError("point is the start or end of the line")
         if axis_of == 'x':
-            y_axis = point.as_vec()
-            return Pln.from_ori_axies(line.start, line.as_vec(), y_axis, Vec(0, 0, 1))
+            o, x = line.vertices
+            x = x - o
+            y = point - o
+
+            return Pln.from_ori_axies(o, x, y, ZVec())
         else:
             raise NotImplementedError
 
@@ -1108,26 +1121,47 @@ class Tgl(ArrayLikeData):
 
 class Lin(ArrayLikeData, VecConv):
 
-    def __new__(cls, p0=(0, 0, 0), p1=(0, 0, 1)):
+    def __new__(cls, s=(0, 0, 0), e=(0, 0, 1)):
         """
         define line from two coordinate
-        :param p0: xyz coord of starting vertex
-        :param p1: xyz coord of ending vertex
+        :param s: xyz coord of starting vertex
+        :param e: xyz coord of ending vertex
         """
-        return np.array([[p0[0], p1[0]],
-                         [p0[1], p1[1]],
-                         [p0[2], p1[2]],
-                         [1, 1]], dtype=DTYPE).view(cls)
+        cls.validate_3d_coordinate(s, e)
+        obj = super().__new__(cls, shape=(4, 2), dtype=DTYPE)
+        obj[:3, 0] = s
+        obj[:3, 1] = e
+        obj[3] = 1, 1
 
-    @classmethod
-    def from_pnts(cls, start: Pnt, end: Pnt):
+        obj.__s = None
+        obj.__e = None
+        return obj
+
+    def __bool__(self):
         """
-        create line using start, end vertex
-        :param start: starting vertex of line
-        :param end: ending vertex of line
+
         :return:
         """
-        return Lin(start.xyz, end.xyz)
+        return self.length != 0
+
+    def __str__(self):
+        return f"<Lin,{self.length}>"
+
+    @classmethod
+    def from_pnts(cls, s: Pnt, e: Pnt):
+        """
+        create line using start, end vertex
+        :param s: starting vertex of line
+        :param e: ending vertex of line
+        :return:
+        """
+        obj = Lin(s.xyz, e.xyz)
+        # to maintain interior consistency
+        setattr(obj, f"_{cls.__name__}__s", s)
+        setattr(obj, f"_{cls.__name__}__e", e)
+        obj.start = False
+        obj.end = False
+        return obj
 
     @classmethod
     def from_pnt_vec(cls, start: Pnt, direction: Vec):
@@ -1158,7 +1192,7 @@ class Lin(ArrayLikeData, VecConv):
         if not p0 == p1:
             return
 
-    @property
+    @lazyProp
     def length(self):
         """
         of line
@@ -1168,6 +1202,20 @@ class Lin(ArrayLikeData, VecConv):
         for i in range(3):
             summed += pow(self[i, 0] - self[i, 1], 2)
         return sqrt(summed)
+
+    @lazyProp
+    def start(self):
+        self.__s = Pnt(*self[:3, 0])
+        return self.__s
+
+    @lazyProp
+    def end(self):
+        self.__e = Pnt(*self[:3, 1])
+        return self.__e
+
+    @property
+    def vertices(self):
+        return self.start, self.end
 
     def reversed(self):
         """
@@ -1186,14 +1234,6 @@ class Lin(ArrayLikeData, VecConv):
         """
         self[:] = np.roll(self, shift=1, axis=1)
         return self
-
-    @property
-    def start(self):
-        return Pnt(*self[:3, 0])
-
-    @property
-    def end(self):
-        return Pnt(*self[:3, 1])
 
     def pnt_at(self, t):
         """
@@ -1226,6 +1266,34 @@ class Lin(ArrayLikeData, VecConv):
         a, b = a.as_lin(), b.as_lin()
         plane = Pln.from_lin_pnt(a, b.start)
         return plane.pnt_is_on(b.end)
+
+    def pnts_share_side(self, *pnts):
+        """
+        check if given points are on the same side
+
+        :param pnts: points to be tested
+        :return: bool or None - for odd result
+        """
+        # cant define sideness
+        if np.isclose(0, self.length, atol=ATOL):
+            return None
+
+        rep = None
+        s, e = self.vertices
+        for pnt in pnts:
+            if not isinstance(pnt, Pnt):
+                raise TypeError(pnt)
+            normal = Vec.cross(Vec.from_pnts(pnt, s), Vec.from_pnts(pnt, e))
+            # odd case, point on the border
+            if normal == 0:
+                return None
+
+            if rep is None:
+                rep = normal
+            else:
+                if Vec.dot(rep, normal) < 0:
+                    return False
+        return True
 
     def __str__(self):
         return f"<Lin {round(self.length, 5)}>"

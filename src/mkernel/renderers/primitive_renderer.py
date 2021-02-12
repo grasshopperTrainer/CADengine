@@ -7,6 +7,7 @@ from ckernel.render_context.opengl_context.meta_entities import *
 from ckernel.constants import RENDER_DEFAULT_FLOAT as RDF
 
 from global_tools.singleton import Singleton
+from .base import _Renderer, get_shader_fullpath
 
 """
 Three renderers of dimensional primitives.
@@ -23,16 +24,9 @@ renderer holds prgrm and global uniform cache
 """
 
 
-THIS_PATH = os.path.dirname(__file__)
-def _get_fullpath(rel_path):
-    return os.path.join(THIS_PATH, rel_path)
 
 
-class _PrimitiveRenderer(metaclass=abc.ABCMeta):
-    pass
-
-
-class PointRenderer(_PrimitiveRenderer):
+class PointRenderer(_Renderer):
     """
     this is not an expandable, simple functionality wrapper
 
@@ -51,18 +45,18 @@ class PointRenderer(_PrimitiveRenderer):
 
     """
     __square_prgrm = meta.MetaPrgrm(
-        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_vrtx_shdr.glsl'),
-        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_geom_shdr.glsl'),
-        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntSqr_frgm_shdr.glsl'))
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntSqr_vrtx_shdr.glsl'),
+        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntSqr_geom_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntSqr_frgm_shdr.glsl'))
 
     __circle_prgrm = meta.MetaPrgrm(
-        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_vrtx_shdr.glsl'),
-        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntCir_frgm_shdr.glsl'))
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntCir_vrtx_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntCir_frgm_shdr.glsl'))
 
     __triangle_prgrm = meta.MetaPrgrm(
-        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_vrtx_shdr.glsl'),
-        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_geom_shdr.glsl'),
-        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pntTgl_frgm_shdr.glsl'))
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_vrtx_shdr.glsl'),
+        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_geom_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_frgm_shdr.glsl'))
 
     # shared vertex buffer
     __vbo = MetaVrtxBffr(
@@ -111,8 +105,8 @@ class PointRenderer(_PrimitiveRenderer):
             with self.__square_prgrm as prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__square_ufrm_cache['PM'] = camera.body.PM.r
-                self.__square_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__square_ufrm_cache['PM'] = camera.body.PM
+                self.__square_ufrm_cache['VM'] = camera.tripod.VM
                 self.__square_ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                   [0, 1, 0, 0],
                                                   [0, 0, 1, 0],
@@ -133,14 +127,16 @@ class PointRenderer(_PrimitiveRenderer):
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__circle_ufrm_cache['PM'] = camera.body.PM.r
-                self.__circle_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__circle_ufrm_cache['PM'] = camera.body.PM
+                self.__circle_ufrm_cache['VM'] = camera.tripod.VM
                 self.__circle_ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                   [0, 1, 0, 0],
                                                   [0, 0, 1, 0],
                                                   [0, 0, 0, 1]]
-                self.__circle_ufrm_cache['VS'] = get_current_ogl().manager.window.devices.panes.current.size
+                pane = get_current_ogl().manager.window.devices.panes.current
+                self.__circle_ufrm_cache['VPP'] = *pane.pos, *pane.size
                 prgrm.push_ufrms(self.__circle_ufrm_cache)
+
                 self.__circle_ibo.push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   self.__circle_ibo.cache.active_size,
@@ -155,8 +151,8 @@ class PointRenderer(_PrimitiveRenderer):
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__triangle_ufrm_cache['PM'] = camera.body.PM.r
-                self.__triangle_ufrm_cache['VM'] = camera.tripod.VM.r
+                self.__triangle_ufrm_cache['PM'] = camera.body.PM
+                self.__triangle_ufrm_cache['VM'] = camera.tripod.VM
                 self.__triangle_ufrm_cache['MM'] = [[1, 0, 0, 0],
                                                     [0, 1, 0, 0],
                                                     [0, 0, 1, 0],
@@ -169,7 +165,7 @@ class PointRenderer(_PrimitiveRenderer):
                                   ctypes.c_void_p(0))
 
 
-class LineRenderer(_PrimitiveRenderer):
+class LineRenderer(_Renderer):
     """
     prgrm parameter layout:
 
@@ -228,12 +224,12 @@ class LineRenderer(_PrimitiveRenderer):
                                   ctypes.c_void_p(0))
 
 @Singleton
-class PolylineRenderer(_PrimitiveRenderer):
+class PolylineRenderer(_Renderer):
     def __init__(self):
         self.__sharp_prgrm = meta.MetaPrgrm(
-            vrtx_path=_get_fullpath('shaders/plinSharp_vrtx_shdr.glsl'),
-            geom_path=_get_fullpath('shaders/plinSharp_geom_shdr.glsl'),
-            frgm_path=_get_fullpath('shaders/plinSharp_frgm_shdr.glsl')
+            vrtx_path=get_shader_fullpath('shaders/plinSharp_vrtx_shdr.glsl'),
+            geom_path=get_shader_fullpath('shaders/plinSharp_geom_shdr.glsl'),
+            frgm_path=get_shader_fullpath('shaders/plinSharp_frgm_shdr.glsl')
         )
         self.__vbo = MetaVrtxBffr(
             attr_desc=np.dtype([('vtx', 'f4', 4), ('thk', 'f4'), ('clr', 'f4', 4)]),
@@ -277,7 +273,8 @@ class PolylineRenderer(_PrimitiveRenderer):
                                   self.__ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
-class TriangleRenderer(_PrimitiveRenderer):
+
+class TriangleRenderer(_Renderer):
     """
     full spec schema of triangle object.
 
@@ -295,13 +292,13 @@ class TriangleRenderer(_PrimitiveRenderer):
     :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
     """
     __fill_prgrm = meta.MetaPrgrm(
-        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_vrtx_shdr.glsl'),
-        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglFill_frgm_shdr.glsl'))
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglFill_vrtx_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglFill_frgm_shdr.glsl'))
 
     __edge_prgrm = meta.MetaPrgrm(
-        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_vrtx_shdr.glsl'),
-        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_geom_shdr.glsl'),
-        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tglSharpEdge_frgm_shdr.glsl'))
+        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_vrtx_shdr.glsl'),
+        geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_geom_shdr.glsl'),
+        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_frgm_shdr.glsl'))
 
     __vbo = MetaVrtxBffr(
         attr_desc=np.dtype([('vtx', RDF, 4), ('edge_thk', RDF), ('edge_clr', RDF, 4), ('fill_clr', RDF, 4)]),
@@ -368,3 +365,4 @@ class TriangleRenderer(_PrimitiveRenderer):
                               self.__ibo.cache.active_size,
                               self.__ibo.cache.gldtype[0],
                               ctypes.c_void_p(0))
+

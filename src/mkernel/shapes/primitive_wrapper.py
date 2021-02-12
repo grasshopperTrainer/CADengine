@@ -1,22 +1,21 @@
-import numpy as np
 from numbers import Number
-
+import numpy as np
 import gkernel.dtype.geometric as gt
 from gkernel.color.primitive import ClrRGBA, Clr
-import mkernel.shape as shp
-from .primitive_renderer import *
-from global_tools.singleton import Singleton
+from .base import Shape
+import mkernel.renderers.primitive_renderer as pr
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
+import weakref as wr
 
 
-class Ray(shp.Shape):
+class Ray(Shape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
       
-class Pnt(shp.Shape):
+class Pnt(Shape):
 
     def __init__(self, geo, renderer):
         """
@@ -62,7 +61,7 @@ class Pnt(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, (tuple, list, geo.Pnt)):
+        if not isinstance(v, (tuple, list, gt.Pnt)):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         if self.__geo is None:
@@ -133,11 +132,11 @@ class Pnt(shp.Shape):
             return f"<ENUM {self.__name}>"
 
 
-class Vec(shp.Shape):
+class Vec(Shape):
     pass
 
 
-class Lin(shp.Shape):
+class Lin(Shape):
     def __init__(self, geo, renderer):
         self.__vrtx_block = renderer.vbo.cache.request_block(size=2)
       
@@ -160,7 +159,7 @@ class Lin(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, geo.Lin):
+        if not isinstance(v, gt.Lin):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         if self.__geo is None:
@@ -194,24 +193,24 @@ class Lin(shp.Shape):
         self.__thk = v
 
 
-class Plin(shp.Shape):
+class Plin(Shape):
     def __init__(self, *vs):
         """
 
         :param vs: number of vertices coordinate that form polyline
         """
         # this will check input validity
-        self.__geo = geo.Plin(*vs)
+        self.__geo = gt.Plin(*vs)
         self.__clr = ClrRGBA()
         self.__thk = 3
 
-        self.__vrtx_block = PolylineRenderer().vbo.cache.request_block(size=len(vs))
+        self.__vrtx_block = pr.PolylineRenderer().vbo.cache.request_block(size=len(vs))
         # +1 for primitive restart value
-        self.__indx_block = PolylineRenderer().ibo.cache.request_block(size=len(vs)+1)
+        self.__indx_block = pr.PolylineRenderer().ibo.cache.request_block(size=len(vs)+1)
         self.__indx_block['idx', :-1] = self.__vrtx_block.indices
         self.__indx_block['idx', -1] = PRV
 
-        self.geo = geo.Plin(*vs)
+        self.geo = gt.Plin(*vs)
         self.clr = ClrRGBA(0, 0, 0, 1)
         self.thk = 5
 
@@ -221,7 +220,7 @@ class Plin(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, geo.Plin):
+        if not isinstance(v, gt.Plin):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         self.__geo[:] = v
@@ -250,25 +249,19 @@ class Plin(shp.Shape):
 
     @classmethod
     def render(cls):
-        PolylineRenderer().render()
+        pr.PolylineRenderer().render()
 
 
-class Pln(shp.Shape):
+class Pln(Shape):
     @property
     def geo(self):
         raise NotImplementedError
 
 
-class Tgl(shp.Shape):
+class Tgl(Shape):
     __is_render_edge = True
     def __init__(self, geo, renderer):
         """
-
-        :param __block: this is merely a container for block location in raw array
-                        used when shape is deleted thus has to free space in raw array
-                        ! need to be updated when local value is updated
-        :param __geo: exposed geometric data
-                      ! always a copy of __block to prevent undesired value contamination
         """
         self.__vrtx_block = renderer.vbo.cache.request_block(size=3)
         # registering at ibo
@@ -283,7 +276,7 @@ class Tgl(shp.Shape):
         self.geo = geo
         self.clr_fill = ClrRGBA(1, 1, 1, 1)
         self.edge_clr = ClrRGBA(0, 0, 0, 1)
-        self.edge_thk = 1
+        self.edge_thk = 0.5
 
     @property
     def geo(self):
@@ -291,7 +284,7 @@ class Tgl(shp.Shape):
 
     @geo.setter
     def geo(self, v):
-        if not isinstance(v, geo.Tgl):
+        if not isinstance(v, gt.Tgl):
             raise TypeError
         self.__vrtx_block['vtx'] = v.T
         if self.__geo is None:
@@ -358,3 +351,12 @@ class Tgl(shp.Shape):
             raise TypeError
         cls.__render_edge = b
 
+class Colors:
+    def __init__(self):
+        record = wr.WeakKeyDictionary()
+
+    def __set__(self, instance, value):
+        pass
+
+    def __get__(self, instance, owner):
+        pass

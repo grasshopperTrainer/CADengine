@@ -214,7 +214,6 @@ class SimpleShdrParser:
                 else:
                     dtype = 'f4'
                 shape = eval(f"({shape}, {shape})" if len(shape) == 1 else f"({shape})")
-
             else:
                 raise NotImplementedError(name, dtype)
         # field description

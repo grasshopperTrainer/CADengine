@@ -58,6 +58,10 @@ class Pane(RenderDevice, GlyphInterface):
     def size(self):
         return self._glyph.size
 
+    @property
+    def pos(self):
+        return self._glyph.posx.r, self._glyph.posy.r
+
     def clear(self, r=0, g=0, b=0, a=0):
         """
         fill with given color
@@ -96,17 +100,17 @@ class PaneManager(RenderDeviceManager):
     def __init__(self, device_master):
         super().__init__(device_master)
         # default device
-        self.new_pane(x_exp=0,
-                      y_exp=0,
-                      w_exp=1.,
-                      h_exp=1.,
-                      parent=device_master.window)
+        self.appendnew_pane(x_exp=0,
+                            y_exp=0,
+                            w_exp=1.,
+                            h_exp=1.,
+                            parent=device_master.window)
 
     @property
     def device_type(self):
         return Pane
 
-    def new_pane(self, x_exp, y_exp, w_exp, h_exp, parent: GlyphInterface):
+    def appendnew_pane(self, x_exp, y_exp, w_exp, h_exp, parent: GlyphInterface):
         """
         Appendd new view into view pool.
 
@@ -123,5 +127,5 @@ class PaneManager(RenderDeviceManager):
                     h_exp,
                     parent=parent,
                     manager=self)
-        self.appendnew_device(pane)
+        self._appendnew_device(pane)
         return pane

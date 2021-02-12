@@ -101,7 +101,7 @@ class _Prgrm(OGLEntity):
     def delete(self):
         gl.glDeleteProgram(self)
 
-    def push_ufrms(cls, bffr_cache):
+    def push_ufrms(self, bffr_cache):
         """
         push data into bound ogl prgrm
 
@@ -110,7 +110,7 @@ class _Prgrm(OGLEntity):
         :return:
         """
         for name, loc, shape, dtype, _, _ in bffr_cache.field_props:
-            func = cls.parse_ufrm_func(shape, dtype)
+            func = self.parse_ufrm_func(shape, dtype)
             count = len(bffr_cache.array)
             transpose = gl.GL_TRUE
             value = bffr_cache.array[name]

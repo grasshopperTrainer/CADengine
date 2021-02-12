@@ -38,9 +38,7 @@ class BffrCache(ArrayContainer):
         if len(locs) != len(dtype.fields):
             raise ValueError('each field has to have location values')
         self.__locs = {n: l for n, l in zip(dtype.fields, locs)}
-
         self.__array = np.ndarray(size, dtype=dtype)
-
         # for first fit allocation free space record,
         self.__block_pool = [(0, len(self.__array))]    # (start, stop) min heap
         self.__block_inuse = SkipList(key_provider=lambda x: x.indices[-1])
@@ -62,13 +60,21 @@ class BffrCache(ArrayContainer):
     def __len__(self):
         return len(self.__array)
 
+    def __str__(self):
+        return f"<BffrCache {tuple(ps[0] for ps in self.field_props)}>"
+
     def __expand_array(self):
         """
-        double the size of the array
+        in case of overflow double the size of the array
 
         :return:
         """
-        raise NotImplementedError
+        old_len = len(self.__array)
+        new_len = old_len * 2
+        new_arr = np.ndarray(shape=new_len, dtype=self.__array.dtype)
+        new_arr[:old_len] = self.__array
+        self.__block_pool.append((old_len, new_len))
+        self.__array = new_arr
 
     @property
     def active_size(self):
@@ -94,7 +100,7 @@ class BffrCache(ArrayContainer):
         indices = []
         while 0 < size:
             if not self.__block_pool:
-                raise NotImplementedError('overflow')
+                self.__expand_array()
 
             s, e = self.__block_pool[0]
             vacant_size = e - s
@@ -284,19 +290,21 @@ class BffrCache(ArrayContainer):
             else:
                 self.__cache.array[key[0]][self.__indices[key[1]]] = value
 
+        def __len__(self):
+            return len(self.__indices)
+
         def __str__(self):
             return f"<Block {self.__indices}]>"
-
         @property
         def indices(self):
             """
             :return: tuple of array indices
             """
             return tuple(self.__indices)
-
-        @property
-        def size(self):
-            return len(self.__indices)
+        #
+        # @property
+        # def size(self):
+        #     return len(self.__indices)
 
         @property
         def high_indx(self):
