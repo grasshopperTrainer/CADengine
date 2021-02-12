@@ -28,9 +28,6 @@ class Pgon(Shape):
         self.__clr_edge = None
         self.__clr_fill = None
 
-        # _Trapezoidator supports normalized array and returns normalized trapezoid
-        # vertices are in normalized position so apply plane TM
-        # try:
         vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(geo)
         self.__renderer = renderer
         self.__vrtx_block = renderer.vbo.cache.request_block(size=len(vertices))
@@ -44,9 +41,6 @@ class Pgon(Shape):
         self.__edge_indx_block = renderer.edge_ibo.cache.request_block(size=len(edge_indxs) + 1)
         self.__edge_indx_block['idx', :-1] = [offset + i for i in edge_indxs]
         self.__edge_indx_block['idx', -1] = PRV
-        # except Exception as e:
-        #     warn('trapezoidation fail')
-        #     self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
 
         self.__geo = geo
         self.thk = 0.5
@@ -376,6 +370,10 @@ class _Trapezoidator:
         def __repr__(self):
             return self.__str__()
 
+        def determine_cat_sweep(self, prev_v, this_v, next_v, prev_e, next_e):
+            self.__determine_cat(prev_v, this_v, next_v, prev_e, next_e)
+            self.__determine_sweep(prev_v, this_v, next_v, prev_e, next_e)
+
         def __determine_cat(self, prev_v, this_v, next_v, prev_e, next_e):
             # determine category and edge connection
             if np.isclose(prev_v.y, this_v.y, atol=ATOL):  # left horizontal
@@ -459,10 +457,6 @@ class _Trapezoidator:
             else:
                 raise Exception('contradiction')
 
-        def determine_cat_sweep(self, prev_v, this_v, next_v, prev_e, next_e):
-            self.__determine_cat(prev_v, this_v, next_v, prev_e, next_e)
-            self.__determine_sweep(prev_v, this_v, next_v, prev_e, next_e)
-
         def __append_starting_edge(self, edge):
             if not self.__starting_edges:
                 self.__starting_edges.append(edge)
@@ -486,12 +480,6 @@ class _Trapezoidator:
                     self.__ending_edges.append(edge)
                 else:
                     self.__ending_edges.insert(0, edge)
-
-        def set_sweep_dir(self, dir):
-            self.__sweep = dir
-
-        def set_category(self, cat):
-            self.__category = cat
 
         @property
         def y(self):
@@ -517,17 +505,6 @@ class _Trapezoidator:
         def ending_edges(self):
             return self.__ending_edges
 
-        @property
-        def x(self):
-            return self.__geo.x
-
-        @property
-        def y(self):
-            return self.__geo.y
-
-        @property
-        def geo(self):
-            return self.__geo
 
     class __Edge:
         """
@@ -576,10 +553,6 @@ class _Trapezoidator:
         @property
         def high(self):
             return self.__high
-
-        @property
-        def gradient(self):
-            return self.__gradient
 
         @property
         def is_zero(self):

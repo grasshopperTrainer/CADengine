@@ -248,7 +248,7 @@ class MyWindow(Window):
                              (h, 0, 0),
                              (h, q, 0),
                              (e-q, 0, 0),
-                             (e, 0, 0),
+                             (e, q, 0),
                              (e-q, h, 0),
                              (e, h, 0),
                              (e, e, 0),
