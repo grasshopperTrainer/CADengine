@@ -171,7 +171,6 @@ class RedBlackTree:
             raise IndexError
 
         node = self.__bisect_right_node(val)
-
         return None if node is None else node.val
 
     def __compare_value(self, obj, sbj):

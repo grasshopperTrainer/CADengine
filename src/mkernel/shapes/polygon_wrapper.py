@@ -5,6 +5,7 @@ import bisect
 
 import numpy as np
 from global_tools.red_black_tree import RedBlackTree
+from global_tools.enum import enum
 from global_tools.singleton import Singleton
 
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
@@ -125,7 +126,22 @@ class Pgon(Shape):
             self.__clr_fill = v
 
 
-@Singleton
+class CAT(enum):
+    MAX = enum.prop('MAX')
+    MIN = enum.prop('MIN')
+    HMAX = enum.prop('HMAX')
+    HMIN = enum.prop('HMIN')
+    HORI = enum.prop('HORI')
+    INTR = enum.prop('INTR')
+
+
+class SWEEP(enum):
+    LEFT = enum.prop('LEFT')
+    NONE = enum.prop('NONE')
+    RIGHT = enum.prop('RIGHT')
+    BOTH = enum.prop('BOTH')
+
+
 class _Trapezoidator:
     MAX, MIN, HMAX, HMIN, HORI, INTR = 'MAX', 'MIN', 'HMAX', 'HMIN', 'HORI', 'INTR'
     LEFT, NONE, RIGHT, BOTH = 'LEFT', 'NONE', 'RIGHT', 'BOTH'
@@ -144,10 +160,17 @@ class _Trapezoidator:
 
     def __stage_one(self, arr):
         """
-        first stage
-        1. determine vertex category
-        2. determine sweep direction
-        3. create edge list
+        four operations are executed within single loop
+        1. remove horizontal vertices
+        2. update far x
+        3. record edge vertices
+
+        trapezoidation first stage
+        4. define vertex RBT
+            1. determine vertex category
+            2. determine sweep direction
+            3. create edge list
+
         :param arr:
         :return:
         """
@@ -194,95 +217,35 @@ class _Trapezoidator:
                 this_v = gt.Pnt(*arr[:3, i])
                 next_v = gt.Pnt(*arr[:3, (i + 1) % num_v])
                 next_e = self.__Edge(this_v, next_v)
-            # update far x, +100 not to mytest with overlapping vertex
+
+            # 1. ignoring horizontal
+            if gt.Vec.cross(prev_e.geo.as_vec(), next_e.geo.as_vec()) == 0:
+                if np.isclose(prev_e.low.y, next_e.low.y, atol=ATOL):   # horizontal
+                    if prev_e.low.x < next_e.low.x: # check order
+                        prev_e.set_high(next_e.high)
+                    else:
+                        prev_e.set_low(next_e.low)
+                elif prev_e.low.y < next_e.low.y:
+                    prev_e.set_high(next_e.high)
+                else:
+                    prev_e.set_low(next_e.low)
+                prev_v, this_v, prev_e = prev_v, next_v, prev_e
+                continue
+
+            # 2. update far x, +100 not to mytest with overlapping vertex
             if far_x < this_v.x + 100:
                 far_x = this_v.x + 100
 
+            # 3. record edge vertex
+            edge_vrtx.append(this_v)
+
+            # 4. record trap vertex
             vrtx = self.__Vrtx(this_v)
-            # ignoring horizontal
-            if gt.Vec.cross(prev_e.geo.as_vec(), next_e.geo.as_vec()) == 0:
-                e, s = sorted((prev_e, next_e), key=lambda x: x.low.y)
-                e.extand(s.high)
-                prev_v, this_v, prev_e = prev_v, next_v, prev_e
-            else:
-                # determine category and edge connection
-                if np.isclose(prev_v.y, this_v.y, atol=ATOL):  # left horizontal
-                    if next_v.y < this_v.y:  # right below current
-                        vrtx.set_category(self.HMAX)
-                        vrtx.append_ending_edge(next_e)
-                    elif np.isclose(next_v.y, this_v.y, atol=ATOL):  # right horizontal
-                        raise  # this cant happen as horizontals are ignored
-                        # vrtx.set_category(self.HORI)
-                        # not adding horizontal
-                    else:  # right upper
-                        vrtx.set_category(self.HMIN)
-                        vrtx.append_starting_edge(next_e)
-                elif prev_v.y < this_v.y:  # left below current
-                    if np.isclose(next_v.y, this_v.y, atol=ATOL):  # right horizontal
-                        vrtx.set_category(self.HMAX)
-                        vrtx.append_ending_edge(prev_e)
-                        # not adding horizontal
-                    elif next_v.y < this_v.y:  # right below current
-                        vrtx.set_category(self.MAX)
-                        vrtx.append_ending_edge(next_e)  # order matters?
-                        vrtx.append_ending_edge(prev_e)
-                    else:  # right above
-                        vrtx.set_category(self.INTR)
-                        vrtx.append_starting_edge(next_e)
-                        vrtx.append_ending_edge(prev_e)
+            rb.insert(vrtx)
+            vrtx.determine_cat_sweep(prev_v, this_v, next_v, prev_e, next_e)
+            # update for next vertex
+            prev_v, this_v, prev_e = this_v, next_v, next_e
 
-                else:  # left upper current
-                    if np.isclose(next_v.y, this_v.y, atol=ATOL):  # right horizontal
-                        vrtx.set_category(self.HMIN)
-                        vrtx.append_starting_edge(prev_e)
-                        # not adding horizontal
-                    elif next_v.y < this_v.y:  # right below current
-                        vrtx.set_category(self.INTR)
-                        vrtx.append_starting_edge(prev_e)
-                        vrtx.append_ending_edge(next_e)
-                    else:  # right upper
-                        vrtx.set_category(self.MIN)
-                        vrtx.append_starting_edge(prev_e)
-                        vrtx.append_starting_edge(next_e)
-
-                # find sweep direction
-                xvec, yvec = next_v - this_v, prev_v - this_v
-                norm = gt.Vec.dot(gt.ZVec(), gt.Vec.cross(xvec, yvec))
-
-                if vrtx.cat == self.HORI:
-                    vrtx.set_sweep_dir(self.NONE)
-                elif vrtx.cat == self.HMIN:
-                    if 0 < norm:
-                        vrtx.set_sweep_dir(self.NONE)
-                    else:
-                        vrtx.set_sweep_dir(self.BOTH)
-                    # elif np.isclose(next_v.y, this_v.y, atol=ATOL):
-                    #     vrtx.set_sweep_dir(self.RIGHT)
-                    # else:
-                    #     vrtx.set_sweep_dir(self.LEFT)
-                elif vrtx.cat == self.HMAX:
-                    # vrtx.set_sweep_dir(self.BOTH)
-                    if np.isclose(next_v.y, this_v.y, atol=ATOL):
-                        vrtx.set_sweep_dir(self.LEFT)
-                    else:
-                        vrtx.set_sweep_dir(self.RIGHT)
-                elif vrtx.cat in (self.MIN, self.MAX):
-                    # vrtx.set_sweep_dir(self.BOTH)
-                    if 0 < norm:
-                        vrtx.set_sweep_dir(self.NONE)
-                    else:
-                        vrtx.set_sweep_dir(self.BOTH)
-                elif vrtx.cat == self.INTR:
-                    if prev_v.y < next_v.y:
-                        vrtx.set_sweep_dir(self.LEFT)
-                    else:
-                        vrtx.set_sweep_dir(self.RIGHT)
-
-                # record point
-                rb.insert(vrtx)
-                edge_vrtx.append(this_v)
-                # update for next vertex
-                prev_v, this_v, prev_e = this_v, next_v, next_e
         return rb, far_x, edge_vrtx
 
     def __stage_two(self, vrtxs, far_x):
@@ -299,24 +262,28 @@ class _Trapezoidator:
             is_same_side = sbj.pnts_share_side(obj.low, far_pnt)
             # object edge's vertex touches subject edge
             if is_same_side is None:
-                if np.isclose(obj.low.x, obj.low.x, atol=ATOL):
-                    # for v shape, need to determine which is left
-                    # by gradiant
-                    if np.isclose(obj.gradient, sbj.gradient, atol=ATOL):
-                        if np.isclose(obj.high.y, sbj.high.y, atol=ATOL):  # exactly same
-                            return 0
-                        elif obj.high.y < sbj.high.y:
-                            return -1
-                        else:
-                            return 1
-                    elif obj.gradient < sbj.gradient:
-                        return -1
-                    else:
-                        return 1
-                elif obj.low.x < sbj.low.x:
-                    return -1
-                else:  # go right includes equal
+                if sbj.pnts_share_side(obj.high, far_pnt):
                     return 1
+                else:
+                    return -1
+                # if np.isclose(obj.low.x, obj.low.x, atol=ATOL):
+                #     # for v shape, need to determine which is left
+                #     # by gradiant
+                #     if np.isclose(obj.gradient, sbj.gradient, atol=ATOL):
+                #         if np.isclose(obj.high.y, sbj.high.y, atol=ATOL):  # exactly same
+                #             return 0
+                #         elif obj.high.y < sbj.high.y:
+                #             return -1
+                #         else:
+                #             return 1
+                #     elif obj.gradient < sbj.gradient:
+                #         return -1
+                #     else:
+                #         return 1
+                # elif obj.low.x < sbj.low.x:
+                #     return -1
+                # else:  # go right includes equal
+                #     return 1
             elif is_same_side:  # else search right, +1
                 return 1
             else:  # if side differs search left, -1
@@ -327,78 +294,23 @@ class _Trapezoidator:
         for i, vrtx in enumerate(vrtxs):
             print(vrtx)
             if edges:
-                left_edge = None
-                right_edge = None
-                if vrtx.sweep_dir == self.NONE:
-                    if len(vrtx.ending_edges) == 2:  # summit trapezoid, simply join two endings
-                        trapezoids.add(vrtx.ending_edges[0].geo, vrtx.ending_edges[1].geo)
-                    else:
-                        pass
-                        # raise Exception('unknown')
-                # LEFT RIGHT is for category INTR
-                elif vrtx.sweep_dir == self.LEFT:
-                    if vrtx.ending_edges:
-                        left_edge = edges.search_lesser(vrtx.ending_edges[0])
-                        if left_edge:
-                            left_seg = left_edge.cut(vrtx.y)
-                            right_seg = vrtx.ending_edges[0].geo
-                            trapezoids.add(left_seg, right_seg)
+                if vrtx.cat == CAT.MAX:
+                    # weav peak
+                    if vrtx.sweep_dir == SWEEP.NONE:
+                        edges.uprint()
+                        trapezoids.tryadd_right_left(edges, vrtx.ending_edges[0], vrtx.y)
+                    elif vrtx.sweep_dir == SWEEP.BOTH:
+                        trapezoids.tryadd_left_right(edges, vrtx.ending_edges[0], vrtx.y)
+                        trapezoids.tryadd_right_left(edges, vrtx.ending_edges[1], vrtx.y)
 
-                elif vrtx.sweep_dir == self.RIGHT:
-                    if vrtx.ending_edges:
-                        right_edge = edges.search_greater(vrtx.ending_edges[0])
-                        if right_edge:
-                            right_seg = right_edge.cut(vrtx.y)
-                            left_seg = vrtx.ending_edges[0].geo
-                            trapezoids.add(left_seg, right_seg)
-
-                elif vrtx.sweep_dir == self.BOTH:
-                    left_edge = None
-                    right_edge = None
-                    # find left right intersection edges
-                    if vrtx.cat == self.MAX:
-                        # there are two separate trapezoids
-                        # first
-                        left_edge = edges.search_lesser(vrtx.ending_edges[0])
-                        right_edge = edges.search_greater(left_edge)
-                        trapezoids.add(left_edge.cut(vrtx.y), right_edge.cut(vrtx.y))
-                        # second
-                        right_edge = edges.search_greater(vrtx.ending_edges[1])
-                        left_edge = edges.search_lesser(right_edge)
-                        trapezoids.add(left_edge.cut(vrtx.y), right_edge.cut(vrtx.y))
-
-                    else:
-                        if vrtx.cat == self.MIN:
-                            left_edge = edges.search_lesser(vrtx.starting_edges[0])
-                            right_edge = edges.search_greater(left_edge)
-
-                        elif vrtx.cat == self.HMIN:
-                            e = vrtx.starting_edges[0]
-                            if not e.is_zero:
-                                left_edge = edges.search_lesser(e)
-                                if left_edge is not None:
-                                    right_edge = edges.search_greater(left_edge)
-                        elif vrtx.cat == self.HMAX:
-                            e = vrtx.ending_edges[0]
-                            if not e.is_zero and e in edges:
-                                right_edge = edges.search_greater(e)
-                                if right_edge:
-                                    left_edge = e
-                                else:
-                                    right_edge = e
-                                    left_edge = edges.search_lesser(e)
-                        # find segments
-                        if left_edge:
-                            left_seg = left_edge.cut(vrtx.y)
-                        else:
-                            left_seg = gt.Lin.from_pnts(vrtx.geo, vrtx.geo)  # 0 line
-                        if right_edge:
-                            right_seg = right_edge.cut(vrtx.y)
-                        else:
-                            right_seg = gt.Lin.from_pnts(vrtx.geo, vrtx.geo)  # 0 line
-
-                        if left_seg.length != 0 or right_seg.length != 0:
-                            trapezoids.add(left_seg, right_seg)
+                elif vrtx.sweep_dir == SWEEP.LEFT:
+                    trapezoids.tryadd_left_right(edges, vrtx.ending_edges[0], vrtx.y)
+                elif vrtx.sweep_dir == SWEEP.RIGHT:
+                    trapezoids.tryadd_right_left(edges, vrtx.ending_edges[0], vrtx.y)
+                elif vrtx.sweep_dir == SWEEP.BOTH:
+                    trapezoids.tryadd_right_left(edges, vrtx.starting_edges[0], vrtx.y)
+                elif vrtx.sweep_dir == SWEEP.NONE:
+                    pass
 
             # update edges
             for e in vrtx.ending_edges:
@@ -406,10 +318,10 @@ class _Trapezoidator:
             for e in vrtx.starting_edges:
                 if not e.is_zero:
                     edges.insert_unique(e)
-            # if vrtx.sweep_dir != self.NONE:
-            for g in trapezoids.geos:
-                print(g)
-            # edges.uprint()
+
+            for i in trapezoids.geos:
+                print(i)
+            edges.uprint()
         return trapezoids
 
     def __stage_three(self, pgon, edge_vrtx, trapezoids):
@@ -432,7 +344,7 @@ class _Trapezoidator:
             # for each edge vertex find closest
             i = bisect.bisect_right(sorted_vs, ev)
             compared = sorted_vs[i - 1]
-            edge_indxs.append(vtx_idx[compared])    # edge vertex has to be always in vrtx_array
+            edge_indxs.append(vtx_idx[compared])  # edge vertex has to be always in vrtx_array
 
         # form adjacency
         if edge_indxs[-1] != edge_indxs[0]:  # for first vertex being omitted
@@ -452,38 +364,131 @@ class _Trapezoidator:
         def __init__(self, geo):
             self.__geo = geo
 
-            self.__sweep_dir = None
+            self.__sweep = None
             self.__category = None
 
             self.__starting_edges = []
             self.__ending_edges = []
 
         def __str__(self):
-            return f"<Vrtx {self.__geo},swp:{self.__sweep_dir}, cat:{self.__category}>"
+            return f"<Vrtx {self.__geo},swp:{self.__sweep}, cat:{self.__category}>"
 
         def __repr__(self):
             return self.__str__()
 
-        def append_starting_edge(self, edge):
-            self.__starting_edges.append(edge)
+        def __determine_cat(self, prev_v, this_v, next_v, prev_e, next_e):
+            # determine category and edge connection
+            if np.isclose(prev_v.y, this_v.y, atol=ATOL):  # left horizontal
+                if np.isclose(next_v.y, this_v.y, atol=ATOL):  # right horizontal
+                    raise  # this cant happen as horizontals are ignored
+                elif this_v.y < next_v.y:  # right above
+                    # consider as MIN
+                    self.__category = CAT.HMIN
+                    self.__append_ending_edge(prev_e)
+                    self.__append_starting_edge(next_e)
+                else:  # right below
+                    # consider as MAX
+                    self.__category = CAT.HMAX
+                    self.__append_ending_edge(next_e)
+                    # self.__starting_edges.append(prev_e)
 
-        def append_ending_edge(self, edge):
+            elif prev_v.y < this_v.y:  # left below
+                if np.isclose(this_v.y, next_v.y, atol=ATOL):  # right horizontal
+                    # consider as MAX
+                    self.__category = CAT.HMAX
+                    self.__append_ending_edge(prev_e)
+                    # self.__starting_edges.append(next_e)
+                elif this_v.y < next_v.y:  # right above
+                    self.__category = CAT.INTR
+                    self.__append_ending_edge(prev_e)
+                    self.__append_starting_edge(next_e)
+                else:  # right below current
+                    self.__category = CAT.MAX
+                    self.__append_ending_edge(next_e)
+                    self.__append_ending_edge(prev_e)
+
+            else:  # left above
+                if np.isclose(this_v.y, next_v.y, atol=ATOL):  # right horizontal
+                    # consider as MIN
+                    self.__category = CAT.HMIN
+                    self.__append_starting_edge(prev_e)
+                    self.__append_ending_edge(next_e)
+                elif this_v.y < next_v.y:  # right upper
+                    self.__category = CAT.MIN
+                    self.__append_starting_edge(prev_e)
+                    self.__append_starting_edge(next_e)
+                else:  # right below current
+                    self.__category = CAT.INTR
+                    self.__append_starting_edge(prev_e)
+                    self.__append_ending_edge(next_e)
+
+        def __determine_sweep(self, prev_v, this_v, next_v, prev_e, next_e):
+            # find sweep direction
+            xvec, yvec = next_v - this_v, prev_v - this_v
+            norm = gt.Vec.dot(gt.ZVec(), gt.Vec.cross(xvec, yvec))
+
+            if self.__category == CAT.MIN:
+                if 0 < norm:
+                    self.__sweep = SWEEP.NONE
+                else:
+                    self.__sweep = SWEEP.BOTH
+            elif self.__category == CAT.HMIN:
+                if 0 < norm:
+                    self.__sweep = SWEEP.NONE
+                    # if np.isclose(this_v.y, next_v.y, atol=ATOL):
+                    #     self.__sweep = SWEEP.RIGHT
+                    # else:
+                    #     self.__sweep = SWEEP.LEFT
+                else:
+                    self.__sweep = SWEEP.BOTH
+            elif self.__category == CAT.MAX:
+                if 0 < norm:
+                    self.__sweep = SWEEP.NONE
+                else:
+                    self.__sweep = SWEEP.BOTH
+            elif self.__category == CAT.HMAX:
+                if np.isclose(this_v.y, next_v.y, atol=ATOL):
+                    self.__sweep = SWEEP.LEFT
+                else:
+                    self.__sweep = SWEEP.RIGHT
+            elif self.__category == CAT.INTR:
+                if prev_v.y < next_v.y:
+                    self.__sweep = SWEEP.LEFT
+                else:
+                    self.__sweep = SWEEP.RIGHT
+            else:
+                raise Exception('contradiction')
+
+        def determine_cat_sweep(self, prev_v, this_v, next_v, prev_e, next_e):
+            self.__determine_cat(prev_v, this_v, next_v, prev_e, next_e)
+            self.__determine_sweep(prev_v, this_v, next_v, prev_e, next_e)
+
+        def __append_starting_edge(self, edge):
+            if not self.__starting_edges:
+                self.__starting_edges.append(edge)
+            else:
+                e = self.__starting_edges[0]
+                far_x = max(e.low.x, e.high.x) + 100
+                far_pnt = gt.Pnt(far_x, e.high.y, 0)
+                if e.pnts_share_side(far_pnt, edge.high):
+                    self.__starting_edges.append(edge)
+                else:
+                    self.__starting_edges.insert(0, edge)
+
+        def __append_ending_edge(self, edge):
             if not self.__ending_edges:
                 self.__ending_edges.append(edge)
-            else:
-                # special case for max vertex
-                # check gradient
-                v0 = self.__ending_edges[0].geo.as_vec()
-                v1 = edge.geo.as_vec()
-                g0 = v0.x / v0.y
-                g1 = v1.x / v1.y
-                if g0 < g1:
-                    self.__ending_edges.insert(0, edge)
-                else:
+            else:   # maintain order
+                e = self.__ending_edges[0]
+                far_x = max(e.low.x, e.high.x) + 100
+                far_pnt = gt.Pnt(far_x, e.low.y, 0)
+                if e.pnts_share_side(far_pnt, edge.low):
                     self.__ending_edges.append(edge)
+                else:
+                    self.__ending_edges.insert(0, edge)
 
         def set_sweep_dir(self, dir):
-            self.__sweep_dir = dir
+            self.__sweep = dir
 
         def set_category(self, cat):
             self.__category = cat
@@ -498,7 +503,7 @@ class _Trapezoidator:
 
         @property
         def sweep_dir(self):
-            return self.__sweep_dir
+            return self.__sweep
 
         @property
         def cat(self):
@@ -592,28 +597,32 @@ class _Trapezoidator:
         def pnts_share_side(self, v0, v_max):
             return self.__line.pnts_share_side(v0, v_max)
 
-        def cut(self, y):
+        def intersect(self, y):
+            # calculate intersection
+            if np.isclose(self.__low.y, y, atol=ATOL):
+                i = self.__low
+            elif np.isclose(self.__high.y, y, atol=ATOL):
+                i = self.__high
+            else:
+                x = self.__gradient * (y - self.__low.y) + self.__low.x
+                i = gt.Pnt(x, y, 0)
+            return i
+
+        def set_low(self, pnt):
             """
             cut edge at given y and return edge below
 
             :param y:
             :return:
             """
-            # calculate intersection
-            if np.isclose(self.__low.y, y, atol=ATOL):
-                inter_p = self.__low
-            elif np.isclose(self.__high.y, y, atol=ATOL):
-                inter_p = self.__high
-            else:
-                x = self.__gradient * (y - self.__low.y) + self.__low.x
-                inter_p = gt.Pnt(x, y, 0)
-            # form edge below
-            edge_below = gt.Lin.from_pnts(self.__low, inter_p)
-            # erase bolow
-            self.__low = inter_p
-            return edge_below
+            self.__low = pnt
 
-        def extand(self, high):
+        def set_high(self, high):
+            """
+
+            :param high:
+            :return:
+            """
             self.__high = high
 
     class __Trapezoids:
@@ -642,9 +651,37 @@ class _Trapezoidator:
                 elif obj[0][0] >= sbj[0][0]:
                     return 1
 
-        def add(self, left, right):
-            (a, c), (b, d) = (v.xyzw for v in left.vertices), (v.xyzw for v in right.vertices)
-            self.__geos.insert((a, b, c, d))
+        def tryadd_left_right(self, edges, e, y):
+            left_edge = edges.search_lesser(e)
+            if left_edge:
+                right_edge = edges.search_greater(left_edge)
+                if right_edge:
+                    self.__try_cut_add(left_edge, right_edge, y)
+
+        def tryadd_right_left(self, edges, e, y):
+            right_edge = edges.search_greater(e)
+            if right_edge:
+                left_edge = edges.search_lesser(right_edge)
+                if left_edge:
+                    self.__try_cut_add(left_edge, right_edge, y)
+
+        def __is_zero(self, a, b, c, d):
+            if np.isclose(a.y, c.y, atol=ATOL) or np.isclose(b.y, d.y, atol=ATOL):
+                return True
+            # check width
+            if np.isclose(a.x, b.x, atol=ATOL) and np.isclose(c.x, d.x, atol=ATOL):
+                return True
+            return False
+
+        def __try_cut_add(self, left_edge, right_edge, y):
+            a = left_edge.low
+            b = right_edge.low
+            c = left_edge.intersect(y)
+            d = right_edge.intersect(y)
+            if not self.__is_zero(a, b, c, d):
+                left_edge.set_low(c)
+                right_edge.set_low(d)
+                self.__geos.insert((a.xyzw, b.xyzw, c.xyzw, d.xyzw))
 
         def generate_array(self):
             """
