@@ -38,6 +38,44 @@ class Mat1(ArrayLikeData):
         obj[3, 0] = -obj[3, 0]
         return obj
 
+    def __lt__(self, other):
+        """
+        less then
+        :param other:
+        :return:
+        """
+        if self == other:
+            return False
+
+        if np.isclose(self.x, other.x, atol=ATOL):
+            if self.y < other.y:
+                return True
+            else:
+                return False
+        elif self.x < other.x:
+            return True
+        else:
+            return False
+
+    def __gt__(self, other):
+        """
+        greater than
+        :param other:
+        :return:
+        """
+        if self == other:
+            return False
+
+        if np.isclose(self.x, other.x, atol=ATOL):
+            if self.y > other.y:
+                return True
+            else:
+                return False
+        elif self.x > other.x:
+            return True
+        else:
+            return False
+
     def __add__(self, other):
         """
         retain constant type casting in between Vec and Pnt addition
