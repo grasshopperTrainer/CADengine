@@ -1,5 +1,7 @@
 from wkernel.devices.render.panes import PaneManager
 from wkernel.devices.render.cameras import CameraManager
+from wkernel.devices.render.frame import FrameManager
+
 from wkernel.devices.input.base import Mouse, Keyboard
 from global_tools.trackers import TypewiseTracker
 
@@ -20,6 +22,7 @@ class DeviceMaster:
         # of render
         self.__panes = PaneManager(self)
         self.__cameras = CameraManager(self)
+        self.__frames = FrameManager(self)
 
     @property
     def window(self):
@@ -40,3 +43,7 @@ class DeviceMaster:
     @property
     def panes(self) -> PaneManager:
         return self.__panes
+
+    @property
+    def frame(self) -> FrameManager:
+        return self.__frames
