@@ -142,13 +142,13 @@ class MetaIndxBffr(MetaBffr):
 
 class MetaVrtxArry(OGLMetaEntity):
 
-    def __init__(self, *bffr_facs, indx_bffr=None):
+    def __init__(self, *bffrs, indx_bffr=None):
         """
 
-        :param bffr_facs: ! OGLBffrFactory not OGLBffr
+        :param bffrs: ! OGLBffrFactory not OGLBffr
         """
         self.__bffr_factories = []
-        self.__bffr_factories += list(bffr_facs)
+        self.__bffr_factories += list(bffrs)
         self.__indx_bffr_factory = indx_bffr
 
     def _create_entity(self):

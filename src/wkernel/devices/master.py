@@ -45,5 +45,5 @@ class DeviceMaster:
         return self.__panes
 
     @property
-    def frame(self) -> FrameManager:
+    def frames(self) -> FrameManager:
         return self.__frames

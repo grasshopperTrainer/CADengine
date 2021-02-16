@@ -60,8 +60,8 @@ def glGenVertexArrays(n) -> _VrtxArry:
     return _VrtxArry, gl.glGenVertexArrays(n)
 
 @__creator
-def glGenFramebuffers(n) -> _FrameBffr:
-    return _FrameBffr, gl.glGenFramebuffers(n)
+def glGenFramebuffers(n, target) -> _FrameBffr:
+    return _FrameBffr, gl.glGenFramebuffers(n), target
 
 @__creator
 def glGenTextures(n) -> _Texture:
@@ -69,7 +69,7 @@ def glGenTextures(n) -> _Texture:
 
 @__creator
 def glGenRenderbuffers(n) -> _RenderBffr:
-    return _RenderBffr, gl.glGenRenderbuffers(n)
+    return _RenderBffr, gl.glGenRenderbuffers(n), gl.GL_RENDERBUFFER
 
 # def __deleter(func):
 #     def __wrapper(*args, **kwargs):

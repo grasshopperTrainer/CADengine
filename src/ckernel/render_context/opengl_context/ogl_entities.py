@@ -285,11 +285,15 @@ class _VrtxArry(OGLEntity):
 
 
 class _FrameBffr(OGLEntity):
-    def __init__(self, id):
+    def __init__(self, id, target):
         self.__id = id
+        self.__target = None
 
     def __str__(self):
         return f"<FrameBffr: {self.__id}>"
+
+    def set_target(self, target):
+        self.__target = target
 
     def bind(self):
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.id)
@@ -302,21 +306,18 @@ class _FrameBffr(OGLEntity):
 
 
 class _RenderBffr(OGLEntity):
-    def __init__(self, id):
+    def __init__(self, id, target):
         self.__id = id
-        self.__target
+        self.__target = target
 
     def __str__(self):
         return f"<RenderBffr: {self.__id}>"
 
-    def set_target(self, target):
-        self.__target = target
-
     def bind(self):
-        gl.glBindRenderbuffer(self.__target, self.__id)
+        gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, self.__id)
 
     def unbind(self):
-        gl.glBindRenderbuffer(self.__target, 0)
+        gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, 0)
 
     def delete(self):
         raise NotImplementedError
@@ -331,9 +332,12 @@ class _Texture(OGLEntity):
         self.__target = target
 
     def bind(self):
+        if not self.__target:
+            raise ValueError('texture target e.g. GL_TEXTURE_2D not set')
         gl.glBindTexture(self.__target, self.__id)
 
     def unbind(self):
         gl.glBindTexture(self.__target, 0)
 
-
+    def delete(self):
+        gl.glDeleteTextures(self.__target)
