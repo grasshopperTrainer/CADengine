@@ -167,7 +167,8 @@ class _TypewiseStack:
 
     def get_current(self, entity_type):
         if self.is_empty(entity_type):
-            raise _EmptyStackError('no current from empty stack')
+            return None
+            # raise _EmptyStackError('no current from empty stack')
         return self.__initset_substack(entity_type)[-1]
 
     def get_current_byname(self, entity_type_name):

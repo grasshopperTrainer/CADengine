@@ -14,6 +14,10 @@ class MetaTexture(OGLMetaEntity):
     def target(self):
         return self.__target
 
+    @property
+    def size(self):
+        return self.__size
+
     @enum
     class TARGET:
         ONE_D = enum.prop(gl.GL_TEXTURE_1D)
@@ -24,9 +28,13 @@ class MetaTexture(OGLMetaEntity):
         texture = gl.glGenTextures(1)
         texture.set_target(self.__target)
         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
-        with texture as t:
+        with texture:
             # data can latter be filled so make glTexImage2D part of initiation
             if self.__target in (gl.GL_TEXTURE_2D,):
+                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
+                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
+                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
                 gl.glTexImage2D(self.__target,  # target
                                 0,  # level
                                 self.__iformat,  # internalformat
@@ -52,21 +60,3 @@ class MetaTexture(OGLMetaEntity):
             return gl.GL_RGBA
         else:
             raise NotImplementedError
-
-    def _push_image(self):
-        # texture.set_iformat(self.__iformat)
-        # with texture:
-        #     if self.__target in (gl.GL_TEXTURE_2D,):
-        #         gl.glTexImage2D(target=self.__target,
-        #                         level=0,
-        #                         internalformat=self.__iformat,
-        #                         width=self.__size[0],
-        #                         height=self.__size[1],
-        #                         border=0,
-        #                         format=gl.GL_RGB,
-        #                         type=gl.GL_UNSIGNED_INT,
-        #                         data=None)
-        #         raise
-        #     else:
-        #         raise NotImplementedError
-        raise

@@ -53,7 +53,8 @@ class MetaPrgrm(OGLMetaEntity):
         if self.__va_skema is None:
             self.__va_skema = SimpleShdrParser.parse_vrtx_attrs(self.__shdr_srcs[gl.GL_VERTEX_SHADER][1])
             self.__uf_skema = SimpleShdrParser.parse_uniforms(*[s for n, s in self.__shdr_srcs.values()])
-            self.__ufrm_cache = self.__uf_skema.create_bffr_cache(size=1)
+            if self.__uf_skema:
+                self.__ufrm_cache = self.__uf_skema.create_bffr_cache(size=1)
         return self.__va_skema, self.__uf_skema
 
     def __read_source(self, file_path, shdr_type):

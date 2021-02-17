@@ -100,11 +100,11 @@ class PaneManager(RenderDeviceManager):
     def __init__(self, device_master):
         super().__init__(device_master)
         # default device
-        self.appendnew_pane(x_exp=0,
-                            y_exp=0,
-                            w_exp=1.,
-                            h_exp=1.,
-                            parent=device_master.window)
+        p = self.appendnew_pane(x_exp=0,
+                                y_exp=0,
+                                w_exp=1.,
+                                h_exp=1.,
+                                parent=device_master.window)
 
     @property
     def device_type(self):

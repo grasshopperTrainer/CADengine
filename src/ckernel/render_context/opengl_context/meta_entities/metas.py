@@ -9,9 +9,9 @@ from ckernel.render_context.opengl_context.meta_entities.error import *
 from ckernel.render_context.opengl_context.meta_entities.base import OGLMetaEntity
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 from ..translators import npdtype_to_gldtype
+from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
-
-class MetaBffr(OGLMetaEntity, metaclass=abc.ABCMeta):
+class _MetaBffr(OGLMetaEntity, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
@@ -34,7 +34,7 @@ class MetaBffr(OGLMetaEntity, metaclass=abc.ABCMeta):
         self.get_concrete().push_cache()
 
 
-class MetaVrtxBffr(MetaBffr):
+class MetaVrtxBffr(_MetaBffr):
     """
     Buffer of GL_ARRAY_BUFFER target
     """
@@ -109,7 +109,7 @@ class MetaVrtxBffr(MetaBffr):
 
 
 
-class MetaIndxBffr(MetaBffr):
+class MetaIndxBffr(_MetaBffr):
     """
     Buffer of GL_ELEMENT_ARRAY_BUFFER
     """
@@ -120,7 +120,7 @@ class MetaIndxBffr(MetaBffr):
         :param dtype: str, describe IBO dtype, one of (uint, ushort, ubyte)
         """
         self.__cache = BffrCache(np.dtype([('idx', dtype)]), (0,))
-        self.__cache[:] = 0xff_ff_ff_ff
+        self.__cache.fill_array(PRV)
 
     @property
     def target(self):

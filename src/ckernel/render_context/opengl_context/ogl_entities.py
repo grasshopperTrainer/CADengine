@@ -328,6 +328,9 @@ class _Texture(OGLEntity):
         self.__id = id
         self.__target = None
 
+    def __str__(self):
+        return f"<Texture: {self.__id}>"
+
     def set_target(self, target):
         self.__target = target
 

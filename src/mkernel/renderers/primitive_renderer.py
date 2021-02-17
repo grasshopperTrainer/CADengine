@@ -65,9 +65,9 @@ class PointRenderer(_Renderer):
 
     def __init__(self):
 
-        self.__square_ufrm_cache = self.__square_prgrm.ufrm_schema.create_bffr_cache(size=1)
-        self.__circle_ufrm_cache = self.__circle_prgrm.ufrm_schema.create_bffr_cache(size=1)
-        self.__triangle_ufrm_cache = self.__triangle_prgrm.ufrm_schema.create_bffr_cache(size=1)
+        self.__square_ufrm_block = self.__square_prgrm.ufrm_cache.request_block(size=1)
+        self.__circle_ufrm_block = self.__circle_prgrm.ufrm_cache.request_block(size=1)
+        self.__triangle_ufrm_block = self.__triangle_prgrm.ufrm_cache.request_block(size=1)
 
         self.__circle_ibo = MetaIndxBffr('uint')
         self.__circle_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__circle_ibo)
@@ -105,13 +105,13 @@ class PointRenderer(_Renderer):
             with self.__square_prgrm as prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__square_ufrm_cache['PM'] = camera.body.PM
-                self.__square_ufrm_cache['VM'] = camera.tripod.VM
-                self.__square_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                self.__square_ufrm_block['PM'] = camera.body.PM
+                self.__square_ufrm_block['VM'] = camera.tripod.VM
+                self.__square_ufrm_block['MM'] = [[1, 0, 0, 0],
                                                   [0, 1, 0, 0],
                                                   [0, 0, 1, 0],
                                                   [0, 0, 0, 1]]
-                prgrm.push_ufrms(self.__square_ufrm_cache)
+                self.__square_prgrm.push_internal_ufrm_cache()
                 self.__square_ibo.push_cache()
                 # mode, count, type, indices
                 gl.glDrawElements(gl.GL_POINTS,
@@ -127,15 +127,15 @@ class PointRenderer(_Renderer):
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__circle_ufrm_cache['PM'] = camera.body.PM
-                self.__circle_ufrm_cache['VM'] = camera.tripod.VM
-                self.__circle_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                self.__circle_ufrm_block['PM'] = camera.body.PM
+                self.__circle_ufrm_block['VM'] = camera.tripod.VM
+                self.__circle_ufrm_block['MM'] = [[1, 0, 0, 0],
                                                   [0, 1, 0, 0],
                                                   [0, 0, 1, 0],
                                                   [0, 0, 0, 1]]
                 pane = get_current_ogl().manager.window.devices.panes.current
-                self.__circle_ufrm_cache['VPP'] = *pane.pos, *pane.size
-                prgrm.push_ufrms(self.__circle_ufrm_cache)
+                self.__circle_ufrm_block['VPP'] = *pane.pos, *pane.size
+                prgrm.push_ufrms(self.__circle_ufrm_block)
 
                 self.__circle_ibo.push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
@@ -151,13 +151,13 @@ class PointRenderer(_Renderer):
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__triangle_ufrm_cache['PM'] = camera.body.PM
-                self.__triangle_ufrm_cache['VM'] = camera.tripod.VM
-                self.__triangle_ufrm_cache['MM'] = [[1, 0, 0, 0],
+                self.__triangle_ufrm_block['PM'] = camera.body.PM
+                self.__triangle_ufrm_block['VM'] = camera.tripod.VM
+                self.__triangle_ufrm_block['MM'] = [[1, 0, 0, 0],
                                                     [0, 1, 0, 0],
                                                     [0, 0, 1, 0],
                                                     [0, 0, 0, 1]]
-                prgrm.push_ufrms(self.__triangle_ufrm_cache)
+                prgrm.push_ufrms(self.__triangle_ufrm_block)
                 self.__triangle_ibo.push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   self.__triangle_ibo.cache.active_size,

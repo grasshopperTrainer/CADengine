@@ -32,18 +32,18 @@ class CameraFactory:
         self.__fdim = l, r, b, t, near, far
         return self
 
-    def set_frustum_shape(self, fshape:('o', 'p')):
+    def set_frustum_shape(self, fshape: ('o', 'p')):
         """
         attach orthogonal frustum type
         :return:
         """
-        if not(isinstance(fshape, str) and fshape in('o', 'p')):
+        if not (isinstance(fshape, str) and fshape in ('o', 'p')):
             raise ValueError
 
         self.__fshape = fshape
         return self
 
-    def create_camera(self):
+    def create(self):
         if not (self.__fdim and self.__fshape):
             raise ValueError('camera needs dimension and type')
 
@@ -52,6 +52,7 @@ class CameraFactory:
             tripod=CameraTripod(),
             manager=self.__manager())
         self.__manager()._appendnew_device(camera)
+        return camera
 
 
 class Camera(RenderDevice):
@@ -136,24 +137,24 @@ class Camera(RenderDevice):
 
         if self.body.fshape == 'o':
             # modify body
-            hw, hh = (d//2 for d in pane.size)
+            hw, hh = (d // 2 for d in pane.size)
             l, r, b, t, n, f = self.body.dim
             clip_d = f - n
             self.body.dim = -hw, hw, -hh, hh, focus[2] + clip_off, n + clip_d
             # modify tripod
-            self.tripod.lookat(eye=(focus[0], focus[1], focus[2]+clip_off), at=focus, up=(0, 1, 0))
+            self.tripod.lookat(eye=(focus[0], focus[1], focus[2] + clip_off), at=focus, up=(0, 1, 0))
         else:
             # modify body
             # calculate new clipping plane size
             w, h = pane.size
-            cpw = w - 2*(clip_off / np.tan((np.pi - self.body.hfov)/2))
-            cph = h - 2*(clip_off / np.tan((np.pi - self.body.vfov)/2))
+            cpw = w - 2 * (clip_off / np.tan((np.pi - self.body.hfov) / 2))
+            cph = h - 2 * (clip_off / np.tan((np.pi - self.body.vfov) / 2))
             # calculate new near
             l, r, b, t, n, f = self.body.dim
             clip_d = f - n
-            near = (cpw/2) / np.tan(self.body.hfov/2)
+            near = (cpw / 2) / np.tan(self.body.hfov / 2)
             far = near + clip_d
-            self.body.dim = -cpw/2, cpw/2, -cph/2, cph/2, near, far
+            self.body.dim = -cpw / 2, cpw / 2, -cph / 2, cph / 2, near, far
 
             # modify tripod
             x, y, z = focus
@@ -166,11 +167,12 @@ class CameraManager(RenderDeviceManager):
     def __init__(self, device_master):
         super().__init__(device_master)
 
-        self.factory.set_hfov_dimension(
+        c = self.factory.set_hfov_dimension(
             hfov=np.radians(50),
             aspect_ratio=self.window.glyph.aspect_ratio.r,
             near=0.5,
-            far=1_000_000).set_frustum_shape('p').create_camera()
+            far=1_000_000).set_frustum_shape('p').create()
+        c.tripod.lookat(eye=(0, 0, 100), at=(0, 0, 0), up=(0, 1, 0))
 
     @property
     def factory(self):
