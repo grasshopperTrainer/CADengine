@@ -3,20 +3,6 @@ from collections import OrderedDict
 from global_tools.list_set import ListSet
 
 
-class TypewiseTracker:
-    def __init__(self):
-        self.__registry = _TypewiseRegistry()
-        self.__stack = _TypewiseStack()
-
-    @property
-    def registry(self):
-        return self.__registry
-
-    @property
-    def stack(self):
-        return self.__stack
-
-
 class _TypewiseRegistry:
     """
     Registry grouping entities by type.
@@ -108,6 +94,7 @@ class _TypewiseRegistry:
         return not bool(self.__initget_subregistry(entity_cls))
 
 
+
 class _TypewiseStack:
     """
     Stack to record and track current entity of multiple types.
@@ -134,6 +121,7 @@ class _TypewiseStack:
         if isinstance(stack_type, dict_like):
             raise TypeError('data type for registry and stack should be dict-like')
         self.__stacks = stack_type()
+        self.__bases = stack_type()
 
     def __getitem__(self, entity_type):
         """
@@ -144,6 +132,10 @@ class _TypewiseStack:
         """
         # FIXME: this causes an unauthorized intrusion into stack
         return self.__stacks[entity_type]
+
+    @property
+    def record(self):
+        return self.__stacks
 
     def __initset_substack(self, entity_type):
         """
@@ -167,8 +159,9 @@ class _TypewiseStack:
 
     def get_current(self, entity_type):
         if self.is_empty(entity_type):
+            if entity_type in self.__bases:
+                return self.__bases[entity_type]
             return None
-            # raise _EmptyStackError('no current from empty stack')
         return self.__initset_substack(entity_type)[-1]
 
     def get_current_byname(self, entity_type_name):
@@ -186,9 +179,29 @@ class _TypewiseStack:
     def is_empty(self, entity_cls):
         return not bool(self.__stacks.get(entity_cls, False))
 
+    def set_base_entity(self, entity):
+        """
+        set base entity
+
+        Base entity is the one that is under the stack;
+        inpopable, returned when stack is empty
+        :return:
+        """
+        self.__bases[entity.__class__] = entity
+
+
+class TypewiseTracker:
+    def __init__(self):
+        self.__registry = _TypewiseRegistry()
+        self.__stack = _TypewiseStack()
+
     @property
-    def stacks(self):
-        return self.__stacks
+    def registry(self) -> _TypewiseRegistry:
+        return self.__registry
+
+    @property
+    def stack(self) -> _TypewiseStack:
+        return self.__stack
 
 
 class _EmptyStackError(Exception):

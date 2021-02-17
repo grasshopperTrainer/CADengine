@@ -82,7 +82,6 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
 
         :return:
         """
-        print('entering from meta')
         return self.get_concrete().__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):

@@ -50,6 +50,22 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glViewport(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
         return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        return scissor and viewport
+
+        :param exc_type:
+        :param exc_val:
+        :param exc_tb:
+        :return:
+        """
+        super().__exit__(exc_type, exc_val, exc_tb)
+        if self.get_current() is not self:  # if self, there is no need
+            glyph = self.get_current().glyph
+            with self.manager.window.context.gl as gl:
+                gl.glScissor(glyph.posx.r, glyph.posy.r, glyph.width.r, glyph.height.r)
+                gl.glViewport(glyph.posx.r, glyph.posy.r, glyph.width.r, glyph.height.r)
+
     @property
     def glyph(self):
         return self._glyph
@@ -105,6 +121,8 @@ class PaneManager(RenderDeviceManager):
                                 w_exp=1.,
                                 h_exp=1.,
                                 parent=device_master.window)
+        # to make it default
+        self.master.tracker.stack.set_base_entity(p)
 
     @property
     def device_type(self):

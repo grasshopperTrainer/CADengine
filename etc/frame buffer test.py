@@ -14,6 +14,8 @@ class MyWindow(Window):
                                 format=ffactory.TEXTURE.FORMAT.RGB)
         ffactory.set_render_buffer(format=ffactory.RENDER.DEPTH_STENCIL.D24_S8)
         ffactory.create()
+        # create pane
+        self.devices.panes.appendnew_pane(0, 0, 0.6, 0.6, self)
 
         model = Model()
         p0 = model.add_pnt(0, 0, 0)
@@ -25,16 +27,15 @@ class MyWindow(Window):
         self.model = model
 
     def draw(self):
-        with self.devices.panes[0] as p:
-            p.clear()
-            with self.devices.cameras[0] as c:
-                with self.devices.frames[1] as off:
-                    off.clear(1, 0, 0, 1)
-                    self.model.render()
-                    with self.devices.frames[0]:
-                        off.render_on(0, gt.Pln(), 10, 10)
+        self.devices.panes[0].clear()
 
-
+        with self.devices.cameras[0] as c:
+            with self.devices.frames[1] as off:
+                off.clear(1, 0, 0, 1)
+                self.model.render()
+            with self.devices.panes[1] as p:
+                off.render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
+            off.render_world_space(0, gt.Pln(), 20, 20)
 
 
 MyWindow().run_all(1)

@@ -132,33 +132,69 @@ class FrameFactory:
 class FrameRenderer:
     # program for rendering quad
     __THIS_PATH = os.path.dirname(__file__)
-    __quad_prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__THIS_PATH, 'rect_vrtx_shdr.glsl'),
-                                  frgm_path=os.path.join(__THIS_PATH, 'rect_frgm_shdr.glsl'))
+    __quad_prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__THIS_PATH, 'quad_vrtx_shdr.glsl'),
+                                  frgm_path=os.path.join(__THIS_PATH, 'quad_frgm_shdr.glsl'))
     __quad_ufrm_block = __quad_prgrm.ufrm_cache.request_block(size=1)
 
+    __pane_prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__THIS_PATH, 'pane_vrtx_shdr.glsl'),
+                                  frgm_path=os.path.join(__THIS_PATH, 'pane_frgm_shdr.glsl'))
+
     def __init__(self):
-        self.__vbo = self.__quad_prgrm.vrtxattr_schema.create_vrtx_bffr_fac()
-        self.__vrtx_block = self.__vbo.cache.request_block(size=4)
-        self.__vrtx_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
+        # quad set
+        self.__quad_vbo = self.__quad_prgrm.vrtxattr_schema.create_vrtx_bffr_fac()
+        self.__quad_vrtx_block = self.__quad_vbo.cache.request_block(size=4)
+        self.__quad_vrtx_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
+        self.__quad_vao = meta.MetaVrtxArry(self.__quad_vbo)
+        # pane set
+        self.__pane_vbo = self.__pane_prgrm.vrtxattr_schema.create_vrtx_bffr_fac()
+        self.__pane_vrtx_block = self.__pane_vbo.cache.request_block(size=4)
+        self.__pane_vrtx_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
+        self.__pane_vao = meta.MetaVrtxArry(self.__pane_vbo)
 
-        self.__vao = meta.MetaVrtxArry(self.__vbo)
+    def render_pane_space(self, texture, pdomain_x, pdomain_y, pane_z, tdomain_x, tdomain_y):
+        """
+        render frame's given attachment on pane space
 
-    def render(self, coverage):
-        self.__vrtx_block['coord'] = coverage.T
-        self.__vbo.push_cache()
-        with self.__vao:
-            with self.__quad_prgrm:
-                # update uniforms
-                camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__quad_ufrm_block['PM'] = camera.body.PM
-                self.__quad_ufrm_block['VM'] = camera.tripod.VM
-                self.__quad_ufrm_block['MM'] = [[1, 0, 0, 0],
-                                                [0, 1, 0, 0],
-                                                [0, 0, 1, 0],
-                                                [0, 0, 0, 1]]
-                self.__quad_prgrm.push_internal_ufrm_cache()
+        :param texture: render source
+        :param pdomain_x: (-1.~1., -1.~1.), pane space x domain
+        :param pdomain_y: (-1.~1., -1.~1.), pane space y domain
+        :param pane_z: -1.~1., pane space z value, -1 closest
+        :param tdomain_x: (float, float), texture space x domain
+        :param tdomain_y: (float, float), texture space y domain
+        :return:
+        """
+        # update
+        (xs, xe), (ys, ye) = pdomain_x, pdomain_y
+        self.__pane_vrtx_block['coord'] = (xs, ys, pane_z), (xe, ys, pane_z), (xe, ye, pane_z), (xs, ye, pane_z)
+        (xs, xe), (ys, ye) = tdomain_x, tdomain_y
+        self.__pane_vrtx_block['tex_coord'] = (xs, ys), (xe, ys), (xe, ye), (xs, ye)
+        self.__pane_vbo.push_cache()
+        # render
+        with texture:
+            with self.__pane_vao:
+                with self.__pane_prgrm:
+                    gl.glDrawArrays(gl.GL_QUADS, 0, 4)
 
-                gl.glDrawArrays(gl.GL_QUADS, 0, 4)
+    def render_world_space(self, texture, quad_pos, domain_x, domain_y):
+        # update vrtx attributes
+        (xs, xe), (ys, ye) = domain_x, domain_y
+        self.__quad_vrtx_block['tex_coord'] = (xs, ys), (xe, ys), (xe, ye), (xs, ye)
+        self.__quad_vrtx_block['coord'] = quad_pos
+        self.__quad_vbo.push_cache()
+        # render
+        with texture:
+            with self.__quad_vao:
+                with self.__quad_prgrm:
+                    # update uniforms
+                    camera = get_current_ogl().manager.window.devices.cameras.current
+                    self.__quad_ufrm_block['PM'] = camera.body.PM
+                    self.__quad_ufrm_block['VM'] = camera.tripod.VM
+                    self.__quad_ufrm_block['MM'] = [[1, 0, 0, 0],
+                                                    [0, 1, 0, 0],
+                                                    [0, 0, 1, 0],
+                                                    [0, 0, 0, 1]]
+                    self.__quad_prgrm.push_internal_ufrm_cache()
+                    gl.glDrawArrays(gl.GL_QUADS, 0, 4)
 
 
 class Frame(RenderDevice):
@@ -181,23 +217,51 @@ class Frame(RenderDevice):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        self.__frame_bffr.unbind()
+        if self.get_current() is not self:
+            self.get_current().frame_bffr.bind()
 
     def __str__(self):
         return f"<Frame {self.__size}>"
 
     @property
+    def frame_bffr(self):
+        return self.__frame_bffr
+
+    @property
     def size(self):
+        """
+        size of frame buffer
+
+        ! all internal components also have the same size
+        :return:
+        """
         return self.__size
 
-    def render_on(self, attachment_idx, pln: gt.Pln, width, height):
+    def render_pane_space(self, attachment_idx, pdomain_x=(-1, 1), pdomain_y=(-1, 1), pane_z=0, tdomain_x=(0, 1), tdomain_y=(0, 1)):
         """
-        render frame's given attachment on given plane of area (0, width), (0, height)
+        render frame's given attachment on pane space
+
+        :param attachment_idx:
+        :param pdomain_x: (-1.~1., -1.~1.), pane space x domain
+        :param pdomain_y: (-1.~1., -1.~1.), pane space y domain
+        :param pane_z: -1.~1., pane space z value, -1 closest
+        :param tdomain_x: (float, float), texture space x domain
+        :param tdomain_y: (float, float), texture space y domain
+        :return:
+        """
+        texture = self.__frame_bffr.get_texture_attachment(attachment_idx)
+        self.__renderer.render_pane_space(texture, pdomain_x, pdomain_y, pane_z, tdomain_x, tdomain_y)
+
+    def render_world_space(self, attachment_idx, pln: gt.Pln, width, height, tdomain_x=(0, 1), tdomain_y=(0, 1)):
+        """
+        render frame's given attachment on world coordinate system
 
         :param attachment_idx: int, index of color attachment source
         :param pln: Pln, plane to render at
         :param width: Number, width of render area
         :param height: Number, height of render area
+        :param tdomain_x: (float, float), texture space x domain
+        :param tdomain_y: (float, float), texture space y domain
         :return:
         """
         if not isinstance(attachment_idx, int):
@@ -207,30 +271,34 @@ class Frame(RenderDevice):
         if any(not isinstance(d, Number) for d in (width, height)):
             raise TypeError
 
+        # calculate quad position
+        # coverage represented as polyline then as coordinates
         w, h = self.__size
-        # coverage represented as polyline
-        coverage = gt.Plin((0, 0, 0), (w, 0, 0), (w, h, 0), (0, h, 0))
+        quad_pos = gt.Plin((0, 0, 0), (w, 0, 0), (w, h, 0), (0, h, 0))
         sm = mx.ScaleMat(x=width / w, y=height / h, z=1)
-        coverage = sm * coverage
-        coverage = pln.orient(obj=coverage, ref_pln=gt.Pln())
+        quad_pos = sm * quad_pos
+        quad_pos = pln.orient(obj=quad_pos, ref_pln=gt.Pln()).T
 
-        with self.__frame_bffr.get_texture_attachment(attachment_idx):
-            self.__renderer.render(coverage)
+        texture = self.__frame_bffr.get_texture_attachment(attachment_idx)
+        self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
 
-    def clear(self, r=0, g=0, b=0, a=1):
+    def clear(self, r=0, g=0, b=0, a=1, color=True, depth=True, stencil=True):
         """
         clear frame
 
-        :param r:
-        :param g:
-        :param b:
-        :param a:
+        :param r: (0 ~ 1.0), float for red
+        :param g: (0 ~ 1.0), float for green
+        :param b: (0 ~ 1.0), float for blue
+        :param a: (0 ~ 1.0), float for alpha
+        :param color: bool, flag clean color
+        :param depth: bool, flag clean depth
+        :param stencil: bool, flag clean stencil
         :return:
         """
         gl.glClearColor(r, g, b, a)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-        gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
-        gl.glClear(gl.GL_STENCIL_BUFFER_BIT)
+        if color: gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        if depth: gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
+        if stencil: gl.glClear(gl.GL_STENCIL_BUFFER_BIT)
 
 
 class FrameManager(RenderDeviceManager):
@@ -239,7 +307,12 @@ class FrameManager(RenderDeviceManager):
         # default device just binds 0 to get back to glfw provided buffer
         # ! assigning concrete frame buffer
         ww, wh = self.window.glyph.size
-        self._appendnew_device(Frame(self, _FrameBffr(0, gl.GL_FRAMEBUFFER), ww, wh))
+        frame = Frame(self, _FrameBffr(0, gl.GL_FRAMEBUFFER), ww, wh)
+        self._appendnew_device(frame)
+        self.master.tracker.stack.set_base_entity(frame)
+
+    def __getitem__(self, item) -> Frame:
+        return super().__getitem__(item)
 
     @property
     def device_type(self):

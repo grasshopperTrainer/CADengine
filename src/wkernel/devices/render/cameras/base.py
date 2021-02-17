@@ -1,3 +1,4 @@
+import weakref
 from gkernel.dtype.geometric.primitive import Pnt, Lin, Ray, ZeroVec, ZVec
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 from wkernel.devices.render._base import *
@@ -170,9 +171,10 @@ class CameraManager(RenderDeviceManager):
         c = self.factory.set_hfov_dimension(
             hfov=np.radians(50),
             aspect_ratio=self.window.glyph.aspect_ratio.r,
-            near=0.5,
-            far=1_000_000).set_frustum_shape('p').create()
+            near=10,
+            far=100_000).set_frustum_shape('p').create()
         c.tripod.lookat(eye=(0, 0, 100), at=(0, 0, 0), up=(0, 1, 0))
+        self.master.tracker.stack.set_base_entity(c)
 
     @property
     def factory(self):

@@ -1,5 +1,4 @@
 import abc
-from global_tools.trackers import *
 
 
 class RenderDeviceManager(metaclass=abc.ABCMeta):
@@ -15,7 +14,7 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
         self.__default_device = None
 
     def __getitem__(self, item):
-        return self.__master._tracker.registry[self.device_type][item]
+        return self.__master.tracker.registry[self.device_type][item]
 
     def _appendnew_device(self, device):
         """
@@ -23,7 +22,7 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
 
         :return:
         """
-        self.__master._tracker.registry.register(device)
+        self.__master.tracker.registry.register(device)
 
     @property
     @abc.abstractmethod
@@ -32,7 +31,7 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
 
     @property
     def current(self):
-        return self.__master._tracker.stack.get_current(self.device_type)
+        return self.__master.tracker.stack.get_current(self.device_type)
 
     @property
     def master(self):
@@ -65,11 +64,11 @@ class RenderDevice(metaclass=abc.ABCMeta):
 
     # should provide context manager
     def __enter__(self):
-        self.__manager.master._tracker.stack.push(self)
+        self.__manager.master.tracker.stack.push(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__manager.master._tracker.stack.pop(self.__class__)
+        self.__manager.master.tracker.stack.pop(self.__class__)
 
     @property
     def manager(self) -> RenderDeviceManager:
@@ -84,5 +83,5 @@ class RenderDevice(metaclass=abc.ABCMeta):
         get current from tracker
         :return:
         """
-        return self.__manager.master._tracker.stack.get_current(self.__class__)
+        return self.__manager.master.tracker.stack.get_current(self.__class__)
 

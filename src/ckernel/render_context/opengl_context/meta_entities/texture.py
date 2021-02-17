@@ -31,6 +31,7 @@ class MetaTexture(OGLMetaEntity):
         with texture:
             # data can latter be filled so make glTexImage2D part of initiation
             if self.__target in (gl.GL_TEXTURE_2D,):
+                # default settings
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)

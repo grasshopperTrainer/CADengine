@@ -14,7 +14,7 @@ class DeviceMaster:
     def __init__(self, window):
         self.__window = window
         # database
-        self._tracker = TypewiseTracker()
+        self.__tracker = TypewiseTracker()
 
         # of input
         self.__mouse = Mouse(window)
@@ -23,6 +23,10 @@ class DeviceMaster:
         self.__panes = PaneManager(self)
         self.__cameras = CameraManager(self)
         self.__frames = FrameManager(self)
+
+    @property
+    def tracker(self) -> TypewiseTracker:
+        return self.__tracker
 
     @property
     def window(self):
