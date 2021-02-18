@@ -231,7 +231,7 @@ class Plin(Shape):
 
     @clr.setter
     def clr(self, v):
-        if not isinstance(v, Clr):
+        if not isinstance(v, (tuple, list, Clr)):
             raise TypeError
         self.__vrtx_block['clr'] = v
         self.__clr[:] = v

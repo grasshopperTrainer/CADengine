@@ -352,7 +352,7 @@ class MyWindow(Window):
                              (0, 0, 0)))
 
         for pgon, pln in zip(pgons, plns):
-            model1.add_geo(pln.orient(pgon)).thk = 5
+            model1.add_geo(pln.orient(pgon, gt.Pln())).thk = 5
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:

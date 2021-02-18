@@ -70,6 +70,12 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         :return: newly created entity
         """
 
+    def bind(self):
+        self.get_concrete().bind()
+
+    def unbind(self):
+        self.get_concrete().unbind()
+
     def __enter__(self):
         """
         connector method, access entity through context manager patter when binding is needed

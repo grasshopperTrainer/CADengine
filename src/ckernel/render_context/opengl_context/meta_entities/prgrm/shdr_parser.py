@@ -141,28 +141,31 @@ class SimpleShdrParser:
             for m in re.finditer(cls.__layout_ufrm_patt, src):
                 # check layout declaration
                 d = m.groupdict()
-                if d['layout'] is None:
-                    raise SyntaxError(f"{m.group()} <- uniform's layout not declared")
-
-                # location
-                loc = int(d['loc'])
-                pair = (d['name'], loc)
-                for u in unique:
-                    if sum([i == j for i, j in zip(pair, u)]) == 1: # XOR
-                        raise ValueError('location values has to be unique')
-                unique.add(pair)
-
-                # value
-                if d['val'] is not None:
-                    val = eval(d['val'])
+                if d['dtype'] == 'sampler2D':
+                    pass
                 else:
-                    val = None
+                    if d['layout'] is None:
+                        raise SyntaxError(f"{m.group()} <- uniform's layout not declared")
 
-                # attribute
-                dtype = cls.__translate_dtype(d['name'], d['dtype'])
-                if d['name'] in args and args[d['name']] != (loc, val, dtype):
-                    raise Exception('attribute contradictory')
-                args[d['name']] = (loc, val, dtype)
+                    # location
+                    loc = int(d['loc'])
+                    pair = (d['name'], loc)
+                    for u in unique:
+                        if sum([i == j for i, j in zip(pair, u)]) == 1: # XOR
+                            raise ValueError('location values has to be unique')
+                    unique.add(pair)
+
+                    # value
+                    if d['val'] is not None:
+                        val = eval(d['val'])
+                    else:
+                        val = None
+
+                    # attribute
+                    dtype = cls.__translate_dtype(d['name'], d['dtype'])
+                    if d['name'] in args and args[d['name']] != (loc, val, dtype):
+                        raise Exception('attribute contradictory')
+                    args[d['name']] = (loc, val, dtype)
 
         if args:
             # align by layout location

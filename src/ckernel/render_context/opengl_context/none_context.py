@@ -9,3 +9,10 @@ class OpenglNoneContext:
     @property
     def is_none(self):
         return True
+
+    # to ignore all unknown operation
+    def __getattr__(self, item):
+        return self
+
+    def __call__(self, *args, **kwargs):
+        return self

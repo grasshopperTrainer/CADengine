@@ -31,7 +31,7 @@ class BffrCache(ArrayContainer):
 
     # initial size of array for placeholder
 
-    def __init__(self, dtype, locs, size=32):
+    def __init__(self, dtype, locs, size=4):
         # extra location data
         if not isinstance(locs, (list, tuple)):
             raise TypeError
@@ -55,7 +55,8 @@ class BffrCache(ArrayContainer):
         return self.__array.__getitem__(item)
 
     def __setitem__(self, key, value):
-        self.__array.__setitem__(key, value)
+        raise Exception('dont do this, access via block or `fill_array`')
+        # self.__array.__setitem__(key, value)
 
     def __len__(self):
         return len(self.__array)
@@ -75,6 +76,16 @@ class BffrCache(ArrayContainer):
         new_arr[:old_len] = self.__array
         self.__block_pool.append((old_len, new_len))
         self.__array = new_arr
+
+    def fill_array(self, v):
+        """
+        fill array with given value
+
+        ! be aware that this function doesn't mark byte as active
+        :param v:
+        :return:
+        """
+        self.__array[:] = v
 
     @property
     def active_size(self):

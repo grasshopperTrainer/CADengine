@@ -107,7 +107,7 @@ class Mouse(_InputDevice):
     def cursor_goto_center(self):
         win = self.window
         with self.window.context.glfw as glfw:
-            glfw.set_cursor_pos(win.glyph.width.r / 2, win.glyph.height.r / 2)
+            glfw.set_cursor_pos(win.glyph.w0.r / 2, win.glyph.h0.r / 2)
 
 
 class UnknownKeyError(Exception):

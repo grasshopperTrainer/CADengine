@@ -25,7 +25,10 @@ class Model:
         self.__renderers = {}
 
     def __add_geo_helper(self, geo, geo_wrapper, renderer_type):
-        renderer = self.__renderers.setdefault(geo_wrapper, renderer_type())
+        if geo_wrapper not in self.__renderers:
+            self.__renderers[geo_wrapper] = renderer_type()
+        renderer = self.__renderers[geo_wrapper]
+
         shp = geo_wrapper(geo, renderer)
         self._shapes.setdefault(geo_wrapper, []).append(shp)
         return shp
