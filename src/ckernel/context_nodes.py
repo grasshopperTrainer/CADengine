@@ -4,6 +4,8 @@ import OpenGL.GL as gl
 from .render_context.opengl_context.base import OGLSubContext
 from ckernel.glfw_context.context import GLFWContext
 from .glfw_context.none_context import GLFWNoneContext
+from .render_context.opengl_context.context_stack import GlobalOGLContextStack
+import threading
 
 import weakref
 #
@@ -60,7 +62,6 @@ class ContextMaster:
     __opengl_spec = {'info': {}, 'shareness': {}, 'vao_binding': {}}
     __is_context_launched = False
     __context_tree = weakref.WeakSet()
-
     glfw = raw_glfw
 
     @classmethod
@@ -253,20 +254,20 @@ class MetaContext:
         return bool(self.__context_set)
 
     @classmethod
-    def _checkbuild_meta(cls, context, shared):
+    def _checkbuild_meta(cls, window, shared):
         """
         find `MetaContext` and build if nonexistent
 
-        :param context: to check context of
+        :param window: to check context of
         :param shared: shared window
         :return:
         """
         if shared is None:
-            return cls(context)
+            return cls(window)
         else:
             for mc in ContextMaster.iter_meta_context():
                 if mc.is_member_window(shared):
-                    mc._add_context(context)
+                    mc.add_context_manager(window)
                     return mc
         raise Exception('context tree inconsistency error')
 
@@ -298,7 +299,7 @@ class MetaContext:
         for c in self.__context_set:
             yield c
 
-    def _add_context(self, context):
+    def add_context_manager(self, context):
         """
         track context
         :param contest:
@@ -355,13 +356,16 @@ class ContextManager:
         :param height:
         :param title:
         :param monitor:
-        :param share:
+        :param share: Window, mother
         """
         ContextMaster.checkinit_context()
         self.__meta_context = MetaContext._checkbuild_meta(self, share)
         self.__window = weakref.ref(window)
+        if share:
+            share = share.context.glfw_window
         self.__glfw_context = GLFWContext(width, height, title, monitor, share)
         self.__renderer_context = OGLSubContext(self)
+
         self.__init_local_setting()
         # self._gl_logger = Logger(size=1000, do_log=True, prefix='OpenGL_', sufix='')
 

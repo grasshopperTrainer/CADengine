@@ -2,8 +2,9 @@ from wkernel import Window
 from mkernel import Model
 import gkernel.dtype.geometric as gt
 import glfw
+import time
 
-class MyWindow(Window):
+class MainWindow(Window):
     def __init__(self):
         super().__init__(1000, 1000, 'mywindow')
         # want to create frame
@@ -27,8 +28,8 @@ class MyWindow(Window):
         self.model = model
 
     def draw(self):
-        self.devices.panes[0].clear()
-
+        with self.devices.frames[0] as f:
+            f.clear(0, 0, 0, 1)
         with self.devices.cameras[0] as c:
             with self.devices.frames[1] as off:
                 off.clear(1, 0, 0, 1)
@@ -38,4 +39,17 @@ class MyWindow(Window):
             off.render_world_space(0, gt.Pln(), 20, 20)
 
 
-MyWindow().run_all(1)
+class SubWindow(Window):
+    def __init__(self, mother):
+        super().__init__(500, 500, 'widnow2', shared=mother)
+        self.ma = mother
+
+    def draw(self):
+        with self.ma.context.gl:
+            print('calling mother context')
+
+
+window_main = MainWindow()
+window_sub = SubWindow(window_main)
+
+window_main.run_all(1)

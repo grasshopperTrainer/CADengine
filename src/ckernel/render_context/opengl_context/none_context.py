@@ -1,7 +1,7 @@
 from ckernel.glfw_context.none_context import NoneContextManager
 
 
-class OpenglNoneContext:
+class OGLNoneContext:
 
     def __init__(self):
         self._cntxt_manager = NoneContextManager()

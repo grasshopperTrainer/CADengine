@@ -4,7 +4,7 @@ import abc
 import numpy as np
 
 from ckernel.render_context.opengl_context.ogl_entities import OGLEntity
-from ckernel.render_context.opengl_context.context_stack import OGLContextStack, OpenglUnboundError
+from ckernel.render_context.opengl_context.context_stack import GlobalOGLContextStack, OpenglUnboundError
 from .error import *
 
 
@@ -45,7 +45,7 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         If context is not given, entity of current context will be returned.
         :return: entity for current context
         """
-        context = OGLContextStack.get_current()
+        context = GlobalOGLContextStack.get_current()
         if context.is_none:
             raise OpenglUnboundError
         # return if exists already
