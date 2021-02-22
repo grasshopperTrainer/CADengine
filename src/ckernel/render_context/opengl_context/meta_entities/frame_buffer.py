@@ -31,7 +31,6 @@ class MetaFrameBffr(OGLMetaEntity):
         fb = gl.glGenFramebuffers(1, gl.GL_FRAMEBUFFER)
         fb.set_target(gl.GL_FRAMEBUFFER)
         with fb:
-            print('building frame buffer')
             # deal with textures
             # ! give attantion to how attachment index is given
             for i, texture in enumerate(self.__textures):
