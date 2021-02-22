@@ -2,8 +2,10 @@ from wkernel import Window
 from mkernel import Model
 import gkernel.dtype.geometric as gt
 import glfw
+import time
 
-class MyWindow(Window):
+
+class MainWindow(Window):
     def __init__(self):
         super().__init__(1000, 1000, 'mywindow')
         # want to create frame
@@ -25,17 +27,33 @@ class MyWindow(Window):
         p1.dia = 5
         p1.clr = 1, 1, 0, 1
         self.model = model
+        self.is_rendered = False
 
     def draw(self):
-        self.devices.panes[0].clear()
-
+        with self.devices.frames[0] as f:
+            f.clear(0, 0, 0, 1)
         with self.devices.cameras[0] as c:
             with self.devices.frames[1] as off:
                 off.clear(1, 0, 0, 1)
                 self.model.render()
-            with self.devices.panes[1] as p:
-                off.render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
-            off.render_world_space(0, gt.Pln(), 20, 20)
+                self.is_rendered = True
+            # with self.devices.panes[1] as p:
+            off.render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
 
 
-MyWindow().run_all(1)
+class SubWindow(Window):
+    def __init__(self, mother):
+        super().__init__(500, 500, 'sub window', shared=mother)
+        self.ma = mother
+
+    def draw(self):
+        with self.devices.frames[0] as f:
+            f.clear(1, 1, 1, 1)
+            if self.ma.is_rendered:
+                self.ma.devices.frames[1].render_pane_space(0, (-1, 1), (-1, 1), 0, (0, 1), (0, 1))
+
+
+window_main = MainWindow()
+window_sub = SubWindow(window_main)
+
+window_main.run_all(2)

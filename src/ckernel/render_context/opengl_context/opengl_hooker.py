@@ -5,7 +5,7 @@ import importlib
 import OpenGL.GL as gl
 from OpenGL.GL import *
 from .ogl_entities import OGLEntity, _Prgrm, _Bffr, _Shdr, _VrtxArry, _FrameBffr, _Texture, _RenderBffr
-from ckernel.render_context.opengl_context.context_stack import OGLContextStack
+from ckernel.render_context.opengl_context.context_stack import GlobalOGLContextStack
 # _context = []
 # _context.append(getattr(importlib.import_module('ckernel.render_context.opengl_context.context_stack'),
 #                                     'OGLContextStack'))
@@ -37,7 +37,7 @@ def __creator(func):
         for id in ids:
             obj = typ(id, *args)
             objs.append(obj)
-            OGLContextStack.get_current().entities.registry.register(obj)
+            GlobalOGLContextStack.get_current().entities.registry.register(obj)
         return objs[0] if len(objs) == 1 else objs
 
     return __wrapper

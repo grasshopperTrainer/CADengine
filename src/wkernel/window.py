@@ -1,5 +1,6 @@
 import threading
 import time
+import glfw
 
 from numbers import Number
 
@@ -48,10 +49,8 @@ class Window(DrawInterface, GlyphInterface):
     def __init__(self, width, height, name, monitor=None, shared=None, **kwargs):
         super().__init__()
         # in case shared window exists, need to get context from it
-        if shared is not None and isinstance(shared, Window):
-            self.__context = shared.get_context()
-        else:
-            self.__context = ContextManager(width, height, name, monitor, shared, window=self)
+        self.__context = ContextManager(width, height, name, monitor, shared, window=self)
+        self.__name = name
 
         with self.__context.gl as gl:
             gl.glEnable(gl.GL_SCISSOR_TEST)
@@ -66,13 +65,13 @@ class Window(DrawInterface, GlyphInterface):
 
             gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
 
-        with self.__context.glfw as glfw:
-            glfw.set_window_close_callback(self.__close_window)
+        with self.__context.glfw as glfw_window:
+            glfw.set_window_close_callback(glfw_window, self.__close_window)
 
         # make view object
         self.__glyph = GlyphNode(0, 0, width, height, None, None, None, None)
 
-        self._render_thread = threading.Thread(target=self.__run)
+        self._render_thread = threading.Thread(target=self.__run, name=name)
         self._pipelines = []
 
         self.__frame_rate = 30
@@ -85,6 +84,8 @@ class Window(DrawInterface, GlyphInterface):
         self.__device_manager = DeviceMaster(self)
         # self.devices.cameras[0].body.builder.in3_aspect_ratio = self.devices.panes[0].glyph.aspect_ratio
 
+    def __str__(self):
+        return f"<Window: {self.__name}>"
     @property
     def glyph(self) -> GlyphNode:
         """
@@ -143,8 +144,8 @@ class Window(DrawInterface, GlyphInterface):
         :return:
         """
         # bind and as this is a rendering happends in dedicated thread no need to unbind
-        with self.__context.glfw as glfw:
-            while not glfw.window_should_close():
+        with self.__context.glfw as glfw_window:
+            while not glfw.window_should_close(glfw_window):
                 if self.__frame_count == self.__num_draw_frame:
                     break  # if number of drawn frame is targeted number of frame drawn
                 with self.__timer:  # __exit__ of timer will hold thread by time.sleep()
@@ -152,7 +153,7 @@ class Window(DrawInterface, GlyphInterface):
                         self.call_predraw_callback()
                         self.draw()
                         self.call_postdraw_callback()
-                        glfw.swap_buffers()
+                        glfw.swap_buffers(glfw_window)
                 self.__frame_count += 1
 
     def __close_window(self, window):
@@ -166,11 +167,11 @@ class Window(DrawInterface, GlyphInterface):
         :param window:
         :return:
         """
-        with self.__context.glfw as glfw:
-            glfw.hide_window()  # <- glfw window still alive here
+        with self.__context.glfw as window:
+            glfw.hide_window(window)  # <- glfw window still alive here
             self._render_thread.join()
             self.__context.context_master.remove_window(self)
-            glfw.destroy_window()  # <- window destoied here
+            glfw.destroy_window(window)  # <- window destoied here
 
     def set_num_draw_frame(self, num):
         """

@@ -21,6 +21,8 @@ class PolygonRenderer(_Renderer):
     )
 
     __vbo = __fill_prgrm.vrtxattr_schema.create_vrtx_bffr_fac()
+    __ufrm_cache = __fill_prgrm.ufrm_cache
+    __ufrm_block = __ufrm_cache.request_block(size=1)
 
     def __init__(self):
         self.__fill_ibo = meta.MetaIndxBffr(dtype='uint')
@@ -51,13 +53,13 @@ class PolygonRenderer(_Renderer):
             with self.__fill_prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__fill_prgrm.ufrm_cache['PM'] = camera.body.PM
-                self.__fill_prgrm.ufrm_cache['VM'] = camera.tripod.VM
-                self.__fill_prgrm.ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                                      [0, 1, 0, 0],
-                                                      [0, 0, 1, 0],
-                                                      [0, 0, 0, 1]]
-                self.__fill_prgrm.push_internal_ufrm_cache()
+                self.__ufrm_block['PM'] = camera.body.PM
+                self.__ufrm_block['VM'] = camera.tripod.VM
+                self.__ufrm_block['MM'] = [[1, 0, 0, 0],
+                                           [0, 1, 0, 0],
+                                           [0, 0, 1, 0],
+                                           [0, 0, 0, 1]]
+                self.__fill_prgrm.push_external_ufrm_cache(self.__ufrm_cache)
 
                 gl.glDrawElements(gl.GL_QUAD_STRIP,
                                   self.__fill_ibo.cache.active_size,
@@ -66,19 +68,19 @@ class PolygonRenderer(_Renderer):
 
     def __render_edge(self):
         self.__edge_ibo.push_cache()
-        gl.glLineWidth(3)
+        # gl.glLineWidth(3)
         with self.__edge_vao:
             with self.__edge_prgrm:
                 # update uniforms
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__edge_prgrm.ufrm_cache['PM'] = camera.body.PM
-                self.__edge_prgrm.ufrm_cache['VM'] = camera.tripod.VM
-                self.__edge_prgrm.ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                                      [0, 1, 0, 0],
-                                                      [0, 0, 1, 0],
-                                                      [0, 0, 0, 1]]
-                self.__edge_prgrm.push_internal_ufrm_cache()
+                self.__ufrm_block['PM'] = camera.body.PM
+                self.__ufrm_block['VM'] = camera.tripod.VM
+                self.__ufrm_block['MM'] = [[1, 0, 0, 0],
+                                           [0, 1, 0, 0],
+                                           [0, 0, 1, 0],
+                                           [0, 0, 0, 1]]
+                self.__edge_prgrm.push_external_ufrm_cache(self.__ufrm_cache)
 
                 gl.glDrawElements(gl.GL_LINE_STRIP_ADJACENCY,
                                   self.__edge_ibo.cache.active_size,

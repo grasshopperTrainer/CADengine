@@ -11,10 +11,12 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
 
     def __init__(self, master):
         self.__master = master
-        self.__default_device = None
 
     def __getitem__(self, item):
         return self.__master.tracker.registry[self.device_type][item]
+
+    def __len__(self):
+        return len(self.__master.tracker.registry[self.device_type])
 
     def _appendnew_device(self, device):
         """
