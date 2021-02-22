@@ -7,6 +7,7 @@ import abc
 import numpy as np
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from .context_stack import get_current_ogl
+from ckernel.context_spec import ContextSpec
 
 
 class OGLEntity(metaclass=abc.ABCMeta):
@@ -15,6 +16,9 @@ class OGLEntity(metaclass=abc.ABCMeta):
     """
     def __init__(self, id):
         self.__id = id
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def name(self):
@@ -52,6 +56,15 @@ class OGLEntity(metaclass=abc.ABCMeta):
     def delete(self):
         """
         delete obl object
+        :return:
+        """
+        pass
+
+    @property
+    @abc.abstractmethod
+    def is_shared(self):
+        """
+        return if entity is shared along shared context
         :return:
         """
         pass
@@ -195,6 +208,10 @@ class _Prgrm(OGLEntity):
         """
         self.__ufrm_skema = ufrm_skema
 
+    @property
+    def is_shared(self):
+        return ContextSpec().SHARED_PROGRAM
+
 
 class _Shdr(OGLEntity):
     def __init__(self, id, typ):
@@ -219,6 +236,10 @@ class _Shdr(OGLEntity):
 
     def __str__(self):
         return f"<Shader: {self.__id}>"
+
+    @property
+    def is_shared(self):
+        return ContextSpec().SHARED_SHADER
 
 
 class _Bffr(OGLEntity):
@@ -266,6 +287,10 @@ class _Bffr(OGLEntity):
     def set_cache(self, cache):
         self.__cache = cache
 
+    @property
+    def is_shared(self):
+        return ContextSpec().SHARED_BUFFER
+
 
 class _VrtxArry(OGLEntity):
     def __init__(self, id):
@@ -282,6 +307,10 @@ class _VrtxArry(OGLEntity):
 
     def delete(self):
         gl.glDeleteVertexArrays(1, self)
+
+    @property
+    def is_shared(self):
+        return ContextSpec().SHARED_VERTEX_ARRAY
 
 
 class _FrameBffr(OGLEntity):
@@ -304,6 +333,10 @@ class _FrameBffr(OGLEntity):
     def delete(self):
         gl.glDeleteFramebuffers(1, self.__id)
 
+    @property
+    def is_shared(self):
+        return ContextSpec().SHARED_FRAME_BUFFER
+
 
 class _RenderBffr(OGLEntity):
     def __init__(self, id, target):
@@ -321,6 +354,10 @@ class _RenderBffr(OGLEntity):
 
     def delete(self):
         raise NotImplementedError
+
+    @property
+    def is_shared(self):
+        return ContextSpec().SHARED_RENDER_BUFFER
 
 
 class _Texture(OGLEntity):
@@ -344,3 +381,7 @@ class _Texture(OGLEntity):
 
     def delete(self):
         gl.glDeleteTextures(self.__target)
+
+    @property
+    def is_shared(self):
+        return ContextSpec().SHARED_TEXTURE

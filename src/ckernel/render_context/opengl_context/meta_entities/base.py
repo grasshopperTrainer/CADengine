@@ -1,11 +1,13 @@
 import weakref
 import abc
+import threading
 
 import numpy as np
 
 from ckernel.render_context.opengl_context.ogl_entities import OGLEntity
 from ckernel.render_context.opengl_context.context_stack import GlobalOGLContextStack, OpenglUnboundError
 from .error import *
+from global_tools.lazy import lazyProp
 
 
 class OGLMetaEntity(metaclass=abc.ABCMeta):
@@ -23,7 +25,7 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
     It's more like a logical description. 'OGLEntity' describes any object dependent to OGL context.
     """
 
-    @property
+    @lazyProp
     def __context_entity(self):
         """
         lazy parameter assignment
@@ -32,10 +34,15 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         whilst creating entity storage when needed
         :return:
         """
-        name = '__context_entity'
-        if not hasattr(self, name):
-            setattr(self, name, weakref.WeakKeyDictionary())
-        return self.__getattribute__(name)
+        return weakref.WeakKeyDictionary()
+
+    @lazyProp
+    def __lock(self):
+        """
+        to lock `get_concrete` process
+        :return:
+        """
+        return threading.Lock()
 
     def get_concrete(self):
         """
@@ -45,22 +52,28 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         If context is not given, entity of current context will be returned.
         :return: entity for current context
         """
-        c = GlobalOGLContextStack.get_current()
-        if c.is_none:
-            raise OpenglUnboundError
+        with self.__lock:
+            c = GlobalOGLContextStack.get_current()
+            if c.is_none:
+                raise OpenglUnboundError
 
-        # serve meta context not context
-        meta = c.manager.meta_context
-        # return if exists already
-        if meta in self.__context_entity:
-            return self.__context_entity[meta]
-        # if not, create new and store
-        with c:
-            entity = self._create_entity()
-            if not isinstance(entity, OGLEntity):
-                raise Exception('creator method is not wrapped, check opengl_hooked')
-            self.__context_entity[meta] = entity
-        return entity
+            # serve meta context not context
+            meta = c.manager.meta_context
+            # return if exists already
+            if c in self.__context_entity:
+                return self.__context_entity[c]
+            if meta in self.__context_entity:
+                return self.__context_entity[meta]
+            # if not, create new and store
+            with c:
+                entity = self._create_entity()
+                if not isinstance(entity, OGLEntity):
+                    raise Exception('creator method is not wrapped, check opengl_hooked')
+                if entity.is_shared:
+                    self.__context_entity[meta] = entity
+                else:
+                    self.__context_entity[c] = entity
+            return entity
 
     @abc.abstractmethod
     def _create_entity(self):

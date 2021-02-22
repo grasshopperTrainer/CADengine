@@ -27,6 +27,7 @@ class MainWindow(Window):
         p1.dia = 5
         p1.clr = 1, 1, 0, 1
         self.model = model
+        self.is_rendered = False
 
     def draw(self):
         with self.devices.frames[0] as f:
@@ -35,10 +36,9 @@ class MainWindow(Window):
             with self.devices.frames[1] as off:
                 off.clear(1, 0, 0, 1)
                 self.model.render()
+                self.is_rendered = True
             # with self.devices.panes[1] as p:
             off.render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
-            print('MAIN RENDER DONE')
-            # off.render_world_space(0, gt.Pln(), 20, 20)
 
 
 class SubWindow(Window):
@@ -49,15 +49,11 @@ class SubWindow(Window):
     def draw(self):
         with self.devices.frames[0] as f:
             f.clear(1, 1, 1, 1)
-            while len(self.ma.devices.frames) < 2: # revolving door to handle possible bad request
-                pass
-            self.ma.devices.frames[1].render_pane_space(0, (-1, 1), (-1, 1), 0, (0, 1), (0, 1))
-            print('SUB RENDER DONE')
-        #
-        # with self.ma.context.gl:
+            if self.ma.is_rendered:
+                self.ma.devices.frames[1].render_pane_space(0, (-1, 1), (-1, 1), 0, (0, 1), (0, 1))
 
 
 window_main = MainWindow()
 window_sub = SubWindow(window_main)
 
-window_main.run_all(1)
+window_main.run_all(2)
