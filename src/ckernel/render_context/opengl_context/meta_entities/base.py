@@ -45,18 +45,21 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         If context is not given, entity of current context will be returned.
         :return: entity for current context
         """
-        context = GlobalOGLContextStack.get_current()
-        if context.is_none:
+        c = GlobalOGLContextStack.get_current()
+        if c.is_none:
             raise OpenglUnboundError
+
+        # serve meta context not context
+        meta = c.manager.meta_context
         # return if exists already
-        if context in self.__context_entity:
-            return self.__context_entity[context]
+        if meta in self.__context_entity:
+            return self.__context_entity[meta]
         # if not, create new and store
-        with context:
+        with c:
             entity = self._create_entity()
             if not isinstance(entity, OGLEntity):
                 raise Exception('creator method is not wrapped, check opengl_hooked')
-            self.__context_entity[context] = entity
+            self.__context_entity[meta] = entity
         return entity
 
     @abc.abstractmethod

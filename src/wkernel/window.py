@@ -50,6 +50,7 @@ class Window(DrawInterface, GlyphInterface):
         super().__init__()
         # in case shared window exists, need to get context from it
         self.__context = ContextManager(width, height, name, monitor, shared, window=self)
+        self.__name = name
 
         with self.__context.gl as gl:
             gl.glEnable(gl.GL_SCISSOR_TEST)
@@ -83,6 +84,8 @@ class Window(DrawInterface, GlyphInterface):
         self.__device_manager = DeviceMaster(self)
         # self.devices.cameras[0].body.builder.in3_aspect_ratio = self.devices.panes[0].glyph.aspect_ratio
 
+    def __str__(self):
+        return f"<Window: {self.__name}>"
     @property
     def glyph(self) -> GlyphNode:
         """

@@ -193,9 +193,12 @@ class ContextMaster:
     @classmethod
     def remove_window(cls, window):
         """
-        remove window from view
+        remove window
 
-        Release window object from traction so it could be destroied and collected by gc.
+        Release window object from traction so it could be destroyed and collected by gc.
+        1. release all resources of window
+        2. remove it from meta context
+        3. if meta is emptied by it, remove meta
 
         :param window: `Window` removed
         :return:
@@ -251,7 +254,7 @@ class MetaContext:
 
         :return:
         """
-        return bool(self.__context_set)
+        return not bool(self.__context_set)
 
     @classmethod
     def _checkbuild_meta(cls, window, shared):
@@ -367,7 +370,6 @@ class ContextManager:
         self.__renderer_context = OGLSubContext(self)
 
         self.__init_local_setting()
-        # self._gl_logger = Logger(size=1000, do_log=True, prefix='OpenGL_', sufix='')
 
     def __init_local_setting(self):
         """
@@ -392,6 +394,10 @@ class ContextManager:
     @property
     def context_master(self):
         return ContextMaster
+
+    @property
+    def meta_context(self):
+        return self.__meta_context
 
     @property
     def window(self):

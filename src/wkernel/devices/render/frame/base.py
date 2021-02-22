@@ -171,7 +171,7 @@ class FrameRenderer:
         self.__pane_vbo.push_cache()
         # render
         with texture:
-            with self.__pane_vao:
+            with self.__pane_vao as vao:
                 with self.__pane_prgrm:
                     gl.glDrawArrays(gl.GL_QUADS, 0, 4)
 

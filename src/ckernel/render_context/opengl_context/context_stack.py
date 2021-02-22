@@ -1,7 +1,4 @@
-from .none_context import OGLNoneContext
 import threading
-from global_tools.singleton import Singleton
-import weakref
 
 
 # this is simply a shortcut
@@ -15,7 +12,7 @@ class GlobalOGLContextStack:
     @classmethod
     def get_current(cls):
         """
-        return current context
+        return current context manager
 
         :return:
         """

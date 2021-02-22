@@ -4,6 +4,7 @@ import gkernel.dtype.geometric as gt
 import glfw
 import time
 
+
 class MainWindow(Window):
     def __init__(self):
         super().__init__(1000, 1000, 'mywindow')
@@ -34,19 +35,26 @@ class MainWindow(Window):
             with self.devices.frames[1] as off:
                 off.clear(1, 0, 0, 1)
                 self.model.render()
-            with self.devices.panes[1] as p:
-                off.render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
-            off.render_world_space(0, gt.Pln(), 20, 20)
+            # with self.devices.panes[1] as p:
+            off.render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
+            print('MAIN RENDER DONE')
+            # off.render_world_space(0, gt.Pln(), 20, 20)
 
 
 class SubWindow(Window):
     def __init__(self, mother):
-        super().__init__(500, 500, 'widnow2', shared=mother)
+        super().__init__(500, 500, 'sub window', shared=mother)
         self.ma = mother
 
     def draw(self):
-        with self.ma.context.gl:
-            print('calling mother context')
+        with self.devices.frames[0] as f:
+            f.clear(1, 1, 1, 1)
+            while len(self.ma.devices.frames) < 2: # revolving door to handle possible bad request
+                pass
+            self.ma.devices.frames[1].render_pane_space(0, (-1, 1), (-1, 1), 0, (0, 1), (0, 1))
+            print('SUB RENDER DONE')
+        #
+        # with self.ma.context.gl:
 
 
 window_main = MainWindow()
