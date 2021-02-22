@@ -11,6 +11,10 @@ class MetaTexture(OGLMetaEntity):
         self.__size = width, height
 
     @property
+    def iformat(self):
+        return self.__iformat
+
+    @property
     def target(self):
         return self.__target
 

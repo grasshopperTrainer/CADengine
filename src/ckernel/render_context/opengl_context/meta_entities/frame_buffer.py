@@ -7,21 +7,45 @@ from ..constant_enum import RenderBufferTarget
 
 class MetaFrameBffr(OGLMetaEntity):
 
-    def __init__(self, *textures, render_buffer=None):
+    def __init__(self, *attachments, locs):
         """
 
-        ! textures order index will be used as attachment index
-        :param textures: (MetaTexture, ...)
-        :param render_buffer: MetaRenderBffr
+        :param attachments: MetaTexture or MetaRenderBffr
+        :param locs: (int, ...) indx value that will be translated into GL_COLOR_ATTACHMENT{indx}
         """
-        self.__textures = textures
-        self.__render_buffer = render_buffer
+        if len(attachments) != len(locs):
+            raise Exception('all locations for attachment has to be given, for that does not have location set `None`')
+
+        __locs = set()
+        self.__textures = {}
+        self.__render_buffer = []
+        for a, l in zip(attachments, locs):
+            if l is not None:
+                if l in __locs:
+                    raise ValueError('attachment location value has to be unique')
+                else:
+                    __locs.add(l)
+            if isinstance(a, MetaTexture):
+                self.__textures[l] = a
+            elif isinstance(a, MetaRenderBffr):
+                self.__render_buffer.append((a, l))
+            else:
+                raise TypeError
+
+        self.__color_attachment_locs = []
+        for i in __locs:
+            self.__color_attachment_locs.append(eval(f"gl.GL_COLOR_ATTACHMENT{i}"))
 
     def __str__(self):
         return f"<MetaFrameBffr >"
 
     @property
     def size(self):
+        """
+        ! this isnt so good
+
+        :return:
+        """
         return self.__textures[0].size
 
     def _create_entity(self):
@@ -33,8 +57,7 @@ class MetaFrameBffr(OGLMetaEntity):
         with fb:
             # deal with textures
             # ! give attantion to how attachment index is given
-            for i, texture in enumerate(self.__textures):
-                # with texture as t:
+            for i, texture in self.__textures.items():
                 if texture.target == gl.GL_TEXTURE_2D:
                     gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER,  # target
                                               eval(f"gl.GL_COLOR_ATTACHMENT{i}"),  # attachment
@@ -44,11 +67,17 @@ class MetaFrameBffr(OGLMetaEntity):
                 else:
                     raise NotImplementedError
 
-            if self.__render_buffer:
-                gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER,  # target
-                                             self.__iformat_to_attachment(self.__render_buffer.iformat),  # attachment
-                                             gl.GL_RENDERBUFFER,  # renderbuffertarget
-                                             self.__render_buffer.get_concrete())  # renderbuffer
+            for rb, i in self.__render_buffer:
+                if gl.GL_COLOR_ATTACHMENT0 <= rb.iformat <= gl.GL_COLOR_ATTACHMENT31:
+                    if i is None:
+                        raise ValueError('color attachment location for frame buffer not given')
+                else:
+                    if i is not None:
+                        raise ValueError('given location cant be resolved')
+                    gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER,  # target
+                                                 self.__iformat_to_attachment(rb.iformat),  # attachment
+                                                 gl.GL_RENDERBUFFER,  # renderbuffertarget
+                                                 rb.get_concrete())  # renderbuffer
             # check texture binding
             if gl.glCheckFramebufferStatus(gl.GL_FRAMEBUFFER) != gl.GL_FRAMEBUFFER_COMPLETE:
                 raise Exception('FrameBuffer linking error')
@@ -69,6 +98,15 @@ class MetaFrameBffr(OGLMetaEntity):
         :return:
         """
         return self.__textures[idx]
+
+    def bind(self):
+        """
+        extended to use multiple color attachment
+
+        :return:
+        """
+        super().bind()
+        gl.glDrawBuffers(len(self.__color_attachment_locs), self.__color_attachment_locs)
 
 
 class MetaRenderBffr(OGLMetaEntity):

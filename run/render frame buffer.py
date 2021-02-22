@@ -13,8 +13,13 @@ class MainWindow(Window):
         ffactory = self.devices.frames.factory
         ffactory.set_size(w, h)
         ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                format=ffactory.TEXTURE.FORMAT.RGB)
-        ffactory.set_render_buffer(format=ffactory.RENDER.DEPTH_STENCIL.D24_S8)
+                                format=ffactory.TEXTURE.FORMAT.RGBA,
+                                attachment_loc=0)
+        ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
+                                format=ffactory.TEXTURE.FORMAT.RGB,
+                                attachment_loc=1)
+        ffactory.set_render_buffer(format=ffactory.RENDER.DEPTH_STENCIL.D24_S8,
+                                   attachment_loc=None)
         ffactory.create()
         # create pane
         self.devices.panes.appendnew_pane(0, 0, 0.6, 0.6, self)
@@ -32,12 +37,14 @@ class MainWindow(Window):
     def draw(self):
         with self.devices.frames[0] as f:
             f.clear(0, 0, 0, 1)
+            f.clear_depth()
         with self.devices.cameras[0] as c:
             with self.devices.frames[1] as off:
-                off.clear(1, 0, 0, 1)
+                off.clear_depth()
+                off.clear_texture(0, .5, .5, .5, 1)
+                off.clear_texture(1, 0, 0, 0, 1)
                 self.model.render()
                 self.is_rendered = True
-            # with self.devices.panes[1] as p:
             off.render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
 
 
@@ -47,10 +54,11 @@ class SubWindow(Window):
         self.ma = mother
 
     def draw(self):
+        pass
         with self.devices.frames[0] as f:
-            f.clear(1, 1, 1, 1)
+            f.clear_depth()
             if self.ma.is_rendered:
-                self.ma.devices.frames[1].render_pane_space(0, (-1, 1), (-1, 1), 0, (0, 1), (0, 1))
+                self.ma.devices.frames[1].render_pane_space(1, (-1, 1), (-1, 1), 0, (0, 1), (0, 1))
 
 
 window_main = MainWindow()

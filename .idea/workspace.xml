@@ -24,20 +24,14 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="919739c9-3aa1-45fd-813c-3d184bc10445" name="pyopengl2-92 refactor GLFW/GL context specification result" comment="pyopengl2-92 refactor GLFW/GL context specification result&#10;&#10;implement __lock inside `OGLMetaEntity`&#10;    `get_concrete` has to be locked to ensure only needed entities are created.&#10;    &#10;    As using 'unique render thread' approach, its users obligation to control timing correctly. But as rendering often has sleeping phase, think threading can bring some benefit in terms of efficiency.&#10;    resolve #92">
-      <change afterPath="$PROJECT_DIR$/src/ckernel/context_spec.py" afterDir="false" />
+    <list default="true" id="d064fdea-d921-4fd4-84bd-ed603bd63e33" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run/render frame buffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render frame buffer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/context_nodes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/context_nodes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/base.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/frame_buffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/frame_buffer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/texture.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/texture.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_frgm_shdr.glsl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/frame/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/frame/base.py" afterDir="false" />
     </list>
-    <list id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="some refactoring before writing ray-traingle intersection" />
-    <list id="93e3d051-baab-4e5d-a1f6-0e63dea9bbee" name="pyopengl2-73 implement polygon" comment="pyopengl2-73 implement polygon&#10;&#10;test alphabet Polygon">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
-    <list id="ab54728a-b263-4e27-9246-b8c5738ab636" name="pyopengl2-93 implement shared Window" comment="pyopengl2-93 implement shared Window&#10;&#10;fix OGLMetaEntity follow MetaContext" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -63,7 +57,7 @@
     </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="pyopengl2-92" />
+        <entry key="$PROJECT_DIR$" value="pyopengl2-93" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -566,7 +560,7 @@
     <task id="pyopengl2-73" summary="implement polygon">
       <branch name="master" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
       <branch name="pyopengl2-73" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
-      <changelist id="93e3d051-baab-4e5d-a1f6-0e63dea9bbee" name="pyopengl2-73 implement polygon" comment="" />
+      <changelist id="" name="pyopengl2-73 implement polygon" comment="" />
       <created>1612143692000</created>
       <option name="issue" value="true" />
       <url>https://github.com/grasshopperTrainer/pyopengl2/issues/73</url>
@@ -600,10 +594,10 @@
       <option name="type" value="BUG" />
       <updated>1612849482158</updated>
     </task>
-    <task id="pyopengl2-93" summary="implement shared Window">
+    <task active="true" id="pyopengl2-93" summary="implement shared Window">
       <branch name="pyopengl2-34" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
       <branch name="pyopengl2-93" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
-      <changelist id="ab54728a-b263-4e27-9246-b8c5738ab636" name="pyopengl2-93 implement shared Window" comment="" />
+      <changelist id="" name="pyopengl2-93 implement shared Window" comment="" />
       <created>1613616436000</created>
       <option name="issue" value="true" />
       <url>https://github.com/grasshopperTrainer/pyopengl2/issues/93</url>
@@ -611,12 +605,12 @@
       <option name="presentableId" value="pyopengl2-93" />
       <option name="project" value="pyopengl2" />
       <option name="type" value="BUG" />
-      <updated>1613960582789</updated>
+      <updated>1613984129583</updated>
     </task>
     <task active="true" id="pyopengl2-92" summary="refactor GLFW/GL context specification result">
       <branch name="pyopengl2-93" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
       <branch name="pyopengl2-92" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
-      <changelist id="919739c9-3aa1-45fd-813c-3d184bc10445" name="pyopengl2-92 refactor GLFW/GL context specification result" comment="" />
+      <changelist id="" name="pyopengl2-92 refactor GLFW/GL context specification result" comment="" />
       <created>1613559156000</created>
       <option name="issue" value="true" />
       <url>https://github.com/grasshopperTrainer/pyopengl2/issues/92</url>

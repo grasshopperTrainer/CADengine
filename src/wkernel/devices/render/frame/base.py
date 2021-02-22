@@ -75,7 +75,7 @@ class FrameFactory:
             raise TypeError
         self.__size = width, height
 
-    def append_texture(self, target, format):
+    def append_texture(self, target, format, attachment_loc=None):
         """
         append texture
 
@@ -84,17 +84,17 @@ class FrameFactory:
         :param format: internal format
         :return:
         """
-        self.__textures_prop.append((target, format))
+        self.__textures_prop.append((target, format, attachment_loc))
         return self
 
-    def set_render_buffer(self, format):
+    def set_render_buffer(self, format, attachment_loc=None):
         """
         add render buffer
 
         :return:
         """
         # only one render buffer possible?
-        self.__render_buffer_prop.append(format)
+        self.__render_buffer_prop.append((format, attachment_loc))
 
     def create(self):
         """
@@ -109,19 +109,22 @@ class FrameFactory:
             raise ValueError('size not set')
 
         w, h = self.__size
-        textures = [meta.MetaTexture(target=t, iformat=f, width=w, height=h) for t, f in self.__textures_prop]
+        locs = []
+        textures = []
+        for t, f, i in self.__textures_prop:
+            if i in locs:
+                raise ValueError('color attachment location has to be unique')
+            locs.append(i)
+            textures.append(meta.MetaTexture(target=t, iformat=f, width=w, height=h))
 
-        if len(self.__render_buffer_prop) > 1:
-            raise NotImplementedError
-        render_bffrs = [meta.MetaRenderBffr(iformat=f, width=w, height=h) for f in self.__render_buffer_prop]
-        # # check contradiction in color attachment index
-        # if self.__render_buffer_prop:
-        #     low, high = int(gl.GL_COLOR_ATTACHMENT0), int(gl.GL_COLOR_ATTACHMENT31)
-        #     iformat = int(self.__render_buffer_prop.iformat)
-        #     if low <= iformat <= high and iformat < low + len(self.__textures_prop):
-        #         raise ValueError('render buffer cant have given color attachment index')
+        render_bffrs = []
+        for f, i in self.__render_buffer_prop:
+            if i in locs:
+                raise ValueError('color attachment location has to be unique')
+            locs.append(i)
+            render_bffrs.append(meta.MetaRenderBffr(iformat=f, width=w, height=h))
 
-        frame_bffr = meta.MetaFrameBffr(*textures, render_buffer=render_bffrs[0])
+        frame_bffr = meta.MetaFrameBffr(*textures, *render_bffrs, locs=locs)
 
         manager = self.__manager()
         frame = Frame(manager, frame_bffr, w, h)
@@ -237,7 +240,8 @@ class Frame(RenderDevice):
         """
         return self.__size
 
-    def render_pane_space(self, attachment_idx, pdomain_x=(-1, 1), pdomain_y=(-1, 1), pane_z=0, tdomain_x=(0, 1), tdomain_y=(0, 1)):
+    def render_pane_space(self, attachment_idx, pdomain_x=(-1, 1), pdomain_y=(-1, 1), pane_z=0, tdomain_x=(0, 1),
+                          tdomain_y=(0, 1)):
         """
         render frame's given attachment on pane space
 
@@ -282,7 +286,7 @@ class Frame(RenderDevice):
         texture = self.__frame_bffr.get_texture_attachment(attachment_idx)
         self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
 
-    def clear(self, r=0, g=0, b=0, a=1, color=True, depth=True, stencil=True):
+    def clear(self, r=0, g=0, b=0, a=1):
         """
         clear frame
 
@@ -295,10 +299,40 @@ class Frame(RenderDevice):
         :param stencil: bool, flag clean stencil
         :return:
         """
+
         gl.glClearColor(r, g, b, a)
-        if color: gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-        if depth: gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
-        if stencil: gl.glClear(gl.GL_STENCIL_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+
+    def clear_texture(self, id, r, g, b, a):
+        """
+        clear texture of given attachment id
+
+        :param id: int, color attachment id
+        :param r: (0 ~ 1.0), float for red
+        :param g: (0 ~ 1.0), float for green
+        :param b: (0 ~ 1.0), float for blue
+        :param a: (0 ~ 1.0), float for alpha
+        :return:
+        """
+        texture = self.frame_bffr.get_texture_attachment(id)
+        color = np.array((r, g, b, a), dtype=np.float32)
+        gl.glClearTexImage(texture.get_concrete(), 0, texture.iformat, gl.GL_FLOAT, color)
+
+    def clear_depth(self):
+        """
+        clear depth
+
+        :return:
+        """
+        gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
+
+    def clear_stencil(self):
+        """
+        clear stencil
+
+        :return:
+        """
+        raise NotImplementedError
 
 
 class FrameManager(RenderDeviceManager):
