@@ -12,6 +12,8 @@ from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
 import gkernel.dtype.geometric as gt
 import gkernel.dtype.nongeometric.matrix as mx
+import gkernel.color as clr
+
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
 from global_tools.lazy import lazyProp
 
@@ -226,7 +228,7 @@ class Frame(RenderDevice):
         return f"<Frame {self.__size}>"
 
     @property
-    def frame_bffr(self):
+    def frame_bffr(self) -> meta.MetaFrameBffr:
         return self.__frame_bffr
 
     @property
@@ -239,12 +241,12 @@ class Frame(RenderDevice):
         """
         return self.__size
 
-    def render_pane_space(self, attachment_idx, pdomain_x=(-1, 1), pdomain_y=(-1, 1), pane_z=0, tdomain_x=(0, 1),
+    def render_pane_space(self, aid, pdomain_x=(-1, 1), pdomain_y=(-1, 1), pane_z=0, tdomain_x=(0, 1),
                           tdomain_y=(0, 1)):
         """
         render frame's given attachment on pane space
 
-        :param attachment_idx:
+        :param aid:
         :param pdomain_x: (-1.~1., -1.~1.), pane space x domain
         :param pdomain_y: (-1.~1., -1.~1.), pane space y domain
         :param pane_z: -1.~1., pane space z value, -1 closest
@@ -252,14 +254,14 @@ class Frame(RenderDevice):
         :param tdomain_y: (float, float), texture space y domain
         :return:
         """
-        texture = self.__frame_bffr.get_texture_attachment(attachment_idx)
+        texture = self.__frame_bffr.get_texture_attachment(aid)
         self.__renderer.render_pane_space(texture, pdomain_x, pdomain_y, pane_z, tdomain_x, tdomain_y)
 
-    def render_world_space(self, attachment_idx, pln: gt.Pln, width, height, tdomain_x=(0, 1), tdomain_y=(0, 1)):
+    def render_world_space(self, aid, pln: gt.Pln, width, height, tdomain_x=(0, 1), tdomain_y=(0, 1)):
         """
         render frame's given attachment on world coordinate system
 
-        :param attachment_idx: int, index of color attachment source
+        :param aid: int, color attachment id
         :param pln: Pln, plane to render at
         :param width: Number, width of render area
         :param height: Number, height of render area
@@ -267,7 +269,7 @@ class Frame(RenderDevice):
         :param tdomain_y: (float, float), texture space y domain
         :return:
         """
-        if not isinstance(attachment_idx, int):
+        if not isinstance(aid, int):
             raise TypeError
         if not isinstance(pln, gt.Pln):
             raise TypeError
@@ -282,12 +284,45 @@ class Frame(RenderDevice):
         quad_pos = sm * quad_pos
         quad_pos = pln.orient(obj=quad_pos, ref_pln=gt.Pln()).T
 
-        texture = self.__frame_bffr.get_texture_attachment(attachment_idx)
+        texture = self.__frame_bffr.get_texture_attachment(aid)
         self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
+
+    def pick_texture(self, aid, pos, parameterized):
+        """
+        pick texture color of given attachment id, position
+
+        :param aid: int, color attachment id
+        :param pos: (Number, Number), pixel coordinate
+        :param parameterized: bool, if given pixel coordinate is of parameterized(0 ~ 1.0)
+        :return:
+        """
+        texture = self.frame_bffr.get_texture_attachment(aid)
+        if parameterized:
+            x, y = [int(a*b) for a, b in zip(pos, texture.size)]
+        else:
+            x, y = pos
+        gl.glReadBuffer(gl.GL_COLOR_ATTACHMENT1)
+        b = gl.glReadPixelsf(x, y, 1, 1, texture.iformat)
+        if texture.iformat == gl.GL_RGB:
+            return clr.ClrRGB(*b[0][0])
+        else:
+            raise NotImplementedError
+
+    def pick_texture_area(self, aid, xdomain, ydomain, parameterized):
+        """
+        pick value of given texture area
+
+        :param aid:
+        :param xdomain:
+        :param ydomain:
+        :param parameterized:
+        :return:
+        """
+        raise NotImplementedError
 
     def clear(self, r=0, g=0, b=0, a=1):
         """
-        clear frame
+        clear all
 
         :param r: (0 ~ 1.0), float for red
         :param g: (0 ~ 1.0), float for green
