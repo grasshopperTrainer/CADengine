@@ -49,7 +49,7 @@ class NodeBody(_NodeMember):
         input_vs = OrderedDict()
         for intf in self.input_intfs:
             if intf.sibling_intf_allowed:
-                input_vs.setdefault(intf.family_name, []).register(intf.get_calculated_value())
+                input_vs.setdefault(intf.family_name, []).register_get(intf.get_calculated_value())
             else:
                 input_vs[intf] = intf.get_calculated_value()
 

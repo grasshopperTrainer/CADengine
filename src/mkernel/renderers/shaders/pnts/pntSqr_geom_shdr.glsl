@@ -10,13 +10,16 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 in vsOut {
     vec4 clr;
     float dia;
+    vec3 cid;
 } vs_in[];
 
 out vec4 clr;
+out vec3 cid;
 
 void main() {
     // invariants
     clr = vs_in[0].clr;
+    cid = vs_in[0].cid;
     float rad = vs_in[0].dia/2;
     vec4 pnt = VM*MM*gl_in[0].gl_Position;
     // vectors of identical size

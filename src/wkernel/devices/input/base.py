@@ -272,6 +272,6 @@ class Keyboard(_InputDevice):
         return cls.__glfw_key_dict.key_to_char(key, mods)
 
     def get_key_status(self, *chars):
-        with self.window.context.glfw as glfw:
-            return tuple(glfw.get_key(self.__glfw_key_dict.char_to_key(char)) for char in chars)
+        with self.window.context.glfw as window:
+            return tuple(glfw.get_key(window, self.__glfw_key_dict.char_to_key(char)) for char in chars)
 

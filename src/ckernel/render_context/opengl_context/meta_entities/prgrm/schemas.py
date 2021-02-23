@@ -36,7 +36,7 @@ class VrtxAttrSchema(_GLSLParamSchema):
         cache = BffrCache(self._dtype, self._locs, size)
         return cache
 
-    def create_vrtx_bffr_fac(self) -> MetaVrtxBffr:
+    def create_vrtx_bffr(self) -> MetaVrtxBffr:
         """
         create vertex buffer factory that describes entire vertex attribute set
         :return:

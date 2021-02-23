@@ -31,6 +31,13 @@ class MainWindow(Window):
         p1 = model.add_pnt(10, 10, 10)
         p1.dia = 5
         p1.clr = 1, 1, 0, 1
+        p1.frm = p1.FORM_CIRCLE
+
+        P2 = model.add_pnt(20, 20, 20)
+        P2.dia = 5
+        P2.clr = 1, 1, 0, 1
+        P2.frm = P2.FORM_TRIANGLE
+
         self.model = model
         self.is_rendered = False
 
@@ -54,7 +61,7 @@ class SubWindow(Window):
         self.ma = mother
 
     def draw(self):
-        pass
+        time.sleep(0.1)
         with self.devices.frames[0] as f:
             f.clear_depth()
             if self.ma.is_rendered:

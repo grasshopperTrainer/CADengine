@@ -160,7 +160,7 @@ class BffrCache(ArrayContainer):
                 s = e = i  # start counting new consecutive
         heapq.heappush(self.__block_pool, (s, e+1))  # dont forget remaining
         # count vertex in use
-        self.__num_vertex_inuse -= block.size
+        self.__num_vertex_inuse -= len(block)
         # update highest index
         if block.indices[-1] == self.__highest_indx:
             if self.__block_inuse:
@@ -306,6 +306,7 @@ class BffrCache(ArrayContainer):
 
         def __str__(self):
             return f"<Block {self.__indices}]>"
+
         @property
         def indices(self):
             """

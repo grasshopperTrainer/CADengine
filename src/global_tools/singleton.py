@@ -1,5 +1,8 @@
+import weakref
+
+# can here be memory leak?
 def Singleton(cls):
-    instances = {}
+    instances = weakref.WeakKeyDictionary()
 
     def getinstance(*args):
         if cls not in instances:

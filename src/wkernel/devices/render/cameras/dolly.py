@@ -28,7 +28,7 @@ class FpsDolly(Dolly):
         :return:
         """
         # left right back forward create delta vector
-        x, y, z = tripod.in_plane.r.axes
+        x, y, z = tripod.plane.axes
         dvec = ZeroVec()
         for c, v in zip(('a', 's', 'd', 'w', 'e', 'q'), (-x, z, x, -z, ZVec(), -ZVec())):
             if keyboard.get_key_status(c)[0]:

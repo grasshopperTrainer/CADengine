@@ -18,6 +18,10 @@ class CameraTripod:
         self.__pln = Pln()
 
     @property
+    def plane(self):
+        return self.__pln
+
+    @property
     def VM(self):
         """
         veiw matrix

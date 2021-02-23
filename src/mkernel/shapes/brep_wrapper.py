@@ -1,12 +1,6 @@
-import random
-import weakref as wr
-
-import numpy as np
-from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 from mkernel.shapes.base import Shape
-import gkernel.dtype.geometric as gt
-from mkernel.renderers.brep_renderer import BrepRenderer
 from gkernel.color import *
+from mkernel.color_registry import GlobalColorRegistry
 
 
 class Brep(Shape):
@@ -21,8 +15,6 @@ class Brep(Shape):
         # self.__crv_cache = BffrCache(dtype=np.dtype([('clr', 'f4', 4), ('thk', 'f4')]), locs=(0, 1), size=16)
         # self.__srf_cache =
         self.__points = set()
-
-        self.__entity_registry = EntityRegistry()
 
     @property
     def geo(self):
@@ -45,7 +37,7 @@ class Brep(Shape):
         point_indx_block = self.__pnt_indx_cache.request_block(size=1)
 
         point = PointRenderEntity(vrtx, vrtx_block, point_vrtx_block, point_indx_block)
-        self.__entity_registry.getset_entity_cid(point)
+        GlobalColorRegistry().register_get(point)
         self.__points.add(point)
         return vrtx
 
@@ -55,44 +47,6 @@ class Brep(Shape):
     def add_pgon(self):
         raise NotImplementedError
 
-
-class EntityRegistry:
-
-    def __init__(self):
-        self.__record = wr.WeakKeyDictionary()
-
-        self.__color_comp_bitsize = 8
-        self.__color_comp_bitmask = [0 for i in range(3)]
-
-    def getset_entity_cid(self, entity):
-        """
-        get, set color id for the entity
-
-        :param entity:
-        :return:
-        """
-        if entity in self.__record:
-            return self.__record[entity]
-        else:
-            while True:
-                color_comps = tuple(random.getrandbits(self.__color_comp_bitsize) for _ in range(3))
-                # check for reserved 0
-                if any([cc == 0 for cc in color_comps]):
-                    continue
-
-                masked_count = 0
-                for bm, cc in zip(self.__color_comp_bitmask, color_comps):
-                    if bm & (1 << cc):
-                        masked_count += 1
-                # color is already occupied
-                if masked_count == 3:
-                    continue
-                else:   # mask
-                    for i in range(3):
-                        self.__color_comp_bitmask[i] |= color_comps[i]
-                    break
-            self.__record[entity] = color_comps
-            return color_comps
 
 class RenderEntity:
     pass

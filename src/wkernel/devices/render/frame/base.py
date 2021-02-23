@@ -137,19 +137,18 @@ class FrameRenderer:
     __THIS_PATH = os.path.dirname(__file__)
     __quad_prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__THIS_PATH, 'quad_vrtx_shdr.glsl'),
                                   frgm_path=os.path.join(__THIS_PATH, 'quad_frgm_shdr.glsl'))
-    __quad_ufrm_block = __quad_prgrm.ufrm_cache.request_block(size=1)
 
     __pane_prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__THIS_PATH, 'pane_vrtx_shdr.glsl'),
                                   frgm_path=os.path.join(__THIS_PATH, 'pane_frgm_shdr.glsl'))
 
     def __init__(self):
         # quad set
-        self.__quad_vbo = self.__quad_prgrm.vrtxattr_schema.create_vrtx_bffr_fac()
+        self.__quad_vbo = self.__quad_prgrm.vrtxattr_schema.create_vrtx_bffr()
         self.__quad_vrtx_block = self.__quad_vbo.cache.request_block(size=4)
         self.__quad_vrtx_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
         self.__quad_vao = meta.MetaVrtxArry(self.__quad_vbo)
         # pane set
-        self.__pane_vbo = self.__pane_prgrm.vrtxattr_schema.create_vrtx_bffr_fac()
+        self.__pane_vbo = self.__pane_prgrm.vrtxattr_schema.create_vrtx_bffr()
         self.__pane_vrtx_block = self.__pane_vbo.cache.request_block(size=4)
         self.__pane_vrtx_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
         self.__pane_vao = meta.MetaVrtxArry(self.__pane_vbo)
@@ -190,13 +189,13 @@ class FrameRenderer:
                 with self.__quad_prgrm:
                     # update uniforms
                     camera = get_current_ogl().manager.window.devices.cameras.current
-                    self.__quad_ufrm_block['PM'] = camera.body.PM
-                    self.__quad_ufrm_block['VM'] = camera.tripod.VM
-                    self.__quad_ufrm_block['MM'] = [[1, 0, 0, 0],
-                                                    [0, 1, 0, 0],
-                                                    [0, 0, 1, 0],
-                                                    [0, 0, 0, 1]]
-                    self.__quad_prgrm.push_internal_ufrm_cache()
+                    self.__quad_prgrm.uniforms['PM'] = camera.body.PM
+                    self.__quad_prgrm.uniforms['VM'] = camera.tripod.VM
+                    self.__quad_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
+                                                        [0, 1, 0, 0],
+                                                        [0, 0, 1, 0],
+                                                        [0, 0, 0, 1]]
+                    self.__quad_prgrm.push_uniforms()
                     gl.glDrawArrays(gl.GL_QUADS, 0, 4)
 
 
