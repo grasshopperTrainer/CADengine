@@ -94,15 +94,19 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
             gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
 
-    def local_cursor(self):
+    def cursor_pos(self, parameterize):
         """
         Returns cursor position in view coordinate system
         :param view:
+        :param parameterize:
         :return:
         """
         w, h = self.manager.window.glyph.size
-        unitize_matrix = ScaleMat(1 / w, 1 / h)
-        pos = unitize_matrix * self.glyph.trnsf_matrix.r.I * Pnt(*self.manager.window.devices.mouse.cursor_pos)
+        if parameterize:
+            TM = ScaleMat(1 / w, 1 / h) * self.glyph.trnsf_matrix.r.I
+        else:
+            TM = self.glyph.trnsf_matrix.r.I
+        pos = TM * Pnt(*self.manager.window.devices.mouse.cursor_pos)
         return pos.x, pos.y
 
 

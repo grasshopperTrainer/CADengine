@@ -111,6 +111,8 @@ class lazyProp:
         self.__flags = wr.WeakKeyDictionary()
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
         # init
         if instance not in self.__cache:
             # setattr(instance, f"_{owner.__name__.lstrip('_')}__lazyProp_{self.__func.__name__}", self)
@@ -122,21 +124,32 @@ class lazyProp:
             self.__flags[instance] = False
         return self.__cache[instance]
 
-    def __set__(self, instance, value):
+    def reset(self, instance):
         """
-        reset cache switch
+        reset cache
 
+        accessible via `self.__class__.(arg_name).reset(self)` pattern
         :param instance:
-        :param value: bool, set True to reset cache, False to disable gen. cache flag
         :return:
         """
-        if not isinstance(value, bool):
-            raise TypeError('use this interface to reset cache')
-        if value:
-            self.__flags[instance] = True
-            self.__cache[instance] = None
-        else:
-            self.__flags[instance] = False
+        self.__flags[instance] = True
+
+    #
+    # def __set__(self, instance, value):
+    #     """
+    #     reset cache switch
+    #
+    #     :param instance:
+    #     :param value: bool, set True to reset cache, False to disable gen. cache flag
+    #     :return:
+    #     """
+    #     if not isinstance(value, bool):
+    #         raise TypeError('use this interface to reset cache')
+    #     if value:
+    #         self.__flags[instance] = True
+    #         self.__cache[instance] = None
+    #     else:
+    #         self.__flags[instance] = False
 
     # def reset(self, instance):
     #     """

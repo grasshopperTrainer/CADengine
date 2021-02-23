@@ -37,7 +37,7 @@ class Brep(Shape):
         point_indx_block = self.__pnt_indx_cache.request_block(size=1)
 
         point = PointRenderEntity(vrtx, vrtx_block, point_vrtx_block, point_indx_block)
-        GlobalColorRegistry().register_get(point)
+        GlobalColorRegistry().register_entity(point)
         self.__points.add(point)
         return vrtx
 

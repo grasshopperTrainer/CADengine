@@ -24,39 +24,23 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d064fdea-d921-4fd4-84bd-ed603bd63e33" name="Default Changelist" comment="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    This provides cid globally. Does it support multiprocessing? Not yet but may need to.">
-      <change afterPath="$PROJECT_DIR$/etc/test ubyte float conversion.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mkernel/color_registry.py" afterDir="false" />
+    <list default="true" id="d064fdea-d921-4fd4-84bd-ed603bd63e33" name="Default Changelist" comment="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    Accepts entity and returns unique id - color representable. Thread safe.&#10;    &#10;implement `PointRenderer` color id render&#10;    Primitive renderers now should outputs color id into GL_COLOR_ATTACHMENT1. Only Points do for now.&#10;    &#10;fix `MetaPrgrm` cache integration&#10;    'uniforms' is a block with size 1 and can be __setitem__ directly.">
+      <change afterPath="$PROJECT_DIR$/run/color picking.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/etc/gl/single frame triangle drawing with element array.py" beforeDir="false" afterPath="$PROJECT_DIR$/etc/gl/single frame triangle drawing with element array.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/etc/noding/getting explained.py" beforeDir="false" afterPath="$PROJECT_DIR$/etc/noding/getting explained.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/gl/single frame triangle drawing with element array.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/gl/single frame triangle drawing with element array.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/noding/getting explained.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/noding/getting explained.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run/render frame buffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render frame buffer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run/render points form.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render points form.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/bffr_cache.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/prgrm/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/prgrm/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/prgrm/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/prgrm/schemas.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/ogl_entities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/global_tools/singleton.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/singleton.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/frame_buffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/frame_buffer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/texture.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/texture.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gkernel/color/primitive.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/color/primitive.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/global_tools/lazy.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/lazy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/color_registry.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/color_registry.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mkernel/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/brep_renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/brep_renderer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/polygon_renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/polygon_renderer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/primitive_renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/primitive_renderer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntCir_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntCir_frgm_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntCir_vrtx_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntCir_vrtx_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_frgm_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_geom_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_geom_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_vrtx_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntSqr_vrtx_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntTgl_frgm_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntTgl_frgm_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntTgl_geom_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntTgl_geom_shdr.glsl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntTgl_vrtx_shdr.glsl" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/renderers/shaders/pnts/pntTgl_vrtx_shdr.glsl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mkernel/shapes/brep_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shapes/brep_wrapper.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mkernel/shapes/primitive_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shapes/primitive_wrapper.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/input/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/input/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/cameras/dolly.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/cameras/dolly.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/cameras/parts.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/cameras/parts.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/frame/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/frame/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/panes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/panes.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -136,8 +120,8 @@
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\renderers\shaders\tgls" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.render frame buffer">
-    <configuration name="MWindow" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.color picking">
+    <configuration name="color picking" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -145,11 +129,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/wkernel" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/wkernel/MWindow.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/color picking.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -244,11 +228,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.color picking" />
         <item itemvalue="Python.render frame buffer" />
-        <item itemvalue="Python.render points form" />
         <item itemvalue="Python.scratch_11" />
+        <item itemvalue="Python.render points form" />
         <item itemvalue="Python.render multi process" />
-        <item itemvalue="Python.MWindow" />
       </list>
     </recent_temporary>
   </component>
@@ -652,7 +636,7 @@
       <option name="presentableId" value="pyopengl2-34" />
       <option name="project" value="pyopengl2" />
       <option name="type" value="BUG" />
-      <updated>1613999657548</updated>
+      <updated>1614056143410</updated>
     </task>
     <option name="localTasksCounter" value="28" />
     <option name="clearContext" value="false" />
@@ -688,7 +672,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="pyopengl2-34" />
+                        <option value="origin/pyopengl2-34" />
                       </list>
                     </value>
                   </entry>
@@ -717,7 +701,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement perspective circle point render&#10;    Smooth circle using vertex and fragment shader only." />
     <MESSAGE value="pyopengl2-53 implement element array buffer in Shape&#10;&#10;enhance line triangle renderer&#10;    Now following pattern of `PointRenderer`.&#10;    &#10;implement triangle point render&#10;    Perspective point render of shape circumcircle triangle." />
     <MESSAGE value="pyopengl2-56 fix name 'EntityFactory'&#10;&#10;refactor 'Factory' into 'Meta'&#10;   The class has 'Factory' functionalities but 'Meta' fits better. 'Meta' class is a class that moves dependency of entity from context to application(holder). Inheritor should implement none-context specific functions at Meta instead of Concrete, such as caching. In the same manner 'Meta' provides python builtin context manager pattern." />
     <MESSAGE value="pyopengl2-58 implement bffr cache compaction, merge algorithm&#10;&#10;implement `SkipList`&#10;    Basic `SkipList` written. Skip list is chosen as a data structure for storing vacant, occupied `BffrCache` Blocks. It is chosen for it having benefits of both array list and linked list, which are, fast binary searching and fast insertion." />
@@ -742,6 +725,7 @@
     <MESSAGE value="pyopengl2-92 refactor GLFW/GL context specification result&#10;&#10;fix commit" />
     <MESSAGE value="pyopengl2-92 refactor GLFW/GL context specification result&#10;&#10;implement __lock inside `OGLMetaEntity`&#10;    `get_concrete` has to be locked to ensure only needed entities are created.&#10;    &#10;    As using 'unique render thread' approach, its users obligation to control timing correctly. But as rendering often has sleeping phase, think threading can bring some benefit in terms of efficiency.&#10;    resolve #92" />
     <MESSAGE value="pyopengl2-34 consider implement color id intersection&#10;&#10;implement individual texture clearing" />
-    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-34 consider implement color id intersection&#10;&#10;implement individual texture clearing" />
+    <MESSAGE value="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    Accepts entity and returns unique id - color representable. Thread safe.&#10;    &#10;implement `PointRenderer` color id render&#10;    Primitive renderers now should outputs color id into GL_COLOR_ATTACHMENT1. Only Points do for now.&#10;    &#10;fix `MetaPrgrm` cache integration&#10;    'uniforms' is a block with size 1 and can be __setitem__ directly." />
+    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    Accepts entity and returns unique id - color representable. Thread safe.&#10;    &#10;implement `PointRenderer` color id render&#10;    Primitive renderers now should outputs color id into GL_COLOR_ATTACHMENT1. Only Points do for now.&#10;    &#10;fix `MetaPrgrm` cache integration&#10;    'uniforms' is a block with size 1 and can be __setitem__ directly." />
   </component>
 </project>

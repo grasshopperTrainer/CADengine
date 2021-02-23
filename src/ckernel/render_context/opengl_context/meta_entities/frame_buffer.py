@@ -1,5 +1,4 @@
 from .base import OGLMetaEntity
-from ..ogl_entities import _FrameBffr
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from .texture import MetaTexture
 from ..constant_enum import RenderBufferTarget
@@ -90,7 +89,7 @@ class MetaFrameBffr(OGLMetaEntity):
         else:
             raise TypeError
 
-    def get_texture_attachment(self, idx):
+    def get_texture_attachment(self, idx) -> MetaTexture:
         """
         return texture of given color attachment
 

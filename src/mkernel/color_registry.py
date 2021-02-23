@@ -13,13 +13,14 @@ class GlobalColorRegistry:
     ! has to be thread safe
     """
     def __init__(self):
-        self.__record = wr.WeakKeyDictionary()
+        self.__entity_color = {}
+        self.__color_entity = wr.WeakValueDictionary()
 
         self.__color_comp_bitsize = 8
         self.__color_comp_bitmask = [0 for _ in range(3)]
         self.__lock = threading.Lock()
 
-    def register_get(self, entity):
+    def register_entity(self, entity):
         """
         register color id with the entity
 
@@ -28,8 +29,8 @@ class GlobalColorRegistry:
         :return: cid
         """
         with self.__lock:
-            if entity in self.__record:
-                return _ColorGetter(self.__record[entity])
+            if entity in self.__entity_color:
+                return _ColorGetter(self.__entity_color[entity])
             # find vacant color
             while True:
                 color = np.random.randint(low=0, high=256, size=3, dtype=np.ubyte)
@@ -48,7 +49,10 @@ class GlobalColorRegistry:
                     for i in range(3):
                         self.__color_comp_bitmask[i] |= color[i]
                     break
-            self.__record[entity] = color
+
+            tcolor = tuple(color)
+            self.__entity_color[entity] = tcolor
+            self.__color_entity[tcolor] = entity
             return _ColorGetter(color)
 
     def deregister(self, entity):
@@ -59,7 +63,7 @@ class GlobalColorRegistry:
         :return:
         """
         with self.__lock:
-            if entity not in self.__record:
+            if entity not in self.__entity_color:
                 raise
             raise NotImplementedError
 
@@ -70,7 +74,16 @@ class GlobalColorRegistry:
         :param entity:
         :return:
         """
-        return entity in self.__record
+        return entity in self.__entity_color
+
+    def get_registered(self, cid):
+        """
+        return entity if given cid is valid
+
+        :param cid:
+        :return:
+        """
+        return self.__color_entity.get(cid, None)
 
 
 class _ColorGetter:

@@ -21,6 +21,7 @@ class ModelIterator:
 
 class Model:
     def __init__(self):
+        self._shapes = {}
         self._plane = gw.Pln()
         self.__renderers = {}
 
@@ -29,6 +30,7 @@ class Model:
             self.__renderers[geo_wrapper] = renderer_type()
         renderer = self.__renderers[geo_wrapper]
         shp = geo_wrapper(geo, renderer)
+        self._shapes.setdefault(geo_wrapper, []).append(shp)
         return shp
 
     def add_geo(self, geo):
