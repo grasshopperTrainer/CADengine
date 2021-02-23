@@ -57,9 +57,8 @@ class Brep:
             p = self.geometry.add_point(pnt)
             v = self.topology.add_vertex(p)
         else:
-            p = self.geometry.get_coincident_point(pnt)
             v = self.topology.get_coincident_vertex(pnt)
-        return v, p
+        return v
 
     def iter_edges(self):
         pass

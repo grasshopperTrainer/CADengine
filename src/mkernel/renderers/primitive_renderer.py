@@ -24,8 +24,6 @@ renderer holds prgrm and global uniform cache
 """
 
 
-
-
 class PointRenderer(_Renderer):
     """
     this is not an expandable, simple functionality wrapper
@@ -59,16 +57,9 @@ class PointRenderer(_Renderer):
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_frgm_shdr.glsl'))
 
     # shared vertex buffer
-    __vbo = MetaVrtxBffr(
-        attr_desc=np.dtype([('vtx', RDF, 4), ('clr', RDF, 4), ('dia', RDF)]),
-        attr_locs=(0, 1, 2))
+    __vbo = __square_prgrm.vrtxattr_schema.create_vrtx_bffr()
 
     def __init__(self):
-
-        self.__square_ufrm_cache = self.__square_prgrm.ufrm_schema.create_bffr_cache(size=1)
-        self.__circle_ufrm_cache = self.__circle_prgrm.ufrm_schema.create_bffr_cache(size=1)
-        self.__triangle_ufrm_cache = self.__triangle_prgrm.ufrm_schema.create_bffr_cache(size=1)
-
         self.__circle_ibo = MetaIndxBffr('uint')
         self.__circle_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__circle_ibo)
         self.__square_ibo = MetaIndxBffr('uint')
@@ -102,16 +93,16 @@ class PointRenderer(_Renderer):
         if not self.__square_ibo.cache.active_size:
             return
         with self.__square_vao:
-            with self.__square_prgrm as prgrm:
+            with self.__square_prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__square_ufrm_cache['PM'] = camera.body.PM
-                self.__square_ufrm_cache['VM'] = camera.tripod.VM
-                self.__square_ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                                  [0, 1, 0, 0],
-                                                  [0, 0, 1, 0],
-                                                  [0, 0, 0, 1]]
-                prgrm.push_ufrms(self.__square_ufrm_cache)
+                self.__square_prgrm.uniforms['PM'] = camera.body.PM
+                self.__square_prgrm.uniforms['VM'] = camera.tripod.VM
+                self.__square_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
+                                                      [0, 1, 0, 0],
+                                                      [0, 0, 1, 0],
+                                                      [0, 0, 0, 1]]
+                self.__square_prgrm.push_uniforms()
                 self.__square_ibo.push_cache()
                 # mode, count, type, indices
                 gl.glDrawElements(gl.GL_POINTS,
@@ -123,21 +114,21 @@ class PointRenderer(_Renderer):
         if not self.__circle_ibo.cache.active_size:
             return
         with self.__circle_vao:
-            with self.__circle_prgrm as prgrm:
+            with self.__circle_prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__circle_ufrm_cache['PM'] = camera.body.PM
-                self.__circle_ufrm_cache['VM'] = camera.tripod.VM
-                self.__circle_ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                                  [0, 1, 0, 0],
-                                                  [0, 0, 1, 0],
-                                                  [0, 0, 0, 1]]
+                self.__circle_prgrm.uniforms['PM'] = camera.body.PM
+                self.__circle_prgrm.uniforms['VM'] = camera.tripod.VM
+                self.__circle_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
+                                                      [0, 1, 0, 0],
+                                                      [0, 0, 1, 0],
+                                                      [0, 0, 0, 1]]
                 pane = get_current_ogl().manager.window.devices.panes.current
-                self.__circle_ufrm_cache['VPP'] = *pane.pos, *pane.size
-                prgrm.push_ufrms(self.__circle_ufrm_cache)
-
+                self.__circle_prgrm.uniforms['VPP'] = *pane.pos, *pane.size
+                self.__circle_prgrm.push_uniforms()
                 self.__circle_ibo.push_cache()
+
                 gl.glDrawElements(gl.GL_POINTS,
                                   self.__circle_ibo.cache.active_size,
                                   self.__circle_ibo.cache.gldtype[0],
@@ -147,17 +138,17 @@ class PointRenderer(_Renderer):
         if not self.__triangle_ibo.cache.active_size:
             return
         with self.__triangle_vao:
-            with self.__triangle_prgrm as prgrm:
+            with self.__triangle_prgrm:
                 # update uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
 
-                self.__triangle_ufrm_cache['PM'] = camera.body.PM
-                self.__triangle_ufrm_cache['VM'] = camera.tripod.VM
-                self.__triangle_ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                                    [0, 1, 0, 0],
-                                                    [0, 0, 1, 0],
-                                                    [0, 0, 0, 1]]
-                prgrm.push_ufrms(self.__triangle_ufrm_cache)
+                self.__triangle_prgrm.uniforms['PM'] = camera.body.PM
+                self.__triangle_prgrm.uniforms['VM'] = camera.tripod.VM
+                self.__triangle_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
+                                                        [0, 1, 0, 0],
+                                                        [0, 0, 1, 0],
+                                                        [0, 0, 0, 1]]
+                self.__triangle_prgrm.push_uniforms()
                 self.__triangle_ibo.push_cache()
                 gl.glDrawElements(gl.GL_POINTS,
                                   self.__triangle_ibo.cache.active_size,
@@ -188,7 +179,6 @@ class LineRenderer(_Renderer):
         attr_locs=(0, 1, 2))
 
     def __init__(self):
-        self.__ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
         self.__ibo = MetaIndxBffr(dtype='uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -208,37 +198,34 @@ class LineRenderer(_Renderer):
         if not self.__ibo.cache.active_size:
             return
         with self.__vao:
-            with self.__sharp_prgrm as prgrm:
+            with self.__sharp_prgrm:
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__ufrm_cache['VM'] = camera.tripod.VM.r
-                self.__ufrm_cache['PM'] = camera.body.PM.r
-                self.__ufrm_cache['MM'] = [[1, 0, 0, 0],
-                                           [0, 1, 0, 0],
-                                           [0, 0, 1, 0],
-                                           [0, 0, 0, 1]]
-                prgrm.push_ufrms(self.__ufrm_cache)
+                self.__sharp_prgrm.uniforms['VM'] = camera.tripod.VM.r
+                self.__sharp_prgrm.uniforms['PM'] = camera.body.PM.r
+                self.__sharp_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
+                                                     [0, 1, 0, 0],
+                                                     [0, 0, 1, 0],
+                                                     [0, 0, 0, 1]]
+                self.__sharp_prgrm.push_uniforms()
                 self.__ibo.push_cache()
                 gl.glDrawElements(gl.GL_LINES,
                                   self.__ibo.cache.active_size,
                                   self.__ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
 
+
 @Singleton
 class PolylineRenderer(_Renderer):
+    __sharp_prgrm = meta.MetaPrgrm(
+        vrtx_path=get_shader_fullpath('shaders/plinSharp_vrtx_shdr.glsl'),
+        geom_path=get_shader_fullpath('shaders/plinSharp_geom_shdr.glsl'),
+        frgm_path=get_shader_fullpath('shaders/plinSharp_frgm_shdr.glsl')
+    )
+
     def __init__(self):
-        self.__sharp_prgrm = meta.MetaPrgrm(
-            vrtx_path=get_shader_fullpath('shaders/plinSharp_vrtx_shdr.glsl'),
-            geom_path=get_shader_fullpath('shaders/plinSharp_geom_shdr.glsl'),
-            frgm_path=get_shader_fullpath('shaders/plinSharp_frgm_shdr.glsl')
-        )
-        self.__vbo = MetaVrtxBffr(
-            attr_desc=np.dtype([('vtx', 'f4', 4), ('thk', 'f4'), ('clr', 'f4', 4)]),
-            attr_locs=(0, 1, 2)
-        )
+        self.__vbo = self.__sharp_prgrm.vrtxattr_schema.create_buffer()
         self.__ibo = MetaIndxBffr(dtype='uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
-
-        self.__ufrm_cache = self.__sharp_prgrm.ufrm_schema.create_bffr_cache(size=1)
 
     @property
     def vbo(self):
@@ -257,16 +244,16 @@ class PolylineRenderer(_Renderer):
         if not self.__ibo.cache.active_size:
             return
         with self.__vao:
-            with self.__sharp_prgrm as prgrm:
+            with self.__sharp_prgrm:
                 # uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__ufrm_cache['VM'] = camera.tripod.VM.r
-                self.__ufrm_cache['PM'] = camera.body.PM.r
-                self.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+                self.__sharp_prgrm.uniforms['VM'] = camera.tripod.VM.r
+                self.__sharp_prgrm.uniforms['PM'] = camera.body.PM.r
+                self.__sharp_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
                                            [0, 1, 0, 0],
                                            [0, 0, 1, 0],
                                            [0, 0, 0, 1]]
-                prgrm.push_ufrms(self.__ufrm_cache)
+                self.__sharp_prgrm.push_uniforms()
 
                 gl.glDrawElements(gl.GL_LINE_STRIP,
                                   self.__ibo.cache.active_size,
@@ -305,7 +292,6 @@ class TriangleRenderer(_Renderer):
         attr_locs=(0, 1, 2, 3))
 
     def __init__(self):
-        self.__ufrm_cache = self.__fill_prgrm.ufrm_schema.create_bffr_cache(size=1)
         self.__ibo = MetaIndxBffr('uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -325,13 +311,13 @@ class TriangleRenderer(_Renderer):
         camera = get_current_ogl().manager.window.devices.cameras.current
         vm = camera.tripod.VM.r
         pm = camera.body.PM.r
-        self.__ufrm_cache['VM'] = vm
-        self.__ufrm_cache['PM'] = pm
-        self.__ufrm_cache['MM'] = [[1, 0, 0, 0],
+        prgrm.uniforms['VM'] = vm
+        prgrm.uniforms['PM'] = pm
+        prgrm.uniforms['MM'] = [[1, 0, 0, 0],
                                    [0, 1, 0, 0],
                                    [0, 0, 1, 0],
                                    [0, 0, 0, 1]]
-        prgrm.push_ufrms(self.__ufrm_cache)
+        prgrm.push_uniforms()
 
     def render(self, is_render_edge=True):
         """
@@ -349,8 +335,8 @@ class TriangleRenderer(_Renderer):
     def __render_fill(self):
         if not self.__ibo.cache.active_size:
             return
-        with self.__fill_prgrm as prgrm:
-            self.__update_global_ufrm(prgrm)
+        with self.__fill_prgrm:
+            self.__update_global_ufrm(self.__fill_prgrm)
             gl.glDrawElements(gl.GL_TRIANGLES,
                               self.__ibo.cache.active_size,
                               self.__ibo.cache.gldtype[0],
@@ -359,10 +345,9 @@ class TriangleRenderer(_Renderer):
     def __render_edge(self):
         if not self.__ibo.cache.active_size:
             return
-        with self.__edge_prgrm as prgrm:
-            self.__update_global_ufrm(prgrm)
+        with self.__edge_prgrm:
+            self.__update_global_ufrm(self.__edge_prgrm)
             gl.glDrawElements(gl.GL_TRIANGLES,
                               self.__ibo.cache.active_size,
                               self.__ibo.cache.gldtype[0],
                               ctypes.c_void_p(0))
-

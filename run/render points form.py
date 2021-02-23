@@ -18,7 +18,7 @@ class MyWindow(Window):
         pnts = []
         for i in range(20):
             e += 20
-            pnts.append(Pnt(e, 0, 0))
+            pnts.append(self.model.add_pnt(e, 0, 0))
         for p in pnts:
             p.dia = 10
 
@@ -34,7 +34,7 @@ class MyWindow(Window):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 0)
-                self.model.test_render()
+                self.model.render()
 
 
 MyWindow().run_all(1)

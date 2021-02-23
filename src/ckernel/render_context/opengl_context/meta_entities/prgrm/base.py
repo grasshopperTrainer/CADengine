@@ -6,6 +6,7 @@ from ..error import *
 
 from .shdr_parser import SimpleShdrParser
 from .shdr_parser import VrtxAttrSchema, UfrmSchema
+from global_tools.lazy import lazyProp
 
 
 class MetaPrgrm(OGLMetaEntity):
@@ -25,36 +26,22 @@ class MetaPrgrm(OGLMetaEntity):
             self.__read_source(geom_path, gl.GL_GEOMETRY_SHADER)
         if frgm_path is not None:
             self.__read_source(frgm_path, gl.GL_FRAGMENT_SHADER)
-        # glsl parameter skemas
-        self.__va_skema = None
-        self.__uf_skema = None
-        # internal cache
-        self.__ufrm_cache = None
 
-    @property
+    @lazyProp
     def vrtxattr_schema(self) -> VrtxAttrSchema:
-        return self.__initget_prgrm_params()[0]
+        return SimpleShdrParser.parse_vrtx_attrs(self.__shdr_srcs[gl.GL_VERTEX_SHADER][1])
 
-    @property
+    @lazyProp
     def ufrm_schema(self) -> UfrmSchema:
-        return self.__initget_prgrm_params()[1]
+        return SimpleShdrParser.parse_uniforms(*[s for n, s in self.__shdr_srcs.values()])
 
-    @property
-    def ufrm_cache(self):
-        self.__initget_prgrm_params()
-        return self.__ufrm_cache
+    @lazyProp
+    def __uniform_cache(self):
+        return self.ufrm_schema.create_bffr_cache(size=1)
 
-    def __initget_prgrm_params(self):
-        """
-        return program parameters or initiate and return
-
-        :return: (VrtxAttrSkema, UfrmSkema)
-        """
-        if self.__va_skema is None:
-            self.__va_skema = SimpleShdrParser.parse_vrtx_attrs(self.__shdr_srcs[gl.GL_VERTEX_SHADER][1])
-            self.__uf_skema = SimpleShdrParser.parse_uniforms(*[s for n, s in self.__shdr_srcs.values()])
-            self.__ufrm_cache = self.__uf_skema.create_bffr_cache(size=1)
-        return self.__va_skema, self.__uf_skema
+    @lazyProp
+    def uniforms(self):
+        return self.__uniform_cache.request_block(size=1)
 
     def __read_source(self, file_path, shdr_type):
         """
@@ -93,21 +80,14 @@ class MetaPrgrm(OGLMetaEntity):
         if not gl.glGetProgramiv(prgrm, gl.GL_LINK_STATUS):
             raise PrgrmLinkError(shdrs)
 
-        # check for enforced layout declaration just once
-        # checking it after link success reduces work
-        va, uf = self.__initget_prgrm_params()
-        prgrm.attach_vrtxattr_skema(va)
-        prgrm.attach_ufrm_skema(uf)
-
         # deleted used shaders if all is successful
         for shdr in shdrs:
             gl.glDeleteShader(shdr)
         return prgrm
 
-    def push_internal_ufrm_cache(self):
-        self.__initget_prgrm_params()
+    def push_uniforms(self):
         with self:
-            self.__push_ufrms(self.__ufrm_cache)
+            self.__push_ufrms(self.__uniform_cache)
 
     def push_external_ufrm_cache(self, cache):
         with self:
@@ -118,7 +98,6 @@ class MetaPrgrm(OGLMetaEntity):
         push data into bound ogl prgrm
 
         :param bffr_cache: `_BffrCache`, data to push into ogl prgrm
-        :param prgrm: `_Prgrm`, data to push into ogl prgrm
         :return:
         """
         for name, loc, shape, dtype, _, _ in bffr_cache.field_props:

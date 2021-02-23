@@ -3,6 +3,7 @@ import mkernel.shapes.primitive_wrapper as gw
 import gkernel.dtype.geometric as gt
 import mkernel.shapes as st
 import mkernel.renderers as rend
+from .color_registry import GlobalColorRegistry
 
 
 class ModelIterator:
@@ -25,7 +26,9 @@ class Model:
         self.__renderers = {}
 
     def __add_geo_helper(self, geo, geo_wrapper, renderer_type):
-        renderer = self.__renderers.setdefault(geo_wrapper, renderer_type())
+        if geo_wrapper not in self.__renderers:
+            self.__renderers[geo_wrapper] = renderer_type()
+        renderer = self.__renderers[geo_wrapper]
         shp = geo_wrapper(geo, renderer)
         self._shapes.setdefault(geo_wrapper, []).append(shp)
         return shp

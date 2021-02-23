@@ -1,8 +1,7 @@
 from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 from global_tools import Singleton, callbackRegistry
-
-import ckernel.glfw_context.glfw_hooker as glfw
+import glfw
 
 
 class _InputDevice:
@@ -24,8 +23,8 @@ class Mouse(_InputDevice):
 
     def __init__(self, window):
         super().__init__(window)
-        with window.context.glfw as glfw:
-            glfw.set_cursor_pos_callback(self.__master_cursor_pos_callback)
+        with window.context.glfw as window:
+            glfw.set_cursor_pos_callback(window, self.__master_cursor_pos_callback)
 
     def __master_cursor_pos_callback(self, window, xpos, ypos):
         """
@@ -96,9 +95,9 @@ class Mouse(_InputDevice):
         flips y to match OpenGL coordinate system
         :return:
         """
-        with self.window.context.glfw as glfw:
-            _, height = glfw.get_window_size()
-            x, y = glfw.get_cursor_pos()
+        with self.window.context.glfw as window:
+            _, height = glfw.get_window_size(window)
+            x, y = glfw.get_cursor_pos(window)
         return x, height - y
 
     def cursor_center(self):
@@ -106,8 +105,8 @@ class Mouse(_InputDevice):
 
     def cursor_goto_center(self):
         win = self.window
-        with self.window.context.glfw as glfw:
-            glfw.set_cursor_pos(win.glyph.width.r / 2, win.glyph.height.r / 2)
+        with self.window.context.glfw as window:
+            glfw.set_cursor_pos(window, win.glyph.w0.r / 2, win.glyph.h0.r / 2)
 
 
 class UnknownKeyError(Exception):
@@ -206,8 +205,8 @@ class Keyboard(_InputDevice):
         self.__key_press_dict = self.__glfw_key_dict.get_copied_dict()
         for k, v in self.__key_press_dict.items():
             self.__key_press_dict[k] = [None, 0]  # time, pressed
-        with window.context.glfw as glfw:
-            glfw.set_key_callback(self.__master_key_callback)
+        with window.context.glfw as window:
+            glfw.set_key_callback(window, self.__master_key_callback)
 
     def __master_key_callback(self, window, key, scancode, action, mods):
         """
@@ -273,6 +272,6 @@ class Keyboard(_InputDevice):
         return cls.__glfw_key_dict.key_to_char(key, mods)
 
     def get_key_status(self, *chars):
-        with self.window.context.glfw as glfw:
-            return tuple(glfw.get_key(self.__glfw_key_dict.char_to_key(char)) for char in chars)
+        with self.window.context.glfw as window:
+            return tuple(glfw.get_key(window, self.__glfw_key_dict.char_to_key(char)) for char in chars)
 

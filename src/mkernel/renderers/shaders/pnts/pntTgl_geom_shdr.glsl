@@ -8,15 +8,20 @@ layout (location = 1) uniform mat4 VM = mat4(1.0);
 layout (location = 2) uniform mat4 PM = mat4(1.0);
 
 in vsOut {
+    vec3 cid;
     vec4 clr;
     float dia;
 } vs_in[];
 
-out vec4 clr;
+out gsOut {
+    vec3 cid;
+    vec4 clr;
+} gs_out;
 
 void main() {
+    gs_out.cid = vs_in[0].cid;
     // invariants
-    clr = vs_in[0].clr;
+    gs_out.clr = vs_in[0].clr;
     float rad = vs_in[0].dia/2;  //circumcircle
     float cosv = cos(radians(120));
     float sinv = sin(radians(120));

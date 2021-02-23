@@ -3,6 +3,7 @@ from numbers import Number
 
 from ..array_like import ArrayLikeData
 from ..constants import DTYPE
+from global_tools.lazy import lazyProp
 
 
 class Clr(ArrayLikeData):
@@ -10,6 +11,15 @@ class Clr(ArrayLikeData):
     @staticmethod
     def is_num_complike(num):
         return isinstance(num, Number) and 0 <= num <= 1
+
+
+    @lazyProp
+    def as_byte(self):
+        return (self*255).astype(np.uint8).tolist()
+
+    def __setattr__(self, key, value):
+        super(Clr, self).__setattr__(key, value)
+        self.__class__.as_byte.reset(self)
 
     def __str__(self):
         return f"<{self.__class__.__name__}: {[round(v, 3) for v in self.view(np.ndarray)]}>"

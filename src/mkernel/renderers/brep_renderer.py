@@ -48,12 +48,12 @@ class BrepRenderer(_Renderer):
             with self.__pnt_prgrm as prgrm:
                 window = get_current_ogl().manager.window
                 camera = window.devices.cameras.current
-                self.__pnt_prgrm.ufrm_cache['PM'] = camera.body.PM
-                self.__pnt_prgrm.ufrm_cache['VM'] = camera.tripod.VM
-                self.__pnt_prgrm.ufrm_cache['MM'] = np.eye(4)
+                self.__pnt_prgrm.uniforms['PM'] = camera.body.PM
+                self.__pnt_prgrm.uniforms['VM'] = camera.tripod.VM
+                self.__pnt_prgrm.uniforms['MM'] = np.eye(4)
                 pane = window.devices.panes.current
-                self.__pnt_prgrm.ufrm_cache['VPP'] = *pane.pos, *pane.size
-                self.__pnt_prgrm.push_internal_ufrm_cache()
+                self.__pnt_prgrm.uniforms['VPP'] = *pane.pos, *pane.size
+                self.__pnt_prgrm.push_uniforms()
 
                 gl.glDrawElements(gl.GL_POINTS,
                                   self.__pnt_ibo.cache.active_size,

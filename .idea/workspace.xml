@@ -24,11 +24,24 @@
     </select>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93e3d051-baab-4e5d-a1f6-0e63dea9bbee" name="pyopengl2-73 implement polygon" comment="pyopengl2-73 implement polygon&#10;&#10;test alphabet Polygon">
-      <change beforePath="$PROJECT_DIR$/run/render polygons alphabets.py" beforeDir="false" afterPath="$PROJECT_DIR$/run/render polygons alphabets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mkernel/shapes/polygon_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shapes/polygon_wrapper.py" afterDir="false" />
+    <list default="true" id="d064fdea-d921-4fd4-84bd-ed603bd63e33" name="Default Changelist" comment="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    Accepts entity and returns unique id - color representable. Thread safe.&#10;    &#10;implement `PointRenderer` color id render&#10;    Primitive renderers now should outputs color id into GL_COLOR_ATTACHMENT1. Only Points do for now.&#10;    &#10;fix `MetaPrgrm` cache integration&#10;    'uniforms' is a block with size 1 and can be __setitem__ directly.">
+      <change afterPath="$PROJECT_DIR$/run/color picking.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/etc/gl/single frame triangle drawing with element array.py" beforeDir="false" afterPath="$PROJECT_DIR$/etc/gl/single frame triangle drawing with element array.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/etc/noding/getting explained.py" beforeDir="false" afterPath="$PROJECT_DIR$/etc/noding/getting explained.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/gl/single frame triangle drawing with element array.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/gl/single frame triangle drawing with element array.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/noding/getting explained.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/noding/getting explained.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/frame_buffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/frame_buffer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/texture.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ckernel/render_context/opengl_context/meta_entities/texture.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gkernel/color/primitive.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gkernel/color/primitive.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/global_tools/lazy.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/global_tools/lazy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/color_registry.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/color_registry.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/shapes/brep_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shapes/brep_wrapper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mkernel/shapes/primitive_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mkernel/shapes/primitive_wrapper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/frame/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/frame/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/wkernel/devices/render/panes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/wkernel/devices/render/panes.py" afterDir="false" />
     </list>
-    <list id="a2bb444d-d792-46e6-85ce-941cf08504b1" name="pyopengl2-19 mapping cursor pos into view coordinate system" comment="some refactoring before writing ray-traingle intersection" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -54,7 +67,7 @@
     </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="pyopengl2-73" />
+        <entry key="$PROJECT_DIR$" value="pyopengl2-93" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -100,15 +113,15 @@
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shaders" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\ckernel" />
+      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\run" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\wkernel\devices\render\cameras" />
       <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\renderers\shaders\tgls" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\renderers\shaders\pgon" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\renderers\shaders\pnts" />
-      <recent name="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2\src\mkernel\shapes" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.render polygons alphabets">
-    <configuration name="generalize HMAX, HMIN" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.color picking">
+    <configuration name="color picking" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -120,7 +133,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/generalize HMAX, HMIN.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/color picking.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -129,7 +142,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render more polygons" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="render frame buffer" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -141,7 +154,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render more polygons.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render frame buffer.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -150,7 +163,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render overflow pnts" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="render multi process" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -162,7 +175,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render overflow pnts.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render multi process.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -171,7 +184,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="render polygons alphabets" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="render points form" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -183,7 +196,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render polygons alphabets.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run/render points form.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -192,7 +205,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="scratch_10" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="scratch_11" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyopengl2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -204,7 +217,7 @@
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_10.py" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_11.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -215,11 +228,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.render polygons alphabets" />
-        <item itemvalue="Python.generalize HMAX, HMIN" />
-        <item itemvalue="Python.scratch_10" />
-        <item itemvalue="Python.render more polygons" />
-        <item itemvalue="Python.render overflow pnts" />
+        <item itemvalue="Python.color picking" />
+        <item itemvalue="Python.render frame buffer" />
+        <item itemvalue="Python.scratch_11" />
+        <item itemvalue="Python.render points form" />
+        <item itemvalue="Python.render multi process" />
       </list>
     </recent_temporary>
   </component>
@@ -233,6 +246,7 @@
   <component name="TaskManager">
     <task id="Default" summary="Default task">
       <branch name="windowing" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
+      <changelist id="d064fdea-d921-4fd4-84bd-ed603bd63e33" name="Default Changelist" comment="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    This provides cid globally. Does it support multiprocessing? Not yet but may need to." />
       <created>1583740018340</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -554,10 +568,9 @@
       <option name="project" value="LOCAL" />
       <updated>1612099275679</updated>
     </task>
-    <task active="true" id="pyopengl2-73" summary="implement polygon">
+    <task id="pyopengl2-73" summary="implement polygon">
       <branch name="master" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
       <branch name="pyopengl2-73" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
-      <changelist id="93e3d051-baab-4e5d-a1f6-0e63dea9bbee" name="pyopengl2-73 implement polygon" comment="" />
       <created>1612143692000</created>
       <option name="issue" value="true" />
       <url>https://github.com/grasshopperTrainer/pyopengl2/issues/73</url>
@@ -590,6 +603,40 @@
       <option name="project" value="pyopengl2" />
       <option name="type" value="BUG" />
       <updated>1612849482158</updated>
+    </task>
+    <task active="true" id="pyopengl2-93" summary="implement shared Window">
+      <branch name="pyopengl2-34" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
+      <branch name="pyopengl2-93" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
+      <created>1613616436000</created>
+      <option name="issue" value="true" />
+      <url>https://github.com/grasshopperTrainer/pyopengl2/issues/93</url>
+      <option name="number" value="93" />
+      <option name="presentableId" value="pyopengl2-93" />
+      <option name="project" value="pyopengl2" />
+      <option name="type" value="BUG" />
+      <updated>1613984129583</updated>
+    </task>
+    <task id="pyopengl2-92" summary="refactor GLFW/GL context specification result">
+      <branch name="pyopengl2-93" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" original="true" />
+      <branch name="pyopengl2-92" repository="C:\Users\dingo\OneDrive\prgrm_dev\pyopengl2" />
+      <created>1613559156000</created>
+      <option name="issue" value="true" />
+      <url>https://github.com/grasshopperTrainer/pyopengl2/issues/92</url>
+      <option name="number" value="92" />
+      <option name="presentableId" value="pyopengl2-92" />
+      <option name="project" value="pyopengl2" />
+      <option name="type" value="BUG" />
+      <updated>1613979094381</updated>
+    </task>
+    <task id="pyopengl2-34" summary="consider implement color id intersection">
+      <created>1609725799000</created>
+      <option name="issue" value="true" />
+      <url>https://github.com/grasshopperTrainer/pyopengl2/issues/34</url>
+      <option name="number" value="34" />
+      <option name="presentableId" value="pyopengl2-34" />
+      <option name="project" value="pyopengl2" />
+      <option name="type" value="BUG" />
+      <updated>1614056143410</updated>
     </task>
     <option name="localTasksCounter" value="28" />
     <option name="clearContext" value="false" />
@@ -625,7 +672,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="pyopengl2-73" />
+                        <option value="origin/pyopengl2-34" />
                       </list>
                     </value>
                   </entry>
@@ -654,13 +701,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement triangle renderer." />
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement line renderer." />
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement triangle sharp edge renderer&#10;Learn writing geometry kernel." />
-    <MESSAGE value="pyopengl2-46 parse variable names from glsl source&#10;&#10;implement `SimpleShdrParser` and 'VrtxAttrSkema', `UfrmSkema`&#10;Simplified mechanism for reading parameters from shader source. Instead of fullspec including lexer, token, parser, it uses regex pattern to figure out layout location values. This mechanism forces all shader's parameter have layout declaration.&#10;'VrtxAttrSkema' and 'UfrmSkema' objects hold necessary information for creating buffer cache that can be used to push data into the program.&#10;! notice that buffer cache can't have one to one relationship with program. Program is independent from buffers and so are buffers.&#10;resolve #46" />
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement fancy line renderer&#10;Now line rendering has property of shape sharp, and thickness property. Important feature is that thickness is drawn perpendicular to camera normal, meaning line rectangle is always facing viewport center. This can be checked by running 'render lines with edge.py'. Farther implementation can include capping." />
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;&#10;append render functionality:&#10;    implement `PointRenderer.render_square`:&#10;        Point has dia(diameter), clr(color), frm(form) render properties.&#10;&#10;refine OpenGL program build, entity enhancement prosedure:&#10;    seperate `factory`, `PrgrmFactory` into separate module&#10;        resolve #54&#10;    &#10;    refactor `_PrimitiveRenderer`&#10;        Done whilst handling problems below;&#10;        &#10;    dump descriptor functionality of `OGLEntityFactory`:&#10;        Usage becomes confusing. Better seperate it into something like `OGLEntityDispenser`&#10;        &#10;    append `dtype` property and `create_vrtx_bffr` in `_GLSLParamSchema` instead of :&#10;        Vertex buffer doesn't match one to one with program's vertex attribute schema. One would want to store vertex attribute in many buffers and weave it using VAO. So better provide access to 'dtype'. On the other hand, using one vertex buffer to store all vertex attribute values is a common practice. In this case, one can use `create_vrtxbffr_fac` to be returned with `VrtxAttrFactory`&#10;        &#10;    remove `UfrmPusher`&#10;        Now program has enough information about its inputs and can handle uniform pushing. But such a 'Pusher' may appear again when uniform buffer is being implemented." />
-    <MESSAGE value="pyopengl2-39 hard coded primitive shape renderer&#10;&#10;implement perspective circle point render&#10;    Smooth circle using vertex and fragment shader only." />
     <MESSAGE value="pyopengl2-53 implement element array buffer in Shape&#10;&#10;enhance line triangle renderer&#10;    Now following pattern of `PointRenderer`.&#10;    &#10;implement triangle point render&#10;    Perspective point render of shape circumcircle triangle." />
     <MESSAGE value="pyopengl2-56 fix name 'EntityFactory'&#10;&#10;refactor 'Factory' into 'Meta'&#10;   The class has 'Factory' functionalities but 'Meta' fits better. 'Meta' class is a class that moves dependency of entity from context to application(holder). Inheritor should implement none-context specific functions at Meta instead of Concrete, such as caching. In the same manner 'Meta' provides python builtin context manager pattern." />
     <MESSAGE value="pyopengl2-58 implement bffr cache compaction, merge algorithm&#10;&#10;implement `SkipList`&#10;    Basic `SkipList` written. Skip list is chosen as a data structure for storing vacant, occupied `BffrCache` Blocks. It is chosen for it having benefits of both array list and linked list, which are, fast binary searching and fast insertion." />
@@ -679,6 +719,13 @@
     <MESSAGE value="pyopengl2-73 implement polygon&#10;&#10;generalize Polygon Trapezoidation&#10;    Not yet fully understanding core, implementation fragile. But good for now.&#10;&#10;implement Polygon normal calculator&#10;    Pgon.__calc_normal()&#10;    &#10;bugfix `Pln.from_lin_pnt`&#10;&#10;bugfix Polygon normalized&#10;    normalized is now stored as np.ndarray not Pgon&#10;    &#10;bugfix coordinate value equation&#10;    Comparison without np.isclose caused serious problem. This problem needs better handling." />
     <MESSAGE value="pyopengl2-73 implement polygon&#10;&#10;backup before generalizing HMIN HMAX" />
     <MESSAGE value="pyopengl2-73 implement polygon&#10;&#10;test alphabet Polygon" />
-    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-73 implement polygon&#10;&#10;test alphabet Polygon" />
+    <MESSAGE value="pyopengl2-93 implement shared Window&#10;&#10;implement ContextCounter&#10;    The class records context in use and make 'glfw.make_context_current' context-free, meaning render thread calling 'glfw.make_context_current' with context being used with another thread will go to sleep till that thread is released by that other thread. So user doesn't have to worry about thread-context paring." />
+    <MESSAGE value="pyopengl2-93 implement shared Window&#10;&#10;fix OGLMetaEntity follow MetaContext" />
+    <MESSAGE value="pyopengl2-92 refactor GLFW/GL context specification result&#10;&#10;implement&#10;    resolve #92" />
+    <MESSAGE value="pyopengl2-92 refactor GLFW/GL context specification result&#10;&#10;fix commit" />
+    <MESSAGE value="pyopengl2-92 refactor GLFW/GL context specification result&#10;&#10;implement __lock inside `OGLMetaEntity`&#10;    `get_concrete` has to be locked to ensure only needed entities are created.&#10;    &#10;    As using 'unique render thread' approach, its users obligation to control timing correctly. But as rendering often has sleeping phase, think threading can bring some benefit in terms of efficiency.&#10;    resolve #92" />
+    <MESSAGE value="pyopengl2-34 consider implement color id intersection&#10;&#10;implement individual texture clearing" />
+    <MESSAGE value="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    Accepts entity and returns unique id - color representable. Thread safe.&#10;    &#10;implement `PointRenderer` color id render&#10;    Primitive renderers now should outputs color id into GL_COLOR_ATTACHMENT1. Only Points do for now.&#10;    &#10;fix `MetaPrgrm` cache integration&#10;    'uniforms' is a block with size 1 and can be __setitem__ directly." />
+    <option name="LAST_COMMIT_MESSAGE" value="pyopengl2-34 consider implement color id intersection&#10;&#10;implement `GlobalColorRegistry`&#10;    Accepts entity and returns unique id - color representable. Thread safe.&#10;    &#10;implement `PointRenderer` color id render&#10;    Primitive renderers now should outputs color id into GL_COLOR_ATTACHMENT1. Only Points do for now.&#10;    &#10;fix `MetaPrgrm` cache integration&#10;    'uniforms' is a block with size 1 and can be __setitem__ directly." />
   </component>
 </project>

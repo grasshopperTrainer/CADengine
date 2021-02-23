@@ -887,11 +887,11 @@ class Pln(ArrayLikeData, PntConv):
 
         if isinstance(obj, self.__class__):
             self[:] = obj
-            self.__standardize()
+            self.__normalize()
         elif isinstance(obj, np.ndarray):
             # self already has resulting value, need to check array correctness
             if self.validate_array(self):
-                self.__standardize()
+                self.__normalize()
             else:
                 raise ValueError('given is not Pln-like')
         else:
@@ -912,14 +912,16 @@ class Pln(ArrayLikeData, PntConv):
             return True
         return False
 
-    def orient(self, obj):
+    def orient(self, obj, ref_pln):
         """
         orient given geometric object to this plane
 
         :param obj:
+        :param ref_pln: Pln, reference plane
         :return:
         """
-        return self.TM * obj
+        pln = self.TM * ref_pln
+        return pln.TM * obj
 
     def get_axis(self, sign: ('x', 'y', 'z')):
         sign = {'x': 1, 'y': 2, 'z': 3}[sign]

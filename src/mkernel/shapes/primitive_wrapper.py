@@ -6,6 +6,7 @@ from .base import Shape
 import mkernel.renderers.primitive_renderer as pr
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 import weakref as wr
+from ..color_registry import GlobalColorRegistry
 
 
 class Ray(Shape):
@@ -28,7 +29,8 @@ class Pnt(Shape):
 
         # set vertex attributes
         self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
-
+        # set cid
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
         # set index buffer
         self.__indx_block = None
         self.__frm = None
@@ -231,7 +233,7 @@ class Plin(Shape):
 
     @clr.setter
     def clr(self, v):
-        if not isinstance(v, Clr):
+        if not isinstance(v, (tuple, list, Clr)):
             raise TypeError
         self.__vrtx_block['clr'] = v
         self.__clr[:] = v
