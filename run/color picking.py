@@ -59,7 +59,7 @@ class MainWindow(Window):
         with self.devices.panes[1] as p:
             self.devices.frames[1].render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
             with self.devices.frames[1] as f:
-                pos = p.cursor_pos(parameterize=True)
+                pos = p.cursor_pos_instant(parameterize=True)
                 c = f.pick_texture(tid=1, pos=pos, parameterized=True).as_byte
                 e = GlobalColorRegistry().get_registered(tuple(c))
                 print(e)

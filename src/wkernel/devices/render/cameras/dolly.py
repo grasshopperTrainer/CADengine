@@ -11,11 +11,11 @@ class Dolly:
 class FpsDolly(Dolly):
 
     def __init__(self):
-        self.move_speed = 10
-        self.view_speed = 0.01
+        self.move_speed = 2
+        self.view_speed = 0.005
         # should it be at upper?
 
-        self._last_cursor_pos = None
+        self.__last_v = Vec(0, 0, 0)
 
     def callbacked_move_tripod(self, keyboard, tripod, **kwargs):
         """
@@ -37,7 +37,7 @@ class FpsDolly(Dolly):
         dvec.as_vec().amplify(self.move_speed)
         tripod.move(dvec)
 
-    def callbacked_move_camera(self, window, xpos, ypos, mouse, tripod):
+    def callbacked_move_camera(self, glfw_window, xpos, ypos, mouse, tripod, window):
         """
         move camera frustum with cursor move
 
@@ -47,12 +47,15 @@ class FpsDolly(Dolly):
         :param mouse:
         :return:
         """
+        xpos, ypos = mouse.cursor_pos_perframe
         v = Vec.from_pnts(Pnt(*mouse.cursor_center()), Pnt(xpos, ypos)) * self.view_speed  # cursor delta
+        v = (self.__last_v + v)/2
+        self.__last_v = v
         # rotate vertically and horizontally
         if abs(v.y) > 0.01:
             tripod.pitch(v.y)
         if abs(v.x) > 0.01:
-            axis = Lin.from_pnt_vec(tripod.in_plane.r.origin, Vec(0, 0, 1))
+            axis = Lin.from_pnt_vec(tripod.plane.origin, Vec(0, 0, 1))
             tripod.rotate_along(axis, -v.x)
 
         mouse.cursor_goto_center()

@@ -65,6 +65,8 @@ class Window(DrawInterface, GlyphInterface):
 
             gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
 
+            # glfw.swap_interval(1)
+
         with self.__context.glfw as glfw_window:
             glfw.set_window_close_callback(glfw_window, self.__close_window)
 
@@ -83,6 +85,8 @@ class Window(DrawInterface, GlyphInterface):
         # FIXME: this is bad bad
         self.__device_manager = DeviceMaster(self)
         # self.devices.cameras[0].body.builder.in3_aspect_ratio = self.devices.panes[0].glyph.aspect_ratio
+
+        self.__flag_indraw = False
 
     def __str__(self):
         return f"<Window: {self.__name}>"
@@ -134,6 +138,10 @@ class Window(DrawInterface, GlyphInterface):
         self.__frame_rate = per_sec
         self.__timer.tfps = per_sec
 
+    @property
+    def is_indraw(self):
+        return self.__flag_indraw
+
     def append_pipeline(self, pipeline):
         self._pipelines.append(pipeline)
 
@@ -151,7 +159,9 @@ class Window(DrawInterface, GlyphInterface):
                 with self.__timer:  # __exit__ of timer will hold thread by time.sleep()
                     with self.__context.gl:
                         self.call_predraw_callback()
+                        self.__flag_indraw = True
                         self.draw()
+                        self.__flag_indraw = False
                         self.call_postdraw_callback()
                         glfw.swap_buffers(glfw_window)
                 self.__frame_count += 1
