@@ -183,6 +183,13 @@ class CameraBody:
         l, r, b, t = (self.__dim[k] for k in 'lrbt')
         return (r - l) / (t - b)
 
+    @property
+    def near(self):
+        return self.__dim['n']
+
+    @property
+    def far(self):
+        return self.__dim['f']
 
     @property
     def dim(self):
@@ -203,4 +210,9 @@ class CameraBody:
 
     @property
     def fshape(self):
+        """
+        frustum shape either 'o'(orthogonal) or 'p'(perspective)
+
+        :return:
+        """
         return self.__fshape

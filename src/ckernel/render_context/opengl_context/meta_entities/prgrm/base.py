@@ -165,7 +165,6 @@ class MetaPrgrm(OGLMetaEntity):
             t = 'i'
         else:
             raise NotImplementedError
-
         return eval(f"gl.glUniform{m}{d}{t}v")
 
     # attachers

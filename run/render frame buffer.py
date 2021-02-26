@@ -14,10 +14,10 @@ class MainWindow(Window):
         ffactory.set_size(w, h)
         ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
                                 format=ffactory.TEXTURE.FORMAT.RGBA,
-                                attachment_loc=0)
+                                tid=0)
         ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
                                 format=ffactory.TEXTURE.FORMAT.RGB,
-                                attachment_loc=1)
+                                tid=1)
         ffactory.set_render_buffer(format=ffactory.RENDER.DEPTH_STENCIL.D24_S8,
                                    attachment_loc=None)
         ffactory.create()

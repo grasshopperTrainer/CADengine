@@ -5,6 +5,7 @@ Schemas describes data structure of shader parameters
 and has methods for creating buffer cache.
 """
 
+
 class _GLSLParamSchema:
     @property
     def dtype(self):
@@ -65,5 +66,6 @@ class UfrmSchema(_GLSLParamSchema):
         """
         cache = BffrCache(self._dtype, self._locs, size)
         for name, val in zip(self._dtype.fields, self._def_val):
-            cache.array[name][...] = val
+            if val is not None:
+                cache.array[name][...] = val
         return cache

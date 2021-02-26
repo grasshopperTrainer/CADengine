@@ -4,6 +4,13 @@ from global_tools.enum import enum
 
 
 class MetaTexture(OGLMetaEntity):
+    __base_iformats = (gl.GL_DEPTH_COMPONENT,
+                       gl.GL_DEPTH_STENCIL,
+                       gl.GL_RED,
+                       gl.GL_RG,
+                       gl.GL_RGB,
+                       gl.GL_RGBA)
+
     def __init__(self, target, iformat, width, height):
         self.__target = target
         self.__iformat = iformat
@@ -12,6 +19,7 @@ class MetaTexture(OGLMetaEntity):
 
     def __str__(self):
         return f"<MetaTexture: {self.__target}, {self.__iformat}>"
+
     @property
     def iformat(self):
         return self.__iformat
@@ -61,9 +69,29 @@ class MetaTexture(OGLMetaEntity):
 
         :return:
         """
-        if self.__iformat == gl.GL_RGB:
-            return gl.GL_RGB
-        elif self.__iformat == gl.GL_RGBA:
-            return gl.GL_RGBA
+        if self.__iformat in self.__base_iformats:
+            return self.__iformat
         else:
             raise NotImplementedError
+
+    def as_unit(self, unit):
+        """
+        instant unit setting
+
+        :param unit:
+        :return:
+        """
+        return _MetaTextureAsUnit(self, unit)
+
+
+class _MetaTextureAsUnit:
+    def __init__(self, mt, unit):
+        self.__mt = mt
+        self.__unit = unit
+
+    def __enter__(self):
+        gl.glActiveTexture(gl.GL_TEXTURE0 + self.__unit)
+        self.__mt.bind()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__mt.unbind()
