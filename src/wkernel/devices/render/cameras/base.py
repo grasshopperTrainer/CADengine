@@ -1,5 +1,5 @@
 import weakref
-from gkernel.dtype.geometric.primitive import Pnt, Lin, Ray, ZeroVec, ZVec
+import gkernel.dtype.geometric as gt
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 from wkernel.devices.render._base import *
 from .dolly import *
@@ -81,6 +81,34 @@ class Camera(RenderDevice):
     def dolly(self):
         return self.__dolly
 
+    @property
+    def near_clipping_face(self):
+        """
+        return frustum near clipping face in WCS
+
+        :return: Plin
+        """
+        pln = self.tripod.plane
+        l, r, b, t, n, f = self.body.dim
+        face = gt.Plin((l, b, -n), (r, b, -n), (r, t, -n), (l, t, -n))
+        return pln.TM * face
+
+    @property
+    def far_clipping_face(self):
+        """
+        return frustum far clipping face in WCS
+
+        :return: Plin
+        """
+        pln = self.tripod.plane
+        l, r, b, t, n, f = self.body.dim
+        if self.body.fshape == 'p':
+            d = f - n
+            # far face dimensions
+            l, r, b, t = [(i * d) / n + i for i in (l, r, b, t)]
+        face = gt.Plin((l, b, -f), (r, b, -f), (r, t, -f), (l, t, -f))
+        return pln.TM * face
+
     def attach_dolly(self, dolly):
         """
         Assign dolly
@@ -118,7 +146,7 @@ class Camera(RenderDevice):
         mm = MoveMat(x=(r + l) / 2, y=(t + b) / 2, z=-n)
         offset = MoveMat(-.5, -.5)  # to compensate origin difference between OpenGL space and pane space
         frustum_point = mm * sm * offset * Pnt(x=param_x, y=param_y, z=0)
-        ray = Ray([0, 0, 0], frustum_point.xyz)
+        ray = gt.Ray([0, 0, 0], frustum_point.xyz)
         return self.tripod.in_plane.r.TM * ray
 
     def focus_pane(self, pane, focus, clip_off):
@@ -175,6 +203,9 @@ class CameraManager(RenderDeviceManager):
             far=100_000).set_frustum_shape('p').create()
         c.tripod.lookat(eye=(0, 0, 100), at=(0, 0, 0), up=(0, 1, 0))
         self.master.tracker.stack.set_base_entity(c)
+
+    def __getitem__(self, item) -> Camera:
+        return super(CameraManager, self).__getitem__(item)
 
     @property
     def factory(self):

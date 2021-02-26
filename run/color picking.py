@@ -16,10 +16,10 @@ class MainWindow(Window):
         ffactory.set_size(w, h)
         ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
                                 format=ffactory.TEXTURE.FORMAT.RGBA,
-                                attachment_loc=0)
+                                tid=0)
         ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
                                 format=ffactory.TEXTURE.FORMAT.RGB,
-                                attachment_loc=1)
+                                tid=1)
         ffactory.set_render_buffer(format=ffactory.RENDER.DEPTH_STENCIL.D24_S8,
                                    attachment_loc=None)
         ffactory.create()
@@ -60,7 +60,7 @@ class MainWindow(Window):
             self.devices.frames[1].render_pane_space(0, (-1, 1), (-1, 1), 0.9, (0, 1), (0, 1))
             with self.devices.frames[1] as f:
                 pos = p.cursor_pos(parameterize=True)
-                c = f.pick_texture(aid=1, pos=pos, parameterized=True).as_byte
+                c = f.pick_texture(tid=1, pos=pos, parameterized=True).as_byte
                 e = GlobalColorRegistry().get_registered(tuple(c))
                 print(e)
 

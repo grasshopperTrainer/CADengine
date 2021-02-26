@@ -7,6 +7,7 @@ in gsOut {
 
 layout (location=0) out vec4 fclr;
 layout (location=1) out vec4 cid;
+//layout (location=2) out vec4 cid;
 
 void main() {
     fclr = gs_in.clr;

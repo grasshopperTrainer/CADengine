@@ -2,7 +2,7 @@
 
 out vec4 fColor;
 
-uniform sampler2D myTexture;
+layout (location=0) uniform sampler2D myTexture;
 
 in vec2 texCoord;
 

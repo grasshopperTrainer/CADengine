@@ -251,7 +251,10 @@ class BffrCache(ArrayContainer):
         ntuple = namedtuple('interleave_prop', 'name, loc, size, dtype, stride, offset')
         stride = self.array.itemsize
         for name, (dtype, offset) in self.__array.dtype.fields.items():
-            dtype, shape = dtype.subdtype
+            if dtype.subdtype is not None:
+                dtype, shape = dtype.subdtype
+            else:
+                shape = (1, )
             loc = self.__locs[name]
             tuples.append(ntuple(name, loc, shape, dtype, stride, offset))
         return tuple(tuples)
