@@ -76,7 +76,7 @@ class CameraTripod:
         rotate along y axis
         :return:
         """
-        origin, camerax, cameray, cameraz = self.in_plane.r.components
+        origin, camerax, cameray, cameraz = self.plane.components
         new_x = camerax.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
         new_z = cameray.cross(new_x)
         self.__pln = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
@@ -86,7 +86,7 @@ class CameraTripod:
         rotate along x axis
         :return:
         """
-        origin, camerax, cameray, cameraz = self.in_plane.r.components
+        origin, camerax, cameray, cameraz = self.plane.components
         new_y = cameray.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
         new_z = Vec.cross(camerax, new_y)
         self.__pln = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)

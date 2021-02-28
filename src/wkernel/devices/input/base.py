@@ -25,18 +25,20 @@ class Mouse(_InputDevice):
         super().__init__(window)
         with window.context.glfw as window:
             glfw.set_cursor_pos_callback(window, self.__master_cursor_pos_callback)
+        self.__cursor_pos_perframe = 0, 0
+        self.window.append_predraw_callback(self.__set_cursor_pos_perframe)
 
-    def __master_cursor_pos_callback(self, window, xpos, ypos):
+    def __master_cursor_pos_callback(self, glfw_window, xpos, ypos):
         """
         Calls all callbacks joined with 'cursor pos callback'
 
-        :param window:
+        :param glfw_window:
         :param xpos:
         :param ypos:
         :return:
         """
-        xpos, ypos = self.cursor_pos
-        self.call_cursor_pos_callback(window=window, xpos=xpos, ypos=ypos, mouse=self)
+        xpos, ypos = self.cursor_pos_instant
+        self.call_cursor_pos_callback(glfw_window, xpos, ypos, mouse=self)
 
     @callbackRegistry
     def call_cursor_pos_callback(self):
@@ -63,7 +65,7 @@ class Mouse(_InputDevice):
         transform_matrix = view.glyph.trnsf_matrix.r.I.M
         w, h = self.window.glyph.size
         unitize_matrix = ScaleMat(1 / w, 1 / h)
-        pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos)
+        pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos_instant)
         if not normalize:
             w, h = view.glyph.size
             view_scale_matrix = ScaleMat(w, h)
@@ -88,11 +90,11 @@ class Mouse(_InputDevice):
         # raise NotImplementedError
 
     @property
-    def cursor_pos(self):
+    def cursor_pos_instant(self):
         """
-        Ask glfw current cursor pos and return
+        Ask glfw event poll thread current cursor pos and return
 
-        flips y to match OpenGL coordinate system
+        flips y to match window coordinate system
         :return:
         """
         with self.window.context.glfw as window:
@@ -100,13 +102,34 @@ class Mouse(_InputDevice):
             x, y = glfw.get_cursor_pos(window)
         return x, height - y
 
+    @property
+    def cursor_pos_perframe(self):
+        """
+        cursor pos stored at the beginning of frame rendering
+
+        This is needed as cursor pos is polled by separate thread.
+        One has to use this value if it needs a consistent cursor pos during a whole frame rendering
+
+        e.g. FPS camera controlled by cursor movement. Instant cursor_pos called at the beginning and ending
+        of frame rendering may return distinct values respectively thus causing perspective anomaly.
+        :return:
+        """
+        return self.__cursor_pos_perframe
+
+    def __set_cursor_pos_perframe(self):
+        w = self.window.context.glfw_window
+        pos = glfw.get_cursor_pos(w)
+        self.__cursor_pos_perframe = pos[0], glfw.get_window_size(w)[1] - pos[1]
+
     def cursor_center(self):
         return tuple(v / 2 for v in self.window.glyph.size)
 
     def cursor_goto_center(self):
         win = self.window
+        center = win.glyph.width.r / 2, win.glyph.height.r / 2
         with self.window.context.glfw as window:
-            glfw.set_cursor_pos(window, win.glyph.w0.r / 2, win.glyph.h0.r / 2)
+            glfw.set_cursor_pos(window, *center)
+        self.__cursor_pos_perframe = center
 
 
 class UnknownKeyError(Exception):

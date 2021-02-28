@@ -106,7 +106,7 @@ class Pane(RenderDevice, GlyphInterface):
             TM = ScaleMat(1 / w, 1 / h) * self.glyph.trnsf_matrix.r.I
         else:
             TM = self.glyph.trnsf_matrix.r.I
-        pos = TM * Pnt(*self.manager.window.devices.mouse.cursor_pos)
+        pos = TM * Pnt(*self.manager.window.devices.mouse.cursor_pos_instant)
         return pos.x, pos.y
 
 
