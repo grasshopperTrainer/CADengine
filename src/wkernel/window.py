@@ -139,7 +139,7 @@ class Window(DrawInterface, GlyphInterface):
         self.__timer.tfps = per_sec
 
     @property
-    def is_indraw(self):
+    def is_drawing(self):
         return self.__flag_indraw
 
     def append_pipeline(self, pipeline):
