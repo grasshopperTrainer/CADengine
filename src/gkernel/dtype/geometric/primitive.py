@@ -118,6 +118,12 @@ class Mat1(ArrayLikeData):
         if isinstance(self, Vec):
             if isinstance(other, Vec):
                 return super().__sub__(other)
+            elif isinstance(other, np.ndarray):
+                if not other.shape: # singular unit
+                    # compare components
+                    return self[:3] - other
+                else:
+                    raise NotImplementedError
         elif isinstance(self, Pnt):
             if isinstance(other, Pnt):
                 return super().__sub__(other).view(Vec)
@@ -453,7 +459,7 @@ class Vec(Mat1, VecConv, PntConv):
         boolean for self being zero vector
         :return:
         """
-        return True if self.xyz == (0, 0, 0) else False
+        return np.isclose(self, 0, atol=ATOL).all()
 
     def is_parallel_with(self, vec):
         """

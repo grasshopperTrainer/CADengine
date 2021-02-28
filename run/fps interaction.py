@@ -62,8 +62,11 @@ class MainWindow(Window):
 
         self.ref0 = model.add_pnt(0, 0, 0)
         self.ref1 = model.add_pnt(0, 0, 0)
+        self.ref2 = model.add_pnt(0, 0, 0)
+
         self.ref0.dia = 0.5
         self.ref1.dia = 0.5
+        self.ref2.dia = 0.5
         self.ref1.frm = p1.FORM_TRIANGLE
 
         self.model = model
@@ -77,6 +80,7 @@ class MainWindow(Window):
         with self.devices.cameras[0] as cam:
             self.ref0.geo = cam.tripod.plane.TM * gt.Pnt(2, 2, -30)
             self.ref1.geo = cam.tripod.plane.TM * gt.Pnt(-2, -2, -30)
+            self.ref2.geo = cam.tripod.plane.TM * gt.Pnt(0, 0, -30)
 
             with self.devices.frames[1] as f:
                 f.clear_depth()
@@ -88,7 +92,6 @@ class MainWindow(Window):
         with self.devices.panes[1] as p:
             self.ground.render(cam)
             self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
-
             with self.devices.frames[1] as deff:
                 pos = p.cursor_pos(parameterize=True)
                 c = deff.pick_texture(tid=1, pos=pos, parameterized=True).as_byte

@@ -1,6 +1,8 @@
-from .base import OGLMetaEntity
+import numpy as np
+from ckernel.render_context.opengl_context.meta_entities.base import OGLMetaEntity
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from global_tools.enum import enum
+from .exporter import TxtrExporter
 
 
 class MetaTexture(OGLMetaEntity):
@@ -38,10 +40,13 @@ class MetaTexture(OGLMetaEntity):
         TWO_D = enum.prop(gl.GL_TEXTURE_2D)
         THREE_D = enum.prop(gl.GL_TEXTURE_3D)
 
+    def bind(self):
+        super(MetaTexture, self).bind()
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
+
     def _create_entity(self):
         texture = gl.glGenTextures(1)
         texture.set_target(self.__target)
-        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
         with texture:
             # data can latter be filled so make glTexImage2D part of initiation
             if self.__target in (gl.GL_TEXTURE_2D,):
@@ -50,6 +55,7 @@ class MetaTexture(OGLMetaEntity):
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+                gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
                 gl.glTexImage2D(self.__target,  # target
                                 0,  # level
                                 self.__iformat,  # internalformat
@@ -82,6 +88,31 @@ class MetaTexture(OGLMetaEntity):
         :return:
         """
         return _MetaTextureAsUnit(self, unit)
+
+    def image_export(self, file_name: str):
+        """
+        export texture as an image file
+
+        :param file_name:
+        :param format:
+        :return:
+        """
+        im_format = file_name.rsplit('.')[-1]
+        if im_format in ('jpg',):
+            iformat = gl.GL_BGR
+            comp_size = 3
+        elif im_format in ('png',):
+            iformat = gl.GL_BGRA
+            comp_size = 4
+        else:
+            raise NotImplementedError
+
+        with self:
+            gl.glPixelStorei(gl.GL_PACK_ALIGNMENT, 1)
+            im = gl.glGetTexImage(gl.GL_TEXTURE_2D, 0, iformat, gl.GL_UNSIGNED_BYTE)
+        im = np.array(tuple(im)).reshape((self.size[1], self.size[0], comp_size))
+        im = np.flip(im, axis=0)
+        TxtrExporter().export(file_name, im)
 
 
 class _MetaTextureAsUnit:

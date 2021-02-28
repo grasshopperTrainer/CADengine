@@ -319,7 +319,7 @@ class Frame(RenderDevice):
         :param with_depth: bool, render with current frame buffer's depth texture
         :return:
         """
-        texture = self.__frame_bffr.get_texture_attachment(tid)
+        texture = self.__frame_bffr.get_attachment(tid)
         self.__renderer.render_pane_space(texture, txtr_domain, pane_domain, pane_z)
 
     def render_pane_space_depth(self, tid, txtr_domain=(0, 1, 0, 1), pane_domain=(-1, 1, -1, 1)):
@@ -334,8 +334,8 @@ class Frame(RenderDevice):
         :param pane_domain: (-1.~1., -1.~1., -1.~1., -1.~1.), texture space x0,y0, x1,y1 domain
         :return:
         """
-        color_txtr = self.__frame_bffr.get_texture_attachment(tid)
-        depth_txtr = self.__frame_bffr.get_texture_attachment('d')
+        color_txtr = self.__frame_bffr.get_attachment(tid)
+        depth_txtr = self.__frame_bffr.get_attachment('d')
         self.__renderer.render_pane_space_depth(color_txtr, depth_txtr, txtr_domain, pane_domain)
 
     def render_world_space(self, aid, pln: gt.Pln, width, height, tdomain_x=(0, 1), tdomain_y=(0, 1)):
@@ -365,7 +365,7 @@ class Frame(RenderDevice):
         quad_pos = sm * quad_pos
         quad_pos = pln.orient(obj=quad_pos, ref_pln=gt.Pln()).T
 
-        texture = self.__frame_bffr.get_texture_attachment(aid)
+        texture = self.__frame_bffr.get_attachment(aid)
         self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
 
     def pick_texture(self, tid, pos, parameterized):
@@ -377,7 +377,7 @@ class Frame(RenderDevice):
         :param parameterized: bool, if given pixel coordinate is of parameterized(0 ~ 1.0)
         :return:
         """
-        texture = self.frame_bffr.get_texture_attachment(tid)
+        texture = self.frame_bffr.get_attachment(tid)
         if parameterized:
             x, y = [int(a * b) for a, b in zip(pos, texture.size)]
         else:
@@ -429,7 +429,7 @@ class Frame(RenderDevice):
         :param a: (0 ~ 1.0), float for alpha
         :return:
         """
-        texture = self.frame_bffr.get_texture_attachment(id)
+        texture = self.frame_bffr.get_attachment(id)
         color = np.array((r, g, b, a), dtype=np.float32)
         gl.glClearTexImage(texture.get_concrete(), 0, texture.iformat, gl.GL_FLOAT, color)
 

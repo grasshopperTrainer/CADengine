@@ -1,6 +1,6 @@
 from .base import OGLMetaEntity
 import ckernel.render_context.opengl_context.opengl_hooker as gl
-from .texture import MetaTexture
+from ckernel.render_context.opengl_context.meta_entities.txtr.body import MetaTexture
 from ..constant_enum import DrawBufferFormats
 
 
@@ -42,6 +42,9 @@ class MetaFrameBffr(OGLMetaEntity):
         :return:
         """
         return self.__textures[0].size
+    @property
+    def textures(self):
+        pass
 
     def _create_entity(self):
         if not self.__attachments:
@@ -93,7 +96,7 @@ class MetaFrameBffr(OGLMetaEntity):
         else:
             raise TypeError
 
-    def get_texture_attachment(self, tid) -> MetaTexture:
+    def get_attachment(self, tid) -> MetaTexture:
         """
         return texture of given color attachment
 
