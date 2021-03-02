@@ -1,7 +1,8 @@
-from gkernel.dtype.geometric.primitive import Pnt
+from gkernel.dtype.geometric.primitive import Pnt, Vec
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 from global_tools import Singleton, callbackRegistry
 import glfw
+import numpy as np
 
 
 class _InputDevice:
@@ -25,8 +26,12 @@ class Mouse(_InputDevice):
         super().__init__(window)
         with window.context.glfw as window:
             glfw.set_cursor_pos_callback(window, self.__master_cursor_pos_callback)
-        self.__cursor_pos_perframe = 0, 0
         self.window.append_predraw_callback(self.__set_cursor_pos_perframe)
+
+        self.__pos_perframe = Vec(0, 0, 0)
+        self.__pos_prev = Vec(0, 0, 0)
+        self.__pos_instant = Vec(0, 0, 0)
+        self.__accel = Vec(0, 0, 0)
 
     def __master_cursor_pos_callback(self, glfw_window, xpos, ypos):
         """
@@ -37,8 +42,16 @@ class Mouse(_InputDevice):
         :param ypos:
         :return:
         """
-        xpos, ypos = self.cursor_pos_instant
-        self.call_cursor_pos_callback(glfw_window, xpos, ypos, mouse=self)
+        # flip glfw window space to match OGL space(like texture that has bottom left origin)
+        ypos = self.window.glyph.size[1] - ypos
+
+        # update values
+        self.__pos_instant = Vec(xpos, ypos, 0)
+        self.__accel = self.__pos_instant - self.__pos_prev
+        self.__pos_prev = self.__pos_instant
+
+        # call registered callbacks
+        self.call_cursor_pos_callback(glfw_window, *self.__pos_instant.xy, mouse=self)
 
     @callbackRegistry
     def call_cursor_pos_callback(self):
@@ -56,38 +69,40 @@ class Mouse(_InputDevice):
         """
         pass
 
-    def cursor_in_view(self, view, normalize=True):
-        """
-        Returns cursor position in view coordinate system
-        :param view:
-        :return:
-        """
-        transform_matrix = view.glyph.trnsf_matrix.r.I.M
-        w, h = self.window.glyph.size
-        unitize_matrix = ScaleMat(1 / w, 1 / h)
-        pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos_instant)
-        if not normalize:
-            w, h = view.glyph.size
-            view_scale_matrix = ScaleMat(w, h)
-            pos = view_scale_matrix * pos
-        return pos.x, pos.y
+    # @callbackRegistry
+    # def call_
+    # def cursor_in_view(self, view, normalize=True):
+    #     """
+    #     Returns cursor position in view coordinate system
+    #     :param view:
+    #     :return:
+    #     """
+    #     transform_matrix = view.glyph.trnsf_matrix.r.I.M
+    #     w, h = self.window.glyph.size
+    #     unitize_matrix = ScaleMat(1 / w, 1 / h)
+    #     pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos_instant)
+    #     if not normalize:
+    #         w, h = view.glyph.size
+    #         view_scale_matrix = ScaleMat(w, h)
+    #         pos = view_scale_matrix * pos
+    #     return pos.x, pos.y
 
-    def intersect_model(self, view, camera, model):
-        """
-
-        :param view:
-        :param camera:
-        :param model:
-        :return:
-        """
-        # 1. convert parameter value into point in space using VM, PM
-        #    to create intersection point on near frustum(A)
-        # 2. create ray(R) combining using origin(B) and vector from B to A
-        # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
-        px, py = self.cursor_in_view(view)
-        ray = camera.frusrum_ray(px, py)
-        print(ray.describe())
-        # raise NotImplementedError
+    # def intersect_model(self, view, camera, model):
+    #     """
+    #
+    #     :param view:
+    #     :param camera:
+    #     :param model:
+    #     :return:
+    #     """
+    #     # 1. convert parameter value into point in space using VM, PM
+    #     #    to create intersection point on near frustum(A)
+    #     # 2. create ray(R) combining using origin(B) and vector from B to A
+    #     # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
+    #     px, py = self.cursor_in_view(view)
+    #     ray = camera.frusrum_ray(px, py)
+    #     print(ray.describe())
+    #     # raise NotImplementedError
 
     @property
     def cursor_pos_instant(self):
@@ -97,10 +112,7 @@ class Mouse(_InputDevice):
         flips y to match window coordinate system
         :return:
         """
-        with self.window.context.glfw as window:
-            _, height = glfw.get_window_size(window)
-            x, y = glfw.get_cursor_pos(window)
-        return x, height - y
+        return self.__pos_instant
 
     @property
     def cursor_pos_perframe(self):
@@ -114,22 +126,28 @@ class Mouse(_InputDevice):
         of frame rendering may return distinct values respectively thus causing perspective anomaly.
         :return:
         """
-        return self.__cursor_pos_perframe
+        return self.__pos_perframe
+
+    @property
+    def acceleration(self):
+        """
+        return cursor x, y acceleration
+
+        :return:
+        """
+        return self.__accel
 
     def __set_cursor_pos_perframe(self):
-        w = self.window.context.glfw_window
-        pos = glfw.get_cursor_pos(w)
-        self.__cursor_pos_perframe = pos[0], glfw.get_window_size(w)[1] - pos[1]
+        self.__pos_perframe = self.__pos_instant
 
+    @property
     def cursor_center(self):
         return tuple(v / 2 for v in self.window.glyph.size)
 
     def cursor_goto_center(self):
-        win = self.window
-        center = win.glyph.width.r / 2, win.glyph.height.r / 2
         with self.window.context.glfw as window:
-            glfw.set_cursor_pos(window, *center)
-        self.__cursor_pos_perframe = center
+            glfw.set_cursor_pos(window, *self.cursor_center)
+        self.__pos_perframe = self.cursor_center
 
 
 class UnknownKeyError(Exception):
@@ -297,4 +315,3 @@ class Keyboard(_InputDevice):
     def get_key_status(self, *chars):
         with self.window.context.glfw as window:
             return tuple(glfw.get_key(window, self.__glfw_key_dict.char_to_key(char)) for char in chars)
-

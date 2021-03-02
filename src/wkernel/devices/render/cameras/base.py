@@ -216,22 +216,26 @@ class CameraManager(RenderDeviceManager):
         return Camera
 
     # TODO: need camera dolly connector? should it take all the responsibilities? who has to know about dolly?
-    def attach_fps_dolly(self, camera_id):
+    def attach_fps_dolly(self, camera_id, cursor_id):
         """
         attach dolly to the camera
 
         :param camera_id:
+        :param cursor_id:
         :return:
         """
         camera = self[camera_id]
-        dolly = FpsDolly(camera)
+        cursor = self.master.cursors[cursor_id]
+
+        dolly = FpsDolly(camera, cursor)
         camera.attach_dolly(dolly)
         # handling callback
         self.window.append_predraw_callback(dolly.callbacked_move_tripod,
                                             keyboard=self.window.devices.keyboard)
         self.window.append_predraw_callback(dolly.casllbacked_update_camera)
         self.window.devices.mouse.append_cursor_pos_callback(dolly.callbacked_update_acceleration)
-        glfw.set_input_mode(self.window.context.glfw_window, glfw.CURSOR, glfw.CURSOR_HIDDEN)
+        # this is needed for glfw cursor pos callback to operate
+        glfw.set_input_mode(self.window.context.glfw_window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 
     def detach_dolly(self, camera_id):
         """

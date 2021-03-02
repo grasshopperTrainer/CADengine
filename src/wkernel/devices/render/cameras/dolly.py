@@ -15,11 +15,12 @@ class FpsDolly(Dolly):
     collection of callbacks for moving camera
     """
 
-    def __init__(self, camera):
+    def __init__(self, camera, cursor):
         self.move_speed = 2
         self.view_speed = 0.005
 
         self.__camera = wr.ref(camera)
+        self.__cursor = wr.ref(cursor)
 
         self.__acceleration = Vec(0, 0, 0)
         # max pixel acceleration per frame
@@ -36,10 +37,16 @@ class FpsDolly(Dolly):
 
     @property
     def camera(self):
-        if self.__camera():
-            return self.__camera()
-        else:
-            raise NotImplementedError
+        o = self.__camera()
+        return o if o else self.delete()
+
+    @property
+    def cursor(self):
+        o = self.__cursor()
+        return o if o else self.delete()
+
+    def delete(self):
+        raise NotImplementedError
 
     def callbacked_move_tripod(self, keyboard, **kwargs):
         """
@@ -70,12 +77,12 @@ class FpsDolly(Dolly):
         :param mouse:
         :return:
         """
+
         # calculate acceleration
-        v = Vec.from_pnts(Pnt(*mouse.cursor_center()), Pnt(xpos, ypos))  # acc vector
+        v = self.cursor.accel
         x, y = map(lambda lim, c: max(lim[0], min(c, lim[1])), repeat(self.__acc_limit), v.xy)  # clamping
         self.__acceleration = Vec(x, y, 0) * self.__acc_unit  # mapping
-        # reset cursor pos
-        mouse.cursor_goto_center()
+        # mouse.cursor_goto_center()
 
     def casllbacked_update_camera(self):
         self.__velocity = (self.__velocity + self.__acceleration) / self.__friction  # simple friction

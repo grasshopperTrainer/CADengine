@@ -2,7 +2,10 @@ from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 
 from wkernel.glyph import GlyphNode, GlyphInterface
-from ._base import RenderDevice, RenderDeviceManager
+from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
+from global_tools.lazy import lazyProp
+
+from .cursor import Cursor
 
 
 class Pane(RenderDevice, GlyphInterface):
@@ -93,21 +96,6 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glClearColor(r, g, b, a)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
             gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
-
-    def cursor_pos(self, parameterize):
-        """
-        Returns cursor position in view coordinate system
-        :param view:
-        :param parameterize:
-        :return:
-        """
-        w, h = self.manager.window.glyph.size
-        if parameterize:
-            TM = ScaleMat(1 / w, 1 / h) * self.glyph.trnsf_matrix.r.I
-        else:
-            TM = self.glyph.trnsf_matrix.r.I
-        pos = TM * Pnt(*self.manager.window.devices.mouse.cursor_pos_instant)
-        return pos.x, pos.y
 
 
 class PaneManager(RenderDeviceManager):
