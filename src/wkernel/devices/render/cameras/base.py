@@ -6,6 +6,7 @@ from .dolly import *
 from .parts import *
 import glfw
 
+
 class CameraFactory:
 
     def __init__(self, manager):
@@ -136,18 +137,18 @@ class Camera(RenderDevice):
         return ray crossing near frustum at given param
 
         param 0,0 points at the center of frustum
-        :param param_x: in domain(-1.0, 1.0)
-        :param param_y: in domain(-1.0, 1.0)
+        :param param_x: in domain(0., 1.)
+        :param param_y: in domain(0., 1.)
         :return:
         """
         l, r, b, t, n, f = self.body.dim
         # convert normalized into near frustum space
         sm = ScaleMat(x=r - l, y=t - b)
-        mm = MoveMat(x=(r + l) / 2, y=(t + b) / 2, z=-n)
-        offset = MoveMat(-.5, -.5)  # to compensate origin difference between OpenGL space and pane space
-        frustum_point = mm * sm * offset * Pnt(x=param_x, y=param_y, z=0)
+        # .5 to compensate origin difference between OpenGL space and pane space
+        offset = MoveMat(-.5, -.5, -n)
+        frustum_point = sm * offset * Pnt(x=param_x, y=param_y, z=0)
         ray = gt.Ray([0, 0, 0], frustum_point.xyz)
-        return self.tripod.in_plane.r.TM * ray
+        return self.tripod.plane.TM * ray
 
     def focus_pane(self, pane, focus, clip_off):
         """

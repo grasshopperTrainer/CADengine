@@ -163,7 +163,6 @@ class MetaVrtxArry(OGLMetaEntity):
                 with bffr_fct.get_concrete():
                     for _, loc, size, dtype, stride, offset in bffr_fct.attr_props:
                         gl.glEnableVertexAttribArray(loc)  # ! dont forget
-                        print(loc, size, dtype, npdtype_to_gldtype(dtype), stride, offset)
                         gl.glVertexAttribPointer(index=loc,
                                                  size=size,
                                                  type=npdtype_to_gldtype(dtype),

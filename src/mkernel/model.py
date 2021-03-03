@@ -50,6 +50,8 @@ class Model:
             return self.__add_geo_helper(geo, geo_wrapper=st.Plin, renderer_type=rend.PolylineRenderer)
         elif isinstance(geo, gt.Brep):
             return self.__add_geo_helper(geo, geo_wrapper=st.Brep, renderer_type=rend.BrepRenderer)
+        elif isinstance(geo, gt.Pln):
+            return self.__add_geo_helper(geo, geo_wrapper=st.Pln, renderer_type=rend.PlaneRenderer)
         else:
             raise NotImplementedError
 
