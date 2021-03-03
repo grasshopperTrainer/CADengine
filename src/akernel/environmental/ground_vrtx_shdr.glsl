@@ -5,7 +5,6 @@ layout (location=1) in vec3 near;
 layout (location=2) in vec3 far;
 layout (location=3) in vec4 clr;
 
-out vec3 fpos;
 out vec3 fnear;
 out vec3 ffar;
 out vec4 fclr;

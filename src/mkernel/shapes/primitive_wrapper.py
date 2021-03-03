@@ -254,12 +254,6 @@ class Plin(Shape):
         pr.PolylineRenderer().render()
 
 
-class Pln(Shape):
-    @property
-    def geo(self):
-        raise NotImplementedError
-
-
 class Tgl(Shape):
     __is_render_edge = True
     def __init__(self, geo, renderer):
@@ -352,13 +346,3 @@ class Tgl(Shape):
         if not isinstance(b, bool):
             raise TypeError
         cls.__render_edge = b
-
-class Colors:
-    def __init__(self):
-        record = wr.WeakKeyDictionary()
-
-    def __set__(self, instance, value):
-        pass
-
-    def __get__(self, instance, owner):
-        pass

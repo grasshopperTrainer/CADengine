@@ -72,7 +72,7 @@ class MetaPrgrm(OGLMetaEntity):
                 gl.glShaderSource(shdr, src)
                 gl.glCompileShader(shdr)
                 if not gl.glGetShaderiv(shdr, gl.GL_COMPILE_STATUS):
-                    raise ShaderCompileError(name, shdr_type)
+                    raise ShaderCompileError(shdr_type, name)
                 gl.glAttachShader(prgrm, shdr)
                 shdrs.append(shdr)
         # validate prgrm

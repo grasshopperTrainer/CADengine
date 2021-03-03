@@ -4,7 +4,6 @@ layout (location=0) uniform mat4 PM;
 layout (location=1) uniform mat4 VM;
 //layout (location=1) uniform mat4 MM = mat4(1.0);
 
-in vec3 fpos;
 in vec3 fnear;
 in vec3 ffar;
 in vec4 fclr;
