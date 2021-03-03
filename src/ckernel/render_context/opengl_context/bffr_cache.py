@@ -31,7 +31,7 @@ class BffrCache(ArrayContainer):
 
     # initial size of array for placeholder
 
-    def __init__(self, dtype, locs, size=4):
+    def __init__(self, dtype, locs, size=1):
         # extra location data
         if not isinstance(locs, (list, tuple)):
             raise TypeError

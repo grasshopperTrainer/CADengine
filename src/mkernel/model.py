@@ -1,5 +1,4 @@
 from gkernel.tools.intersector import Intersector as intx
-import mkernel.shapes.primitive_wrapper as gw
 import gkernel.dtype.geometric as gt
 import mkernel.shapes as st
 import mkernel.renderers as rend
@@ -22,7 +21,7 @@ class ModelIterator:
 class Model:
     def __init__(self):
         self._shapes = {}
-        self._plane = gw.Pln()
+        self._plane = gt.Pln()
         self.__renderers = {}
 
     def __add_geo_helper(self, geo, geo_wrapper, renderer_type):
@@ -109,6 +108,18 @@ class Model:
         :return:
         """
         return self.__add_geo_helper(geo=gt.Brep(), geo_wrapper=st.Brep, renderer_type=rend.BrepRenderer)
+
+    def add_pln(self, o, x, y, z):
+        """
+
+        coordinate values of:
+        :param o: (x, y, z), origin
+        :param x: (x, y, z), x axis
+        :param y: (x, y, z), y axis
+        :param z: (x, y, z), z axis
+        :return:
+        """
+        return self.__add_geo_helper(geo=gt.Pln(o, x, y, z), geo_wrapper=st.Pln, renderer_type=rend.PlaneRenderer)
 
     def iterator(self):
         """

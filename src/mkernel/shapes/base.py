@@ -27,6 +27,7 @@ class Shape(metaclass=abc.ABCMeta):
         """
         return self.__geo
 
+
     def triangulated(self):
         """
         return triangulated form?

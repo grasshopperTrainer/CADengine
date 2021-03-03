@@ -461,7 +461,19 @@ class FrameManager(RenderDeviceManager):
         self.master.tracker.stack.set_base_entity(frame)
 
     def __getitem__(self, item) -> Frame:
+        """
+        just to indicate return type
+        :param item:
+        :return:
+        """
         return super().__getitem__(item)
+
+    def __enter__(self) -> Frame:
+        """
+        just to indicate return type
+        :return:
+        """
+        super().__enter__()
 
     @property
     def device_type(self):

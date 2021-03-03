@@ -113,6 +113,10 @@ class SimpleShdrParser:
             unique.add(pair)
 
             # attribute
+            if d['dtype'].startswith('mat'):
+                raise Exception("""using matrix makes location qualifier ambiguous
+                please for now, use independed vectors""")
+
             dtype = cls.__translate_dtype(d['name'], d['dtype'])
             if d['name'] in args:
                 raise Exception('attribute contradictory')
@@ -192,7 +196,7 @@ class SimpleShdrParser:
         :return: (name, dtype, shape), numpy dtype field description
         """
         suf, pref = re.match(cls.__dtype_patt, dtype).groups()
-        if suf in cls.__singular_types: # singular types
+        if suf in cls.__singular_types:  # singular types
             return name, cls.__singular_types[suf]
         elif pref is not None:  # complex types
             pref = list(map(lambda x: int(x), pref.split('x')))
@@ -211,7 +215,7 @@ class SimpleShdrParser:
                     suf = 'float64'
                 else:
                     suf = 'float32'
-                pref = tuple(pref*2) if len(pref) == 1 else tuple(pref)
+                pref = tuple(pref * 2) if len(pref) == 1 else tuple(pref)
             else:
                 raise NotImplementedError(name, suf)
             return name, suf, pref
