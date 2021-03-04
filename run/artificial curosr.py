@@ -15,14 +15,14 @@ class MainWindow(Window):
         w, h = self.glyph.size
         ffactory = self.devices.frames.factory
         ffactory.set_size(w, h)
-        ffactory.append_color_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                      format=ffactory.TEXTURE.FORMAT.RGBA,
+        ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                      format=ffactory.TXTR.FORMAT.RGBA,
                                       loc=0)
-        ffactory.append_color_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                      format=ffactory.TEXTURE.FORMAT.RGB,
+        ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                      format=ffactory.TXTR.FORMAT.RGB,
                                       loc=1)  # color id texture
-        ffactory.append_depth_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                      format=ffactory.TEXTURE.FORMAT.DEPTH_COMPONENT)
+        ffactory.append_depth_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                      format=ffactory.TXTR.FORMAT.DEPTH_COMPONENT)
         ffactory.create()
 
         # create pane

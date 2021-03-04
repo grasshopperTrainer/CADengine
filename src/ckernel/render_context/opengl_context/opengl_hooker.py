@@ -6,6 +6,8 @@ import OpenGL.GL as gl
 from OpenGL.GL import *
 from .ogl_entities import OGLEntity, _Prgrm, _Bffr, _Shdr, _VrtxArry, _FrameBffr, _Texture, _RenderBffr
 from ckernel.render_context.opengl_context.context_stack import GlobalOGLContextStack
+from global_tools.enum import EnumVal
+
 # _context = []
 # _context.append(getattr(importlib.import_module('ckernel.render_context.opengl_context.context_stack'),
 #                                     'OGLContextStack'))
@@ -18,9 +20,24 @@ def _hook(obj):
 
         # translate entities into ogl id
         # TODO remove acceptance of raw id when structure is mature enough
-        args = [arg.id if isinstance(arg, OGLEntity) else arg for arg in args]
-        kwargs = {k: arg.id if isinstance(arg, OGLEntity) else arg for k, arg in kwargs.items()}
-        return obj(*args, **kwargs)
+        iargs = []
+        for arg in args:
+            if isinstance(arg, OGLEntity):
+                iargs.append(arg.id)
+            elif isinstance(arg, EnumVal):
+                iargs.append(arg.v)
+            else:
+                iargs.append(arg)
+
+        ikwargs = {}
+        for k, arg in kwargs.items():
+            if isinstance(arg, OGLEntity):
+                ikwargs[k] = arg
+            elif isinstance(arg, EnumVal):
+                ikwargs[k] = arg.v
+            else:
+                ikwargs[k] = arg
+        return obj(*iargs, **ikwargs)
     return wrapper
 
 

@@ -16,51 +16,21 @@ import gkernel.color as clr
 
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
 from global_tools.lazy import lazyProp
-from ckernel.render_context.opengl_context.constant_enum import DrawBufferFormats
+from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
+from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 
 
 class FrameFactory:
     @enum
-    class TEXTURE:
-        @enum
-        class TARGET:
-            ONE_D = enum.prop(gl.GL_TEXTURE_1D)
-            TWO_D = enum.prop(gl.GL_TEXTURE_2D)
-            THREE_D = enum.prop(gl.GL_TEXTURE_3D)
-            # else not supported yet
-
-        @enum
-        class FORMAT:
-            DEPTH_COMPONENT = enum.prop(gl.GL_DEPTH_COMPONENT)
-            DEPTH_STENCIL = enum.prop(gl.GL_DEPTH_STENCIL)
-            RED = enum.prop(gl.GL_RED)
-            RG = enum.prop(gl.GL_RG)
-            RGB = enum.prop(gl.GL_RGB)
-            RGBA = enum.prop(gl.GL_RGBA)
-            RGB10_A2 = enum.prop(gl.GL_RGB10_A2)
-            RGBA16F = enum.prop(gl.GL_RGBA16F)
-            RGB32F = enum.prop(gl.GL_RGB32F)
-            # else not supported yet
+    class TXTR:
+        TRGT = TT
+        CLR_FRMT = DTF.COLOR
+        DEPTH_FRMT = DTF.NONECOLOR.DEPTH
 
     @enum
-    class RENDER:
-        @enum
-        class DEPTH:
-            D16 = enum.prop(gl.GL_DEPTH_COMPONENT16)
-            D24 = enum.prop(gl.GL_DEPTH_COMPONENT24)
-            D32F = enum.prop(gl.GL_DEPTH_COMPONENT32F)
-
-        @enum
-        class STENCIL:
-            INDEX8 = enum.prop(gl.GL_STENCIL_INDEX8)
-
-        @enum
-        class DEPTH_STENCIL:
-            D24_S8 = enum.prop(gl.GL_DEPTH24_STENCIL8)
-            D32F_S8 = enum.prop(gl.GL_DEPTH32F_STENCIL8)
-
-        def COLOR(self, idx):
-            return eval(f"gl.GL_COLOR_ATTACHMENT{idx}")
+    class RNDR:
+        DEPTH = DTF.NONECOLOR.DEPTH
+        DEPTH_STENCIL = DTF.NONECOLOR.DEPTH_STENCIL
 
     # TODO: fix color attachment allocation
     def __init__(self, manager):
@@ -93,7 +63,7 @@ class FrameFactory:
         :return:
         """
         # guess texture id if not given
-        if not (format in DrawBufferFormats.COLOR or format in DrawBufferFormats.DEPTH):
+        if not self.TXTR.CLR_FRMT.has_member(format):
             raise TypeError
         if not isinstance(loc, int):
             raise TypeError
@@ -116,7 +86,7 @@ class FrameFactory:
         :param format: internal format
         :return:
         """
-        if format not in DrawBufferFormats.DEPTH:
+        if format not in DTF.NONECOLOR.DEPTH:
             raise TypeError
 
         # check uniqueness
@@ -139,7 +109,7 @@ class FrameFactory:
         :return:
         """
         # only one render buffer possible?
-        self.__render_buffer_prop.append((format, attachment_loc))
+        self.__render_buffer_prop.append((format.v, attachment_loc))
 
     def create(self):
         """
