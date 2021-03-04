@@ -62,7 +62,7 @@ class Pane(RenderDevice, GlyphInterface):
         :param exc_tb:
         :return:
         """
-        super().__exit__(exc_type, exc_val, exc_tb)
+        super().__exit__()
         if self.get_current() is not self:  # if self, there is no need
             glyph = self.get_current().glyph
             with self.manager.window.context.gl as gl:
@@ -98,6 +98,18 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
 
 
+class _Pane:
+    """
+    Just a type notifier for IDE
+    """
+
+    def __enter__(self) -> Pane:
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class PaneManager(RenderDeviceManager):
     """
     Manages multitue of `Pane`
@@ -115,6 +127,9 @@ class PaneManager(RenderDeviceManager):
                                 parent=device_master.window)
         # to make it default
         self.master.tracker.stack.set_base_entity(p)
+
+    def __getitem__(self, item) -> _Pane:
+        return super().__getitem__(item)
 
     @property
     def device_type(self):

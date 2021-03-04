@@ -70,6 +70,12 @@ class Camera(RenderDevice):
         self.__tripod = tripod
         self.__dolly = None
 
+    def __enter__(self):
+        return super().__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return super().__exit__(exc_type, exc_val, exc_tb)
+
     @property
     def body(self) -> CameraBody:
         return self.__body
@@ -192,6 +198,15 @@ class Camera(RenderDevice):
             self.tripod.lookat(eye=(x, y, newz), at=focus, up=(0, 1, 0))
 
 
+class _Camera:
+
+    def __enter__(self) -> Camera:
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class CameraManager(RenderDeviceManager):
 
     def __init__(self, device_master):
@@ -205,7 +220,7 @@ class CameraManager(RenderDeviceManager):
         c.tripod.lookat(eye=(0, 0, 100), at=(0, 0, 0), up=(0, 1, 0))
         self.master.tracker.stack.set_base_entity(c)
 
-    def __getitem__(self, item) -> Camera:
+    def __getitem__(self, item) -> _Camera:
         return super(CameraManager, self).__getitem__(item)
 
     @property

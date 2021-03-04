@@ -37,6 +37,7 @@ class FrameFactory:
             RG = enum.prop(gl.GL_RG)
             RGB = enum.prop(gl.GL_RGB)
             RGBA = enum.prop(gl.GL_RGBA)
+            RGB10_A2 = enum.prop(gl.GL_RGB10_A2)
             # else not supported yet
 
     @enum
@@ -281,7 +282,7 @@ class Frame(RenderDevice):
         :return:
         """
         self.__frame_bffr.bind()  # binding for ogl operations
-        return super().__enter__()  # recording current device
+        return super().__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
@@ -450,7 +451,20 @@ class Frame(RenderDevice):
         raise NotImplementedError
 
 
+class _Frame:
+    """
+    Just a type notifier for IDE
+    """
+
+    def __enter__(self) -> Frame:
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class FrameManager(RenderDeviceManager):
+
     def __init__(self, device_master):
         super().__init__(device_master)
         # default device just binds 0 to get back to glfw provided buffer
@@ -460,20 +474,13 @@ class FrameManager(RenderDeviceManager):
         self._appendnew_device(frame)
         self.master.tracker.stack.set_base_entity(frame)
 
-    def __getitem__(self, item) -> Frame:
+    def __getitem__(self, item) -> _Frame:
         """
         just to indicate return type
         :param item:
         :return:
         """
         return super().__getitem__(item)
-
-    def __enter__(self) -> Frame:
-        """
-        just to indicate return type
-        :return:
-        """
-        super().__enter__()
 
     @property
     def device_type(self):

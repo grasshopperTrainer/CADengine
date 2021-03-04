@@ -64,7 +64,8 @@ class RenderDevice(metaclass=abc.ABCMeta):
         # giving registration responsibility to the terminal deivce
         self.__manager = manager
 
-    # should provide context manager
+    # inheritor should provide context manager
+    # but not through super just to notify IDE about the return type
     def __enter__(self):
         self.__manager.master.tracker.stack.push(self)
         return self
