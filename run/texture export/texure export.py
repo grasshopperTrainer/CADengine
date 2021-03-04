@@ -34,7 +34,7 @@ if __name__ == '__main__':
             # set camera
             self.devices.cameras[0].tripod.lookat(eye=(100, 50, 30), at=(0, 0, 0), up=(0, 0, 1))
 
-            self.devices.cameras.attach_fps_dolly(camera_id=0)
+            self.devices.cameras.attach_fps_dolly(camera_id=0, cursor_id=0)
 
             # draw something
             model = Model()
@@ -95,12 +95,12 @@ if __name__ == '__main__':
                 self.ground.render(cam)
                 self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
                 self.count += 1
-                with self.devices.frames[1] as deff:
-                    pos = p.cursor_pos(parameterize=True)
-                    c = deff.pick_texture(tid=1, pos=pos, parameterized=True).as_byte
-                    e = GlobalColorRegistry().get_registered(tuple(c))
-                    if e:
-                        print(e)
+                # with self.devices.frames[1] as deff:
+                    # pos = self.devices.cursors[0].pos_instant
+                    # c = deff.pick_texture(tid=1, pos=pos, parameterized=True).as_byte
+                    # e = GlobalColorRegistry().get_registered(tuple(c))
+                    # if e:
+                    #     print(e)
 
 
     class SubWindow(Window):

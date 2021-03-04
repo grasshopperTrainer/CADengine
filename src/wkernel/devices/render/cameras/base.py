@@ -198,7 +198,7 @@ class Camera(RenderDevice):
             self.tripod.lookat(eye=(x, y, newz), at=focus, up=(0, 1, 0))
 
 
-class _Camera:
+class _Camera(Camera):
 
     def __enter__(self) -> Camera:
         pass

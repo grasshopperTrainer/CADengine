@@ -217,7 +217,7 @@ class Cursor(RenderDevice):
         raise NotImplementedError
 
 
-class _Cursor:
+class _Cursor(Cursor):
     """
     Just a type notifier for IDE
     """

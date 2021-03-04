@@ -7,25 +7,33 @@ from akernel.picker import InitPosPicker
 class MyWindow(Window):
     def __init__(self):
         super().__init__(500, 800, 'mywindow', None, None)
-        self.framerate = 120
+        self.framerate = 10
         # set camera
         camera = self.devices.cameras[0]
-        camera.tripod.lookat(eye=(-100, -100, 100),
+        camera.tripod.lookat(eye=(100, 100, 100),
                              at=(0, 0, 0),
                              up=(0, 0, 1))
         # set frame
         ff = self.devices.frames.factory
         ff.append_color_texture(ff.TEXTURE.TARGET.TWO_D, ff.TEXTURE.FORMAT.RGBA, loc=0)  # color
-        ff.append_color_texture(ff.TEXTURE.TARGET.TWO_D, ff.TEXTURE.FORMAT.RGBA, loc=1)  # id
-        ff.append_color_texture(ff.TEXTURE.TARGET.TWO_D, ff.TEXTURE.FORMAT.DEPTH_COMPONENT, loc=2)  # depth
-        ff.append_color_texture(ff.TEXTURE.TARGET.TWO_D, ff.TEXTURE.FORMAT.RGB10_A2, loc=3)  # coordinate
+        ff.append_color_texture(ff.TEXTURE.TARGET.TWO_D, ff.TEXTURE.FORMAT.RGB, loc=1)  # id
+        ff.append_color_texture(ff.TEXTURE.TARGET.TWO_D, ff.TEXTURE.FORMAT.RGB32F, loc=2)  # coordinate
+        ff.append_depth_texture(ff.TEXTURE.TARGET.TWO_D, ff.TEXTURE.FORMAT.DEPTH_COMPONENT)  # depth
+        ff.set_size(*self.glyph.size)
         ff.create()
 
         # set model
         self.model = Model()
-        self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-        # self.model.add_pln((10, 23, 10), (6, 4, 24), (5, 6, 10), (2, 100, 1))
-        # self.model.add_pnt(0, 0, 0)
+        # self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+
+        a = 10
+        for x in range(10):
+            for y in range(10):
+                for z in range(10):
+                    p = self.model.add_pnt(a*x, a*y, a*z)
+                    p.frm = p.FORM_CIRCLE
+                    p.dia = 3
+
         self.ground = Ground([.5] * 4)
 
     def draw(self):
@@ -35,11 +43,17 @@ class MyWindow(Window):
 
             with self.devices.cameras[0] as c:
                 with self.devices.frames[1] as df:
-                    self.ground.render(c)
+                    df.clear(1, 0, 0, 0.5)
+                    df.clear_depth()
+                    # self.ground.render(c)
                     self.model.render()
 
+                    p = df.pick_texture(0, self.devices.cursors[0].pos_local, parameterized=False)
+                    print(p)
+        df.render_pane_space_depth(tid=0)
         # with self.devices.panes[0] as p:
         #     p.
+
 
 class SubWindow(Window):
     def __init__(self, mother):
@@ -50,17 +64,20 @@ class SubWindow(Window):
         self.devices.panes.appendnew_pane(0, 0, 0.5, 0.5, self)
         self.devices.panes.appendnew_pane(0.5, 0, 0.5, 0.5, self)
         self.devices.panes.appendnew_pane(0.5, 0.5, 0.5, 0.5, self)
+        self.devices.panes.appendnew_pane(0, 0.5, 0.5, 0.5, self)
 
     def draw(self):
         with self.devices.frames[0] as f:
             f.clear_depth()
+            mf = self.ma.devices.frames[1]
             with self.devices.panes[1]:
-                self.ma.devices.frames[1].render_pane_space(0, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
+                mf.render_pane_space(0, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
             with self.devices.panes[2]:
-                self.ma.devices.frames[1].render_pane_space(1, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
+                mf.render_pane_space(1, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
             with self.devices.panes[3]:
-                self.ma.devices.frames[1].render_pane_space('d', (0, 1, 0, 1), (-1, 1, -1, 1), 0)
-
+                mf.render_pane_space(2, (0, 1, 0, 1), (-1, 1, -1, 1))
+            with self.devices.panes[4]:
+                mf.render_pane_space('d', (0, 1, 0, 1), (-1, 1, -1, 1), 0)
 
 window_main = MyWindow()
 window_sub = SubWindow(window_main)

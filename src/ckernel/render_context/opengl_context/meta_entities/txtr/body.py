@@ -6,12 +6,6 @@ from .exporter import TxtrExporter
 
 
 class MetaTexture(OGLMetaEntity):
-    __base_iformats = (gl.GL_DEPTH_COMPONENT,
-                       gl.GL_DEPTH_STENCIL,
-                       gl.GL_RED,
-                       gl.GL_RG,
-                       gl.GL_RGB,
-                       gl.GL_RGBA)
 
     def __init__(self, target, iformat, width, height):
         self.__target = target
@@ -69,16 +63,102 @@ class MetaTexture(OGLMetaEntity):
                 raise NotImplementedError
         return texture
 
+    __red_iformats = (gl.GL_RED,
+                      gl.GL_R8,
+                      gl.GL_R8,
+                      gl.GL_R8_SNORM,
+                      gl.GL_R16,
+                      gl.GL_R16F,
+                      gl.GL_R32F,
+                      gl.GL_R8I,
+                      gl.GL_R8UI,
+                      gl.GL_R16I,
+                      gl.GL_R16UI,
+                      gl.GL_R32I,
+                      gl.GL_R32UI)
+
+    __rg_iformats = (gl.GL_RG,
+                     gl.GL_R16_SNORM,
+                     gl.GL_RG8,
+                     gl.GL_RG8_SNORM,
+                     gl.GL_RG16,
+                     gl.GL_RG16_SNORM,
+                     gl.GL_RG16F,
+                     gl.GL_RG32F,
+                     gl.GL_RG8I,
+                     gl.GL_RG8UI,
+                     gl.GL_RG16I,
+                     gl.GL_RG16UI,
+                     gl.GL_RG32I,
+                     gl.GL_RG32UI)
+
+    __rgb_iformats = (gl.GL_RGB,
+                      gl.GL_R3_G3_B2,
+                      gl.GL_RGB4,
+                      gl.GL_RGB5,
+                      gl.GL_RGB8,
+                      gl.GL_RGB8_SNORM,
+                      gl.GL_RGB10,
+                      gl.GL_RGB12,
+                      gl.GL_RGB16_SNORM,
+                      gl.GL_RGBA2,
+                      gl.GL_RGBA4,
+                      gl.GL_SRGB8,
+                      gl.GL_RGB16F,
+                      gl.GL_RGB32F,
+                      gl.GL_R11F_G11F_B10F,
+                      gl.GL_RGB9_E5,
+                      gl.GL_RGB8I,
+                      gl.GL_RGB8UI,
+                      gl.GL_RGB16I,
+                      gl.GL_RGB16UI,
+                      gl.GL_RGB32I,
+                      gl.GL_RGB32UI)
+
+    __rgba_iformats = (gl.GL_RGBA,
+                       gl.GL_RGB5_A1,
+                       gl.GL_RGBA8,
+                       gl.GL_RGBA8_SNORM,
+                       gl.GL_RGB10_A2,
+                       gl.GL_RGB10_A2UI,
+                       gl.GL_RGBA12,
+                       gl.GL_RGBA16,
+                       gl.GL_SRGB8_ALPHA8,
+                       gl.GL_RGBA16F,
+                       gl.GL_RGBA32F,
+                       gl.GL_RGBA8I,
+                       gl.GL_RGBA8UI,
+                       gl.GL_RGBA16I,
+                       gl.GL_RGBA16UI,
+                       gl.GL_RGBA32I,
+                       gl.GL_RGBA32UI)
+
+    __depth_iformats = (gl.GL_DEPTH_COMPONENT,
+                        gl.GL_DEPTH_COMPONENT16,
+                        gl.GL_DEPTH_COMPONENT24,
+                        gl.GL_DEPTH_COMPONENT32F)
+
+    __depth_stencil_iformats = (gl.GL_DEPTH_STENCIL,
+                                gl.GL_DEPTH24_STENCIL8,
+                                gl.GL_DEPTH32F_STENCIL8)
+
+    __iformats = {gl.GL_RED: set(__red_iformats),
+                  gl.GL_RG: set(__rg_iformats),
+                  gl.GL_RGB: set(__rgb_iformats),
+                  gl.GL_RGBA: set(__rgba_iformats),
+                  gl.GL_DEPTH_COMPONENT: set(__depth_iformats),
+                  gl.GL_DEPTH_STENCIL: set(__depth_stencil_iformats)}
+
     def __iformat_to_format(self):
         """
         translate internal format to desired texture input format
 
         :return:
         """
-        if self.__iformat in self.__base_iformats:
-            return self.__iformat
-        else:
-            raise NotImplementedError
+        for base, iformats in self.__iformats.items():
+            if self.__iformat in iformats:
+                return base
+        raise NotImplementedError
 
     def as_unit(self, unit):
         """

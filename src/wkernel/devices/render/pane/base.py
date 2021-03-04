@@ -62,7 +62,7 @@ class Pane(RenderDevice, GlyphInterface):
         :param exc_tb:
         :return:
         """
-        super().__exit__()
+        super().__exit__(exc_type, exc_val, exc_tb)
         if self.get_current() is not self:  # if self, there is no need
             glyph = self.get_current().glyph
             with self.manager.window.context.gl as gl:
@@ -98,7 +98,7 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
 
 
-class _Pane:
+class _Pane(Pane):
     """
     Just a type notifier for IDE
     """
