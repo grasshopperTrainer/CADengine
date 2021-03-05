@@ -26,6 +26,9 @@ class Mouse(_InputDevice):
         super().__init__(window)
         with window.context.glfw as window:
             glfw.set_cursor_pos_callback(window, self.__master_cursor_pos_callback)
+            glfw.set_cursor_enter_callback(window, self.__master_cursor_enter_callback)
+            glfw.set_mouse_button_callback(window, self.__master_mouse_button_callback)
+            glfw.set_scroll_callback(window, self.__master_mouse_scroll_callback)
         self.window.append_predraw_callback(self.__set_cursor_pos_perframe)
 
         self.__pos_perframe = Vec(0, 0, 0)
@@ -69,40 +72,65 @@ class Mouse(_InputDevice):
         """
         pass
 
-    # @callbackRegistry
-    # def call_
-    # def cursor_in_view(self, view, normalize=True):
-    #     """
-    #     Returns cursor position in view coordinate system
-    #     :param view:
-    #     :return:
-    #     """
-    #     transform_matrix = view.glyph.trnsf_matrix.r.I.M
-    #     w, h = self.window.glyph.size
-    #     unitize_matrix = ScaleMat(1 / w, 1 / h)
-    #     pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos_instant)
-    #     if not normalize:
-    #         w, h = view.glyph.size
-    #         view_scale_matrix = ScaleMat(w, h)
-    #         pos = view_scale_matrix * pos
-    #     return pos.x, pos.y
+    def __master_cursor_enter_callback(self, glfw_window, entered):
+        """
+        three way callbacking
 
-    # def intersect_model(self, view, camera, model):
-    #     """
-    #
-    #     :param view:
-    #     :param camera:
-    #     :param model:
-    #     :return:
-    #     """
-    #     # 1. convert parameter value into point in space using VM, PM
-    #     #    to create intersection point on near frustum(A)
-    #     # 2. create ray(R) combining using origin(B) and vector from B to A
-    #     # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
-    #     px, py = self.cursor_in_view(view)
-    #     ray = camera.frusrum_ray(px, py)
-    #     print(ray.describe())
-    #     # raise NotImplementedError
+        :param glfw_window:
+        :param entered:
+        :return:
+        """
+        self.call_cursor_enter_callback(glfw_window, entered, mouse=self)
+
+    @callbackRegistry
+    def call_cursor_enter_callback(self):
+        pass
+
+    @call_cursor_enter_callback.appender
+    def append_cursor_enter_callback(self):
+        """
+        append cursor enter callback
+        ! 'enter' also include leaving the window
+        :return:
+        """
+
+    def __master_mouse_button_callback(self, glfw_window, button, action, mods):
+        """
+
+        :param glfw_window:
+        :param button:
+        :param action:
+        :param mods:
+        :return:
+        """
+        self.call_mouse_button_callback(glfw_window, button, action, mods, mouse=self)
+
+    @callbackRegistry
+    def call_mouse_button_callback(self):
+        pass
+
+    @call_mouse_button_callback.appender
+    def append_mouse_button_callback(self):
+        pass
+
+    def __master_mouse_scroll_callback(self, glfw_window, xoffset, yoffset):
+        """
+
+        :param glfw_window:
+        :param xoffset:
+        :param yoffset:
+        :return:
+        """
+        self.call_mouse_scroll_callback(glfw_window, xoffset, yoffset, mouse=self)
+
+    @callbackRegistry
+    def call_mouse_scroll_callback(self):
+        pass
+
+    @call_mouse_scroll_callback.appender
+    def append_mouse_scroll_callback(self):
+        pass
+
 
     @property
     def cursor_pos_instant(self):
