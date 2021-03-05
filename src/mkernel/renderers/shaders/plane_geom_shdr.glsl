@@ -10,9 +10,11 @@ layout (location=2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     mat4 pln;
     float len;
+    vec3 cid;
 } vs_in[];
 
-out vec4 clr;
+out vec4 fclr;
+out vec3 fcid;
 
 // default colors
 const vec4 origin = vs_in[0].pln[0];
@@ -21,22 +23,27 @@ const mat4 TM = PM * VM * MM;
 const vec4 clrs[3] = vec4[3](vec4(1, 0, 0, 1), vec4(0, 1, 0, 1), vec4(0, 0, 1, 1));
 const vec4 vectors[3] = vec4[3](vs_in[0].pln[1], vs_in[0].pln[2], vs_in[0].pln[3]);
 
+
+void emit_vertex(vec4 pos, vec4 clr) {
+    fclr = clr;
+    fcid = vs_in[0].cid;
+
+    gl_Position = TM * pos;
+    EmitVertex();
+}
+
 void draw_axis(float scale, int i) {
-    clr = clrs[i];
+    vec4 clr = clrs[i];
 
     // calculate offset normal
     vec3 norm = normalize(cross(vec3(0, 0, -1), (VM * MM * vectors[i]).xyz));
     vec4 off = inverse(VM * MM) * vec4(norm, 0) * thk * scale;
     vec4 end = origin + vectors[i] * scale;
 
-    gl_Position = TM * (origin + off);
-    EmitVertex();
-    gl_Position = TM * (origin - off);
-    EmitVertex();
-    gl_Position = TM * (end + off);
-    EmitVertex();
-    gl_Position = TM * (end - off);
-    EmitVertex();
+    emit_vertex(origin + off, clr);
+    emit_vertex(origin - off, clr);
+    emit_vertex(end + off, clr);
+    emit_vertex(end - off, clr);
     EndPrimitive();
 }
 

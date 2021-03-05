@@ -16,14 +16,14 @@ if __name__ == '__main__':
             w, h = self.glyph.size
             ffactory = self.devices.frames.factory
             ffactory.set_size(w, h)
-            ffactory.append_color_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                          format=ffactory.TEXTURE.FORMAT.RGBA,
+            ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                          format=ffactory.TXTR.FORMAT.RGBA,
                                           loc=0)
-            ffactory.append_color_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                          format=ffactory.TEXTURE.FORMAT.RGB,
+            ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                          format=ffactory.TXTR.FORMAT.RGB,
                                           loc=1)  # color id texture
-            ffactory.append_depth_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                          format=ffactory.TEXTURE.FORMAT.DEPTH_COMPONENT)
+            ffactory.append_depth_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                          format=ffactory.TXTR.FORMAT.DEPTH_COMPONENT)
             # ffactory.set_render_buffer(format=ffactory.RENDER.DEPTH_STENCIL.D24_S8,
             #                            attachment_loc=None)
             ffactory.create()
@@ -34,7 +34,7 @@ if __name__ == '__main__':
             # set camera
             self.devices.cameras[0].tripod.lookat(eye=(100, 50, 30), at=(0, 0, 0), up=(0, 0, 1))
 
-            self.devices.cameras.attach_fps_dolly(camera_id=0)
+            self.devices.cameras.attach_fps_dolly(camera_id=0, cursor_id=0)
 
             # draw something
             model = Model()
@@ -95,12 +95,12 @@ if __name__ == '__main__':
                 self.ground.render(cam)
                 self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
                 self.count += 1
-                with self.devices.frames[1] as deff:
-                    pos = p.cursor_pos(parameterize=True)
-                    c = deff.pick_texture(tid=1, pos=pos, parameterized=True).as_byte
-                    e = GlobalColorRegistry().get_registered(tuple(c))
-                    if e:
-                        print(e)
+                # with self.devices.frames[1] as deff:
+                    # pos = self.devices.cursors[0].pos_instant
+                    # c = deff.pick_texture(tid=1, pos=pos, parameterized=True).as_byte
+                    # e = GlobalColorRegistry().get_registered(tuple(c))
+                    # if e:
+                    #     print(e)
 
 
     class SubWindow(Window):

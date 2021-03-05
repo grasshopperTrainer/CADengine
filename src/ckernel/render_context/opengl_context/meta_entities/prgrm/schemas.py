@@ -1,5 +1,8 @@
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 from ckernel.render_context.opengl_context.meta_entities.metas import MetaVrtxBffr
+import numpy as np
+
+
 """
 Schemas describes data structure of shader parameters
 and has methods for creating buffer cache.
@@ -43,6 +46,24 @@ class VrtxAttrSchema(_GLSLParamSchema):
         :return:
         """
         return MetaVrtxBffr(self._dtype, self._locs)
+
+    def union(self, other):
+        """
+        like set.union create new schema out of two
+        :return:
+        """
+        new_fields = {}
+        for n, l in zip(self._dtype.names, self._locs):
+            dt = self._dtype[n]
+            new_fields[l] = (n, dt.base, dt.shape)
+        for n, l in zip(other._dtype.names, other._locs):
+            if l in new_fields and new_fields[l] != (n, other._dtype[n].base, other._dtype[n].shape):
+                raise
+            else:
+                dt = other._dtype[n]
+                new_fields[l] = (n, dt.base, dt.shape)
+        locs, dtype = zip(*sorted(new_fields.items()))
+        return VrtxAttrSchema(np.dtype(list(dtype)), locs)
 
 
 class UfrmSchema(_GLSLParamSchema):

@@ -1,17 +1,13 @@
 import numpy as np
 from ckernel.render_context.opengl_context.meta_entities.base import OGLMetaEntity
+from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
+from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from global_tools.enum import enum
 from .exporter import TxtrExporter
 
 
 class MetaTexture(OGLMetaEntity):
-    __base_iformats = (gl.GL_DEPTH_COMPONENT,
-                       gl.GL_DEPTH_STENCIL,
-                       gl.GL_RED,
-                       gl.GL_RG,
-                       gl.GL_RGB,
-                       gl.GL_RGBA)
 
     def __init__(self, target, iformat, width, height):
         self.__target = target
@@ -36,9 +32,9 @@ class MetaTexture(OGLMetaEntity):
 
     @enum
     class TARGET:
-        ONE_D = enum.prop(gl.GL_TEXTURE_1D)
-        TWO_D = enum.prop(gl.GL_TEXTURE_2D)
-        THREE_D = enum.prop(gl.GL_TEXTURE_3D)
+        ONE_D = gl.GL_TEXTURE_1D
+        TWO_D = gl.GL_TEXTURE_2D
+        THREE_D = gl.GL_TEXTURE_3D
 
     def bind(self):
         super(MetaTexture, self).bind()
@@ -49,7 +45,7 @@ class MetaTexture(OGLMetaEntity):
         texture.set_target(self.__target)
         with texture:
             # data can latter be filled so make glTexImage2D part of initiation
-            if self.__target in (gl.GL_TEXTURE_2D,):
+            if self.__target == TT.TWO_D:
                 # default settings
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
                 gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
@@ -75,10 +71,10 @@ class MetaTexture(OGLMetaEntity):
 
         :return:
         """
-        if self.__iformat in self.__base_iformats:
-            return self.__iformat
-        else:
-            raise NotImplementedError
+        for _, base in (*DTF.COLOR, *DTF.NONECOLOR):
+            if self.__iformat in base:
+                return base[0].v
+        raise NotImplementedError
 
     def as_unit(self, unit):
         """

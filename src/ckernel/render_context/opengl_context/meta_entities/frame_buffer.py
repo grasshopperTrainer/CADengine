@@ -1,7 +1,8 @@
 from .base import OGLMetaEntity
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from ckernel.render_context.opengl_context.meta_entities.txtr.body import MetaTexture
-from ..constant_enum import DrawBufferFormats
+from ..constant_enum import DrawTargetFormats as DTF
+from ..constant_enum import TextureTargets as TT
 
 
 class MetaFrameBffr(OGLMetaEntity):
@@ -42,6 +43,7 @@ class MetaFrameBffr(OGLMetaEntity):
         :return:
         """
         return self.__textures[0].size
+
     @property
     def textures(self):
         pass
@@ -56,9 +58,9 @@ class MetaFrameBffr(OGLMetaEntity):
             for tid, att in self.__attachments.items():
                 if isinstance(att, MetaTexture):
                     # deal with textures
-                    if att.target == gl.GL_TEXTURE_2D:
+                    if att.target in TT:
                         # find attachment
-                        if att.iformat in DrawBufferFormats.COLOR:
+                        if DTF.COLOR.has_member(att.iformat):
                             attachment = eval(f'gl.GL_COLOR_ATTACHMENT{tid}')
                         else:
                             attachment = self.__iformat_to_attachment(att.iformat)
@@ -89,9 +91,9 @@ class MetaFrameBffr(OGLMetaEntity):
 
     @staticmethod
     def __iformat_to_attachment(iformat):
-        if iformat in DrawBufferFormats.DEPTH:
+        if iformat in DTF.NONECOLOR.DEPTH:
             return gl.GL_DEPTH_ATTACHMENT
-        elif iformat in DrawBufferFormats.DEPTH_STENCIL:
+        elif iformat in DTF.NONECOLOR.DEPTH_STENCIL:
             return gl.GL_DEPTH_STENCIL_ATTACHMENT
         else:
             raise TypeError
@@ -116,6 +118,7 @@ class MetaFrameBffr(OGLMetaEntity):
         """
         super().bind()
         gl.glDrawBuffers(len(self.__color_attachment_locs), self.__color_attachment_locs)
+        # gl.glColorMaski(1, True, True, True, False)
 
 
 class MetaRenderBffr(OGLMetaEntity):

@@ -3,43 +3,45 @@
 layout (lines) in;
 layout (triangle_strip, max_vertices = 4) out;
 
-layout (location = 0) uniform mat4 MM = mat4(1.0);
-layout (location = 1) uniform mat4 VM = mat4(1.0);
-layout (location = 2) uniform mat4 PM = mat4(1.0);
+layout (location = 0) uniform mat4 PM;
+layout (location = 1) uniform mat4 VM;
+layout (location = 2) uniform mat4 MM = mat4(1.0);
 
 in vsOut {
     float thk;
     vec4 clr;
+    vec3 cid;
 } vs_in[];
 
-out vec4 clr;
+out vec4 fclr;
+out vec3 fcid;
+out vec4 fcoord;
+
+const mat4 VMM = VM * MM;
+const mat4 IVMM = inverse(VMM);
+const float hthk = vs_in[0].thk/2.0;
+
+void emit_vertex(vec4 pos) {
+    // invariants
+    fclr = vs_in[0].clr;
+    fcid = vs_in[0].cid;
+
+    fcoord = IVMM * pos;
+    gl_Position = PM * pos;
+    EmitVertex();
+}
 
 void main() {
-    // invariants
-    clr = vs_in[0].clr;
     float thk = vs_in[0].thk;
     // transformed as so models are at position
     // with camera at origin and facing negetive z
-    vec3 p0 = (VM*MM*gl_in[0].gl_Position).xyz;
-    vec3 p1 = (VM*MM*gl_in[1].gl_Position).xyz;
-    // line vector crossed with camera pointing yields perpendicular to nv
-    vec3 perp;
-    if (length(p0) > length(p1)) {
-        perp = cross(p1-p0, vec3(0, 0, 1));
-    } else {
-        perp = cross(p0-p1, vec3(0, 0, 1));
-    }
-    // amplify to correct thikness
-    perp = normalize(perp) * (thk/2);
-    // move and apply projection matrix to finish transformation
+    vec4 p0 = VMM*gl_in[0].gl_Position;
+    vec4 p1 = VMM*gl_in[1].gl_Position;
+    vec4 norm = vec4(normalize(cross(vec3(0, 0, -1), (p1 - p0).xyz)) * hthk, 0);
     // draw rect
-    gl_Position = PM*vec4(p0 + perp, 1);
-    EmitVertex();
-    gl_Position = PM*vec4(p0 - perp, 1);
-    EmitVertex();
-    gl_Position = PM*vec4(p1 + perp, 1);
-    EmitVertex();
-    gl_Position = PM*vec4(p1 - perp, 1);
-    EmitVertex();
+    emit_vertex(p0 + norm);
+    emit_vertex(p0 - norm);
+    emit_vertex(p1 + norm);
+    emit_vertex(p1 - norm);
     EndPrimitive();
 }

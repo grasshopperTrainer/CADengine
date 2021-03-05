@@ -217,6 +217,18 @@ class Cursor(RenderDevice):
         raise NotImplementedError
 
 
+class _Cursor(Cursor):
+    """
+    Just a type notifier for IDE
+    """
+
+    def __enter__(self) -> Cursor:
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class CursorManager(RenderDeviceManager):
     """
     Manages multitue of `Pane`
@@ -228,6 +240,9 @@ class CursorManager(RenderDeviceManager):
         super().__init__(device_master)
         # default device
         self.appendnew_cursor((0, 0))
+
+    def __getitem__(self, item) -> _Cursor:
+        return super().__getitem__(item)
 
     @property
     def device_type(self):

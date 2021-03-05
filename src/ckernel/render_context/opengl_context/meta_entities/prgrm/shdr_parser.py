@@ -145,30 +145,40 @@ class SimpleShdrParser:
             for m in re.finditer(cls.__layout_ufrm_patt, src):
                 # check layout declaration
                 d = m.groupdict()
+                arg_name = d['name']
+                dtype = d['dtype']
+                loc = int(d['loc'])
+                layout = d['layout']
+                val = None if not d['val'] else eval(d['val'])
 
                 # check location declaration
-                if d['layout'] is None:
+                if layout is None:
                     raise SyntaxError(f"{m.group()} <- uniform's layout not declared")
 
                 # check uniquness
-                loc = int(d['loc'])
-                pair = (d['name'], loc)
+                pair = (arg_name, loc)
                 for u in unique:
                     if sum([i == j for i, j in zip(pair, u)]) == 1:  # XOR
                         raise ValueError('location and att_name has to be unique')
                 unique.add(pair)
 
                 # def val needs additional parsing
-                # value
-                # if d['val'] is not None:
-                #     val = eval(d['val'])
-                # else:
-                #     val = None
-                val = None
+                if val:
+                    if dtype.startswith('mat'):
+                        shape = dtype.replace('mat', '')
+                        if shape in ('2', '3', '4'):    # eye set with value
+                            parsed_val = np.eye(4)
+                            for i in range(int(shape)):
+                                parsed_val[i, i] = val
+                        else:
+                            raise NotImplementedError
+                    else:
+                        raise NotImplementedError
+                    val = parsed_val
 
                 # attribute
-                dtype = cls.__translate_dtype(d['name'], d['dtype'])
-                if d['name'] in args and args[d['name']] != (loc, val, dtype):
+                dtype = cls.__translate_dtype(arg_name, dtype)
+                if arg_name in args and (args[arg_name][0] != loc or args[arg_name][2] != dtype):
                     raise Exception('attribute contradictory')
                 args[d['name']] = (loc, val, dtype)
 

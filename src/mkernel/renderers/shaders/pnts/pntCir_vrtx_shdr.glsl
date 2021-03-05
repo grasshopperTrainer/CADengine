@@ -11,15 +11,18 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 layout (location = 4) uniform vec4 VPP; // viewport pixel property (posx, posy, width, height)
 
 out vsOut {
-    out vec3 cid;
-    out vec4 fclr;
-    out vec2 radVec;
-    out vec2 center;
+    vec3 cid;
+    vec4 fclr;
+    vec2 radVec;
+    vec2 center;
+    vec4 coord;
 } vs_out;
 
 void main() {
     vs_out.cid = cid;
     vs_out.fclr = clr;
+    vs_out.coord = vtx;
+
     // camera space point
     vec4 csPnt = VM*MM*vtx;
     // radius vector at normalized device coordinate

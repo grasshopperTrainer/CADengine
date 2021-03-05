@@ -121,19 +121,19 @@ class Pgon(Shape):
 
 
 class CAT(enum):
-    MAX = enum.prop('MAX')
-    MIN = enum.prop('MIN')
-    HMAX = enum.prop('HMAX')
-    HMIN = enum.prop('HMIN')
-    HORI = enum.prop('HORI')
-    INTR = enum.prop('INTR')
+    MAX = 'MAX'
+    MIN = 'MIN'
+    HMAX = 'HMAX'
+    HMIN = 'HMIN'
+    HORI = 'HORI'
+    INTR = 'INTR'
 
 
 class SWEEP(enum):
-    LEFT = enum.prop('LEFT')
-    NONE = enum.prop('NONE')
-    RIGHT = enum.prop('RIGHT')
-    BOTH = enum.prop('BOTH')
+    LEFT = 'LEFT'
+    NONE = 'NONE'
+    RIGHT = 'RIGHT'
+    BOTH = 'BOTH'
 
 
 class _Trapezoidator:

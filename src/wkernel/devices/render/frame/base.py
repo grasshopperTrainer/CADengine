@@ -16,48 +16,21 @@ import gkernel.color as clr
 
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
 from global_tools.lazy import lazyProp
-from ckernel.render_context.opengl_context.constant_enum import DrawBufferFormats
+from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
+from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 
 
 class FrameFactory:
     @enum
-    class TEXTURE:
-        @enum
-        class TARGET:
-            ONE_D = enum.prop(gl.GL_TEXTURE_1D)
-            TWO_D = enum.prop(gl.GL_TEXTURE_2D)
-            THREE_D = enum.prop(gl.GL_TEXTURE_3D)
-            # else not supported yet
-
-        @enum
-        class FORMAT:
-            DEPTH_COMPONENT = enum.prop(gl.GL_DEPTH_COMPONENT)
-            DEPTH_STENCIL = enum.prop(gl.GL_DEPTH_STENCIL)
-            RED = enum.prop(gl.GL_RED)
-            RG = enum.prop(gl.GL_RG)
-            RGB = enum.prop(gl.GL_RGB)
-            RGBA = enum.prop(gl.GL_RGBA)
-            # else not supported yet
+    class TXTR:
+        TRGT = TT
+        CLR_FRMT = DTF.COLOR
+        DEPTH_FRMT = DTF.NONECOLOR.DEPTH
 
     @enum
-    class RENDER:
-        @enum
-        class DEPTH:
-            D16 = enum.prop(gl.GL_DEPTH_COMPONENT16)
-            D24 = enum.prop(gl.GL_DEPTH_COMPONENT24)
-            D32F = enum.prop(gl.GL_DEPTH_COMPONENT32F)
-
-        @enum
-        class STENCIL:
-            INDEX8 = enum.prop(gl.GL_STENCIL_INDEX8)
-
-        @enum
-        class DEPTH_STENCIL:
-            D24_S8 = enum.prop(gl.GL_DEPTH24_STENCIL8)
-            D32F_S8 = enum.prop(gl.GL_DEPTH32F_STENCIL8)
-
-        def COLOR(self, idx):
-            return eval(f"gl.GL_COLOR_ATTACHMENT{idx}")
+    class RNDR:
+        DEPTH = DTF.NONECOLOR.DEPTH
+        DEPTH_STENCIL = DTF.NONECOLOR.DEPTH_STENCIL
 
     # TODO: fix color attachment allocation
     def __init__(self, manager):
@@ -90,7 +63,7 @@ class FrameFactory:
         :return:
         """
         # guess texture id if not given
-        if format not in DrawBufferFormats.COLOR:
+        if not self.TXTR.CLR_FRMT.has_member(format):
             raise TypeError
         if not isinstance(loc, int):
             raise TypeError
@@ -113,7 +86,7 @@ class FrameFactory:
         :param format: internal format
         :return:
         """
-        if format not in DrawBufferFormats.DEPTH:
+        if format not in DTF.NONECOLOR.DEPTH:
             raise TypeError
 
         # check uniqueness
@@ -136,7 +109,7 @@ class FrameFactory:
         :return:
         """
         # only one render buffer possible?
-        self.__render_buffer_prop.append((format, attachment_loc))
+        self.__render_buffer_prop.append((format.v, attachment_loc))
 
     def create(self):
         """
@@ -148,7 +121,7 @@ class FrameFactory:
             raise ValueError('not enough properties given')
 
         if not self.__size:
-            raise ValueError('size not set')
+            raise ValueError('texture size not set')
 
         w, h = self.__size
         locs = []
@@ -281,7 +254,7 @@ class Frame(RenderDevice):
         :return:
         """
         self.__frame_bffr.bind()  # binding for ogl operations
-        return super().__enter__()  # recording current device
+        return super().__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
@@ -382,11 +355,24 @@ class Frame(RenderDevice):
             x, y = [int(a * b) for a, b in zip(pos, texture.size)]
         else:
             x, y = pos
-        gl.glReadBuffer(gl.GL_COLOR_ATTACHMENT1)
-        b = gl.glReadPixelsf(x, y, 1, 1, texture.iformat)
+
+        if isinstance(tid, int):
+            src = eval(f"gl.GL_COLOR_ATTACHMENT{tid}")
+        elif tid == 'd':
+            src = eval(gl.GL_DEPTH_ATTACHMENT)
+        elif tid == 'ds':
+            src = eval(gl.GL_DEPTH_STENCIL_ATTACHMENT)
+        else:
+            raise
+
+        gl.glReadBuffer(src)
+        # b = gl.glReadPixelsf(x, y, 1, 1, texture.iformat)
+        b = gl.glReadPixels(x, y, 1, 1, gl.GL_RGBA, gl.GL_FLOAT)
+        # b = gl.glReadPixelsd(x, y, 1, 1, gl.GL_RGBA)
         if texture.iformat == gl.GL_RGB:
             return clr.ClrRGB(*b[0][0])
         else:
+            return b
             raise NotImplementedError
 
     def pick_texture_area(self, aid, xdomain, ydomain, parameterized):
@@ -450,7 +436,20 @@ class Frame(RenderDevice):
         raise NotImplementedError
 
 
+class _Frame(Frame):
+    """
+    Just a type notifier for IDE
+    """
+
+    def __enter__(self) -> Frame:
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class FrameManager(RenderDeviceManager):
+
     def __init__(self, device_master):
         super().__init__(device_master)
         # default device just binds 0 to get back to glfw provided buffer
@@ -460,20 +459,13 @@ class FrameManager(RenderDeviceManager):
         self._appendnew_device(frame)
         self.master.tracker.stack.set_base_entity(frame)
 
-    def __getitem__(self, item) -> Frame:
+    def __getitem__(self, item) -> _Frame:
         """
         just to indicate return type
         :param item:
         :return:
         """
         return super().__getitem__(item)
-
-    def __enter__(self) -> Frame:
-        """
-        just to indicate return type
-        :return:
-        """
-        super().__enter__()
 
     @property
     def device_type(self):

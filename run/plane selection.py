@@ -9,8 +9,8 @@ class MyWindow(Window):
         super().__init__(500, 800, 'mywindow', None, None)
         self.framerate = 120
         camera = self.devices.cameras[0]
-        camera.tripod.lookat(eye=(-100, -100, -100),
-                             at=(0, 0, 200),
+        camera.tripod.lookat(eye=(-100, -100, 100),
+                             at=(0, 0, 0),
                              up=(0, 0, 1))
         # self.devices.cameras.attach_fps_dolly(0, 0)
 
