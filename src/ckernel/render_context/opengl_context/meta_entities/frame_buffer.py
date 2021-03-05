@@ -118,6 +118,7 @@ class MetaFrameBffr(OGLMetaEntity):
         """
         super().bind()
         gl.glDrawBuffers(len(self.__color_attachment_locs), self.__color_attachment_locs)
+        # gl.glColorMaski(1, True, True, True, False)
 
 
 class MetaRenderBffr(OGLMetaEntity):

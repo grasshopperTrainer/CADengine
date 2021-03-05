@@ -15,9 +15,8 @@ class MyWindow(Window):
                              up=(0, 0, 1))
         # set frame
         ff = self.devices.frames.factory
-        print(ff.TXTR.TRGT)
         ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, loc=0)  # color
-        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGB.RGB, loc=1)  # id
+        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, loc=1)  # id
         ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGB.RGB32F, loc=2)  # coordinate
         ff.append_depth_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)  # depth
         ff.set_size(*self.glyph.size)
@@ -25,15 +24,30 @@ class MyWindow(Window):
 
         # set model
         self.model = Model()
-        # self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        self.model.add_pnt(0, 0, 0)
+        t = self.model.add_tgl((10, 0, 5), (0, 10, 5), (0, 0, 5))
+        t.edge_clr = 1, 0, 0, 1
+        t.edge_thk = 5
+        l = self.model.add_lin((10, 0, 10), (0, -100, 0))
+        l.clr = 1, 0, 1, 1
+
+        pl = self.model.add_plin([0, 0, 0], [-5, 0, 10], [10, 0, 50])
+        pl.clr = 1, 1, 1, 1
+
+        self.origin = Model()
+        self.origin.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
         a = 10
         for x in range(10):
             for y in range(10):
-                for z in range(10):
+                for z in range(1):
                     p = self.model.add_pnt(a*x, a*y, a*z)
                     p.frm = p.FORM_CIRCLE
                     p.dia = 3
+                    if z % 2 == 0:
+                        p.frm = p.FORM_TRIANGLE
+                    if (x+y+z) % 2 == 0:
+                        p.frm = p.FORM_SQUARE
 
         self.ground = Ground([.5] * 4)
 
@@ -44,9 +58,10 @@ class MyWindow(Window):
 
             with self.devices.cameras[0] as c:
                 with self.devices.frames[1] as df:
-                    df.clear(1, 0, 0, 0.5)
+                    df.clear(0, 0, 0, 1)
                     df.clear_depth()
-                    # self.ground.render(c)
+                    self.ground.render(c)
+                    self.origin.render()
                     self.model.render()
 
                     p = df.pick_texture(2, self.devices.cursors[0].pos_local, parameterized=False)

@@ -174,11 +174,8 @@ class LineRenderer(_Renderer):
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
 
-    __vbo = MetaVrtxBffr(
-        attr_desc=np.dtype([('vtx', RDF, 4), ('thk', RDF), ('clr', RDF, 4)]),
-        attr_locs=(0, 1, 2))
-
     def __init__(self):
+        self.__vbo = self.__sharp_prgrm.vrtxattr_schema.create_vrtx_bffr()
         self.__ibo = MetaIndxBffr(dtype='uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -200,8 +197,8 @@ class LineRenderer(_Renderer):
         with self.__vao:
             with self.__sharp_prgrm:
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__sharp_prgrm.uniforms['VM'] = camera.tripod.VM.r
-                self.__sharp_prgrm.uniforms['PM'] = camera.body.PM.r
+                self.__sharp_prgrm.uniforms['VM'] = camera.tripod.VM
+                self.__sharp_prgrm.uniforms['PM'] = camera.body.PM
                 self.__sharp_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
                                                      [0, 1, 0, 0],
                                                      [0, 0, 1, 0],
@@ -223,7 +220,7 @@ class PolylineRenderer(_Renderer):
     )
 
     def __init__(self):
-        self.__vbo = self.__sharp_prgrm.vrtxattr_schema.create_buffer()
+        self.__vbo = self.__sharp_prgrm.vrtxattr_schema.create_vrtx_bffr()
         self.__ibo = MetaIndxBffr(dtype='uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -247,12 +244,12 @@ class PolylineRenderer(_Renderer):
             with self.__sharp_prgrm:
                 # uniforms
                 camera = get_current_ogl().manager.window.devices.cameras.current
-                self.__sharp_prgrm.uniforms['VM'] = camera.tripod.VM.r
-                self.__sharp_prgrm.uniforms['PM'] = camera.body.PM.r
+                self.__sharp_prgrm.uniforms['VM'] = camera.tripod.VM
+                self.__sharp_prgrm.uniforms['PM'] = camera.body.PM
                 self.__sharp_prgrm.uniforms['MM'] = [[1, 0, 0, 0],
-                                           [0, 1, 0, 0],
-                                           [0, 0, 1, 0],
-                                           [0, 0, 0, 1]]
+                                                     [0, 1, 0, 0],
+                                                     [0, 0, 1, 0],
+                                                     [0, 0, 0, 1]]
                 self.__sharp_prgrm.push_uniforms()
 
                 gl.glDrawElements(gl.GL_LINE_STRIP,
@@ -287,11 +284,8 @@ class TriangleRenderer(_Renderer):
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_frgm_shdr.glsl'))
 
-    __vbo = MetaVrtxBffr(
-        attr_desc=np.dtype([('vtx', RDF, 4), ('edge_thk', RDF), ('edge_clr', RDF, 4), ('fill_clr', RDF, 4)]),
-        attr_locs=(0, 1, 2, 3))
-
     def __init__(self):
+        self.__vbo = self.__fill_prgrm.vrtxattr_schema.union(self.__edge_prgrm.vrtxattr_schema).create_vrtx_bffr()
         self.__ibo = MetaIndxBffr('uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -309,14 +303,12 @@ class TriangleRenderer(_Renderer):
         :return:
         """
         camera = get_current_ogl().manager.window.devices.cameras.current
-        vm = camera.tripod.VM.r
-        pm = camera.body.PM.r
-        prgrm.uniforms['VM'] = vm
-        prgrm.uniforms['PM'] = pm
+        prgrm.uniforms['PM'] = camera.body.PM
+        prgrm.uniforms['VM'] = camera.tripod.VM
         prgrm.uniforms['MM'] = [[1, 0, 0, 0],
-                                   [0, 1, 0, 0],
-                                   [0, 0, 1, 0],
-                                   [0, 0, 0, 1]]
+                                [0, 1, 0, 0],
+                                [0, 0, 1, 0],
+                                [0, 0, 0, 1]]
         prgrm.push_uniforms()
 
     def render(self, is_render_edge=True):
@@ -325,8 +317,8 @@ class TriangleRenderer(_Renderer):
         :param is_render_edge: bool, do render edge?
         :return:
         """
-        self.__vbo.get_concrete().push_cache()
-        self.__ibo.get_concrete().push_cache()
+        self.__vbo.push_cache()
+        self.__ibo.push_cache()
         with self.__vao:
             self.__render_fill()
             if is_render_edge:

@@ -71,12 +71,9 @@ class MetaTexture(OGLMetaEntity):
 
         :return:
         """
-        print(self.__iformat)
         for _, base in (*DTF.COLOR, *DTF.NONECOLOR):
-            print(_, base)
             if self.__iformat in base:
                 return base[0].v
-        print()
         raise NotImplementedError
 
     def as_unit(self, unit):

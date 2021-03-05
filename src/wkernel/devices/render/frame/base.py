@@ -368,6 +368,7 @@ class Frame(RenderDevice):
         gl.glReadBuffer(src)
         # b = gl.glReadPixelsf(x, y, 1, 1, texture.iformat)
         b = gl.glReadPixels(x, y, 1, 1, gl.GL_RGBA, gl.GL_FLOAT)
+        # b = gl.glReadPixelsd(x, y, 1, 1, gl.GL_RGBA)
         if texture.iformat == gl.GL_RGB:
             return clr.ClrRGB(*b[0][0])
         else:

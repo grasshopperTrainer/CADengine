@@ -1,5 +1,6 @@
 from .base import Shape
 import gkernel.dtype.geometric.primitive as gt
+from mkernel.color_registry import GlobalColorRegistry
 
 
 class Pln(Shape):
@@ -7,6 +8,8 @@ class Pln(Shape):
         self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
         self.__indx_block = renderer.ibo.cache.request_block(size=1)
         self.__indx_block['idx'] = self.__vrtx_block.indices
+
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
 
         self.__geo = None
         self.__len = None

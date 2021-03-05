@@ -11,6 +11,7 @@ from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 from ..translators import npdtype_to_gldtype
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
+
 class _MetaBffr(OGLMetaEntity, metaclass=abc.ABCMeta):
 
     @property
@@ -106,7 +107,6 @@ class MetaVrtxBffr(_MetaBffr):
     @property
     def cache(self):
         return self.__cache
-
 
 
 class MetaIndxBffr(_MetaBffr):

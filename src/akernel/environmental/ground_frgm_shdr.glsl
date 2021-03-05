@@ -9,6 +9,8 @@ in vec3 ffar;
 in vec4 fclr;
 
 layout (location=0) out vec4 clr;
+layout (location=1) out vec4 cid;
+layout (location=2) out vec4 coord;
 
 float compute_depth(vec3 P) {
     vec4 ndc_p = PM * VM * vec4(P, 1);
@@ -28,7 +30,8 @@ void main() {
     // 0 = near + t*(far - near)
     vec3 ray = (ffar - fnear);
     float r = -fnear.z / ray.z;
-    vec3 P = fnear + r*ray;// intersection Point
+    vec3 P = fnear + r*ray; // intersection Point
+    coord = vec4(P, 1);
 
     float ps = 1./10.;// chess pattern size
     // clamping resulted to 0.3 ~ 1
@@ -44,4 +47,5 @@ void main() {
     // blending rgb
     clr = vec4(fclr.xyz * c * l, 1);
     gl_FragDepth = compute_depth(P);
+
 }
