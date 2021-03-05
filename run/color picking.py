@@ -14,13 +14,13 @@ class MainWindow(Window):
         w, h = self.glyph.size
         ffactory = self.devices.frames.factory
         ffactory.set_size(w, h)
-        ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                format=ffactory.TEXTURE.FORMAT.RGBA,
+        ffactory.append_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                format=ffactory.TXTR.FORMAT.RGBA,
                                 tid=0)
-        ffactory.append_texture(target=ffactory.TEXTURE.TARGET.TWO_D,
-                                format=ffactory.TEXTURE.FORMAT.RGB,
+        ffactory.append_texture(target=ffactory.TXTR.TRGT.TWO_D,
+                                format=ffactory.TXTR.FORMAT.RGB,
                                 tid=1)
-        ffactory.set_render_buffer(format=ffactory.RENDER.DEPTH_STENCIL.D24_S8,
+        ffactory.set_render_buffer(format=ffactory.RNDR.DEPTH_STENCIL.D24_S8,
                                    attachment_loc=None)
         ffactory.create()
         # create pane
