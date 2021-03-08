@@ -253,6 +253,11 @@ class CameraManager(RenderDeviceManager):
         # this is needed for glfw cursor pos callback to operate
         glfw.set_input_mode(self.window.context.glfw_window, glfw.CURSOR, glfw.CURSOR_DISABLED)
 
+    def attach_cad_dolly(self, camera_id, cursor_id):
+        camera = self[camera_id]
+        cursor = self.master.cursors[cursor_id]
+        return CadDolly(self.window, camera, cursor)
+
     def detach_dolly(self, camera_id):
         """
         detach dolly from a camera

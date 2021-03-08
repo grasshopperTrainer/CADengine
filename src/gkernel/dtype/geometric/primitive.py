@@ -327,7 +327,6 @@ class Vec(Mat1, VecConv, PntConv):
         :param other:
         :return:
         """
-        # print('trudiving')
         obj = super().__truediv__(other)
         if isinstance(other, Number):
             obj[3, 0] = 0
@@ -392,15 +391,27 @@ class Vec(Mat1, VecConv, PntConv):
         return np.dot(a.T, b)[0, 0]
 
     @classmethod
-    def amplified(cls, vec, magnitude):
+    def normalize(cls, vec):
         """
-        return amplified vector
+        return normalized
+        :return:
+        """
+        if vec.is_zero():
+            raise
+        return vec/vec.length
 
-        :param vec01111:
-        :param magnitude:
-        :return: copy of amplified vec
+    @classmethod
+    def amplify(cls, vec, amp):
+        return vec.normalized() * amp
+
+    def amplified(self, magnitude):
         """
-        return vec.normalize().amplify(magnitude)
+        return amplified of self
+
+        :param magnitude:
+        :return: copy of self amplified
+        """
+        return self.amplify(self, magnitude)
 
     def pnts_share_side(self, *pnts):
         """
@@ -430,29 +441,16 @@ class Vec(Mat1, VecConv, PntConv):
                     return False
         return True
 
-    def amplify(self, magnitude):
+    def normalized(self):
         """
-        amplify self
-
-        :param self:
-        :param magnitude:
-        :return:
-        """
-        self.normalize()
-        self[:, [0]] = self * magnitude
-        return self
-
-    def normalize(self):
-        """
-        normalize self
+        return normalize of self
 
         :return: None if self is 0vector else self
         """
         if self.is_zero():
             warnings.warn("zero vector cant be normalized")
             return self
-        self[:] = self / self.length
-        return self
+        return self.normalize(self)
 
     def is_zero(self):
         """
@@ -467,7 +465,7 @@ class Vec(Mat1, VecConv, PntConv):
         :param vec:
         :return:
         """
-        return True if Vec.cross(self, vec)[0] == 0 else False
+        return True if Vec.cross(self, vec) == 0 else False
 
     def is_oposite_with(self, vec):
         """
@@ -478,16 +476,6 @@ class Vec(Mat1, VecConv, PntConv):
         raise NotImplementedError
 
     @classmethod
-    def normalized(cls, vec):
-        """
-        normalized self
-
-        :return: copy of normalized vector
-        """
-
-        return vec / vec.length
-
-    @classmethod
     def trnsf_to_x(cls, vec):
         """
         calculate transformation matrix for aligning self to axis x
@@ -496,13 +484,19 @@ class Vec(Mat1, VecConv, PntConv):
         axis = Vec(1, 0, 0)
         if vec.is_parallel_with(axis):
             return TrnsfMats()
-        v_on_zx = vec.projected_on_yz()
-        rot_dir = 1 if Vec.cross(v_on_zx, axis).y > 0 else -1  # to determine direction of rotation
-        ry = RotYMat(Vec.angle_between(axis, v_on_zx) * rot_dir)
+        v_on_zx = vec.project_on_yz()
+        if v_on_zx == 0:
+            ry = RotYMat(0)
+        else:
+            rot_dir = 1 if Vec.cross(v_on_zx, axis).y > 0 else -1  # to determine direction of rotation
+            ry = RotYMat(Vec.angle_between(axis, v_on_zx) * rot_dir)
 
         v_on_xy = ry * vec
-        rot_dir = 1 if Vec.cross(v_on_xy, axis).z > 0 else -1
-        rz = RotZMat(Vec.angle_between(axis, v_on_xy) * rot_dir)
+        if v_on_xy == 0:
+            rz = RotZMat(0)
+        else:
+            rot_dir = 1 if Vec.cross(v_on_xy, axis).z > 0 else -1
+            rz = RotZMat(Vec.angle_between(axis, v_on_xy) * rot_dir)
         return TrnsfMats([ry, rz])
 
     @classmethod
@@ -514,13 +508,19 @@ class Vec(Mat1, VecConv, PntConv):
         axis = Vec(0, 1, 0)
         if vec.is_parallel_with(axis):
             return TrnsfMats()
-        v_on_yz = vec.projected_on_yz()
-        rot_dir = 1 if Vec.cross(v_on_yz, axis).x > 0 else -1  # to determine direction of rotation
-        rx = RotXMat(Vec.angle_between(axis, v_on_yz) * rot_dir)
+        v_on_yz = vec.project_on_yz()
+        if v_on_yz == 0:
+            rx = RotXMat(0)
+        else:
+            rot_dir = 1 if Vec.cross(v_on_yz, axis).x > 0 else -1  # to determine direction of rotation
+            rx = RotXMat(Vec.angle_between(axis, v_on_yz) * rot_dir)
 
         v_on_xy = rx * vec
-        rot_dir = 1 if Vec.cross(v_on_xy, axis).z > 0 else -1
-        rz = RotZMat(Vec.angle_between(axis, v_on_xy) * rot_dir)
+        if v_on_xy == 0:
+            rz = RotZMat(0)
+        else:
+            rot_dir = 1 if Vec.cross(v_on_xy, axis).z > 0 else -1
+            rz = RotZMat(Vec.angle_between(axis, v_on_xy) * rot_dir)
         return TrnsfMats([rx, rz])
 
     @classmethod
@@ -532,13 +532,19 @@ class Vec(Mat1, VecConv, PntConv):
         axis = Vec(0, 0, 1)
         if vec.is_parallel_with(axis):
             return TrnsfMats()
-        v_on_yz = vec.projected_on_yz()
-        rot_dir = 1 if Vec.cross(v_on_yz, axis).x > 0 else -1  # to determine direction of rotation
-        rx = RotXMat(Vec.angle_between(axis, v_on_yz) * rot_dir)
+        v_on_yz = vec.project_on_yz()
+        if v_on_yz == 0:
+            rx = RotXMat(0)
+        else:
+            rot_dir = 1 if Vec.cross(v_on_yz, axis).x > 0 else -1  # to determine direction of rotation
+            rx = RotXMat(Vec.angle_between(axis, v_on_yz) * rot_dir)
 
         v_on_zx = rx * vec
-        rot_dir = 1 if Vec.cross(v_on_zx, axis).y > 0 else -1
-        ry = RotYMat(Vec.angle_between(axis, v_on_zx) * rot_dir)
+        if v_on_zx == 0:
+            ry = RotYMat(0)
+        else:
+            rot_dir = 1 if Vec.cross(v_on_zx, axis).y > 0 else -1
+            ry = RotYMat(Vec.angle_between(axis, v_on_zx) * rot_dir)
         return TrnsfMats([rx, ry])
 
     def align_with_vec(self, vec):
@@ -549,7 +555,7 @@ class Vec(Mat1, VecConv, PntConv):
         """
         raise NotImplementedError
 
-    def _projected_on(self, plane):
+    def __projected_on(self, plane):
         """
         projection
 
@@ -565,26 +571,26 @@ class Vec(Mat1, VecConv, PntConv):
             vec[1] = 0
         return vec
 
-    def projected_on_xy(self):
+    def project_on_xy(self):
         """
         vector projected on xy plane
         :return: copy of projected self
         """
-        return self._projected_on('xy')
+        return self.__projected_on('xy')
 
-    def projected_on_yz(self):
+    def project_on_yz(self):
         """
         vector projected on yz plane
         :return: copy of projected self
         """
-        return self._projected_on('yz')
+        return self.__projected_on('yz')
 
-    def projected_on_zx(self):
+    def project_on_zx(self):
         """
         vector projected on zx plane
         :return: copy of projected self
         """
-        return self._projected_on('zx')
+        return self.__projected_on('zx')
 
     @classmethod
     def from_pnts(cls, tail, head):
@@ -832,7 +838,7 @@ class Pln(ArrayLikeData, PntConv):
             raise ValueError('cant define plane with parallel axes')
         z = Vec.cross(x, y)  # find z
         y = Vec.cross(z, x)  # find y
-        x, y, z = [v.normalize() for v in (x, y, z)]
+        x, y, z = [v.normalized() for v in (x, y, z)]
         self[:, 1:] = np.array([x, y, z]).T
         # calculate 'plane to origin' rotation matrices
         # last rotation is of x so match axis x to unit x prior
@@ -840,7 +846,7 @@ class Pln(ArrayLikeData, PntConv):
                           [0, x.y, y.y, z.y],
                           [0, x.z, y.z, z.z],
                           [1, 0, 0, 0]], dtype=DTYPE)
-        x_on_xy = x.projected_on_xy()
+        x_on_xy = x.project_on_xy()
         dir_vec = Vec.cross(Vec(1, 0, 0), x_on_xy)
         if dir_vec.is_zero():
             rot_dir = 0

@@ -1,4 +1,4 @@
-from gkernel.dtype.geometric import Vec, Pnt, Lin, ZVec, ZeroVec
+from gkernel.dtype.geometric import Vec, Pnt, Lin, ZVec, ZeroVec, XVec, YVec
 import weakref as wr
 from itertools import repeat
 
@@ -94,4 +94,94 @@ class FpsDolly(Dolly):
             tripod = self.camera.tripod
             tripod.pitch(self.__velocity.y)
             axis = Lin.from_pnt_vec(tripod.plane.origin, Vec(0, 0, 1))
-            tripod.rotate_along(axis, -self.__velocity.x)
+            tripod.rotate_around(axis, -self.__velocity.x)
+
+
+class CadDolly(Dolly):
+    """
+    sketchup like dolly
+    """
+
+    def __init__(self, window, camera, cursor):
+        self.__camera = wr.ref(camera)
+        self.__cursor = wr.ref(cursor)
+        self.__window = wr.ref(window)
+
+        self.__pan_amp = 0.2
+        self.__pan_prev = Vec(0, 0, 0)
+        window.append_predraw_callback(self.__update_pan)
+
+        self.__zoom_accel = Vec(0, 0, 0)
+        self.__zoom_velocity = Vec(0, 0, 0)
+        self.__zoom_friction = 0.25
+        self.__zoom_amp = 10
+        window.append_predraw_callback(self.__update_zoom)
+        self.cursor.append_mouse_scroll_callback(self.__update_scroll_offset)
+
+        self.__orbiting = False
+        self.__oorigin = Pnt(0, 0, 0)
+        self.__oaccel = Vec(0, 0, 0)
+        self.__ovelocity = Vec(0, 0, 0)
+        self.__ofriction = 0.25
+        self.__oamp = -0.05
+        self.__opos = Vec(0, 0, 0)
+        self.cursor.append_cursor_pos_callback(self.__update_orbit_accel)
+        window.append_predraw_callback(self.__update_orbit)
+
+    @property
+    def camera(self):
+        c = self.__camera()
+        if c:
+            return c
+        raise NotImplementedError
+
+    @property
+    def cursor(self):
+        c = self.__cursor()
+        if c:
+            return c
+        raise NotImplementedError
+
+    @property
+    def window(self):
+        w = self.__window()
+        if w:
+            return w
+        raise NotImplementedError
+
+    def __update_pan(self):
+        k, m = self.window.devices.keyboard, self.window.devices.mouse
+        pos = self.cursor.pos_global
+
+        if k.get_key_status('lshift')[0] == 1 and m.get_button_status(2):
+            self.camera.tripod.move_local((pos - self.__pan_prev)*self.__pan_amp)
+
+        self.__pan_prev = pos
+
+    def __update_zoom(self):
+        self.__zoom_velocity = (self.__zoom_velocity + self.__zoom_accel) * self.__zoom_friction
+        self.camera.tripod.move_local(Vec(0, 0, self.__zoom_velocity.y))
+        self.__zoom_accel = Vec(0, 0, 0)
+
+    def __update_scroll_offset(self, glfw_window, xoff, yoff, cursor):
+        self.__zoom_accel += Vec(xoff, yoff)*self.__zoom_amp
+
+    def __update_orbit_accel(self, glfw_window, xpos, ypos, cursor):
+        pos = Vec(xpos, ypos)
+        self.__oaccel = (pos - self.__opos) * self.__oamp
+        self.__opos = pos
+
+    def __update_orbit(self):
+        self.__ovelocity = (self.__ovelocity + self.__oaccel) * self.__ofriction
+        self.__oaccel = Vec(0, 0, 0)
+        if self.window.devices.keyboard.get_key_status('lshift')[0] == 0 and self.window.devices.mouse.get_button_status(2):
+            self.__orbiting = True
+            self.camera.tripod.rotate_around(Lin.from_pnt_vec(self.__oorigin, ZVec()), self.__ovelocity.x)
+            haxis = -self.camera.tripod.plane.axis_x.project_on_xy()
+            self.camera.tripod.rotate_around(Lin.from_pnt_vec(self.__oorigin, haxis), self.__ovelocity.y)
+        else:
+            self.__orbiting = False
+
+    def set_orbit_origin(self, x, y, z):
+        if not self.__orbiting:
+            self.__oorigin = Pnt(x, y, z)

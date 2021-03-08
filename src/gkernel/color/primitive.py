@@ -60,6 +60,20 @@ class ClrRGBA(Clr):
         obj[:] = r, g, b, a
         return obj
 
+    __rgba_idx = {'r':0, 'g':1, 'b':2, 'a':3}
+    def __getattr__(self, item):
+        vs = []
+        if not (set(item) - set('rgba')):
+            for c in item:
+                vs.append(self[self.__rgba_idx[c]])
+        return vs
+
     @property
     def shape_std(self):
         return (4, )
+
+    @classmethod
+    def from_raw_float(cls, r, g, b, a):
+        ins = cls()
+        ins[:] = r, g, b, a
+        return ins

@@ -6,6 +6,7 @@ import ckernel.render_context.opengl_context.meta_entities as meta
 import OpenGL.GL as gl
 
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
+from global_tools.callback_registry import callbackRegistry
 
 
 class _CursorRenderer:
@@ -70,7 +71,7 @@ class Cursor(RenderDevice):
         """
         super().__init__(manager)
 
-        if not(isinstance(origin, (tuple, list)) and len(origin) == 2):
+        if not (isinstance(origin, (tuple, list)) and len(origin) == 2):
             raise TypeError
         self.__origin = gt.Vec(origin[0], origin[1])
 
@@ -79,7 +80,17 @@ class Cursor(RenderDevice):
         self.__accel = gt.Vec(0, 0, 0)
 
         self.__renderer = _CursorRenderer()
-        self.set_cursor_pos_callback(self.__default_cursor_pos_callbacked)
+
+        m = self.manager.master.mouse
+        m.append_cursor_pos_callback(
+            lambda *args, mouse, **kwargs: self.call_cursor_pos_callback(*args, **kwargs, cursor=self))
+        m.append_cursor_pos_callback(self.__default_cursor_pos_update)
+
+        m.append_mouse_button_callback(
+            lambda *args, mouse, **kwargs: self.call_mouse_button_callback(*args, **kwargs, cursor=self))
+
+        m.append_mouse_scroll_callback(
+            lambda *args, mouse, **kwargs: self.call_mouse_scroll_callback(*args, **kwargs, cursor=self))
 
     def __update_pos_local(self, new_pos):
         """
@@ -96,7 +107,7 @@ class Cursor(RenderDevice):
 
     @property
     def pos_local(self):
-        return self.__pos_local.xy
+        return self.__pos_local
 
     @pos_local.setter
     def pos_local(self, v):
@@ -106,7 +117,7 @@ class Cursor(RenderDevice):
 
     @property
     def pos_global(self):
-        return (self.__pos_local + self.__origin).xy
+        return self.__pos_local + self.__origin
 
     @pos_global.setter
     def pos_global(self, v):
@@ -150,11 +161,11 @@ class Cursor(RenderDevice):
         """
         p = self.__pos_local + self.__origin
         # just simple transformation...
-        param = p[:2, 0]/np.array(self.manager.window.glyph.size) * 2 - 1
+        param = p[:2, 0] / np.array(self.manager.window.glyph.size) * 2 - 1
         self.__renderer.set_pos(*param)
         self.__renderer.render_dot()
 
-    def __default_cursor_pos_callbacked(self, glfww, xpos, ypos, mouse, cursor):
+    def __default_cursor_pos_update(self, glfww, xpos, ypos, mouse):
         """
         default cursor pos callback
 
@@ -163,58 +174,53 @@ class Cursor(RenderDevice):
         :param xpos: int, x coordinate provided by glfw
         :param ypos: int, y coordinate provided by glfw
         :param mouse: mouse device
-        :param cursor: this cursor
         :return:
         """
         pos = mouse.cursor_pos_instant
         self.__update_pos_local(pos)
 
-    def __default_cursor_enter_callbacked(self, glfww, mouse):
+    @callbackRegistry
+    def call_cursor_pos_callback(self):
         pass
 
-    def __default_cursor_exit_callbacked(self, glfww):
-        raise NotImplementedError
-
-    def __callbacked_wrapper(self, __func):
+    @call_cursor_pos_callback.appender
+    def append_cursor_pos_callback(self, callbacked):
         """
-        wrapper for enforcing position return
-        and making acceleration atomic property
+        append cursor pos callback
 
-        :param __func:
+        :param callbacked: method should accept following kwargs: window, xpos, ypos, mouse
+        :param args: additional arguments to be put when executing (param)callbacked
+        :param kwargs: additional kwargs to be put when executing (param)callbacked
         :return:
         """
-        def __wrapper(*args, **kwargs):
-            r = __func(*args, **kwargs)
-            if not (isinstance(r, (tuple, list, np.ndarray)) and len(r) == 2):
-                raise ValueError
-            pos = gt.Vec(*r)
-            self.__update_pos_local(pos)
-        return __wrapper
+        pass
 
-    def set_cursor_pos_callback(self, func, *args, **kwargs):
+    @callbackRegistry
+    def call_cursor_enter_callback(self):
+        pass
+
+    @call_cursor_enter_callback.appender
+    def append_cursor_enter_callback(self):
         """
-        for max flexibility providing raw behaviour set function
-
-        e.g. def f(glfww, x, y, m, c): c.pos = (x, y)   # simple follow function
-
-        :param func: callable, should accept folowing params:
-                    glfw_window - glfw window object
-                    xpos - window space coordinate x
-                    ypos - window space coordinate y
-                    mouse - window mouse
-                    cursor - this cursor
-        :param args: additional arguments to put into func when called
-        :param kwargs: additional keyword argument to put into func when called
-
+        append cursor enter callback
+        ! 'enter' also include leaving the window
         :return:
         """
-        self.manager.master.mouse.append_cursor_pos_callback(func, *args, **kwargs, cursor=self)
+    @callbackRegistry
+    def call_mouse_button_callback(self):
+        pass
 
-    def set_cursor_enter_callback(self, func):
-        raise NotImplementedError
+    @call_mouse_button_callback.appender
+    def append_mouse_button_callback(self):
+        pass
 
-    def set_cursor_exit_callback(self, func):
-        raise NotImplementedError
+    @callbackRegistry
+    def call_mouse_scroll_callback(self):
+        pass
+
+    @call_mouse_scroll_callback.appender
+    def append_mouse_scroll_callback(self):
+        pass
 
 
 class _Cursor(Cursor):

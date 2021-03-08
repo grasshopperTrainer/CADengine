@@ -177,6 +177,9 @@ class Mouse(_InputDevice):
             glfw.set_cursor_pos(window, *self.cursor_center)
         self.__pos_perframe = self.cursor_center
 
+    def get_button_status(self, button):
+        return glfw.get_mouse_button(self.window.context.glfw_window, button)
+
 
 class UnknownKeyError(Exception):
     """
@@ -213,6 +216,14 @@ class GLFWCharDict:
     __key_char_dict[glfw.KEY_COMMA] = ","
     __key_char_dict[glfw.KEY_PERIOD] = "."
     __key_char_dict[glfw.KEY_SLASH] = "/"
+    __key_char_dict[glfw.KEY_LEFT_SHIFT] = "lshift"
+    __key_char_dict[glfw.KEY_RIGHT_SHIFT] = "rshift"
+    __key_char_dict[glfw.KEY_LEFT_CONTROL] = "lcontrol"
+    __key_char_dict[glfw.KEY_RIGHT_CONTROL] = "rcontrol"
+    __key_char_dict[glfw.KEY_LEFT_ALT] = "lalt"
+    __key_char_dict[glfw.KEY_RIGHT_ALT] = "rald"
+    __key_char_dict[glfw.KEY_LEFT_SUPER] = "lsuper"
+    __key_char_dict[glfw.KEY_RIGHT_SUPER] = "rsuper"
     # connect char to shifted char
     __char_shifted_dict = {c: s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
     # reversed dicts
@@ -265,13 +276,13 @@ class GLFWCharDict:
 
 class Keyboard(_InputDevice):
     __callback_signature = glfw.set_key_callback
-    __glfw_key_dict = GLFWCharDict()
+    __key_dict = GLFWCharDict()
 
     def __init__(self, window):
         super().__init__(window)
         # build key press dict
         # what i want to record is... press status and time
-        self.__key_press_dict = self.__glfw_key_dict.get_copied_dict()
+        self.__key_press_dict = self.__key_dict.get_copied_dict()
         for k, v in self.__key_press_dict.items():
             self.__key_press_dict[k] = [None, 0]  # time, pressed
         with window.context.glfw as window:
@@ -289,7 +300,7 @@ class Keyboard(_InputDevice):
         :param mods:
         :return:
         """
-        self.call_key_callback(window=window, key=key, scancode=scancode, action=action, mods=mods, keyboard=self)
+        self.call_key_callback(window, key, scancode, action, mods, keyboard=self)
 
     @callbackRegistry
     def call_key_callback(self, **on_call_kwargs):
@@ -338,8 +349,7 @@ class Keyboard(_InputDevice):
         :param mods: mod key, like 'shift' for upper char
         :return: char representation
         """
-        return cls.__glfw_key_dict.key_to_char(key, mods)
+        return cls.__key_dict.key_to_char(key, mods)
 
     def get_key_status(self, *chars):
-        with self.window.context.glfw as window:
-            return tuple(glfw.get_key(window, self.__glfw_key_dict.char_to_key(char)) for char in chars)
+        return tuple(glfw.get_key(self.window.context.glfw_window, self.__key_dict.char_to_key(char)) for char in chars)

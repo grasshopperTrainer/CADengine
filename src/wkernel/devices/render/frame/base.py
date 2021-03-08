@@ -20,133 +20,6 @@ from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormat
 from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 
 
-class FrameFactory:
-    @enum
-    class TXTR:
-        TRGT = TT
-        CLR_FRMT = DTF.COLOR
-        DEPTH_FRMT = DTF.NONECOLOR.DEPTH
-
-    @enum
-    class RNDR:
-        DEPTH = DTF.NONECOLOR.DEPTH
-        DEPTH_STENCIL = DTF.NONECOLOR.DEPTH_STENCIL
-
-    # TODO: fix color attachment allocation
-    def __init__(self, manager):
-        self.__manager = wr.ref(manager)
-        self.__size = None
-        self.__tids = set()
-        self.__textures_prop = []
-        self.__render_buffer_prop = []
-
-    def set_size(self, width, height):
-        """
-        make fb components have equal size
-
-        :param width: int, pixel width
-        :param height: int, pixel height
-        :return:
-        """
-        if any(not isinstance(i, int) for i in (width, height)):
-            raise TypeError
-        self.__size = width, height
-
-    def append_color_texture(self, target, format, loc):
-        """
-        append texture for color attachment
-
-        ! texture will be treated with attachment index of given order
-        :param target: target e.g. TEXTURE.TARGET.TWO_D
-        :param format: internal format
-        :param loc: int, color attachment id
-        :return:
-        """
-        # guess texture id if not given
-        if not self.TXTR.CLR_FRMT.has_member(format):
-            raise TypeError
-        if not isinstance(loc, int):
-            raise TypeError
-
-        # check uniqueness
-        if loc in self.__tids:
-            raise ValueError
-
-        # append
-        self.__textures_prop.append((target, format, loc))
-        self.__tids.add(loc)
-        return self
-
-    def append_depth_texture(self, target, format):
-        """
-        append texture for depth
-
-        ! texture will be treated with attachment index of given order
-        :param target: target e.g. TEXTURE.TARGET.TWO_D
-        :param format: internal format
-        :return:
-        """
-        if format not in DTF.NONECOLOR.DEPTH:
-            raise TypeError
-
-        # check uniqueness
-        tid = 'd'
-        if tid in self.__tids:
-            raise ValueError
-
-        # append
-        self.__textures_prop.append((target, format, tid))
-        self.__tids.add(tid)
-        return self
-
-    def append_depthstencil_texture(self, target, format):
-        raise NotImplementedError
-
-    def set_render_buffer(self, format, attachment_loc=None):
-        """
-        add render buffer
-
-        :return:
-        """
-        # only one render buffer possible?
-        self.__render_buffer_prop.append((format.v, attachment_loc))
-
-    def create(self):
-        """
-        create new meta frame
-
-        :return:
-        """
-        if not (self.__textures_prop or self.__render_buffer_prop):
-            raise ValueError('not enough properties given')
-
-        if not self.__size:
-            raise ValueError('texture size not set')
-
-        w, h = self.__size
-        locs = []
-        textures = []
-        for t, f, i in self.__textures_prop:
-            if i in locs:
-                raise ValueError('color attachment location has to be unique')
-            locs.append(i)
-            textures.append(meta.MetaTexture(target=t, iformat=f, width=w, height=h))
-
-        render_bffrs = []
-        for f, i in self.__render_buffer_prop:
-            if i in locs:
-                raise ValueError('color attachment location has to be unique')
-            locs.append(i)
-            render_bffrs.append(meta.MetaRenderBffr(iformat=f, width=w, height=h))
-
-        frame_bffr = meta.MetaFrameBffr(*textures, *render_bffrs, tids=locs)
-
-        manager = self.__manager()
-        frame = Frame(manager, frame_bffr, w, h)
-        manager._appendnew_device(frame)
-        return frame
-
-
 class FrameRenderer:
     # program for rendering quad
     __THIS_PATH = os.path.dirname(__file__)
@@ -341,7 +214,7 @@ class Frame(RenderDevice):
         texture = self.__frame_bffr.get_attachment(aid)
         self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
 
-    def pick_texture(self, tid, pos, parameterized):
+    def pick_texture(self, tid, pos, parameterized) -> clr.Clr:
         """
         pick texture color of given attachment id, position
 
@@ -351,6 +224,8 @@ class Frame(RenderDevice):
         :return:
         """
         texture = self.frame_bffr.get_attachment(tid)
+        if isinstance(pos, gt.Vec):
+            pos = pos.xy
         if parameterized:
             x, y = [int(a * b) for a, b in zip(pos, texture.size)]
         else:
@@ -371,6 +246,11 @@ class Frame(RenderDevice):
         # b = gl.glReadPixelsd(x, y, 1, 1, gl.GL_RGBA)
         if texture.iformat == gl.GL_RGB:
             return clr.ClrRGB(*b[0][0])
+        elif texture.iformat in DTF.COLOR.RGBA:
+            if texture.iformat in (DTF.COLOR.RGBA.RGBA32F, DTF.COLOR.RGBA.RGBA16F):
+                return clr.ClrRGBA.from_raw_float(*b[0][0])
+            else:
+                return clr.ClrRGBA(*b[0][0])
         else:
             return b
             raise NotImplementedError
@@ -474,3 +354,131 @@ class FrameManager(RenderDeviceManager):
     @property
     def factory(self):
         return FrameFactory(self)
+
+
+
+class FrameFactory:
+    @enum
+    class TXTR:
+        TRGT = TT
+        CLR_FRMT = DTF.COLOR
+        DEPTH_FRMT = DTF.NONECOLOR.DEPTH
+
+    @enum
+    class RNDR:
+        DEPTH = DTF.NONECOLOR.DEPTH
+        DEPTH_STENCIL = DTF.NONECOLOR.DEPTH_STENCIL
+
+    # TODO: fix color attachment allocation
+    def __init__(self, manager):
+        self.__manager = wr.ref(manager)
+        self.__size = None
+        self.__tids = set()
+        self.__textures_prop = []
+        self.__render_buffer_prop = []
+
+    def set_size(self, width, height):
+        """
+        make fb components have equal size
+
+        :param width: int, pixel width
+        :param height: int, pixel height
+        :return:
+        """
+        if any(not isinstance(i, int) for i in (width, height)):
+            raise TypeError
+        self.__size = width, height
+
+    def append_color_texture(self, target, format, loc):
+        """
+        append texture for color attachment
+
+        ! texture will be treated with attachment index of given order
+        :param target: target e.g. TEXTURE.TARGET.TWO_D
+        :param format: internal format
+        :param loc: int, color attachment id
+        :return:
+        """
+        # guess texture id if not given
+        if not self.TXTR.CLR_FRMT.has_member(format):
+            raise TypeError
+        if not isinstance(loc, int):
+            raise TypeError
+
+        # check uniqueness
+        if loc in self.__tids:
+            raise ValueError
+
+        # append
+        self.__textures_prop.append((target, format, loc))
+        self.__tids.add(loc)
+        return self
+
+    def append_depth_texture(self, target, format):
+        """
+        append texture for depth
+
+        ! texture will be treated with attachment index of given order
+        :param target: target e.g. TEXTURE.TARGET.TWO_D
+        :param format: internal format
+        :return:
+        """
+        if format not in DTF.NONECOLOR.DEPTH:
+            raise TypeError
+
+        # check uniqueness
+        tid = 'd'
+        if tid in self.__tids:
+            raise ValueError
+
+        # append
+        self.__textures_prop.append((target, format, tid))
+        self.__tids.add(tid)
+        return self
+
+    def append_depthstencil_texture(self, target, format):
+        raise NotImplementedError
+
+    def set_render_buffer(self, format, attachment_loc=None):
+        """
+        add render buffer
+
+        :return:
+        """
+        # only one render buffer possible?
+        self.__render_buffer_prop.append((format.v, attachment_loc))
+
+    def create(self) -> Frame:
+        """
+        create new meta frame
+
+        :return:
+        """
+        if not (self.__textures_prop or self.__render_buffer_prop):
+            raise ValueError('not enough properties given')
+
+        if not self.__size:
+            raise ValueError('texture size not set')
+
+        w, h = self.__size
+        locs = []
+        textures = []
+        for t, f, i in self.__textures_prop:
+            if i in locs:
+                raise ValueError('color attachment location has to be unique')
+            locs.append(i)
+            textures.append(meta.MetaTexture(target=t, iformat=f, width=w, height=h))
+
+        render_bffrs = []
+        for f, i in self.__render_buffer_prop:
+            if i in locs:
+                raise ValueError('color attachment location has to be unique')
+            locs.append(i)
+            render_bffrs.append(meta.MetaRenderBffr(iformat=f, width=w, height=h))
+
+        frame_bffr = meta.MetaFrameBffr(*textures, *render_bffrs, tids=locs)
+
+        manager = self.__manager()
+        frame = Frame(manager, frame_bffr, w, h)
+        manager._appendnew_device(frame)
+        return frame

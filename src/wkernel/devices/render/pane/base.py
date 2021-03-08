@@ -5,7 +5,6 @@ from wkernel.glyph import GlyphNode, GlyphInterface
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
 from global_tools.lazy import lazyProp
 
-from .cursor import Cursor
 
 
 class Pane(RenderDevice, GlyphInterface):
