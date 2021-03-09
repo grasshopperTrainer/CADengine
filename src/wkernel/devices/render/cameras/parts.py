@@ -21,6 +21,12 @@ class CameraTripod:
     def plane(self):
         return self.__pln
 
+    @plane.setter
+    def plane(self, p):
+        if not isinstance(p, Pln):
+            raise
+        self.__pln = p
+
     @property
     def VM(self):
         """
@@ -77,7 +83,7 @@ class CameraTripod:
         :return:
         """
         origin, camerax, cameray, cameraz = self.plane.components
-        new_x = camerax.copy().amplified(np.cos(rad)) + cameraz.copy().amplified(np.sin(rad))
+        new_x = camerax.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
         new_z = Vec.cross(cameray, new_x)
         self.__pln = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
 
@@ -87,7 +93,7 @@ class CameraTripod:
         :return:
         """
         origin, camerax, cameray, cameraz = self.plane.components
-        new_y = cameray.copy().amplified(np.cos(rad)) + cameraz.copy().amplified(np.sin(rad))
+        new_y = cameray.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
         new_z = Vec.cross(camerax, new_y)
         self.__pln = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)
 
@@ -105,7 +111,7 @@ class CameraTripod:
         :param pv: panning vector, z will be ignored
         :return:
         """
-        x, y, z = (v.amplified(amp) for v, amp in zip(self.__pln.axes, (-pv).xyz))
+        x, y, z = (v.amplify(amp) for v, amp in zip(self.__pln.axes, (-pv).xyz))
         self.move(x + y + z)
 
     def orbit(self):

@@ -43,7 +43,7 @@ class InitPosPicker:
         adeq_plns = sorted([(gt.Vec.cross(R, x).length, k) for k, x in zip(('x', 'y', 'z'), gt.Pln().axes)])
         cam_pln = camera.tripod.plane
         proj_ori = gt.Vec(*cam_pln.origin.xy, 0)
-        off_vec = -cam_pln.axis_z.projected_on_xy().normalize() * self.__offset
+        off_vec = -cam_pln.axis_z.project_on_xy().normalize() * self.__offset
         off_pln = gt.Pln((proj_ori + off_vec).xyz, (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
         # finding intersection

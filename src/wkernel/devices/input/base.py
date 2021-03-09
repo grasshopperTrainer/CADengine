@@ -133,7 +133,7 @@ class Mouse(_InputDevice):
 
 
     @property
-    def cursor_pos_instant(self):
+    def pos_instant(self):
         """
         Ask glfw event poll thread current cursor pos and return
 
@@ -143,7 +143,7 @@ class Mouse(_InputDevice):
         return self.__pos_instant
 
     @property
-    def cursor_pos_perframe(self):
+    def pos_perframe(self):
         """
         cursor pos stored at the beginning of frame rendering
 
@@ -242,8 +242,8 @@ class GLFWCharDict:
         if key in cls.__key_char_dict:
             char = cls.__key_char_dict[key]
             if mods == glfw.MOD_SHIFT:
-                if char in cls.__special_char:
-                    return cls.__special_char[char]
+                # if char in cls.__special_char:
+                #     return cls.__special_char[char]
                 return char.upper()
             return char
         raise UnknownKeyError('input key has to be one of glfw key code')

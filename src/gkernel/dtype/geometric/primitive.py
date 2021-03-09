@@ -242,7 +242,7 @@ class Ray(ArrayLikeData, VecConv, LinConv):
         :param obj:
         :return:
         """
-        self[:, [1]] = Vec.normalized(self.normal)
+        self[:, [1]] = Vec.normalize(self.normal)
 
     def __str__(self):
         return f"<Ray from {self.origin}>"
@@ -390,28 +390,23 @@ class Vec(Mat1, VecConv, PntConv):
         """
         return np.dot(a.T, b)[0, 0]
 
-    @classmethod
-    def normalize(cls, vec):
+    def normalize(self):
         """
         return normalized
         :return:
         """
-        if vec.is_zero():
+        if self.is_zero():
             raise
-        return vec/vec.length
+        return self/self.length
 
-    @classmethod
-    def amplify(cls, vec, amp):
-        return vec.normalized() * amp
-
-    def amplified(self, magnitude):
+    def amplify(self, magnitude):
         """
         return amplified of self
 
         :param magnitude:
         :return: copy of self amplified
         """
-        return self.amplify(self, magnitude)
+        return self.normalize() * magnitude
 
     def pnts_share_side(self, *pnts):
         """
@@ -440,17 +435,6 @@ class Vec(Mat1, VecConv, PntConv):
                 if Vec.dot(rep, normal) < 0:
                     return False
         return True
-
-    def normalized(self):
-        """
-        return normalize of self
-
-        :return: None if self is 0vector else self
-        """
-        if self.is_zero():
-            warnings.warn("zero vector cant be normalized")
-            return self
-        return self.normalize(self)
 
     def is_zero(self):
         """
@@ -838,7 +822,7 @@ class Pln(ArrayLikeData, PntConv):
             raise ValueError('cant define plane with parallel axes')
         z = Vec.cross(x, y)  # find z
         y = Vec.cross(z, x)  # find y
-        x, y, z = [v.normalized() for v in (x, y, z)]
+        x, y, z = [v.normalize() for v in (x, y, z)]
         self[:, 1:] = np.array([x, y, z]).T
         # calculate 'plane to origin' rotation matrices
         # last rotation is of x so match axis x to unit x prior

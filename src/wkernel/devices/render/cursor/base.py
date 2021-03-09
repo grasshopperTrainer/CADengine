@@ -176,7 +176,7 @@ class Cursor(RenderDevice):
         :param mouse: mouse device
         :return:
         """
-        pos = mouse.cursor_pos_instant
+        pos = mouse.pos_instant
         self.__update_pos_local(pos)
 
     @callbackRegistry

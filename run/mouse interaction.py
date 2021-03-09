@@ -1,5 +1,7 @@
 from wkernel import Window
 from mkernel import Model
+from akernel.environmental.ground import Ground
+import gkernel.color as clr
 
 
 class MyWindow(Window):
@@ -21,7 +23,10 @@ class MyWindow(Window):
         ff.create()
 
         # attach dolly
-        self.cad_dolly = self.devices.cameras.attach_cad_dolly(camera_id=0, cursor_id=0)
+        self.cad_dolly = self.devices.cameras.attach_cad_dolly(camera_id=0, cursor_id=0, def_offset=500)
+
+        # ground
+        self.ground = Ground(clr.ClrRGBA(0.5, 0.5, 0.5, 0.5))
 
         self.model = Model()
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
@@ -40,8 +45,10 @@ class MyWindow(Window):
                 f.clear(0, 0, 0, 0)
                 f.clear_depth()
                 self.model.render()
+                self.ground.render(self.devices.cameras[0])
                 v = f.pick_texture(tid=2, pos=self.devices.cursors[0].pos_local, parameterized=False)
-                self.cad_dolly.set_orbit_origin(*v.rgb)
+                if v.rgb != [0, 0, 0]:
+                    self.cad_dolly.set_ref_point(*v.rgb)
             f.render_pane_space_depth(tid=0)
 
 
