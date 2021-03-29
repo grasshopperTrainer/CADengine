@@ -31,13 +31,13 @@ class BffrCache(ArrayContainer):
 
     # initial size of array for placeholder
 
-    def __init__(self, dtype, locs, size=32):
+    def __init__(self, dtype, locs, size=1):
         # extra location data
         if not isinstance(locs, (list, tuple)):
             raise TypeError
         if len(locs) != len(dtype.fields):
             raise ValueError('each field has to have location values')
-        self.__locs = {n: l for n, l in zip(dtype.fields, locs)}
+        self.__locs = {n: l for n, l in zip(dtype.names, locs)}
         self.__array = np.ndarray(size, dtype=dtype)
         # for first fit allocation free space record,
         self.__block_pool = [(0, len(self.__array))]    # (start, stop) min heap
@@ -55,7 +55,8 @@ class BffrCache(ArrayContainer):
         return self.__array.__getitem__(item)
 
     def __setitem__(self, key, value):
-        self.__array.__setitem__(key, value)
+        raise Exception('dont do this, access via block or `fill_array`')
+        # self.__array.__setitem__(key, value)
 
     def __len__(self):
         return len(self.__array)
@@ -75,6 +76,16 @@ class BffrCache(ArrayContainer):
         new_arr[:old_len] = self.__array
         self.__block_pool.append((old_len, new_len))
         self.__array = new_arr
+
+    def fill_array(self, v):
+        """
+        fill array with given value
+
+        ! be aware that this function doesn't mark byte as active
+        :param v:
+        :return:
+        """
+        self.__array[:] = v
 
     @property
     def active_size(self):
@@ -149,7 +160,7 @@ class BffrCache(ArrayContainer):
                 s = e = i  # start counting new consecutive
         heapq.heappush(self.__block_pool, (s, e+1))  # dont forget remaining
         # count vertex in use
-        self.__num_vertex_inuse -= block.size
+        self.__num_vertex_inuse -= len(block)
         # update highest index
         if block.indices[-1] == self.__highest_indx:
             if self.__block_inuse:
@@ -240,7 +251,10 @@ class BffrCache(ArrayContainer):
         ntuple = namedtuple('interleave_prop', 'name, loc, size, dtype, stride, offset')
         stride = self.array.itemsize
         for name, (dtype, offset) in self.__array.dtype.fields.items():
-            dtype, shape = dtype.subdtype
+            if dtype.subdtype is not None:
+                dtype, shape = dtype.subdtype
+            else:
+                shape = (1, )
             loc = self.__locs[name]
             tuples.append(ntuple(name, loc, shape, dtype, stride, offset))
         return tuple(tuples)
@@ -295,6 +309,7 @@ class BffrCache(ArrayContainer):
 
         def __str__(self):
             return f"<Block {self.__indices}]>"
+
         @property
         def indices(self):
             """

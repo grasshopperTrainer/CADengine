@@ -1,8 +1,8 @@
-from gkernel.dtype.geometric.primitive import Pnt
+from gkernel.dtype.geometric.primitive import Pnt, Vec
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 from global_tools import Singleton, callbackRegistry
-
-import ckernel.glfw_context.glfw_hooker as glfw
+import glfw
+import numpy as np
 
 
 class _InputDevice:
@@ -24,20 +24,37 @@ class Mouse(_InputDevice):
 
     def __init__(self, window):
         super().__init__(window)
-        with window.context.glfw as glfw:
-            glfw.set_cursor_pos_callback(self.__master_cursor_pos_callback)
+        with window.context.glfw as window:
+            glfw.set_cursor_pos_callback(window, self.__master_cursor_pos_callback)
+            glfw.set_cursor_enter_callback(window, self.__master_cursor_enter_callback)
+            glfw.set_mouse_button_callback(window, self.__master_mouse_button_callback)
+            glfw.set_scroll_callback(window, self.__master_mouse_scroll_callback)
+        self.window.append_predraw_callback(self.__set_cursor_pos_perframe)
 
-    def __master_cursor_pos_callback(self, window, xpos, ypos):
+        self.__pos_perframe = Vec(0, 0, 0)
+        self.__pos_prev = Vec(0, 0, 0)
+        self.__pos_instant = Vec(0, 0, 0)
+        self.__accel = Vec(0, 0, 0)
+
+    def __master_cursor_pos_callback(self, glfw_window, xpos, ypos):
         """
         Calls all callbacks joined with 'cursor pos callback'
 
-        :param window:
+        :param glfw_window:
         :param xpos:
         :param ypos:
         :return:
         """
-        xpos, ypos = self.cursor_pos
-        self.call_cursor_pos_callback(window=window, xpos=xpos, ypos=ypos, mouse=self)
+        # flip glfw window space to match OGL space(like texture that has bottom left origin)
+        ypos = self.window.glyph.size[1] - ypos
+
+        # update values
+        self.__pos_instant = Vec(xpos, ypos, 0)
+        self.__accel = self.__pos_instant - self.__pos_prev
+        self.__pos_prev = self.__pos_instant
+
+        # call registered callbacks
+        self.call_cursor_pos_callback(glfw_window, *self.__pos_instant.xy, mouse=self)
 
     @callbackRegistry
     def call_cursor_pos_callback(self):
@@ -55,59 +72,113 @@ class Mouse(_InputDevice):
         """
         pass
 
-    def cursor_in_view(self, view, normalize=True):
+    def __master_cursor_enter_callback(self, glfw_window, entered):
         """
-        Returns cursor position in view coordinate system
-        :param view:
+        three way callbacking
+
+        :param glfw_window:
+        :param entered:
         :return:
         """
-        transform_matrix = view.glyph.trnsf_matrix.r.I.M
-        w, h = self.window.glyph.size
-        unitize_matrix = ScaleMat(1 / w, 1 / h)
-        pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos)
-        if not normalize:
-            w, h = view.glyph.size
-            view_scale_matrix = ScaleMat(w, h)
-            pos = view_scale_matrix * pos
-        return pos.x, pos.y
+        self.call_cursor_enter_callback(glfw_window, entered, mouse=self)
 
-    def intersect_model(self, view, camera, model):
+    @callbackRegistry
+    def call_cursor_enter_callback(self):
+        pass
+
+    @call_cursor_enter_callback.appender
+    def append_cursor_enter_callback(self):
         """
-
-        :param view:
-        :param camera:
-        :param model:
+        append cursor enter callback
+        ! 'enter' also include leaving the window
         :return:
         """
-        # 1. convert parameter value into point in space using VM, PM
-        #    to create intersection point on near frustum(A)
-        # 2. create ray(R) combining using origin(B) and vector from B to A
-        # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
-        px, py = self.cursor_in_view(view)
-        ray = camera.frusrum_ray(px, py)
-        print(ray.describe())
-        # raise NotImplementedError
+
+    def __master_mouse_button_callback(self, glfw_window, button, action, mods):
+        """
+
+        :param glfw_window:
+        :param button:
+        :param action:
+        :param mods:
+        :return:
+        """
+        self.call_mouse_button_callback(glfw_window, button, action, mods, mouse=self)
+
+    @callbackRegistry
+    def call_mouse_button_callback(self):
+        pass
+
+    @call_mouse_button_callback.appender
+    def append_mouse_button_callback(self):
+        pass
+
+    def __master_mouse_scroll_callback(self, glfw_window, xoffset, yoffset):
+        """
+
+        :param glfw_window:
+        :param xoffset:
+        :param yoffset:
+        :return:
+        """
+        self.call_mouse_scroll_callback(glfw_window, xoffset, yoffset, mouse=self)
+
+    @callbackRegistry
+    def call_mouse_scroll_callback(self):
+        pass
+
+    @call_mouse_scroll_callback.appender
+    def append_mouse_scroll_callback(self):
+        pass
+
 
     @property
-    def cursor_pos(self):
+    def pos_instant(self):
         """
-        Ask glfw current cursor pos and return
+        Ask glfw event poll thread current cursor pos and return
 
-        flips y to match OpenGL coordinate system
+        flips y to match window coordinate system
         :return:
         """
-        with self.window.context.glfw as glfw:
-            _, height = glfw.get_window_size()
-            x, y = glfw.get_cursor_pos()
-        return x, height - y
+        return self.__pos_instant
 
+    @property
+    def pos_perframe(self):
+        """
+        cursor pos stored at the beginning of frame rendering
+
+        This is needed as cursor pos is polled by separate thread.
+        One has to use this value if it needs a consistent cursor pos during a whole frame rendering
+
+        e.g. FPS camera controlled by cursor movement. Instant cursor_pos called at the beginning and ending
+        of frame rendering may return distinct values respectively thus causing perspective anomaly.
+        :return:
+        """
+        return self.__pos_perframe
+
+    @property
+    def acceleration(self):
+        """
+        return cursor x, y acceleration
+
+        :return:
+        """
+        return self.__accel
+
+    def __set_cursor_pos_perframe(self):
+        self.__pos_perframe = self.__pos_instant
+
+    @property
     def cursor_center(self):
         return tuple(v / 2 for v in self.window.glyph.size)
 
     def cursor_goto_center(self):
-        win = self.window
-        with self.window.context.glfw as glfw:
-            glfw.set_cursor_pos(win.glyph.width.r / 2, win.glyph.height.r / 2)
+        with self.window.context.glfw as window:
+            glfw.set_cursor_pos(window, *self.cursor_center)
+        self.__pos_perframe = self.cursor_center
+
+    def get_button_status(self, button):
+        return glfw.get_mouse_button(self.window.context.glfw_window, button)
 
 
 class UnknownKeyError(Exception):
@@ -145,6 +216,14 @@ class GLFWCharDict:
     __key_char_dict[glfw.KEY_COMMA] = ","
     __key_char_dict[glfw.KEY_PERIOD] = "."
     __key_char_dict[glfw.KEY_SLASH] = "/"
+    __key_char_dict[glfw.KEY_LEFT_SHIFT] = "lshift"
+    __key_char_dict[glfw.KEY_RIGHT_SHIFT] = "rshift"
+    __key_char_dict[glfw.KEY_LEFT_CONTROL] = "lcontrol"
+    __key_char_dict[glfw.KEY_RIGHT_CONTROL] = "rcontrol"
+    __key_char_dict[glfw.KEY_LEFT_ALT] = "lalt"
+    __key_char_dict[glfw.KEY_RIGHT_ALT] = "rald"
+    __key_char_dict[glfw.KEY_LEFT_SUPER] = "lsuper"
+    __key_char_dict[glfw.KEY_RIGHT_SUPER] = "rsuper"
     # connect char to shifted char
     __char_shifted_dict = {c: s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
     # reversed dicts
@@ -163,8 +242,8 @@ class GLFWCharDict:
         if key in cls.__key_char_dict:
             char = cls.__key_char_dict[key]
             if mods == glfw.MOD_SHIFT:
-                if char in cls.__special_char:
-                    return cls.__special_char[char]
+                # if char in cls.__special_char:
+                #     return cls.__special_char[char]
                 return char.upper()
             return char
         raise UnknownKeyError('input key has to be one of glfw key code')
@@ -197,17 +276,17 @@ class GLFWCharDict:
 
 class Keyboard(_InputDevice):
     __callback_signature = glfw.set_key_callback
-    __glfw_key_dict = GLFWCharDict()
+    __key_dict = GLFWCharDict()
 
     def __init__(self, window):
         super().__init__(window)
         # build key press dict
         # what i want to record is... press status and time
-        self.__key_press_dict = self.__glfw_key_dict.get_copied_dict()
+        self.__key_press_dict = self.__key_dict.get_copied_dict()
         for k, v in self.__key_press_dict.items():
             self.__key_press_dict[k] = [None, 0]  # time, pressed
-        with window.context.glfw as glfw:
-            glfw.set_key_callback(self.__master_key_callback)
+        with window.context.glfw as window:
+            glfw.set_key_callback(window, self.__master_key_callback)
 
     def __master_key_callback(self, window, key, scancode, action, mods):
         """
@@ -221,7 +300,7 @@ class Keyboard(_InputDevice):
         :param mods:
         :return:
         """
-        self.call_key_callback(window=window, key=key, scancode=scancode, action=action, mods=mods, keyboard=self)
+        self.call_key_callback(window, key, scancode, action, mods, keyboard=self)
 
     @callbackRegistry
     def call_key_callback(self, **on_call_kwargs):
@@ -270,9 +349,7 @@ class Keyboard(_InputDevice):
         :param mods: mod key, like 'shift' for upper char
         :return: char representation
         """
-        return cls.__glfw_key_dict.key_to_char(key, mods)
+        return cls.__key_dict.key_to_char(key, mods)
 
     def get_key_status(self, *chars):
-        with self.window.context.glfw as glfw:
-            return tuple(glfw.get_key(self.__glfw_key_dict.char_to_key(char)) for char in chars)
-
+        return tuple(glfw.get_key(self.window.context.glfw_window, self.__key_dict.char_to_key(char)) for char in chars)

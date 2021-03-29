@@ -3,19 +3,26 @@
 layout (location = 0) in vec4 vtx;
 layout (location = 1) in vec4 clr;
 layout (location = 2) in float dia;
+layout (location = 3) in vec3 cid;
 
 layout (location = 0) uniform mat4 MM = mat4(1.0);
 layout (location = 1) uniform mat4 VM = mat4(1.0);
 layout (location = 2) uniform mat4 PM = mat4(1.0);
-layout (location = 4) uniform vec4 VPP;  // viewport pixel property (posx, posy, width, height)
+layout (location = 4) uniform vec4 VPP; // viewport pixel property (posx, posy, width, height)
 
-
-out vec4 fclr;
-out vec2 radVec;
-out vec2 center;
+out vsOut {
+    vec3 cid;
+    vec4 fclr;
+    vec2 radVec;
+    vec2 center;
+    vec4 coord;
+} vs_out;
 
 void main() {
-    fclr = clr;
+    vs_out.cid = cid;
+    vs_out.fclr = clr;
+    vs_out.coord = vtx;
+
     // camera space point
     vec4 csPnt = VM*MM*vtx;
     // radius vector at normalized device coordinate
@@ -24,10 +31,10 @@ void main() {
     // size from unit to pixel
     gl_PointSize = ((csRadVec.x/csRadVec.w)*VPP.z);
     // size from projection space to ndc
-    radVec = csRadVec.xy/csRadVec.w;
+    vs_out.radVec = csRadVec.xy/csRadVec.w;
     // projection space point
     vec4 psPnt = PM*csPnt;
 
-    center = psPnt.xy/psPnt.w;
+    vs_out.center = psPnt.xy/psPnt.w;
     gl_Position = psPnt;
 }

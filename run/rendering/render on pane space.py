@@ -12,7 +12,7 @@ class MyWindow(Window):
         # enable camera move
         o = 200
         self.devices.cameras[0].tripod.lookat(eye=(0, 0, o), at=(0, 0, 0), up=(0, 1, 0))
-        self.devices.cameras.factory.set_lrbt_dimension(-1, 1, -1, 1, 1, 1_000_000).set_frustum_shape('o').create_camera()
+        self.devices.cameras.factory.set_lrbt_dimension(-1, 1, -1, 1, 1, 1_000_000).set_frustum_shape('o').create()
         self.devices.panes.appendnew_pane(0.5, 0.5, 0.5, 0.5, self)
         self.devices.cameras[0].focus_pane(pane=self.devices.panes[1], focus=(0, 0, 0), clip_off=100)
         self.devices.cameras[1].focus_pane(pane=self.devices.panes[1], focus=(0, 0, 0), clip_off=100)

@@ -3,9 +3,9 @@
 layout (lines_adjacency) in;
 layout (triangle_strip, max_vertices = 4) out;
 
-layout (location = 0) uniform mat4 MM = mat4(1.0);
+layout (location = 0) uniform mat4 PM = mat4(1.0);
 layout (location = 1) uniform mat4 VM = mat4(1.0);
-layout (location = 2) uniform mat4 PM = mat4(1.0);
+layout (location = 2) uniform mat4 MM = mat4(1.0);
 
 in vsOut {
     float edgeThk;

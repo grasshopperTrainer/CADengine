@@ -1,9 +1,17 @@
 #version 450 core
 
-in vec4 clr;
+in gsOut {
+    vec3 cid;
+    vec4 clr;
+    vec4 coord;
+} gs_in;
 
-out vec4 FragColor;
+layout (location=0) out vec4 fclr;
+layout (location=1) out vec4 cid;
+layout (location=2) out vec4 fcoord;
 
 void main() {
-    FragColor = clr;
+    fclr = gs_in.clr;
+    cid = vec4(gs_in.cid, 1);
+    fcoord = gs_in.coord;
 }

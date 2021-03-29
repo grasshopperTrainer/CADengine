@@ -1,8 +1,10 @@
-from gkernel.dtype.geometric.primitive import Pnt, Lin, Ray, ZeroVec, ZVec
+import weakref
+import gkernel.dtype.geometric as gt
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 from wkernel.devices.render._base import *
 from .dolly import *
 from .parts import *
+import glfw
 
 
 class CameraFactory:
@@ -32,18 +34,18 @@ class CameraFactory:
         self.__fdim = l, r, b, t, near, far
         return self
 
-    def set_frustum_shape(self, fshape:('o', 'p')):
+    def set_frustum_shape(self, fshape: ('o', 'p')):
         """
         attach orthogonal frustum type
         :return:
         """
-        if not(isinstance(fshape, str) and fshape in('o', 'p')):
+        if not (isinstance(fshape, str) and fshape in ('o', 'p')):
             raise ValueError
 
         self.__fshape = fshape
         return self
 
-    def create_camera(self):
+    def create(self):
         if not (self.__fdim and self.__fshape):
             raise ValueError('camera needs dimension and type')
 
@@ -52,6 +54,7 @@ class CameraFactory:
             tripod=CameraTripod(),
             manager=self.__manager())
         self.__manager()._appendnew_device(camera)
+        return camera
 
 
 class Camera(RenderDevice):
@@ -67,6 +70,12 @@ class Camera(RenderDevice):
         self.__tripod = tripod
         self.__dolly = None
 
+    def __enter__(self):
+        return super().__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return super().__exit__(exc_type, exc_val, exc_tb)
+
     @property
     def body(self) -> CameraBody:
         return self.__body
@@ -78,6 +87,34 @@ class Camera(RenderDevice):
     @property
     def dolly(self):
         return self.__dolly
+
+    @property
+    def near_clipping_face(self):
+        """
+        return frustum near clipping face in WCS
+
+        :return: Plin
+        """
+        pln = self.tripod.plane
+        l, r, b, t, n, f = self.body.dim
+        face = gt.Plin((l, b, -n), (r, b, -n), (r, t, -n), (l, t, -n))
+        return pln.TM * face
+
+    @property
+    def far_clipping_face(self):
+        """
+        return frustum far clipping face in WCS
+
+        :return: Plin
+        """
+        pln = self.tripod.plane
+        l, r, b, t, n, f = self.body.dim
+        if self.body.fshape == 'p':
+            d = f - n
+            # far face dimensions
+            l, r, b, t = [(i * d) / n + i for i in (l, r, b, t)]
+        face = gt.Plin((l, b, -f), (r, b, -f), (r, t, -f), (l, t, -f))
+        return pln.TM * face
 
     def attach_dolly(self, dolly):
         """
@@ -106,18 +143,18 @@ class Camera(RenderDevice):
         return ray crossing near frustum at given param
 
         param 0,0 points at the center of frustum
-        :param param_x: in domain(-1.0, 1.0)
-        :param param_y: in domain(-1.0, 1.0)
+        :param param_x: in domain(0., 1.)
+        :param param_y: in domain(0., 1.)
         :return:
         """
         l, r, b, t, n, f = self.body.dim
         # convert normalized into near frustum space
         sm = ScaleMat(x=r - l, y=t - b)
-        mm = MoveMat(x=(r + l) / 2, y=(t + b) / 2, z=-n)
-        offset = MoveMat(-.5, -.5)  # to compensate origin difference between OpenGL space and pane space
-        frustum_point = mm * sm * offset * Pnt(x=param_x, y=param_y, z=0)
-        ray = Ray([0, 0, 0], frustum_point.xyz)
-        return self.tripod.in_plane.r.TM * ray
+        # .5 to compensate origin difference between OpenGL space and pane space
+        offset = MoveMat(-.5, -.5, -n)
+        frustum_point = sm * offset * Pnt(x=param_x, y=param_y, z=0)
+        ray = gt.Ray([0, 0, 0], frustum_point.xyz)
+        return self.tripod.plane.TM * ray
 
     def focus_pane(self, pane, focus, clip_off):
         """
@@ -136,24 +173,24 @@ class Camera(RenderDevice):
 
         if self.body.fshape == 'o':
             # modify body
-            hw, hh = (d//2 for d in pane.size)
+            hw, hh = (d // 2 for d in pane.size)
             l, r, b, t, n, f = self.body.dim
             clip_d = f - n
             self.body.dim = -hw, hw, -hh, hh, focus[2] + clip_off, n + clip_d
             # modify tripod
-            self.tripod.lookat(eye=(focus[0], focus[1], focus[2]+clip_off), at=focus, up=(0, 1, 0))
+            self.tripod.lookat(eye=(focus[0], focus[1], focus[2] + clip_off), at=focus, up=(0, 1, 0))
         else:
             # modify body
             # calculate new clipping plane size
             w, h = pane.size
-            cpw = w - 2*(clip_off / np.tan((np.pi - self.body.hfov)/2))
-            cph = h - 2*(clip_off / np.tan((np.pi - self.body.vfov)/2))
+            cpw = w - 2 * (clip_off / np.tan((np.pi - self.body.hfov) / 2))
+            cph = h - 2 * (clip_off / np.tan((np.pi - self.body.vfov) / 2))
             # calculate new near
             l, r, b, t, n, f = self.body.dim
             clip_d = f - n
-            near = (cpw/2) / np.tan(self.body.hfov/2)
+            near = (cpw / 2) / np.tan(self.body.hfov / 2)
             far = near + clip_d
-            self.body.dim = -cpw/2, cpw/2, -cph/2, cph/2, near, far
+            self.body.dim = -cpw / 2, cpw / 2, -cph / 2, cph / 2, near, far
 
             # modify tripod
             x, y, z = focus
@@ -161,16 +198,30 @@ class Camera(RenderDevice):
             self.tripod.lookat(eye=(x, y, newz), at=focus, up=(0, 1, 0))
 
 
+class _Camera(Camera):
+
+    def __enter__(self) -> Camera:
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class CameraManager(RenderDeviceManager):
 
     def __init__(self, device_master):
         super().__init__(device_master)
 
-        self.factory.set_hfov_dimension(
+        c = self.factory.set_hfov_dimension(
             hfov=np.radians(50),
             aspect_ratio=self.window.glyph.aspect_ratio.r,
-            near=0.5,
-            far=1_000_000).set_frustum_shape('p').create_camera()
+            near=5,
+            far=100_000).set_frustum_shape('p').create()
+        c.tripod.lookat(eye=(0, 0, 100), at=(0, 0, 0), up=(0, 1, 0))
+        self.master.tracker.stack.set_base_entity(c)
+
+    def __getitem__(self, item) -> _Camera:
+        return super(CameraManager, self).__getitem__(item)
 
     @property
     def factory(self):
@@ -181,22 +232,31 @@ class CameraManager(RenderDeviceManager):
         return Camera
 
     # TODO: need camera dolly connector? should it take all the responsibilities? who has to know about dolly?
-    def attach_fps_dolly(self, camera_id):
+    def attach_fps_dolly(self, camera_id, cursor_id):
         """
         attach dolly to the camera
 
         :param camera_id:
+        :param cursor_id:
         :return:
         """
         camera = self[camera_id]
-        dolly = FpsDolly()
+        cursor = self.master.cursors[cursor_id]
+
+        dolly = FpsDolly(camera, cursor)
         camera.attach_dolly(dolly)
         # handling callback
         self.window.append_predraw_callback(dolly.callbacked_move_tripod,
-                                            keyboard=self.window.devices.keyboard,
-                                            tripod=camera.tripod)
-        self.window.devices.mouse.append_cursor_pos_callback(dolly.callbacked_move_camera,
-                                                             tripod=camera.tripod)
+                                            keyboard=self.window.devices.keyboard)
+        self.window.append_predraw_callback(dolly.casllbacked_update_camera)
+        self.window.devices.mouse.append_cursor_pos_callback(dolly.callbacked_update_acceleration)
+        # this is needed for glfw cursor pos callback to operate
+        glfw.set_input_mode(self.window.context.glfw_window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+
+    def attach_cad_dolly(self, camera_id, cursor_id, def_offset):
+        camera = self[camera_id]
+        cursor = self.master.cursors[cursor_id]
+        return CadDolly(self.window, camera, cursor, def_offset)
 
     def detach_dolly(self, camera_id):
         """
@@ -210,6 +270,6 @@ class CameraManager(RenderDeviceManager):
         # handling callback. temporary patching
         if isinstance(dolly, FpsDolly):
             self.window.remove_predraw_callback(dolly.callbacked_move_tripod)
-            self.window.devices.mouse.remove_cursor_pos_callback(dolly.callbacked_move_camera)
+            self.window.devices.mouse.remove_cursor_pos_callback(dolly.callbacked_update_acceleration)
         else:
             raise NotImplementedError

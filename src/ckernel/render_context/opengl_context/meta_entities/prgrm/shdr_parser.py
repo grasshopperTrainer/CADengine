@@ -113,6 +113,10 @@ class SimpleShdrParser:
             unique.add(pair)
 
             # attribute
+            if d['dtype'].startswith('mat'):
+                raise Exception("""using matrix makes location qualifier ambiguous
+                please for now, use independed vectors""")
+
             dtype = cls.__translate_dtype(d['name'], d['dtype'])
             if d['name'] in args:
                 raise Exception('attribute contradictory')
@@ -141,26 +145,40 @@ class SimpleShdrParser:
             for m in re.finditer(cls.__layout_ufrm_patt, src):
                 # check layout declaration
                 d = m.groupdict()
-                if d['layout'] is None:
+                arg_name = d['name']
+                dtype = d['dtype']
+                loc = int(d['loc'])
+                layout = d['layout']
+                val = None if not d['val'] else eval(d['val'])
+
+                # check location declaration
+                if layout is None:
                     raise SyntaxError(f"{m.group()} <- uniform's layout not declared")
 
-                # location
-                loc = int(d['loc'])
-                pair = (d['name'], loc)
+                # check uniquness
+                pair = (arg_name, loc)
                 for u in unique:
-                    if sum([i == j for i, j in zip(pair, u)]) == 1: # XOR
-                        raise ValueError('location values has to be unique')
+                    if sum([i == j for i, j in zip(pair, u)]) == 1:  # XOR
+                        raise ValueError('location and att_name has to be unique')
                 unique.add(pair)
 
-                # value
-                if d['val'] is not None:
-                    val = eval(d['val'])
-                else:
-                    val = None
+                # def val needs additional parsing
+                if val:
+                    if dtype.startswith('mat'):
+                        shape = dtype.replace('mat', '')
+                        if shape in ('2', '3', '4'):    # eye set with value
+                            parsed_val = np.eye(4)
+                            for i in range(int(shape)):
+                                parsed_val[i, i] = val
+                        else:
+                            raise NotImplementedError
+                    else:
+                        raise NotImplementedError
+                    val = parsed_val
 
                 # attribute
-                dtype = cls.__translate_dtype(d['name'], d['dtype'])
-                if d['name'] in args and args[d['name']] != (loc, val, dtype):
+                dtype = cls.__translate_dtype(arg_name, dtype)
+                if arg_name in args and (args[arg_name][0] != loc or args[arg_name][2] != dtype):
                     raise Exception('attribute contradictory')
                 args[d['name']] = (loc, val, dtype)
 
@@ -172,50 +190,44 @@ class SimpleShdrParser:
         else:
             return None
 
+    __singular_types = {'sampler': 'int32',
+                        'bool': 'bool',
+                        'int': 'int32',
+                        'uint': 'uint32',
+                        'float': 'float32',
+                        'double': 'float64'}
+
     @classmethod
     def __translate_dtype(cls, name, dtype):
         """
         translate glsl dtype into numpy dtype field
 
         :param dtype: str, glsl dtype
-        :return: (name, dtype, shape), numpy dtype field-like
+        :return: (name, dtype, shape), numpy dtype field description
         """
-        dtype, shape = re.match(cls.__dtype_patt, dtype).groups()
-        if shape is None:
-            if dtype == 'bool':
-                dtype = 'bool'
-            elif dtype == 'int':
-                dtype = 'int'
-            elif dtype == 'uint':
-                dtype = 'uint'
-            elif dtype == 'float':
-                dtype = 'f4'
-            elif dtype == 'double':
-                dtype = 'f8'
+        suf, pref = re.match(cls.__dtype_patt, dtype).groups()
+        if suf in cls.__singular_types:  # singular types
+            return name, cls.__singular_types[suf]
+        elif pref is not None:  # complex types
+            pref = list(map(lambda x: int(x), pref.split('x')))
+            if suf == 'vec':  # vector types
+                if suf.startswith('d'):
+                    suf = 'float64'
+                elif suf.startswith('i'):
+                    suf = 'int'
+                elif suf.startswith('u'):
+                    suf = 'uint'
+                else:
+                    suf = 'float32'
+                pref = pref[0]
+            elif suf == 'mat':  # matrix types
+                if suf.startswith('d'):
+                    suf = 'float64'
+                else:
+                    suf = 'float32'
+                pref = tuple(pref * 2) if len(pref) == 1 else tuple(pref)
             else:
-                raise TypeError
-            shape = (1,)
+                raise NotImplementedError(name, suf)
+            return name, suf, pref
         else:
-            shape = shape.replace('x', ',')
-            if 'vec' in dtype:
-                if dtype.startswith('d'):
-                    dtype = 'f8'
-                elif dtype.startswith('i'):
-                    dtype = 'int'
-                elif dtype.startswith('u'):
-                    dtype = 'uint'
-                else:
-                    dtype = 'f4'
-                shape = int(shape)
-
-            elif 'mat' in dtype:
-                if dtype.startswith('d'):
-                    dtype = 'f8'
-                else:
-                    dtype = 'f4'
-                shape = eval(f"({shape}, {shape})" if len(shape) == 1 else f"({shape})")
-            else:
-                raise NotImplementedError(name, dtype)
-        # field description
-        return name, dtype, shape
-
+            raise NotImplementedError

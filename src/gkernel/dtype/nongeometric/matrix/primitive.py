@@ -57,9 +57,17 @@ class TrnsfMats(TrnsfMat):
     def __new__(cls, matrices=[]):
         obj = super(TrnsfMats, cls).__new__(cls, shape=(4, 4),
                                             dtype=DTYPE)  # default transformation matrix that does nothing
-        obj._matrices = matrices  # stacked matrix for inverse
+        obj._matrices = []  # stacked matrix for inverse
+        for m in matrices:
+            if isinstance(m, TrnsfMats):
+                obj._matrices += list(m.matrices)
+            else:
+                obj._matrices.append(m)
         obj.__merge()
         return obj
+
+    def __str__(self):
+        return f"<Matrices of: {[m.type_nickname for m in self._matrices]}>"
 
     def __array_finalize__(self, obj):
         """
@@ -74,6 +82,18 @@ class TrnsfMats(TrnsfMat):
         elif isinstance(obj, self.__class__):
             self._matrices = copy.deepcopy(obj._matrices)  # deepcopying? what if its a view?
             self.__merge()
+
+    @property
+    def I(self):
+        """
+        Inverse of all transformation matrix
+        :return:
+        """
+        return TrnsfMats([m.I for m in reversed(self._matrices)])
+
+    @property
+    def matrices(self):
+        return tuple(self._matrices)
 
     def __merge(self):
         """
@@ -117,23 +137,13 @@ class TrnsfMats(TrnsfMat):
         for m in self._matrices:
             yield m
 
-    @property
-    def I(self):
-        """
-        Inverse of all transformation matrix
-        :return:
-        """
-        return TrnsfMats([m.I for m in reversed(self._matrices)])
-
-    def __str__(self):
-        return f"<Matrices of: {[m.type_nickname for m in self._matrices]}>"
 
 
 class MoveMat(TrnsfMat):
     """
     Translation matrix (move)
     """
-    type_nickname = 'M'
+    type_nickname = 'MM'
 
     def __new__(cls, x=0, y=0, z=0):
         return np.array([[1, 0, 0, x],

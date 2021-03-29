@@ -18,6 +18,16 @@ class CameraTripod:
         self.__pln = Pln()
 
     @property
+    def plane(self):
+        return self.__pln
+
+    @plane.setter
+    def plane(self, p):
+        if not isinstance(p, Pln):
+            raise
+        self.__pln = p
+
+    @property
     def VM(self):
         """
         veiw matrix
@@ -50,7 +60,7 @@ class CameraTripod:
         zaxis *= -1  # reverse z
         self.__pln = Pln.from_ori_axies(eye, xaxis, yaxis, zaxis)
 
-    def rotate_along(self, axis, rad):
+    def rotate_around(self, axis, rad):
         """
         rotate along given axis
 
@@ -72,9 +82,9 @@ class CameraTripod:
         rotate along y axis
         :return:
         """
-        origin, camerax, cameray, cameraz = self.in_plane.r.components
+        origin, camerax, cameray, cameraz = self.plane.components
         new_x = camerax.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
-        new_z = cameray.cross(new_x)
+        new_z = Vec.cross(cameray, new_x)
         self.__pln = Pln(origin.xyz, new_x.xyz, cameray.xyz, new_z.xyz)
 
     def pitch(self, rad):
@@ -82,7 +92,7 @@ class CameraTripod:
         rotate along x axis
         :return:
         """
-        origin, camerax, cameray, cameraz = self.in_plane.r.components
+        origin, camerax, cameray, cameraz = self.plane.components
         new_y = cameray.copy().amplify(np.cos(rad)) + cameraz.copy().amplify(np.sin(rad))
         new_z = Vec.cross(camerax, new_y)
         self.__pln = Pln(origin.xyz, camerax.xyz, new_y.xyz, new_z.xyz)
@@ -94,23 +104,28 @@ class CameraTripod:
         """
         raise NotImplementedError
 
+    def move_local(self, pv):
+        """
+        move camera along its plane
+
+        :param pv: panning vector, z will be ignored
+        :return:
+        """
+        x, y, z = (v.amplify(amp) for v, amp in zip(self.__pln.axes, (-pv).xyz))
+        self.move(x + y + z)
+
+    def orbit(self):
+        raise NotImplementedError
+
+    def zoom(self):
+        raise NotImplementedError
+
     def move(self, vec: Vec):
         """
         Move camera using vector
         :return:
         """
         tm = MoveMat(*vec.xyz)
-        self.__pln = tm * self.__pln
-
-    def move_along_axis(self, axis, magnitude):
-        """
-        Move camera using camera plane's axis
-        :param axis:
-        :return:
-        """
-        axis = self.in_plane.r.components[{'x': 1, 'y': 2, 'z': 3}[axis]]
-        axis.amplify(magnitude)
-        tm = MoveMat(*axis.xyz)
         self.__pln = tm * self.__pln
 
     def orient(self, pos):
@@ -151,9 +166,9 @@ class CameraBody:
         """
         h = self.__dim['n']
         l, r = self.__dim['l'], self.__dim['r']
-        la = np.arccos(h/np.sqrt(h**2 + l**2))
-        ra = np.arccos(h/np.sqrt(h**2 + r**2))
-        return la+ra
+        la = np.arccos(h / np.sqrt(h ** 2 + l ** 2))
+        ra = np.arccos(h / np.sqrt(h ** 2 + r ** 2))
+        return la + ra
 
     @property
     def vfov(self):
@@ -179,6 +194,13 @@ class CameraBody:
         l, r, b, t = (self.__dim[k] for k in 'lrbt')
         return (r - l) / (t - b)
 
+    @property
+    def near(self):
+        return self.__dim['n']
+
+    @property
+    def far(self):
+        return self.__dim['f']
 
     @property
     def dim(self):
@@ -199,4 +221,9 @@ class CameraBody:
 
     @property
     def fshape(self):
+        """
+        frustum shape either 'o'(orthogonal) or 'p'(perspective)
+
+        :return:
+        """
         return self.__fshape

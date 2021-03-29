@@ -2,7 +2,9 @@ from gkernel.dtype.geometric.primitive import Pnt
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 
 from wkernel.glyph import GlyphNode, GlyphInterface
-from ._base import RenderDevice, RenderDeviceManager
+from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
+from global_tools.lazy import lazyProp
+
 
 
 class Pane(RenderDevice, GlyphInterface):
@@ -50,6 +52,22 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glViewport(self._glyph.posx.r, self._glyph.posy.r, self._glyph.width.r, self._glyph.height.r)
         return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        return scissor and viewport
+
+        :param exc_type:
+        :param exc_val:
+        :param exc_tb:
+        :return:
+        """
+        super().__exit__(exc_type, exc_val, exc_tb)
+        if self.get_current() is not self:  # if self, there is no need
+            glyph = self.get_current().glyph
+            with self.manager.window.context.gl as gl:
+                gl.glScissor(glyph.posx.r, glyph.posy.r, glyph.width.r, glyph.height.r)
+                gl.glViewport(glyph.posx.r, glyph.posy.r, glyph.width.r, glyph.height.r)
+
     @property
     def glyph(self):
         return self._glyph
@@ -78,16 +96,17 @@ class Pane(RenderDevice, GlyphInterface):
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
             gl.glClear(gl.GL_DEPTH_BUFFER_BIT)
 
-    def local_cursor(self):
-        """
-        Returns cursor position in view coordinate system
-        :param view:
-        :return:
-        """
-        w, h = self.manager.window.glyph.size
-        unitize_matrix = ScaleMat(1 / w, 1 / h)
-        pos = unitize_matrix * self.glyph.trnsf_matrix.r.I * Pnt(*self.manager.window.devices.mouse.cursor_pos)
-        return pos.x, pos.y
+
+class _Pane(Pane):
+    """
+    Just a type notifier for IDE
+    """
+
+    def __enter__(self) -> Pane:
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
 
 class PaneManager(RenderDeviceManager):
@@ -100,11 +119,16 @@ class PaneManager(RenderDeviceManager):
     def __init__(self, device_master):
         super().__init__(device_master)
         # default device
-        self.appendnew_pane(x_exp=0,
-                            y_exp=0,
-                            w_exp=1.,
-                            h_exp=1.,
-                            parent=device_master.window)
+        p = self.appendnew_pane(x_exp=0,
+                                y_exp=0,
+                                w_exp=1.,
+                                h_exp=1.,
+                                parent=device_master.window)
+        # to make it default
+        self.master.tracker.stack.set_base_entity(p)
+
+    def __getitem__(self, item) -> _Pane:
+        return super().__getitem__(item)
 
     @property
     def device_type(self):

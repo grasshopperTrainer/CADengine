@@ -103,8 +103,8 @@ class callbackRegistry:
         :return:
         """
 
-        def wrapper(**on_call_kwargs):
-            return self.call(instance, **on_call_kwargs)
+        def wrapper(*on_call_args, **on_call_kwargs):
+            return self.call(instance, *on_call_args, **on_call_kwargs)
 
         return wrapper
 
@@ -155,7 +155,7 @@ class callbackRegistry:
     real executors
     """
 
-    def call(self, instance, **on_call_kwarg):
+    def call(self, instance, *on_call_args, **on_call_kwarg):
         """
         provided for strudctural consistency, refer to __call__ for real decorator in action
 
@@ -168,7 +168,7 @@ class callbackRegistry:
         # calling actual callbacked functions
         for k, (args, wkwargs, skwargs) in self.__callbacked_record.get(instance, {}).items():
             args = (arg() if isinstance(arg, weakref.ref) else arg for arg in args)
-            k(*args, **skwargs, **wkwargs, **on_call_kwarg)
+            k(*args, *on_call_args, **skwargs, **wkwargs, **on_call_kwarg)
 
     def append(self, instance, callbacked, *args, **kwargs):
         """

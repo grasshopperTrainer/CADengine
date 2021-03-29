@@ -6,6 +6,7 @@ from .base import Shape
 import mkernel.renderers.primitive_renderer as pr
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 import weakref as wr
+from ..color_registry import GlobalColorRegistry
 
 
 class Ray(Shape):
@@ -28,7 +29,8 @@ class Pnt(Shape):
 
         # set vertex attributes
         self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
-
+        # set cid
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
         # set index buffer
         self.__indx_block = None
         self.__frm = None
@@ -139,7 +141,7 @@ class Vec(Shape):
 class Lin(Shape):
     def __init__(self, geo, renderer):
         self.__vrtx_block = renderer.vbo.cache.request_block(size=2)
-      
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
         # set index
         self.__indx_block = renderer.ibo.cache.request_block(size=2)
         self.__indx_block['idx'] = self.__vrtx_block.indices
@@ -175,7 +177,7 @@ class Lin(Shape):
     def clr(self, v):
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__vrtx_block['clr'] = v  # to accept as much as possible
+        self.__vrtx_block['clr'] = v
         if self.__clr is None:
             self.__clr = v
         else:
@@ -194,25 +196,26 @@ class Lin(Shape):
 
 
 class Plin(Shape):
-    def __init__(self, *vs):
+    def __init__(self, geo, renderer):
         """
 
         :param vs: number of vertices coordinate that form polyline
         """
         # this will check input validity
-        self.__geo = gt.Plin(*vs)
-        self.__clr = ClrRGBA()
-        self.__thk = 3
-
-        self.__vrtx_block = pr.PolylineRenderer().vbo.cache.request_block(size=len(vs))
+        self.__vrtx_block = pr.PolylineRenderer().vbo.cache.request_block(size=len(geo))
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
         # +1 for primitive restart value
-        self.__indx_block = pr.PolylineRenderer().ibo.cache.request_block(size=len(vs)+1)
+        self.__indx_block = pr.PolylineRenderer().ibo.cache.request_block(size=len(geo)+1)
         self.__indx_block['idx', :-1] = self.__vrtx_block.indices
         self.__indx_block['idx', -1] = PRV
 
-        self.geo = gt.Plin(*vs)
+        self.__geo = geo
+        self.__clr = ClrRGBA()
+        self.__thk = 1
+
+        self.geo = geo
         self.clr = ClrRGBA(0, 0, 0, 1)
-        self.thk = 5
+        self.thk = 1
 
     @property
     def geo(self):
@@ -231,7 +234,7 @@ class Plin(Shape):
 
     @clr.setter
     def clr(self, v):
-        if not isinstance(v, Clr):
+        if not isinstance(v, (tuple, list, Clr)):
             raise TypeError
         self.__vrtx_block['clr'] = v
         self.__clr[:] = v
@@ -252,21 +255,19 @@ class Plin(Shape):
         pr.PolylineRenderer().render()
 
 
-class Pln(Shape):
-    @property
-    def geo(self):
-        raise NotImplementedError
-
-
 class Tgl(Shape):
     __is_render_edge = True
+
     def __init__(self, geo, renderer):
         """
         """
         self.__vrtx_block = renderer.vbo.cache.request_block(size=3)
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
+
         # registering at ibo
         self.__indx_block = renderer.ibo.cache.request_block(size=3)
         self.__indx_block['idx'] = self.__vrtx_block.indices
+
         # just filling correct placeholder
         self.__geo = None
         self.__fill_clr = None
@@ -350,13 +351,3 @@ class Tgl(Shape):
         if not isinstance(b, bool):
             raise TypeError
         cls.__render_edge = b
-
-class Colors:
-    def __init__(self):
-        record = wr.WeakKeyDictionary()
-
-    def __set__(self, instance, value):
-        pass
-
-    def __get__(self, instance, owner):
-        pass
