@@ -26,6 +26,9 @@ class Mouse(_InputDevice):
         super().__init__(window)
         with window.context.glfw as window:
             glfw.set_cursor_pos_callback(window, self.__master_cursor_pos_callback)
+            glfw.set_cursor_enter_callback(window, self.__master_cursor_enter_callback)
+            glfw.set_mouse_button_callback(window, self.__master_mouse_button_callback)
+            glfw.set_scroll_callback(window, self.__master_mouse_scroll_callback)
         self.window.append_predraw_callback(self.__set_cursor_pos_perframe)
 
         self.__pos_perframe = Vec(0, 0, 0)
@@ -69,43 +72,68 @@ class Mouse(_InputDevice):
         """
         pass
 
-    # @callbackRegistry
-    # def call_
-    # def cursor_in_view(self, view, normalize=True):
-    #     """
-    #     Returns cursor position in view coordinate system
-    #     :param view:
-    #     :return:
-    #     """
-    #     transform_matrix = view.glyph.trnsf_matrix.r.I.M
-    #     w, h = self.window.glyph.size
-    #     unitize_matrix = ScaleMat(1 / w, 1 / h)
-    #     pos = unitize_matrix * transform_matrix * Pnt(*self.cursor_pos_instant)
-    #     if not normalize:
-    #         w, h = view.glyph.size
-    #         view_scale_matrix = ScaleMat(w, h)
-    #         pos = view_scale_matrix * pos
-    #     return pos.x, pos.y
+    def __master_cursor_enter_callback(self, glfw_window, entered):
+        """
+        three way callbacking
 
-    # def intersect_model(self, view, camera, model):
-    #     """
-    #
-    #     :param view:
-    #     :param camera:
-    #     :param model:
-    #     :return:
-    #     """
-    #     # 1. convert parameter value into point in space using VM, PM
-    #     #    to create intersection point on near frustum(A)
-    #     # 2. create ray(R) combining using origin(B) and vector from B to A
-    #     # 3. do 'Möller–Trumbore intersection algorithm' with (R) and triangles
-    #     px, py = self.cursor_in_view(view)
-    #     ray = camera.frusrum_ray(px, py)
-    #     print(ray.describe())
-    #     # raise NotImplementedError
+        :param glfw_window:
+        :param entered:
+        :return:
+        """
+        self.call_cursor_enter_callback(glfw_window, entered, mouse=self)
+
+    @callbackRegistry
+    def call_cursor_enter_callback(self):
+        pass
+
+    @call_cursor_enter_callback.appender
+    def append_cursor_enter_callback(self):
+        """
+        append cursor enter callback
+        ! 'enter' also include leaving the window
+        :return:
+        """
+
+    def __master_mouse_button_callback(self, glfw_window, button, action, mods):
+        """
+
+        :param glfw_window:
+        :param button:
+        :param action:
+        :param mods:
+        :return:
+        """
+        self.call_mouse_button_callback(glfw_window, button, action, mods, mouse=self)
+
+    @callbackRegistry
+    def call_mouse_button_callback(self):
+        pass
+
+    @call_mouse_button_callback.appender
+    def append_mouse_button_callback(self):
+        pass
+
+    def __master_mouse_scroll_callback(self, glfw_window, xoffset, yoffset):
+        """
+
+        :param glfw_window:
+        :param xoffset:
+        :param yoffset:
+        :return:
+        """
+        self.call_mouse_scroll_callback(glfw_window, xoffset, yoffset, mouse=self)
+
+    @callbackRegistry
+    def call_mouse_scroll_callback(self):
+        pass
+
+    @call_mouse_scroll_callback.appender
+    def append_mouse_scroll_callback(self):
+        pass
+
 
     @property
-    def cursor_pos_instant(self):
+    def pos_instant(self):
         """
         Ask glfw event poll thread current cursor pos and return
 
@@ -115,7 +143,7 @@ class Mouse(_InputDevice):
         return self.__pos_instant
 
     @property
-    def cursor_pos_perframe(self):
+    def pos_perframe(self):
         """
         cursor pos stored at the beginning of frame rendering
 
@@ -148,6 +176,9 @@ class Mouse(_InputDevice):
         with self.window.context.glfw as window:
             glfw.set_cursor_pos(window, *self.cursor_center)
         self.__pos_perframe = self.cursor_center
+
+    def get_button_status(self, button):
+        return glfw.get_mouse_button(self.window.context.glfw_window, button)
 
 
 class UnknownKeyError(Exception):
@@ -185,6 +216,14 @@ class GLFWCharDict:
     __key_char_dict[glfw.KEY_COMMA] = ","
     __key_char_dict[glfw.KEY_PERIOD] = "."
     __key_char_dict[glfw.KEY_SLASH] = "/"
+    __key_char_dict[glfw.KEY_LEFT_SHIFT] = "lshift"
+    __key_char_dict[glfw.KEY_RIGHT_SHIFT] = "rshift"
+    __key_char_dict[glfw.KEY_LEFT_CONTROL] = "lcontrol"
+    __key_char_dict[glfw.KEY_RIGHT_CONTROL] = "rcontrol"
+    __key_char_dict[glfw.KEY_LEFT_ALT] = "lalt"
+    __key_char_dict[glfw.KEY_RIGHT_ALT] = "rald"
+    __key_char_dict[glfw.KEY_LEFT_SUPER] = "lsuper"
+    __key_char_dict[glfw.KEY_RIGHT_SUPER] = "rsuper"
     # connect char to shifted char
     __char_shifted_dict = {c: s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
     # reversed dicts
@@ -203,8 +242,8 @@ class GLFWCharDict:
         if key in cls.__key_char_dict:
             char = cls.__key_char_dict[key]
             if mods == glfw.MOD_SHIFT:
-                if char in cls.__special_char:
-                    return cls.__special_char[char]
+                # if char in cls.__special_char:
+                #     return cls.__special_char[char]
                 return char.upper()
             return char
         raise UnknownKeyError('input key has to be one of glfw key code')
@@ -237,13 +276,13 @@ class GLFWCharDict:
 
 class Keyboard(_InputDevice):
     __callback_signature = glfw.set_key_callback
-    __glfw_key_dict = GLFWCharDict()
+    __key_dict = GLFWCharDict()
 
     def __init__(self, window):
         super().__init__(window)
         # build key press dict
         # what i want to record is... press status and time
-        self.__key_press_dict = self.__glfw_key_dict.get_copied_dict()
+        self.__key_press_dict = self.__key_dict.get_copied_dict()
         for k, v in self.__key_press_dict.items():
             self.__key_press_dict[k] = [None, 0]  # time, pressed
         with window.context.glfw as window:
@@ -261,7 +300,7 @@ class Keyboard(_InputDevice):
         :param mods:
         :return:
         """
-        self.call_key_callback(window=window, key=key, scancode=scancode, action=action, mods=mods, keyboard=self)
+        self.call_key_callback(window, key, scancode, action, mods, keyboard=self)
 
     @callbackRegistry
     def call_key_callback(self, **on_call_kwargs):
@@ -310,8 +349,7 @@ class Keyboard(_InputDevice):
         :param mods: mod key, like 'shift' for upper char
         :return: char representation
         """
-        return cls.__glfw_key_dict.key_to_char(key, mods)
+        return cls.__key_dict.key_to_char(key, mods)
 
     def get_key_status(self, *chars):
-        with self.window.context.glfw as window:
-            return tuple(glfw.get_key(window, self.__glfw_key_dict.char_to_key(char)) for char in chars)
+        return tuple(glfw.get_key(self.window.context.glfw_window, self.__key_dict.char_to_key(char)) for char in chars)

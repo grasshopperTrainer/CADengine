@@ -215,7 +215,7 @@ class CameraManager(RenderDeviceManager):
         c = self.factory.set_hfov_dimension(
             hfov=np.radians(50),
             aspect_ratio=self.window.glyph.aspect_ratio.r,
-            near=10,
+            near=5,
             far=100_000).set_frustum_shape('p').create()
         c.tripod.lookat(eye=(0, 0, 100), at=(0, 0, 0), up=(0, 1, 0))
         self.master.tracker.stack.set_base_entity(c)
@@ -252,6 +252,11 @@ class CameraManager(RenderDeviceManager):
         self.window.devices.mouse.append_cursor_pos_callback(dolly.callbacked_update_acceleration)
         # this is needed for glfw cursor pos callback to operate
         glfw.set_input_mode(self.window.context.glfw_window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+
+    def attach_cad_dolly(self, camera_id, cursor_id, def_offset):
+        camera = self[camera_id]
+        cursor = self.master.cursors[cursor_id]
+        return CadDolly(self.window, camera, cursor, def_offset)
 
     def detach_dolly(self, camera_id):
         """
