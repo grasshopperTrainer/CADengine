@@ -37,7 +37,7 @@ class PointRenderer(_Renderer):
     ... add more to expand render possibility
     :return:
 
-    :param self.__~_prgrm: program rendering sized square points
+    :param self.__~_prgrm: program drawing sized square points
     :param self.__~_indx_bffr: index buffer storing drawing index of its type
     :param self.__~_ufrm_cache: buffer cache of transformation matrices
 
@@ -125,7 +125,7 @@ class PointRenderer(_Renderer):
                                                       [0, 0, 1, 0],
                                                       [0, 0, 0, 1]]
                 pane = get_current_ogl().manager.window.devices.panes.current
-                self.__circle_prgrm.uniforms['VPP'] = *pane.pos, *pane.size
+                self.__circle_prgrm.uniforms['VPP'] = *pane.pos.xy, *pane.size.xy
                 self.__circle_prgrm.push_uniforms()
                 self.__circle_ibo.push_cache()
 
@@ -166,7 +166,7 @@ class LineRenderer(_Renderer):
     layout (location = 2) in vec4 clr;
     ... add more to expand render possibility
 
-    :param self.__sharp_prgrm: program rendering thick sharp line
+    :param self.__sharp_prgrm: program drawing thick sharp line
     :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
     """
     __sharp_prgrm = meta.MetaPrgrm(
@@ -271,21 +271,18 @@ class TriangleRenderer(_Renderer):
     layout(location = 3) in fill_clr;
     ... add more to expand render possibility
 
-    :param self.__fill_prgrm: for rendering triangle fill
-    :param self.__edge_prgrm: for rendering triangle thick edge
+    :param self.__fill_prgrm: for drawing triangle fill
+    :param self.__edge_prgrm: for drawing triangle thick edge
     :param self.__trnsf_ufrm_cache: buffer cache of transformation matrices
     """
-    __fill_prgrm = meta.MetaPrgrm(
-        vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglFill_vrtx_shdr.glsl'),
-        frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglFill_frgm_shdr.glsl'))
 
-    __edge_prgrm = meta.MetaPrgrm(
+    __prgrm = meta.MetaPrgrm(
         vrtx_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_vrtx_shdr.glsl'),
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__vbo = self.__fill_prgrm.vrtxattr_schema.union(self.__edge_prgrm.vrtxattr_schema).create_vrtx_bffr()
+        self.__vbo = self.__prgrm.vrtxattr_schema.union(self.__prgrm.vrtxattr_schema).create_vrtx_bffr()
         self.__ibo = MetaIndxBffr('uint')
         self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
@@ -320,26 +317,11 @@ class TriangleRenderer(_Renderer):
         self.__vbo.push_cache()
         self.__ibo.push_cache()
         with self.__vao:
-            self.__render_fill()
-            if is_render_edge:
-                self.__render_edge()
-
-    def __render_fill(self):
-        if not self.__ibo.cache.active_size:
-            return
-        with self.__fill_prgrm:
-            self.__update_global_ufrm(self.__fill_prgrm)
-            gl.glDrawElements(gl.GL_TRIANGLES,
-                              self.__ibo.cache.active_size,
-                              self.__ibo.cache.gldtype[0],
-                              ctypes.c_void_p(0))
-
-    def __render_edge(self):
-        if not self.__ibo.cache.active_size:
-            return
-        with self.__edge_prgrm:
-            self.__update_global_ufrm(self.__edge_prgrm)
-            gl.glDrawElements(gl.GL_TRIANGLES,
-                              self.__ibo.cache.active_size,
-                              self.__ibo.cache.gldtype[0],
-                              ctypes.c_void_p(0))
+            if not self.__ibo.cache.active_size:
+                return
+            with self.__prgrm:
+                self.__update_global_ufrm(self.__prgrm)
+                gl.glDrawElements(gl.GL_TRIANGLES,
+                                  self.__ibo.cache.active_size,
+                                  self.__ibo.cache.gldtype[0],
+                                  ctypes.c_void_p(0))

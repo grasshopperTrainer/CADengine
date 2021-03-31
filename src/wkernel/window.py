@@ -151,7 +151,7 @@ class Window(DrawInterface, GlyphInterface):
 
         :return:
         """
-        # bind and as this is a rendering happends in dedicated thread no need to unbind
+        # bind and as this is a drawing happends in dedicated thread no need to unbind
         with self.__context.glfw as glfw_window:
             while not glfw.window_should_close(glfw_window):
                 if self.__frame_count == self.__num_draw_frame:

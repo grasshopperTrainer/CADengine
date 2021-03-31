@@ -1,7 +1,7 @@
 from gkernel.dtype.geometric import Vec, Pnt, Lin, ZVec, ZeroVec, XVec, YVec, MoveMat
 import weakref as wr
 from itertools import repeat
-import numpy as np
+import glfw
 
 
 class Dolly:
@@ -16,25 +16,26 @@ class FpsDolly(Dolly):
     collection of callbacks for moving camera
     """
 
-    def __init__(self, camera, cursor):
-        self.move_speed = 2
-        self.view_speed = 0.005
-
+    def __init__(self, window, camera, cursor):
         self.__camera = wr.ref(camera)
         self.__cursor = wr.ref(cursor)
 
-        self.__acceleration = Vec(0, 0, 0)
-        # max pixel acceleration per frame
-        mpapf = 100
-        self.__acc_limit = (-mpapf, mpapf)
-        # max angle acceleration per frame
-        # meaning max acceleration gained can't overcome 1 degree
-        maapf = 1
-        # acceleration unit for 1 pixel cursor move
-        self.__acc_unit = maapf / mpapf
-        self.__velocity = Vec(0, 0, 0)
-        # self.__velocity_threshold = 3.14 / 1800  # about 1/10 degree
-        self.__friction = 4
+        with window.context.glfw as glfw_window:
+            glfw.set_input_mode(glfw_window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+
+        self.__move_spd = 2
+        self.__move_boost = 4
+        window.append_predraw_callback(self.__update_move, keyboard=window.devices.keyboard)
+
+        mpapf = 100  # max pixel acceleration per frame
+        maapf = 1  # max angle acceleration per frame
+        self.__rot_acc_lim = (-mpapf, mpapf)
+        self.__rot_acc_unit = maapf / mpapf  # acceleration unit for 1 pixel cursor move
+        self.__rot_acc = Vec(0, 0, 0)
+        self.__rot_vel = Vec(0, 0, 0)
+        self.__rot_fric = 4
+        window.append_predraw_callback(self.__update_rot)
+        window.devices.mouse.append_cursor_pos_callback(self.__update_rot_acc)
 
     @property
     def camera(self):
@@ -46,10 +47,26 @@ class FpsDolly(Dolly):
         o = self.__cursor()
         return o if o else self.delete()
 
+    @property
+    def move_spd(self):
+        return self.__move_spd
+
+    @move_spd.setter
+    def move_spd(self, v):
+        self.__move_spd = v
+
+    @property
+    def move_boost(self):
+        self.__move_boost
+
+    @move_boost.setter
+    def move_boost(self, v):
+        self.__move_boost = v
+
     def delete(self):
         raise NotImplementedError
 
-    def callbacked_move_tripod(self, keyboard, **kwargs):
+    def __update_move(self, keyboard, **kwargs):
         """
         move tripod
 
@@ -62,13 +79,14 @@ class FpsDolly(Dolly):
         x, y, z = self.camera.tripod.plane.axes
         dvec = ZeroVec()
         for c, v in zip(('a', 's', 'd', 'w', 'e', 'q'), (-x, z, x, -z, ZVec(), -ZVec())):
-            if keyboard.get_key_status(c)[0]:
+            if keyboard.get_key_status(c):
                 dvec += v
-
-        dvec.as_vec().amplify(self.move_speed)
+        dvec = dvec.as_vec().amplify(self.__move_spd)
+        if keyboard.get_key_status('lshift'):
+            dvec *= self.__move_boost
         self.camera.tripod.move(dvec)
 
-    def callbacked_update_acceleration(self, glfw_window, xpos, ypos, mouse):
+    def __update_rot_acc(self, glfw_window, xpos, ypos, mouse):
         """
         update camera move acceleration
 
@@ -81,21 +99,20 @@ class FpsDolly(Dolly):
 
         # calculate acceleration
         v = self.cursor.accel
-        x, y = map(lambda lim, c: max(lim[0], min(c, lim[1])), repeat(self.__acc_limit), v.xy)  # clamping
-        self.__acceleration = Vec(x, y, 0) * self.__acc_unit  # mapping
-        # mouse.cursor_goto_center()
+        x, y = map(lambda lim, c: max(lim[0], min(c, lim[1])), repeat(self.__rot_acc_lim), v.xy)  # clamping
+        self.__rot_acc = Vec(x, y, 0) * self.__rot_acc_unit  # mapping
 
-    def casllbacked_update_camera(self):
-        self.__velocity = (self.__velocity + self.__acceleration) / self.__friction  # simple friction
-        self.__acceleration = Vec(0, 0, 0)  # reset acceleration
-        if self.__velocity.length < self.__acc_unit:  # stop if velocity is too small
-            self.__velocity = Vec(0, 0, 0)
+    def __update_rot(self):
+        self.__rot_vel = (self.__rot_vel + self.__rot_acc) / self.__rot_fric  # simple friction
+        self.__rot_acc = Vec(0, 0, 0)  # reset acceleration
+        if self.__rot_vel.length < 0.001:  # stop if velocity is too small
+            self.__rot_vel = Vec(0, 0, 0)
         else:  # move camera
             # rotate vertically and horizontally
             tripod = self.camera.tripod
-            tripod.pitch(self.__velocity.y)
+            tripod.pitch(self.__rot_vel.y)
             axis = Lin.from_pnt_vec(tripod.plane.origin, Vec(0, 0, 1))
-            tripod.rotate_around(axis, -self.__velocity.x)
+            tripod.rotate_around(axis, -self.__rot_vel.x)
 
 
 class CadDolly(Dolly):
@@ -114,7 +131,7 @@ class CadDolly(Dolly):
         self.__prf = Pnt(0, 0, 0)
         # percentage describing how much of distance between camera,
         # cursor target is applied to panning distance
-        self.__pa = 0.001
+        self.__pa = 0.005
         self.__pf = 0.25
         self.__pv = Vec(0, 0, 0)
         self.__pp = Vec(0, 0, 0)
@@ -182,21 +199,22 @@ class CadDolly(Dolly):
             self.__prf = self.__cam_off_ref
 
         k, m = self.window.devices.keyboard, self.window.devices.mouse
-        if k.get_key_status('lshift')[0] == 1 and m.get_button_status(2):  # actuator
+        if k.get_key_status('lshift') and m.get_button_status(2):  # actuator
             d = (self.__prf - self.camera.tripod.plane.origin).length
             acc = (pos - self.__pp) * d * self.__pa
+            self.__panning = True
         else:
             acc = Vec(0, 0, 0)
+            self.__prf = None
+            self.__panning = False
 
+        # update camera move
         self.__pv = (self.__pv + acc) * self.__pf
         if 0.001 < self.__pv.length:
-            self.__panning = True
             self.camera.tripod.move_local(self.__pv)
         else:
-            self.__panning = False
             self.__pv = Vec(0, 0, 0)
 
-        self.__prf = None
         self.__pp = pos
 
     def __apply_zooming(self):
@@ -257,7 +275,7 @@ class CadDolly(Dolly):
 
         self.__ov = (self.__ov + acc) * self.__of
         k, m = self.window.devices.keyboard, self.window.devices.mouse
-        if k.get_key_status('lshift')[0] == 0 and m.get_button_status(2) and self.__orf is not None:  # actuator
+        if not k.get_key_status('lshift') and m.get_button_status(2) and self.__orf is not None:  # actuator
             self.__orbiting = True  # to fix orbiting target
             self.camera.tripod.rotate_around(Lin.from_pnt_vec(self.__orf, ZVec()), self.__ov.x)
             haxis = -self.camera.tripod.plane.axis_x.project_on_xy()  # maintain camera up

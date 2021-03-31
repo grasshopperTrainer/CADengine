@@ -3,6 +3,7 @@ import random
 import weakref as wr
 from global_tools.singleton import Singleton
 import numpy as np
+from gkernel.color import ClrRGBA
 
 
 @Singleton
@@ -80,7 +81,7 @@ class GlobalColorRegistry:
         """
         return entity if given cid is valid
 
-        :param cid:
+        :param cid: (int, int, int) tuple of 3 ubyte-like values
         :return:
         """
         return self.__color_entity.get(cid, None)

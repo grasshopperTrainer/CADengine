@@ -145,13 +145,13 @@ class Mouse(_InputDevice):
     @property
     def pos_perframe(self):
         """
-        cursor pos stored at the beginning of frame rendering
+        cursor pos stored at the beginning of frame drawing
 
         This is needed as cursor pos is polled by separate thread.
-        One has to use this value if it needs a consistent cursor pos during a whole frame rendering
+        One has to use this value if it needs a consistent cursor pos during a whole frame drawing
 
         e.g. FPS camera controlled by cursor movement. Instant cursor_pos called at the beginning and ending
-        of frame rendering may return distinct values respectively thus causing perspective anomaly.
+        of frame drawing may return distinct values respectively thus causing perspective anomaly.
         :return:
         """
         return self.__pos_perframe
@@ -351,5 +351,5 @@ class Keyboard(_InputDevice):
         """
         return cls.__key_dict.key_to_char(key, mods)
 
-    def get_key_status(self, *chars):
-        return tuple(glfw.get_key(self.window.context.glfw_window, self.__key_dict.char_to_key(char)) for char in chars)
+    def get_key_status(self, char):
+        return glfw.get_key(self.window.context.glfw_window, self.__key_dict.char_to_key(char))

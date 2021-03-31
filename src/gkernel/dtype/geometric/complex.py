@@ -127,7 +127,6 @@ class Pgon(ArrayLikeData):
         norm = ZeroVec()
         for a, b in zip(self[:3, :-1].T, self[:3, 1:].T):
             norm += Vec.cross(Pnt(*a), Pnt(*b))
-
         return norm.normalize()
 
     def __normalize(self):

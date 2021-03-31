@@ -173,7 +173,7 @@ class Camera(RenderDevice):
 
         if self.body.fshape == 'o':
             # modify body
-            hw, hh = (d // 2 for d in pane.size)
+            hw, hh = (d // 2 for d in pane.size.xy)
             l, r, b, t, n, f = self.body.dim
             clip_d = f - n
             self.body.dim = -hw, hw, -hh, hh, focus[2] + clip_off, n + clip_d
@@ -182,7 +182,7 @@ class Camera(RenderDevice):
         else:
             # modify body
             # calculate new clipping plane size
-            w, h = pane.size
+            w, h = pane.size.xy
             cpw = w - 2 * (clip_off / np.tan((np.pi - self.body.hfov) / 2))
             cph = h - 2 * (clip_off / np.tan((np.pi - self.body.vfov) / 2))
             # calculate new near
@@ -234,7 +234,13 @@ class CameraManager(RenderDeviceManager):
     # TODO: need camera dolly connector? should it take all the responsibilities? who has to know about dolly?
     def attach_fps_dolly(self, camera_id, cursor_id):
         """
-        attach dolly to the camera
+        attach FPS dolly to the camera
+
+        FPS dolly replies to cursor, keyboard inputs
+        asdw - move camera
+        qe - ascend descend camera
+        shift - boost movement
+        mouse - rotate camera
 
         :param camera_id:
         :param cursor_id:
@@ -242,18 +248,20 @@ class CameraManager(RenderDeviceManager):
         """
         camera = self[camera_id]
         cursor = self.master.cursors[cursor_id]
-
-        dolly = FpsDolly(camera, cursor)
-        camera.attach_dolly(dolly)
-        # handling callback
-        self.window.append_predraw_callback(dolly.callbacked_move_tripod,
-                                            keyboard=self.window.devices.keyboard)
-        self.window.append_predraw_callback(dolly.casllbacked_update_camera)
-        self.window.devices.mouse.append_cursor_pos_callback(dolly.callbacked_update_acceleration)
-        # this is needed for glfw cursor pos callback to operate
-        glfw.set_input_mode(self.window.context.glfw_window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+        return FpsDolly(self.window, camera, cursor)
 
     def attach_cad_dolly(self, camera_id, cursor_id, def_offset):
+        """
+        attach CAD like dolly
+
+        CAD dolly supports three movement:
+        pan, orbit, zoom conrolled by scroll, mouse center button and 'shift'
+
+        :param camera_id:
+        :param cursor_id:
+        :param def_offset:
+        :return:
+        """
         camera = self[camera_id]
         cursor = self.master.cursors[cursor_id]
         return CadDolly(self.window, camera, cursor, def_offset)
@@ -269,7 +277,7 @@ class CameraManager(RenderDeviceManager):
         dolly = self[camera_id].detach_dolly()
         # handling callback. temporary patching
         if isinstance(dolly, FpsDolly):
-            self.window.remove_predraw_callback(dolly.callbacked_move_tripod)
-            self.window.devices.mouse.remove_cursor_pos_callback(dolly.callbacked_update_acceleration)
+            self.window.remove_predraw_callback(dolly.__move_tripod)
+            self.window.devices.mouse.remove_cursor_pos_callback(dolly.__update_acceleration)
         else:
             raise NotImplementedError

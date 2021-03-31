@@ -13,6 +13,7 @@ layout (location = 2) uniform mat4 MM = mat4(1.0);
 out vsOut {
     float edgeThk;
     vec4 edgeClr;
+    vec4 fillClr;
     vec3 cid;
 } vs_out;
 
@@ -20,6 +21,8 @@ void main() {
     // for geometry shader
     vs_out.edgeThk = edge_thk;
     vs_out.edgeClr = edge_clr;
+    vs_out.fillClr = fill_clr;
     vs_out.cid = cid;
+
     gl_Position = vtx;
 }

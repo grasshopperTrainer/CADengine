@@ -1,4 +1,4 @@
-from gkernel.dtype.geometric.primitive import Pnt
+from gkernel.dtype.geometric.primitive import Vec
 from gkernel.dtype.nongeometric.matrix.primitive import ScaleMat
 
 from wkernel.glyph import GlyphNode, GlyphInterface
@@ -74,11 +74,11 @@ class Pane(RenderDevice, GlyphInterface):
 
     @property
     def size(self):
-        return self._glyph.size
+        return Vec(*self._glyph.size).astype(int)
 
     @property
     def pos(self):
-        return self._glyph.posx.r, self._glyph.posy.r
+        return Vec(self._glyph.posx.r, self._glyph.posy.r)
 
     def clear(self, r=0, g=0, b=0, a=0):
         """

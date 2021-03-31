@@ -22,7 +22,7 @@ class Mat1(ArrayLikeData):
         :return:
         """
         if not (set(item) - {'x', 'y', 'z', 'w'}):
-            d = dict(zip('xyzw', self[:, 0]))
+            d = dict(zip('xyzw', self[:, 0].tolist()))
             vs = tuple(d[c] for c in item)
             return vs[0] if len(vs) == 1 else vs
         return super().__getattribute__(item)
@@ -93,21 +93,6 @@ class Mat1(ArrayLikeData):
                 return super().__add__(other)
         raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} add unknown')
 
-    def __iadd__(self, other):
-        """
-        :param other:
-        :return:
-        """
-        if isinstance(self, Vec):
-            if isinstance(other, Vec):
-                return super().__iadd__(other)
-            elif isinstance(other, Pnt):
-                return other.__iadd__(self)
-        elif isinstance(self, Pnt):
-            if isinstance(other, Vec):
-                return super().__iadd__(other)
-        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} iadd unknown')
-
     def __sub__(self, other):
         """
         retain constant type casting in between Vec and Pnt subtraction
@@ -119,7 +104,7 @@ class Mat1(ArrayLikeData):
             if isinstance(other, Vec):
                 return super().__sub__(other)
             elif isinstance(other, np.ndarray):
-                if not other.shape: # singular unit
+                if not other.shape:  # singular unit
                     # compare components
                     return self[:3] - other
                 else:
@@ -130,21 +115,6 @@ class Mat1(ArrayLikeData):
             elif isinstance(other, Vec):
                 return super().__sub__(other)
         raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} sub unknown')
-
-    def __isub__(self, other):
-        """01
-        :param other:
-        :return:
-        """
-        if isinstance(self, Vec):
-            if isinstance(other, Vec):
-                return super().__isub__(other)
-        elif isinstance(self, Pnt):
-            if isinstance(other, Pnt):
-                return super().__isub__(other).view(Vec)
-            elif isinstance(other, Vec):
-                return super().__isub__(other)
-        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} isub unknown')
 
     def __mul__(self, other):
         """
@@ -157,36 +127,74 @@ class Mat1(ArrayLikeData):
             return super().__mul__(other)
         raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} mul unknown')
 
-    def __imul__(self, other):
-        """
-
-        :param other:
-        :return:
-        """
-        if isinstance(self, Vec) and isinstance(other, Number):
-            return super().__imul__(other)
-        raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} imul unknown')
-
     def __truediv__(self, other):
         """
-        only scalar division is accepted
+        ! primitive doesn't support value assignment
 
         :param other:
-        :return:
+        :return: ! returns new primitive
         """
         if isinstance(self, Vec) and isinstance(other, Number):
             return super().__truediv__(other)
         raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} div unknown')
 
-    def __itruediv__(self, other):
+    # all __i~__ return new object
+    def __iadd__(self, other):
         """
+        ! primitive doesn't support value assignment
 
         :param other:
-        :return:
+        :return: ! returns new primitive
+        """
+        if isinstance(self, Vec):
+            if isinstance(other, Vec):
+                return self.__add__(other)
+            elif isinstance(other, Pnt):
+                return other.__add__(self)
+        elif isinstance(self, Pnt):
+            if isinstance(other, Vec):
+                return self.__add__(other)
+        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} iadd unknown')
+
+    def __isub__(self, other):
+        """
+        ! primitive doesn't support value assignment
+
+        :param other:
+        :return: ! returns new primitive
+        """
+        if isinstance(self, Vec):
+            if isinstance(other, Vec):
+                return super().__sub__(other)
+        elif isinstance(self, Pnt):
+            if isinstance(other, Pnt):
+                return super().__sub__(other).view(Vec)
+            elif isinstance(other, Vec):
+                return super().__sub__(other)
+        raise ArithmeticError(f'{self.__class__.__name__}, {other.__class__.__name__} isub unknown')
+
+    def __imul__(self, other):
+        """
+        ! primitive doesn't support value assignment
+
+        :param other:
+        :return: ! returns new primitive
         """
         if isinstance(self, Vec) and isinstance(other, Number):
-            return super().__itruediv__(other)
-        raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} idiv unknown')
+            return super().__mul__(other)
+        raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} imul unknown')
+
+    def __itruediv__(self, other):
+        """
+        ! primitive doesn't support value assignment
+
+        :param other:
+        :return: ! returns new primitive
+        """
+        try:
+            return super(Mat1, self).__truediv__(other)
+        except:
+            raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} idiv unknown')
 
 
 class VecConv(metaclass=abc.ABCMeta):
@@ -396,8 +404,8 @@ class Vec(Mat1, VecConv, PntConv):
         :return:
         """
         if self.is_zero():
-            raise
-        return self/self.length
+            return self
+        return self / self.length
 
     def amplify(self, magnitude):
         """
@@ -818,6 +826,7 @@ class Pln(ArrayLikeData, PntConv):
             return
         # make vectors normalized and perpendicular
         x, y = self.axis_x, self.axis_y
+
         if Vec.cross(x, y) == 0:
             raise ValueError('cant define plane with parallel axes')
         z = Vec.cross(x, y)  # find z
@@ -831,9 +840,12 @@ class Pln(ArrayLikeData, PntConv):
                           [0, x.z, y.z, z.z],
                           [1, 0, 0, 0]], dtype=DTYPE)
         x_on_xy = x.project_on_xy()
-        dir_vec = Vec.cross(Vec(1, 0, 0), x_on_xy)
+        dir_vec = Vec.cross(XVec(), x_on_xy)
         if dir_vec.is_zero():
-            rot_dir = 0
+            if Vec.dot(XVec(), x_on_xy) < 0:
+                rot_dir = 1
+            else:
+                rot_dir = 0
         elif dir_vec.z > 0:
             rot_dir = -1
         else:
@@ -842,9 +854,12 @@ class Pln(ArrayLikeData, PntConv):
 
         plane = rz * plane
         x_on_zx = Vec(*plane[:3, 1])
-        dir_vec = Vec.cross(Vec(1, 0, 0), x_on_zx)
+        dir_vec = Vec.cross(XVec(), x_on_zx)
         if dir_vec.is_zero():
-            rot_dir = 0
+            if Vec.dot(XVec(), x_on_zx) < 0:
+                rot_dir = 1
+            else:
+                rot_dir = 0
         elif dir_vec.y > 0:
             rot_dir = -1
         else:
@@ -854,14 +869,17 @@ class Pln(ArrayLikeData, PntConv):
         # axis x is aligned so lastly match axis y
         plane = ry * plane
         y_on_yz = Vec(*plane[:3, 2])
-        dir_vec = Vec.cross(Vec(0, 1, 0), y_on_yz)
-        if dir_vec.is_zero():
-            rot_dir = 0
+        dir_vec = Vec.cross(YVec(), y_on_yz)
+        if dir_vec.is_zero():  # parallel, need opposite checking
+            if Vec.dot(YVec(), y_on_yz) < 0:  # opposite
+                rot_dir = 1
+            else:
+                rot_dir = 0
         elif dir_vec.x > 0:
             rot_dir = -1
         else:
             rot_dir = 1
-        rx = RotXMat(Vec.angle_between(Vec(0, 1, 0), y_on_yz) * rot_dir)
+        rx = RotXMat(Vec.angle_between(YVec(), y_on_yz) * rot_dir)
 
         to_origin = MoveMat(*(-self.origin).xyz)
 
@@ -1195,8 +1213,6 @@ class Lin(ArrayLikeData, VecConv):
         # to maintain interior consistency
         setattr(obj, f"_{cls.__name__}__s", s)
         setattr(obj, f"_{cls.__name__}__e", e)
-        obj.start = False
-        obj.end = False
         return obj
 
     @classmethod
