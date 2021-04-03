@@ -11,13 +11,13 @@ class MainWindow(Window):
         ffactory = self.devices.frames.factory
         ffactory.set_size(w, h)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      format=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
                                       lid=0)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      format=ffactory.TXTR.CLR_FRMT.RGB.RGB,
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGB.RGB,
                                       lid=1)
-        ffactory.set_render_buffer(format=ffactory.RNDR.DEPTH_STENCIL.DEPTH24_STENCIL8,
-                                   lid='ds')
+        ffactory.append_render_buffer(iformat=ffactory.RNDR.DEPTH_STENCIL.DEPTH24_STENCIL8,
+                                      lid='ds')
         ffactory.create()
         # create pane
         self.devices.panes.appendnew_pane(0, 0, 0.6, 0.6, self)

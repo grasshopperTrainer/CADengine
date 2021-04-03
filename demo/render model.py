@@ -16,7 +16,7 @@ class MyWindow(Window):
         model2 = Model()
 
         # model1.add_pnt(0, 0, 0)
-        # model1.add_pnt(0, 10, 10)
+        # model1.add_pnt(0, 10, 1q0)
 
         for i in range(10):
             pnt = model2.add_pnt(0, i * 10, i * 10)

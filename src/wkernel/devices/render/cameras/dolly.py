@@ -32,7 +32,7 @@ class FpsDolly(Dolly):
         self.__rot_acc_lim = (-mpapf, mpapf)
         self.__rot_acc_unit = maapf / mpapf  # acceleration unit for 1 pixel cursor move
         self.__rot_acc = Vec(0, 0, 0)
-        self.__rot_vel = Vec(0, 0, 0)
+        self.__rot_val = Vec(0, 0, 0)
         self.__rot_fric = 4
         window.append_predraw_callback(self.__update_rot)
         window.devices.mouse.append_cursor_pos_callback(self.__update_rot_acc)
@@ -103,16 +103,16 @@ class FpsDolly(Dolly):
         self.__rot_acc = Vec(x, y, 0) * self.__rot_acc_unit  # mapping
 
     def __update_rot(self):
-        self.__rot_vel = (self.__rot_vel + self.__rot_acc) / self.__rot_fric  # simple friction
+        self.__rot_val = (self.__rot_val + self.__rot_acc) / self.__rot_fric  # simple friction
         self.__rot_acc = Vec(0, 0, 0)  # reset acceleration
-        if self.__rot_vel.length < 0.001:  # stop if velocity is too small
-            self.__rot_vel = Vec(0, 0, 0)
+        if self.__rot_val.length < 0.001:  # stop if velocity is too small
+            self.__rot_val = Vec(0, 0, 0)
         else:  # move camera
             # rotate vertically and horizontally
             tripod = self.camera.tripod
-            tripod.pitch(self.__rot_vel.y)
+            tripod.pitch(self.__rot_val.y)
             axis = Lin.from_pnt_vec(tripod.plane.origin, Vec(0, 0, 1))
-            tripod.rotate_around(axis, -self.__rot_vel.x)
+            tripod.rotate_around(axis, -self.__rot_val.x)
 
 
 class CadDolly(Dolly):

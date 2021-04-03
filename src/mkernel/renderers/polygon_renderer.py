@@ -1,12 +1,12 @@
 import ctypes as ct
 
 import ckernel.render_context.opengl_context.meta_entities as meta
-from .base import _Renderer, get_shader_fullpath
+from .base import Renderer, get_shader_fullpath
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 
-class PolygonRenderer(_Renderer):
+class PolygonRenderer(Renderer):
     """
 
     """
@@ -29,15 +29,15 @@ class PolygonRenderer(_Renderer):
         self.__edge_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__edge_ibo)
 
     @property
-    def vbo(self):
+    def vbo(self) -> meta.MetaVrtxBffr:
         return self.__vbo
 
     @property
-    def fill_ibo(self):
+    def fill_ibo(self) -> meta.MetaIndxBffr:
         return self.__fill_ibo
 
     @property
-    def edge_ibo(self):
+    def edge_ibo(self) -> meta.MetaIndxBffr:
         return self.__edge_ibo
 
     def render(self):

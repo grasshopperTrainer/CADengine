@@ -16,13 +16,13 @@ class MainWindow(Window):
         ffactory = self.devices.frames.factory
         ffactory.set_size(w, h)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      format=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
-                                      lid=0)
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
+                                      aid=0)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      format=ffactory.TXTR.CLR_FRMT.RGB.RGB,
-                                      lid=1)  # color id texture
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGB.RGB,
+                                      aid=1)  # color id texture
         ffactory.append_depth_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      format=ffactory.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
+                                      iformat=ffactory.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
         ffactory.create()
 
         # create pane
@@ -89,7 +89,7 @@ class MainWindow(Window):
             self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
             with self.devices.frames[1] as deff:
                 # pos = p.cursor_pos(parameterize=True)
-                color = deff.pick_pixel(tid=1, pos=(.5, .5), size=(1, 1))[0][0]
+                color = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))[0][0]
                 color = clr.ClrRGBA(*color).as_ubyte()[:3]
                 e = GlobalColorRegistry().get_registered(color)
                 if e:

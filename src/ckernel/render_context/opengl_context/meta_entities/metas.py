@@ -26,7 +26,7 @@ class _MetaBffr(OGLMetaEntity, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def cache(self):
+    def cache(self) -> BffrCache:
         """
         :return: cache instance.
         """

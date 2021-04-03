@@ -36,6 +36,7 @@ class Mouse(_InputDevice):
         self.__pos_instant = Vec(0, 0, 0)
         self.__accel = Vec(0, 0, 0)
 
+
     def __master_cursor_pos_callback(self, glfw_window, xpos, ypos):
         """
         Calls all callbacks joined with 'cursor pos callback'
@@ -178,6 +179,12 @@ class Mouse(_InputDevice):
         self.__pos_perframe = self.cursor_center
 
     def get_button_status(self, button):
+        """
+        ask glfw current button status
+
+        :param button: int, {0:left, 1:right, 2:middle}
+        :return: current button status
+        """
         return glfw.get_mouse_button(self.window.context.glfw_window, button)
 
 
@@ -224,6 +231,7 @@ class GLFWCharDict:
     __key_char_dict[glfw.KEY_RIGHT_ALT] = "rald"
     __key_char_dict[glfw.KEY_LEFT_SUPER] = "lsuper"
     __key_char_dict[glfw.KEY_RIGHT_SUPER] = "rsuper"
+    __key_char_dict[glfw.KEY_ESCAPE] = "esc"
     # connect char to shifted char
     __char_shifted_dict = {c: s for c, s in zip("`1234567890-=[]\;',./", '~!@#$%^&*()_+{}|:"<>?')}
     # reversed dicts

@@ -3,10 +3,10 @@ import numpy as np
 import gkernel.dtype.geometric as gt
 from gkernel.color.primitive import ClrRGBA, Clr
 from .base import Shape
-import mkernel.renderers.primitive_renderer as pr
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 import weakref as wr
 from ..color_registry import GlobalColorRegistry
+from ..renderers.base import Renderer
 
 
 class Ray(Shape):
@@ -15,14 +15,15 @@ class Ray(Shape):
     def get_cls_renderer(cls):
         return None
 
-      
+
 class Pnt(Shape):
 
-    def __init__(self, geo, renderer):
+    def __init__(self, geo, renderer:Renderer, model):
         """
 
         """
         # enums
+        self.__model = model
         self.__form_square = self.__Form(renderer.square_ibo, 'SQUARE')
         self.__form_circle = self.__Form(renderer.circle_ibo, 'CIRCLE')
         self.__form_tirangle = self.__Form(renderer.triangle_ibo, 'TRIANGLE')
@@ -30,7 +31,7 @@ class Pnt(Shape):
         # set vertex attributes
         self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
         # set cid
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
         # set index buffer
         self.__indx_block = None
         self.__frm = None
@@ -42,7 +43,6 @@ class Pnt(Shape):
         self.geo = geo
         self.clr = ClrRGBA(1, 1, 1, 1)
         self.dia = 5
-
 
     # form constants
     @property
@@ -70,7 +70,6 @@ class Pnt(Shape):
             self.__geo = v
         else:
             self.__geo[:] = v
-
 
     @property
     def clr(self):
@@ -121,6 +120,21 @@ class Pnt(Shape):
         self.__indx_block['idx'] = self.__vrtx_block.indices
         self.__frm = v
 
+
+    def delete(self):
+        # release OGL block
+        self.__vrtx_block.release()
+        self.__indx_block.release(reset_val=PRV)
+
+        GlobalColorRegistry().deregister(self)
+        self.__model.remove_shape(self)
+
+        for k, v in self.__dict__.items():
+            setattr(self, k, None)
+
+    def __del__(self):
+        print("shape Pnt gced")
+
     class __Form:
         def __init__(self, ibo, name):
             self.__ibo = ibo
@@ -139,9 +153,10 @@ class Vec(Shape):
 
 
 class Lin(Shape):
-    def __init__(self, geo, renderer):
+    def __init__(self, geo, renderer, model):
+        self.__model = model
         self.__vrtx_block = renderer.vbo.cache.request_block(size=2)
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
         # set index
         self.__indx_block = renderer.ibo.cache.request_block(size=2)
         self.__indx_block['idx'] = self.__vrtx_block.indices
@@ -153,7 +168,6 @@ class Lin(Shape):
         self.geo = geo
         self.clr = ClrRGBA(0, 0, 0, 1)
         self.thk = 1
-
 
     @property
     def geo(self):
@@ -196,16 +210,17 @@ class Lin(Shape):
 
 
 class Plin(Shape):
-    def __init__(self, geo, renderer):
+    def __init__(self, geo, renderer, model):
         """
 
         :param vs: number of vertices coordinate that form polyline
         """
+        self.__model = model
         # this will check input validity
-        self.__vrtx_block = pr.PolylineRenderer().vbo.cache.request_block(size=len(geo))
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
+        self.__vrtx_block = renderer.vbo.cache.request_block(size=len(geo))
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
         # +1 for primitive restart value
-        self.__indx_block = pr.PolylineRenderer().ibo.cache.request_block(size=len(geo)+1)
+        self.__indx_block = renderer.ibo.cache.request_block(size=len(geo) + 1)
         self.__indx_block['idx', :-1] = self.__vrtx_block.indices
         self.__indx_block['idx', -1] = PRV
 
@@ -250,19 +265,16 @@ class Plin(Shape):
         self.__vrtx_block['thk'] = v
         self.__thk = v
 
-    @classmethod
-    def render(cls):
-        pr.PolylineRenderer().render()
-
 
 class Tgl(Shape):
     __is_render_edge = True
 
-    def __init__(self, geo, renderer):
+    def __init__(self, geo, renderer, model):
         """
         """
+        self.__model = model
         self.__vrtx_block = renderer.vbo.cache.request_block(size=3)
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).asfloat()
+        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
 
         # registering at ibo
         self.__indx_block = renderer.ibo.cache.request_block(size=3)
@@ -292,7 +304,6 @@ class Tgl(Shape):
             self.__geo = v
         else:
             self.__geo[:] = v
-
 
     @property
     def clr_fill(self):

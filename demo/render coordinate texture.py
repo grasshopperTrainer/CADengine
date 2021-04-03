@@ -14,9 +14,9 @@ class MyWindow(Window):
                              up=(0, 0, 1))
         # set frame
         ff = self.devices.frames.factory
-        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, lid=0)  # color
-        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, lid=1)  # id
-        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGB.RGB32F, lid=2)  # coordinate
+        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, aid=0)  # color
+        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, aid=1)  # id
+        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGB.RGB32F, aid=2)  # coordinate
         ff.append_depth_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)  # depth
         ff.set_size(*self.glyph.size)
         ff.create()
@@ -63,7 +63,7 @@ class MyWindow(Window):
                     self.origin.render()
                     self.model.render()
 
-                    p = df.pick_pixel(2, self.devices.cursors[0].pos_local.astype(int), size=(1, 1))
+                    p = df.pick_pixels(2, self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
                     print(p)
         df.render_pane_space_depth(tid=0)
 

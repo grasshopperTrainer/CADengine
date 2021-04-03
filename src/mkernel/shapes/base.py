@@ -27,7 +27,6 @@ class Shape(metaclass=abc.ABCMeta):
         """
         return self.__geo
 
-
     def triangulated(self):
         """
         return triangulated form?
@@ -39,3 +38,20 @@ class Shape(metaclass=abc.ABCMeta):
             setattr(self, mname, arr)
         else:
             getattr(self, mname)[:] = arr
+
+    def delete(self):
+        """
+        explicitly release all attributes
+
+        :return:
+        """
+        pass
+
+    def delete_force(self):
+        """
+        explicitly release all attributes
+        and try to remove all references
+
+        :return:
+        """
+        raise NotImplementedError

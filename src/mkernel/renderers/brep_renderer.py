@@ -1,7 +1,7 @@
 import numpy as np
 import ctypes as ct
 
-from .base import _Renderer
+from .base import Renderer
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
 import ckernel.render_context.opengl_context.meta_entities as meta
 from .base import get_shader_fullpath
@@ -9,7 +9,7 @@ from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 
-class BrepRenderer(_Renderer):
+class BrepRenderer(Renderer):
 
     __vrtx_vbo = meta.MetaVrtxBffr(attr_desc=np.dtype([('coord', 'f4', 4), ]), attr_locs=(0,))
     __pnt_vbo = meta.MetaVrtxBffr(attr_desc=np.dtype([('clr', 'f4', 4), ('dia', 'f4')]), attr_locs=(1, 2))

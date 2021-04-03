@@ -1,7 +1,7 @@
 from wkernel import Window
 from mkernel import Model
 from akernel.environmental.ground import Ground
-from akernel.picker import InitPosPicker
+from mkernel.modeler.vicinity_picker import VicinityPicker
 
 
 class MyWindow(Window):
@@ -17,7 +17,7 @@ class MyWindow(Window):
         self.model = Model()
         self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.ground = Ground([.5] * 4)
-        self.picker = InitPosPicker(500)
+        self.picker = VicinityPicker(500)
 
     def draw(self):
         with self.devices.frames[0] as df:
@@ -28,8 +28,7 @@ class MyWindow(Window):
                 self.ground.render(c)
                 self.model.render()
 
-                coord = map(lambda a, b: a / b, self.devices.cursors[0].pos_local, self.glyph.size)
-                k, P = self.picker.pick(c, coord)
+                k, P = self.picker.pick(c, self.devices.cursors[0])
                 if k == 'xy':
                     clr = 0, 0, 1, 0.5
                 elif k == 'yz':

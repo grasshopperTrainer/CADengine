@@ -1,7 +1,8 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import Model, AModeler
 from akernel.environmental.ground import Ground
 import gkernel.color as clr
+import time
 
 
 class MyWindow(Window):
@@ -12,16 +13,11 @@ class MyWindow(Window):
         self.devices.cameras[0].tripod.lookat(eye=(100, 50, 100),
                                               at=(0, 0, 0),
                                               up=(0, 0, 1))
-
-        # create pane and cursor
-        self.devices.panes.appendnew_pane(0.1, 0.1, 0.8, 0.8, parent=self.devices.panes[0])
-        self.devices.cursors.appendnew_cursor(1)
-
         # creeat frame
         ff = self.devices.frames.factory
         ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, aid=0)
-        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGB.RGB, aid=1)
-        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA32F, aid=2)
+        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGB.RGB, aid=1, name='cid')
+        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA32F, aid=2, name='coord')
         ff.append_depth_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
         ff.set_size(500, 880)
         ff.create()
@@ -32,35 +28,46 @@ class MyWindow(Window):
         # ground
         self.ground = Ground(clr.ClrRGBA(0.5, 0.5, 0.5, 0.5))
 
+        self.modeler = AModeler()
         self.model = Model()
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
-        a = 10
-        for x in range(10):
-            for y in range(10):
-                self.model.add_pnt(x * a, y * a, a)
+        self.count = 0
+        self.t = None
+
+        self.__id_picker = self.devices.frames[1].create_pixel_picker(aid=1)
+        self.__coord_picker = self.devices.frames[1].create_pixel_picker(aid=2)
 
     def draw(self):
+        self.count += 1
         with self.devices.frames[0] as f:
             f.clear(0, 0, 0, 0)
             f.clear_depth()
 
             with self.devices.frames[1] as f:
+                self.modeler.listen(self.model,
+                                    self,
+                                    self.devices.mouse,
+                                    self.devices.keyboard,
+                                    self.devices.cameras[0],
+                                    self.devices.cursors[0],
+                                    self.__id_picker)
+
+                # draw ground and model
                 f.clear(0, 0, 0, 0)
                 f.clear_depth()
-                self.model.render()
                 self.ground.render(self.devices.cameras[0])
+                self.model.render()
 
+                # update camera move
                 # extract coordinate texture value
-                # print(self.devices.cursors[1].pos_local, self.devices.cursors[1].pos_global)
-                pos = self.devices.cursors[1].pos_local * self.devices.frames[1].size
-                v = f.pick_pixels(aid=2, pos=pos.astype(int), size=(1, 1))
+                txtr_pos = self.devices.cursors[0].pos_local * self.devices.frames[1].size
+                v = self.__coord_picker.pick(pos=txtr_pos.astype(int), size=(1, 1))
                 coord = clr.ClrRGBA(*v[0][0]).rgb
                 if coord != (0, 0, 0):
                     self.cad_dolly.set_ref_point(*coord)
 
-            with self.devices.panes[1]:
-                f.render_pane_space_depth(tid=0)
+            f.render_pane_space_depth(tid=0)
 
 
 class DebuggerWindow(Window):
@@ -89,6 +96,7 @@ class DebuggerWindow(Window):
                 mf.render_pane_space('d', (0, 1, 0, 1), (-1, 1, -1, 1), 0)
 
 
-mw = MyWindow()
-sw = DebuggerWindow(mw)
-mw.run_all()
+if __name__ == '__main__':
+    mw = MyWindow()
+    sw = DebuggerWindow(mw)
+    mw.run_all()

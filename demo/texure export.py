@@ -17,13 +17,13 @@ if __name__ == '__main__':
             ffactory = self.devices.frames.factory
             ffactory.set_size(w, h)
             ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                          format=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
-                                          lid=0)
+                                          iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
+                                          aid=0)
             ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                          format=ffactory.TXTR.CLR_FRMT.RGB.RGB,
-                                          lid=1)  # color id texture
+                                          iformat=ffactory.TXTR.CLR_FRMT.RGB.RGB,
+                                          aid=1)  # color id texture
             ffactory.append_depth_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                          format=ffactory.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
+                                          iformat=ffactory.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
             ffactory.create()
 
             # create pane

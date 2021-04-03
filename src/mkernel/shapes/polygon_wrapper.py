@@ -21,7 +21,9 @@ class Pgon(Shape):
     Polygon shape
     """
 
-    def __init__(self, geo: gt.Pgon, renderer):
+    def __init__(self, geo: gt.Pgon, renderer, model):
+        self.__model = model
+
         self.__geo = None
         self.__thk = None
         self.__clr_edge = None

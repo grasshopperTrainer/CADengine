@@ -125,6 +125,8 @@ class Mat1(ArrayLikeData):
         """
         if isinstance(self, Vec) and isinstance(other, Number):  # amplify
             return super().__mul__(other)
+        if isinstance(self, Vec) and isinstance(other, Vec):
+            return super().__mul__(other)
         raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} mul unknown')
 
     def __truediv__(self, other):
@@ -135,6 +137,8 @@ class Mat1(ArrayLikeData):
         :return: ! returns new primitive
         """
         if isinstance(self, Vec) and isinstance(other, Number):
+            return super().__truediv__(other)
+        elif isinstance(self, Vec) and isinstance(other, Vec):
             return super().__truediv__(other)
         raise TypeError(f'{self.__class__.__name__}, {other.__class__.__name__} div unknown')
 

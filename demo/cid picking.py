@@ -18,12 +18,13 @@ class MainWindow(Window):
         ffactory = self.devices.frames.factory
         ffactory.set_size(w, h)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      format=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
-                                      lid=0)
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
+                                      aid=0)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      format=ffactory.TXTR.CLR_FRMT.RGB.RGB,
-                                      lid=1)
-        ffactory.set_render_buffer(format=ffactory.RNDR.DEPTH_STENCIL.DEPTH24_STENCIL8)
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGB.RGB,
+                                      aid=1)
+        ffactory.append_render_buffer(iformat=ffactory.RNDR.DEPTH_STENCIL.DEPTH24_STENCIL8,
+                                      aid='ds')
         ffactory.create()
 
         # create pane
@@ -66,11 +67,11 @@ class MainWindow(Window):
 
             with self.devices.frames[1] as rf:
                 # manual pos transformation
-                pos = self.devices.cursors[0].pos_local
+                pos = self.devices.cursors[0].pos_global
                 pos -= self.devices.panes[1].pos
                 pos /= self.devices.panes[1].size
                 # pick color id
-                clr = rf.pick_pixel(tid=1, pos=pos, size=(1, 1))
+                clr = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))
                 clr = ClrRGBA(*clr[0][0]).as_ubyte()[:3]
                 e = GlobalColorRegistry().get_registered(clr)
                 print('POINTING AT', e)

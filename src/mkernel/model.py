@@ -20,16 +20,16 @@ class ModelIterator:
 
 class Model:
     def __init__(self):
-        self._shapes = {}
+        self.__shapes = {}
         self._plane = gt.Pln()
         self.__renderers = {}
 
-    def __add_geo_helper(self, geo, geo_wrapper, renderer_type):
-        if geo_wrapper not in self.__renderers:
-            self.__renderers[geo_wrapper] = renderer_type()
-        renderer = self.__renderers[geo_wrapper]
-        shp = geo_wrapper(geo, renderer)
-        self._shapes.setdefault(geo_wrapper, []).append(shp)
+    def __add_geo_helper(self, geo, shape_type, renderer_type):
+        if shape_type not in self.__renderers:
+            self.__renderers[shape_type] = renderer_type()
+        renderer = self.__renderers[shape_type]
+        shp = shape_type(geo, renderer, self)
+        self.__shapes.setdefault(shape_type, set()).add(shp)
         return shp
 
     def add_geo(self, geo):
@@ -39,19 +39,19 @@ class Model:
         :return:
         """
         if isinstance(geo, gt.Pnt):
-            return self.__add_geo_helper(geo, geo_wrapper=st.Pnt, renderer_type=rend.PointRenderer)
+            return self.__add_geo_helper(geo, shape_type=st.Pnt, renderer_type=rend.PointRenderer)
         elif isinstance(geo, gt.Lin):
-            return self.__add_geo_helper(geo, geo_wrapper=st.Lin, renderer_type=rend.LineRenderer)
+            return self.__add_geo_helper(geo, shape_type=st.Lin, renderer_type=rend.LineRenderer)
         elif isinstance(geo, gt.Tgl):
-            return self.__add_geo_helper(geo, geo_wrapper=st.Tgl, renderer_type=rend.TriangleRenderer)
+            return self.__add_geo_helper(geo, shape_type=st.Tgl, renderer_type=rend.TriangleRenderer)
         elif isinstance(geo, gt.Pgon):
-            return self.__add_geo_helper(geo, geo_wrapper=st.Pgon, renderer_type=rend.PolygonRenderer)
+            return self.__add_geo_helper(geo, shape_type=st.Pgon, renderer_type=rend.PolygonRenderer)
         elif isinstance(geo, gt.Plin):
-            return self.__add_geo_helper(geo, geo_wrapper=st.Plin, renderer_type=rend.PolylineRenderer)
+            return self.__add_geo_helper(geo, shape_type=st.Plin, renderer_type=rend.PolylineRenderer)
         elif isinstance(geo, gt.Brep):
-            return self.__add_geo_helper(geo, geo_wrapper=st.Brep, renderer_type=rend.BrepRenderer)
+            return self.__add_geo_helper(geo, shape_type=st.Brep, renderer_type=rend.BrepRenderer)
         elif isinstance(geo, gt.Pln):
-            return self.__add_geo_helper(geo, geo_wrapper=st.Pln, renderer_type=rend.PlaneRenderer)
+            return self.__add_geo_helper(geo, shape_type=st.Pln, renderer_type=rend.PlaneRenderer)
         else:
             raise NotImplementedError
 
@@ -64,7 +64,7 @@ class Model:
         :param z: Number, coordinate z
         :return: Pnt shape
         """
-        return self.__add_geo_helper(geo=gt.Pnt(x, y, z), geo_wrapper=st.Pnt, renderer_type=rend.PointRenderer)
+        return self.__add_geo_helper(geo=gt.Pnt(x, y, z), shape_type=st.Pnt, renderer_type=rend.PointRenderer)
 
     def add_lin(self, vs, ve) -> st.Lin:
         """
@@ -74,7 +74,7 @@ class Model:
         :param ve: (x, y, z), vertex end
         :return: Lin shape
         """
-        return self.__add_geo_helper(geo=gt.Lin(vs, ve), geo_wrapper=st.Lin, renderer_type=rend.LineRenderer)
+        return self.__add_geo_helper(geo=gt.Lin(vs, ve), shape_type=st.Lin, renderer_type=rend.LineRenderer)
 
     def add_tgl(self, v0, v1, v2) -> st.Tgl:
         """
@@ -85,7 +85,7 @@ class Model:
         :param v2: (x, y, z), vertex 2
         :return:
         """
-        return self.__add_geo_helper(geo=gt.Tgl(v0, v1, v2), geo_wrapper=st.Tgl, renderer_type=rend.TriangleRenderer)
+        return self.__add_geo_helper(geo=gt.Tgl(v0, v1, v2), shape_type=st.Tgl, renderer_type=rend.TriangleRenderer)
 
     def add_plin(self, *vs) -> st.Plin:
         """
@@ -93,7 +93,7 @@ class Model:
         :param vs:
         :return:
         """
-        return self.__add_geo_helper(geo=gt.Plin(*vs), geo_wrapper=st.Plin, renderer_type=rend.PolylineRenderer)
+        return self.__add_geo_helper(geo=gt.Plin(*vs), shape_type=st.Plin, renderer_type=rend.PolylineRenderer)
 
     def add_pgon(self, *vs) -> st.Pgon:
         """
@@ -102,14 +102,14 @@ class Model:
         :param vs: vertices
         :return:
         """
-        return self.__add_geo_helper(geo=gt.Pgon(*vs), geo_wrapper=st.Pgon, renderer_type=rend.PolygonRenderer)
+        return self.__add_geo_helper(geo=gt.Pgon(*vs), shape_type=st.Pgon, renderer_type=rend.PolygonRenderer)
 
     def add_brep(self):
         """
 
         :return:
         """
-        return self.__add_geo_helper(geo=gt.Brep(), geo_wrapper=st.Brep, renderer_type=rend.BrepRenderer)
+        return self.__add_geo_helper(geo=gt.Brep(), shape_type=st.Brep, renderer_type=rend.BrepRenderer)
 
     def add_pln(self, o, x, y, z):
         """
@@ -121,14 +121,25 @@ class Model:
         :param z: (x, y, z), z axis
         :return:
         """
-        return self.__add_geo_helper(geo=gt.Pln(o, x, y, z), geo_wrapper=st.Pln, renderer_type=rend.PlaneRenderer)
+        return self.__add_geo_helper(geo=gt.Pln(o, x, y, z), shape_type=st.Pln, renderer_type=rend.PlaneRenderer)
+
+    def remove_shape(self, shape):
+        """
+        remove geometry from the model
+
+        Method does nothing if geometry is not in the model.
+        :param shape:
+        :return:
+        """
+        if shape in self.__shapes.get(shape.__class__, {}):
+            self.__shapes[shape.__class__].remove(shape)
 
     def iterator(self):
         """
         iter all shapes in model
         :return:
         """
-        for shape in self._shapes:
+        for shape in self.__shapes:
             if isinstance(shape, Model):  # if its a sub model iter it
                 for child_shape in shape.iterator():
                     yield child_shape

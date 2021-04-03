@@ -65,6 +65,7 @@ class Window(DrawInterface, GlyphInterface):
 
             gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
 
+            glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
             # glfw.swap_interval(1)
 
         with self.__context.glfw as glfw_window:

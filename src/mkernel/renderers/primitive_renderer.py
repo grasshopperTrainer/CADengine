@@ -7,7 +7,7 @@ from ckernel.render_context.opengl_context.meta_entities import *
 from ckernel.constants import RENDER_DEFAULT_FLOAT as RDF
 
 from global_tools.singleton import Singleton
-from .base import _Renderer, get_shader_fullpath
+from .base import Renderer, get_shader_fullpath
 
 """
 Three renderers of dimensional primitives.
@@ -24,7 +24,7 @@ renderer holds prgrm and global uniform cache
 """
 
 
-class PointRenderer(_Renderer):
+class PointRenderer(Renderer):
     """
     this is not an expandable, simple functionality wrapper
 
@@ -156,7 +156,7 @@ class PointRenderer(_Renderer):
                                   ctypes.c_void_p(0))
 
 
-class LineRenderer(_Renderer):
+class LineRenderer(Renderer):
     """
     prgrm parameter layout:
 
@@ -212,7 +212,7 @@ class LineRenderer(_Renderer):
 
 
 @Singleton
-class PolylineRenderer(_Renderer):
+class PolylineRenderer(Renderer):
     __sharp_prgrm = meta.MetaPrgrm(
         vrtx_path=get_shader_fullpath('shaders/plinSharp_vrtx_shdr.glsl'),
         geom_path=get_shader_fullpath('shaders/plinSharp_geom_shdr.glsl'),
@@ -258,7 +258,7 @@ class PolylineRenderer(_Renderer):
                                   ctypes.c_void_p(0))
 
 
-class TriangleRenderer(_Renderer):
+class TriangleRenderer(Renderer):
     """
     full spec schema of triangle object.
 
