@@ -1,12 +1,11 @@
 from math import inf
 from numbers import Number
-from warnings import warn
+from collections import deque
 import bisect
 
 import numpy as np
 from global_tools.red_black_tree import RedBlackTree
 from global_tools.enum import enum
-from global_tools.singleton import Singleton
 
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
@@ -14,6 +13,7 @@ from gkernel.color import Clr, ClrRGBA
 import gkernel.dtype.geometric as gt
 from gkernel.constants import ATOL
 
+from mkernel.global_id_provider import GIDP
 from .base import Shape
 
 
@@ -22,16 +22,15 @@ class Pgon(Shape):
     Polygon shape
     """
 
-    def __init__(self, geo: gt.Pgon, renderer):
-        self.__geo = None
-        self.__thk = None
-        self.__clr_edge = None
-        self.__clr_fill = None
-
+    def __init__(self, geo: gt.Pgon, renderer, model):
         vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(geo)
-        self.__renderer = renderer
+
+        self.__model = model
+
         self.__vrtx_block = renderer.vbo.cache.request_block(size=len(vertices))
         self.__vrtx_block['vtx'] = vertices
+        self.__vrtx_block['cid'] = GIDP().register_entity(self).as_rgb_float()
+
         # add PRV at the end to draw separately
         offset = self.__vrtx_block.indices[0]  # min index
         self.__fill_indx_block = renderer.fill_ibo.cache.request_block(size=len(fill_indxs) + 1)
@@ -41,6 +40,11 @@ class Pgon(Shape):
         self.__edge_indx_block = renderer.edge_ibo.cache.request_block(size=len(edge_indxs) + 1)
         self.__edge_indx_block['idx', :-1] = [offset + i for i in edge_indxs]
         self.__edge_indx_block['idx', -1] = PRV
+
+        self.__geo = None
+        self.__thk = None
+        self.__clr_edge = None
+        self.__clr_fill = None
 
         self.__geo = geo
         self.thk = 0.5
@@ -119,6 +123,17 @@ class Pgon(Shape):
         else:
             self.__clr_fill = v
 
+    def delete(self):
+        self.__vrtx_block.release()
+        self.__edge_indx_block.release()
+        self.__fill_indx_block.release()
+
+        GIDP.deregister(self)
+        self.__model.remove(self)
+
+        for k, v in self.__dict__.items():
+            setattr(self, k, None)
+
 
 class CAT(enum):
     MAX = 'MAX'
@@ -168,7 +183,6 @@ class _Trapezoidator:
         :param arr:
         :return:
         """
-        edge_vrtx = []
         arr = arr[:, :-1]
 
         def __vertex_comparator(obj, sbj):
@@ -185,60 +199,47 @@ class _Trapezoidator:
                 return 1
 
         rb = RedBlackTree(comparator=__vertex_comparator)  # sort by y,x
-        # prepare for the first
-        prev_v = gt.Pnt(*arr[:3, -1])  # not to consider last
-        this_v = gt.Pnt(*arr[:3, 0])
-
-        prev_e = self.__Edge(this_v, prev_v)
-        # to maintain membership mytest through hash?
-        last_v = prev_v
-        first_v = this_v
-        last_e = prev_e
-
-        # find far x for further research
-        far_x = -inf
-        num_v = arr.shape[1]
-        for i in range(num_v):  # not to consider last
-            if i == num_v - 2:
-                this_v = gt.Pnt(*arr[:3, i])
-                next_v = last_v
-                next_e = self.__Edge(this_v, next_v)
-            elif i == num_v - 1:
-                this_v = last_v
-                next_v = first_v
-                next_e = last_e
-            else:
-                this_v = gt.Pnt(*arr[:3, i])
-                next_v = gt.Pnt(*arr[:3, (i + 1) % num_v])
-                next_e = self.__Edge(this_v, next_v)
-
-            # 1. ignoring horizontal
-            if gt.Vec.cross(prev_e.geo.as_vec(), next_e.geo.as_vec()) == 0:
-                if np.isclose(prev_e.low.y, next_e.low.y, atol=ATOL):   # horizontal
-                    if prev_e.low.x < next_e.low.x: # check order
-                        prev_e.set_high(next_e.high)
-                    else:
-                        prev_e.set_low(next_e.low)
-                elif prev_e.low.y < next_e.low.y:
-                    prev_e.set_high(next_e.high)
-                else:
-                    prev_e.set_low(next_e.low)
-                prev_v, this_v, prev_e = prev_v, next_v, prev_e
+        far_x = -inf  # find far x for further research
+        vertices = deque([gt.Pnt(*coord) for coord in arr[:3].T])
+        edges, edge_vrtx = deque(), deque()
+        while vertices:
+            if not edges:
+                a, b = vertices.popleft(), vertices[0]
+                edges.append(self.__Edge(a, b))
+                edge_vrtx.append(a)
                 continue
 
-            # 2. update far x, +100 not to mytest with overlapping vertex
-            if far_x < this_v.x + 100:
-                far_x = this_v.x + 100
+            this_vrtx = vertices.popleft()
+            vrtx_next = vertices[0] if vertices else edge_vrtx[0]
+            edge_next = self.__Edge(this_vrtx, vrtx_next)
 
-            # 3. record edge vertex
-            edge_vrtx.append(this_v)
+            # 1. ignore horizontal
+            if gt.Vec.cross(edges[-1].geo.as_vec(), edge_next.geo.as_vec()) == 0:
+                # determine which vertex should become high
+                low, _, high = sorted((edges[-1].high, edges[-1].low, vrtx_next), key=lambda v: v.yx)
+                edges[-1].low = low
+                edges[-1].high = high
+            else:
+                edges.append(edge_next)
+                edge_vrtx.append(this_vrtx)  # 3. record edge vertex
+                far_x = max(far_x, this_vrtx.x + 100)  # 2. update far x
 
-            # 4. record trap vertex
-            vrtx = self.__Vrtx(this_v)
+        # check last horizontal
+        if gt.Vec.cross(edges[-1].geo.as_vec(), edges[0].geo.as_vec()) == 0:
+            # determine which vertex should become high
+            low, _, __, high = sorted((edges[-1].high, edges[-1].low, edges[0].high, edges[0].low), key=lambda v: v.yx)
+            edges[0].low = low
+            edges[0].high = high
+            edges.pop()
+            edge_vrtx.popleft()
+            edge_vrtx.appendleft(edge_vrtx.pop())
+
+        # 4. record trap vertex
+        for i, v in enumerate(edge_vrtx):
+            vrtx = self.__Vrtx(v)
             rb.insert(vrtx)
-            vrtx.determine_cat_sweep(prev_v, this_v, next_v, prev_e, next_e)
-            # update for next vertex
-            prev_v, this_v, prev_e = this_v, next_v, next_e
+            pi, ni = i - 1, (i + 1) % len(edge_vrtx)
+            vrtx.determine_cat_sweep(edge_vrtx[pi], v, edge_vrtx[ni], edges[pi], edges[i])
 
         return rb, far_x, edge_vrtx
 
@@ -260,24 +261,6 @@ class _Trapezoidator:
                     return 1
                 else:
                     return -1
-                # if np.isclose(obj.low.x, obj.low.x, atol=ATOL):
-                #     # for v shape, need to determine which is left
-                #     # by gradiant
-                #     if np.isclose(obj.gradient, sbj.gradient, atol=ATOL):
-                #         if np.isclose(obj.high.y, sbj.high.y, atol=ATOL):  # exactly same
-                #             return 0
-                #         elif obj.high.y < sbj.high.y:
-                #             return -1
-                #         else:
-                #             return 1
-                #     elif obj.gradient < sbj.gradient:
-                #         return -1
-                #     else:
-                #         return 1
-                # elif obj.low.x < sbj.low.x:
-                #     return -1
-                # else:  # go right includes equal
-                #     return 1
             elif is_same_side:  # else search right, +1
                 return 1
             else:  # if side differs search left, -1
@@ -424,7 +407,6 @@ class _Trapezoidator:
             # find sweep direction
             xvec, yvec = next_v - this_v, prev_v - this_v
             norm = gt.Vec.dot(gt.ZVec(), gt.Vec.cross(xvec, yvec))
-
             if self.__category == CAT.MIN:
                 if 0 < norm:
                     self.__sweep = SWEEP.NONE
@@ -472,7 +454,7 @@ class _Trapezoidator:
         def __append_ending_edge(self, edge):
             if not self.__ending_edges:
                 self.__ending_edges.append(edge)
-            else:   # maintain order
+            else:  # maintain order
                 e = self.__ending_edges[0]
                 far_x = max(e.low.x, e.high.x) + 100
                 far_pnt = gt.Pnt(far_x, e.low.y, 0)
@@ -504,7 +486,6 @@ class _Trapezoidator:
         @property
         def ending_edges(self):
             return self.__ending_edges
-
 
     class __Edge:
         """
@@ -550,9 +531,17 @@ class _Trapezoidator:
         def low(self):
             return self.__low
 
+        @low.setter
+        def low(self, v):
+            self.__low = v
+
         @property
         def high(self):
             return self.__high
+
+        @high.setter
+        def high(self, v):
+            self.__high = v
 
         @property
         def is_zero(self):

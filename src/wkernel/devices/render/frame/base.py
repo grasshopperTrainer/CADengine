@@ -18,10 +18,11 @@ from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
 from global_tools.lazy import lazyProp
 from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
 from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
+from .FramePixelPicker import FramePixelPicker
 
 
 class FrameRenderer:
-    # program for rendering quad
+    # program for drawing quad
     __THIS_PATH = os.path.dirname(__file__)
     __quad_prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__THIS_PATH, 'quad_vrtx_shdr.glsl'),
                                   frgm_path=os.path.join(__THIS_PATH, 'quad_frgm_shdr.glsl'))
@@ -116,8 +117,8 @@ class Frame(RenderDevice):
     def __init__(self, manager, frame_bffr, width, height):
         super().__init__(manager)
         self.__frame_bffr = frame_bffr
-        self.__size = width, height
-        # for rendering
+        self.__size = gt.Vec(width, height, 0)
+        # for drawing
         self.__renderer = FrameRenderer()
 
     def __enter__(self):
@@ -214,58 +215,55 @@ class Frame(RenderDevice):
         texture = self.__frame_bffr.get_attachment(aid)
         self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
 
-    def pick_texture(self, tid, pos, parameterized) -> clr.Clr:
+    def pick_pixels(self, aid, pos, size) -> clr.Clr:
         """
-        pick texture color of given attachment id, position
+        pick texture pixel of a given attachment id, position
 
-        :param tid: int, color attachment id
-        :param pos: (Number, Number), pixel coordinate
-        :param parameterized: bool, if given pixel coordinate is of parameterized(0 ~ 1.0)
+        :param aid: int, color attachment id
+        :param pos: (x, y), pixel coordinate
+                    int   - absolute texture coordinate
+                    float - parameterized
+        :param size: (width, height) picking area
+                    int   - absolute pixel area
+                    float - parameterized relative to texture size
         :return:
         """
-        texture = self.frame_bffr.get_attachment(tid)
+        # parse pos expression
+        texture = self.frame_bffr.get_attachment(aid)
         if isinstance(pos, gt.Vec):
             pos = pos.xy
-        if parameterized:
-            x, y = [int(a * b) for a, b in zip(pos, texture.size)]
-        else:
-            x, y = pos
+        x, y = [int(v * b) if isinstance(v, float) else v for v, b in zip(pos, texture.size)]
 
-        if isinstance(tid, int):
-            src = eval(f"gl.GL_COLOR_ATTACHMENT{tid}")
-        elif tid == 'd':
+        # parse size expression
+        if isinstance(pos, gt.Vec):
+            size = size.xy
+        w, h = [int(v * b) if isinstance(v, float) else v for v, b in zip(size, texture.size)]
+
+        # get source
+        if isinstance(aid, int):
+            src = eval(f"gl.GL_COLOR_ATTACHMENT{aid}")
+        elif aid == 'd':
             src = eval(gl.GL_DEPTH_ATTACHMENT)
-        elif tid == 'ds':
+        elif aid == 'ds':
             src = eval(gl.GL_DEPTH_STENCIL_ATTACHMENT)
         else:
             raise
 
-        gl.glReadBuffer(src)
-        # b = gl.glReadPixelsf(x, y, 1, 1, texture.iformat)
-        b = gl.glReadPixels(x, y, 1, 1, gl.GL_RGBA, gl.GL_FLOAT)
-        # b = gl.glReadPixelsd(x, y, 1, 1, gl.GL_RGBA)
-        if texture.iformat == gl.GL_RGB:
-            return clr.ClrRGB(*b[0][0])
-        elif texture.iformat in DTF.COLOR.RGBA:
-            if texture.iformat in (DTF.COLOR.RGBA.RGBA32F, DTF.COLOR.RGBA.RGBA16F):
-                return clr.ClrRGBA.from_raw_float(*b[0][0])
-            else:
-                return clr.ClrRGBA(*b[0][0])
+        # get format
+        if DTF.COLOR.RG.has_member(texture.iformat):
+            frmt = gl.GL_RED
+        elif DTF.COLOR.RG.has_member(texture.iformat):
+            frmt = gl.GL_RG
+        elif DTF.COLOR.RGB.has_member(texture.iformat):
+            frmt = gl.GL_RGB
+        elif DTF.COLOR.RGBA.has_member(texture.iformat):
+            frmt = gl.GL_RGBA
         else:
-            return b
             raise NotImplementedError
 
-    def pick_texture_area(self, aid, xdomain, ydomain, parameterized):
-        """
-        pick value of given texture area
-
-        :param aid:
-        :param xdomain:
-        :param ydomain:
-        :param parameterized:
-        :return:
-        """
-        raise NotImplementedError
+        gl.glReadBuffer(src)
+        # is returning raw array okay?
+        return gl.glReadPixels(x, y, w, h, frmt, gl.GL_FLOAT)
 
     def clear(self, r=0, g=0, b=0, a=1):
         """
@@ -314,6 +312,9 @@ class Frame(RenderDevice):
         :return:
         """
         raise NotImplementedError
+    
+    def create_pixel_picker(self, aid) -> FramePixelPicker:
+        return FramePixelPicker(self, aid)
 
 
 class _Frame(Frame):
@@ -356,7 +357,6 @@ class FrameManager(RenderDeviceManager):
         return FrameFactory(self)
 
 
-
 class FrameFactory:
     @enum
     class TXTR:
@@ -389,41 +389,39 @@ class FrameFactory:
             raise TypeError
         self.__size = width, height
 
-    def append_color_texture(self, target, format, loc):
+    def append_color_texture(self, target, iformat, aid, name=None):
         """
         append texture for color attachment
 
-        ! texture will be treated with attachment index of given order
         :param target: target e.g. TEXTURE.TARGET.TWO_D
-        :param format: internal format
-        :param loc: int, color attachment id
+        :param iformat: internal format
+        :param aid: int, color attachment id
         :return:
         """
         # guess texture id if not given
-        if not self.TXTR.CLR_FRMT.has_member(format):
+        if not self.TXTR.CLR_FRMT.has_member(iformat):
             raise TypeError
-        if not isinstance(loc, int):
+        if not isinstance(aid, int):
             raise TypeError
 
         # check uniqueness
-        if loc in self.__tids:
+        if aid in self.__tids:
             raise ValueError
 
         # append
-        self.__textures_prop.append((target, format, loc))
-        self.__tids.add(loc)
+        self.__textures_prop.append((target, iformat, aid, name))
+        self.__tids.add(aid)
         return self
 
-    def append_depth_texture(self, target, format):
+    def append_depth_texture(self, target, iformat, name=None):
         """
         append texture for depth
 
-        ! texture will be treated with attachment index of given order
         :param target: target e.g. TEXTURE.TARGET.TWO_D
-        :param format: internal format
+        :param iformat: internal format
         :return:
         """
-        if format not in DTF.NONECOLOR.DEPTH:
+        if iformat not in DTF.NONECOLOR.DEPTH:
             raise TypeError
 
         # check uniqueness
@@ -432,21 +430,22 @@ class FrameFactory:
             raise ValueError
 
         # append
-        self.__textures_prop.append((target, format, tid))
+        self.__textures_prop.append((target, iformat, tid, name))
         self.__tids.add(tid)
         return self
 
-    def append_depthstencil_texture(self, target, format):
+    def append_depth_stencil_texture(self, target, iformat, name):
         raise NotImplementedError
 
-    def set_render_buffer(self, format, attachment_loc=None):
+    def append_render_buffer(self, iformat, aid, name=None):
         """
         add render buffer
 
         :return:
         """
-        # only one render buffer possible?
-        self.__render_buffer_prop.append((format.v, attachment_loc))
+        if not (isinstance(aid, int) or aid in ('d', 'ds')):
+            raise ValueError("location id should be int for color att. or one of 'd', 'ds' for depth")
+        self.__render_buffer_prop.append((iformat, aid, name))
 
     def create(self) -> Frame:
         """
@@ -460,25 +459,28 @@ class FrameFactory:
         if not self.__size:
             raise ValueError('texture size not set')
 
-        w, h = self.__size
-        locs = []
+        # textures
+        width, height = self.__size
+        aids = []
         textures = []
-        for t, f, i in self.__textures_prop:
-            if i in locs:
+        for target, iformat, aid, name in self.__textures_prop:
+            if aid in aids:
                 raise ValueError('color attachment location has to be unique')
-            locs.append(i)
-            textures.append(meta.MetaTexture(target=t, iformat=f, width=w, height=h))
+            aids.append(aid)
+            textures.append(meta.MetaTexture(target, iformat, width, height))
 
+        # render buffers
+        # ! currently only one render buffer supported
         render_bffrs = []
-        for f, i in self.__render_buffer_prop:
-            if i in locs:
+        for iformat, aid, name in self.__render_buffer_prop:
+            if aid in aids:
                 raise ValueError('color attachment location has to be unique')
-            locs.append(i)
-            render_bffrs.append(meta.MetaRenderBffr(iformat=f, width=w, height=h))
+            aids.append(aid)
+            render_bffrs.append(meta.MetaRenderBffr(iformat, width, height, name))
 
-        frame_bffr = meta.MetaFrameBffr(*textures, *render_bffrs, tids=locs)
+        frame_bffr = meta.MetaFrameBffr(*textures, *render_bffrs, aids=aids)
 
         manager = self.__manager()
-        frame = Frame(manager, frame_bffr, w, h)
+        frame = Frame(manager, frame_bffr, width, height)
         manager._appendnew_device(frame)
         return frame

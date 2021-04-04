@@ -1,3 +1,7 @@
+from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
+from mkernel.global_id_provider import GIDP
+
+
 """
 ! shpae is a renderable thing.
 ! not all geometry is natively shape.
@@ -27,7 +31,6 @@ class Shape(metaclass=abc.ABCMeta):
         """
         return self.__geo
 
-
     def triangulated(self):
         """
         return triangulated form?
@@ -39,3 +42,21 @@ class Shape(metaclass=abc.ABCMeta):
             setattr(self, mname, arr)
         else:
             getattr(self, mname)[:] = arr
+
+    @abc.abstractmethod
+    def delete(self):
+        """
+        explicitly release all attributes
+
+        :return:
+        """
+        pass
+
+    def delete_force(self):
+        """
+        explicitly release all attributes
+        and try to remove all references
+
+        :return:
+        """
+        raise NotImplementedError

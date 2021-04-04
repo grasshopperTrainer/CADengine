@@ -1,7 +1,7 @@
 #version 450 core
 
 layout (triangles) in;
-layout (triangle_strip, max_vertices = 8) out;
+layout (triangle_strip, max_vertices = 11) out;
 
 layout (location = 0) uniform mat4 PM;
 layout (location = 1) uniform mat4 VM;
@@ -10,10 +10,11 @@ layout (location = 2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     float edgeThk;
     vec4 edgeClr;
+    vec4 fillClr;
     vec3 cid;
 } vs_in[];
 
-out vec4 edgeClr;
+out vec4 fclr;
 out vec3 fcid;
 out vec4 fcoord;
 
@@ -35,8 +36,8 @@ vec3 pnt_offset(vec3 p, vec3 v0, vec3 v1, float offset) {
     return p + bi*amp;
 }
 
-void emit(vec3 p, float zOff) {
-    vec4 pos = vec4(p, 1) + vec4(0, 0, zOff, 0);
+void emit(vec3 p) {
+    vec4 pos = vec4(p, 1);
     fcoord = pos;
     gl_Position = TM * pos;
     EmitVertex();
@@ -63,14 +64,21 @@ void main() {
     vec3 outer2 = pnt_offset(p2, -v02, -v12, -thk);
 
     fcid = vs_in[0].cid;
-    edgeClr = vs_in[0].edgeClr;
-    emit(inner0, zOff);
-    emit(outer0, zOff);
-    emit(inner1, zOff);
-    emit(outer1, zOff);
-    emit(inner2, zOff);
-    emit(outer2, zOff);
-    emit(inner0, zOff);
-    emit(outer0, zOff);
+    fclr = vs_in[0].edgeClr;
+    // edges
+    emit(inner0);
+    emit(outer0);
+    emit(inner1);
+    emit(outer1);
+    emit(inner2);
+    emit(outer2);
+    emit(inner0);
+    emit(outer0);
+    EndPrimitive();
+    // face
+    fclr = vs_in[0].fillClr;
+    emit(inner0);
+    emit(inner1);
+    emit(inner2);
     EndPrimitive();
 }

@@ -7,30 +7,40 @@ from ..constant_enum import TextureTargets as TT
 
 class MetaFrameBffr(OGLMetaEntity):
 
-    def __init__(self, *attachments, tids):
+    def __init__(self, *attachments, aids):
         """
 
         :param attachments: MetaTexture or MetaRenderBffr
-        :param tids: int or str, semantic texture ids
+        :param aids: int or str, location id, semantic texture ids
                     integer - color attachment
                     'd','ds' - depth and depth-stencil
         """
-        for a in attachments:
-            if not isinstance(a, (MetaTexture, MetaRenderBffr)):
-                raise TypeError
-        if len(attachments) != len(tids):
+        # check attachment and location pair
+        if len(attachments) != len(aids):
             raise Exception('all locations for attachment has to be given, for that does not have location set `None`')
-        if len(set(tids)) != len(tids):
-            raise ValueError('texture ids has to be unique')
-        for tid in tids:
-            if isinstance(tid, str):
-                if tid not in ('d', 'ds'):
-                    raise ValueError
-            elif not isinstance(tid, int):
-                raise TypeError
 
-        self.__attachments = {t: a for a, t in zip(attachments, tids)}
-        self.__color_attachment_locs = [eval(f"gl.GL_COLOR_ATTACHMENT{i}") for i in tids if isinstance(i, int)]
+        checked = {}
+        # check aid syntax
+        for att, aid in zip(attachments, aids):
+            if isinstance(att, MetaTexture):
+                if not (isinstance(aid, int) or aid in ('d', 'ds')):
+                    raise TypeError('incorrect location id')
+                if aid in checked:
+                    raise ValueError('aid has to be unique')
+            elif isinstance(att, MetaRenderBffr):
+                # if i is not None:
+                #     raise TypeError('render buffer should have None aid')
+                if aid in checked:
+                    raise ValueError('aid has to be unique')
+            else:
+                raise TypeError('Attachment should pass isinstance(a, (MetaTexture, MetaRenderBffr))')
+            # register for getitem
+            checked[aid] = att
+            if att.name is not None:
+                checked[att.name] = att.name
+
+        self.__attachments = checked
+        self.__color_attachment_names = [eval(f"gl.GL_COLOR_ATTACHMENT{i}") for i in aids if isinstance(i, int)]
 
     def __str__(self):
         return f"<MetaFrameBffr >"
@@ -45,8 +55,8 @@ class MetaFrameBffr(OGLMetaEntity):
         return self.__textures[0].size
 
     @property
-    def textures(self):
-        pass
+    def textures(self) -> MetaTexture:
+        return self.__attachments.copy()
 
     def _create_entity(self):
         if not self.__attachments:
@@ -55,34 +65,22 @@ class MetaFrameBffr(OGLMetaEntity):
         fb = gl.glGenFramebuffers(1, gl.GL_FRAMEBUFFER)
         fb.set_target(gl.GL_FRAMEBUFFER)
         with fb:
-            for tid, att in self.__attachments.items():
+            for aid, att in self.__attachments.items():
+                # textures then render buffers
                 if isinstance(att, MetaTexture):
-                    # deal with textures
                     if att.target in TT:
-                        # find attachment
-                        if DTF.COLOR.has_member(att.iformat):
-                            attachment = eval(f'gl.GL_COLOR_ATTACHMENT{tid}')
-                        else:
-                            attachment = self.__iformat_to_attachment(att.iformat)
-
                         gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER,  # target
-                                                  attachment,  # attachment
-                                                  att.target,  # textarget
+                                                  self.__iformat_to_attachment(att.iformat, aid),  # attachment
+                                                  att.target,  # target
                                                   att.get_concrete(),  # texture
                                                   0)  # level
                     else:
                         raise NotImplementedError
                 else:
-                    if gl.GL_COLOR_ATTACHMENT0 <= att.iformat <= gl.GL_COLOR_ATTACHMENT31:
-                        if tid is None:
-                            raise ValueError('color attachment location for frame buffer not given')
-                    else:
-                        if tid is not None:
-                            raise ValueError('given location cant be resolved')
-                        gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER,  # target
-                                                     self.__iformat_to_attachment(att.iformat),  # attachment
-                                                     gl.GL_RENDERBUFFER,  # renderbuffertarget
-                                                     att.get_concrete())  # renderbuffer
+                    gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER,  # target
+                                                 self.__iformat_to_attachment(att.iformat, aid),  # attachment
+                                                 gl.GL_RENDERBUFFER,  # renderbuffertarget
+                                                 att.get_concrete())  # renderbuffer
             # check texture binding
             if gl.glCheckFramebufferStatus(gl.GL_FRAMEBUFFER) != gl.GL_FRAMEBUFFER_COMPLETE:
                 raise Exception('FrameBuffer linking error')
@@ -90,25 +88,34 @@ class MetaFrameBffr(OGLMetaEntity):
         return fb
 
     @staticmethod
-    def __iformat_to_attachment(iformat):
-        if iformat in DTF.NONECOLOR.DEPTH:
+    def __iformat_to_attachment(iformat, aid):
+        """
+        pick attachment
+
+        :param iformat:
+        :param aid:
+        :return:
+        """
+        if DTF.COLOR.has_member(iformat):
+            return eval(f'gl.GL_COLOR_ATTACHMENT{aid}')
+        elif iformat in DTF.NONECOLOR.DEPTH:
             return gl.GL_DEPTH_ATTACHMENT
         elif iformat in DTF.NONECOLOR.DEPTH_STENCIL:
             return gl.GL_DEPTH_STENCIL_ATTACHMENT
         else:
             raise TypeError
 
-    def get_attachment(self, tid) -> MetaTexture:
+    def get_attachment(self, aid) -> MetaTexture:
         """
         return texture of given color attachment
 
-        :param tid: texture id, e.g.
+        :param aid: location id, e.g.
                     0, 1 - integers for color attachment
                     'd' - depth attachment
                     'ds' - depth stencil attachment
         :return:
         """
-        return self.__attachments[tid]
+        return self.__attachments[aid]
 
     def bind(self):
         """
@@ -117,18 +124,23 @@ class MetaFrameBffr(OGLMetaEntity):
         :return:
         """
         super().bind()
-        gl.glDrawBuffers(len(self.__color_attachment_locs), self.__color_attachment_locs)
+        gl.glDrawBuffers(len(self.__color_attachment_names), self.__color_attachment_names)
         # gl.glColorMaski(1, True, True, True, False)
 
 
 class MetaRenderBffr(OGLMetaEntity):
-    def __init__(self, iformat, width, height):
+    def __init__(self, iformat, width, height, name):
         self.__iformat = iformat
         self.__size = width, height
+        self.__name = name
 
     @property
     def iformat(self):
         return self.__iformat
+
+    @property
+    def name(self):
+        return self.__name
 
     def _create_entity(self):
         bffr = gl.glGenRenderbuffers(1)

@@ -4,6 +4,107 @@ import heapq
 
 from .translators import npdtype_to_gldtype
 from global_tools.skip_list import SkipList
+from itertools import repeat
+
+
+class _Block:
+    """
+    redirector to buffer array
+
+    Syncs value update between sliced array and master array
+    """
+
+    def __init__(self, array_container, indices):
+        self.__cache = array_container
+        self.__indices = list(indices)
+
+    def __getitem__(self, item):
+        """
+        slice is used to update value of the array
+
+        Updated value always has to be push into container's array.
+        :param item:
+        :return:
+        """
+        return self.__cache.array[item][self.__indices]
+
+    def __setitem__(self, key, value):
+        """
+        ex) block['vtx'] = 10, 10, 10, 1
+
+        :param key:
+        :param value:
+        :return:
+        """
+        # for 1D setitem
+        if not isinstance(key, tuple):
+            self.__cache.array[key][self.__indices] = value
+        else:
+            self.__cache.array[key[0]][self.__indices[key[1]]] = value
+
+    def __len__(self):
+        return len(self.__indices)
+
+    def __str__(self):
+        return f"<Block {self.__indices}]>"
+
+    @property
+    def indices(self):
+        """
+        :return: tuple of array indices
+        """
+        return tuple(self.__indices)
+
+    #
+    # @property
+    # def size(self):
+    #     return len(self.__indices)
+
+    @property
+    def high_indx(self):
+        """
+        biggest index of blocks' indices
+
+        :return:
+        """
+        return self.__indices[-1]
+
+    @property
+    def arr(self):
+        """
+        debug access
+        :return:
+        """
+        return self.__cache.array
+
+    def release(self, reset_val=None):
+        """
+        end of usage, release memory
+
+        :param reset_val: value to fill released block with
+        :return:
+        """
+        self.__cache._release_block(self, reset_val)
+        # ! resetting has to be below
+        self.__cache = None
+        self.__indices = None
+
+    def release_refill(self, reset_val=None):
+        """
+        release and refill consecutively as a set op operation
+
+        ! This doesn't guarantee that released vertex will be filled.
+        It is guaranteed that foremost will be filled using lastest Block
+
+        :param reset_val: value to fill into released vertex by releasing and refilling
+        :return:
+        """
+        self.__cache._release_block(self, reset_val)
+        mapping = self.__cache.refill_foremost(reset_val)
+        self.__cache = None
+        self.__indices = None
+        return mapping
+
 
 class ArrayContainer:
     """
@@ -31,16 +132,21 @@ class BffrCache(ArrayContainer):
 
     # initial size of array for placeholder
 
-    def __init__(self, dtype, locs, size=1):
+    def __init__(self, dtype, locs, size=1, def_val=None):
         # extra location data
         if not isinstance(locs, (list, tuple)):
             raise TypeError
         if len(locs) != len(dtype.fields):
             raise ValueError('each field has to have location values')
         self.__locs = {n: l for n, l in zip(dtype.names, locs)}
+        self.__def_val = def_val
+
         self.__array = np.ndarray(size, dtype=dtype)
+        if self.__def_val:
+            self.__array[:] = [self.__def_val]*len(self.__array)
+
         # for first fit allocation free space record,
-        self.__block_pool = [(0, len(self.__array))]    # (start, stop) min heap
+        self.__block_pool = [(0, len(self.__array))]  # (start, stop) min heap
         self.__block_inuse = SkipList(key_provider=lambda x: x.indices[-1])
         self.__num_vertex_inuse = 0
         self.__highest_indx = -1
@@ -73,7 +179,11 @@ class BffrCache(ArrayContainer):
         old_len = len(self.__array)
         new_len = old_len * 2
         new_arr = np.ndarray(shape=new_len, dtype=self.__array.dtype)
+
         new_arr[:old_len] = self.__array
+        if self.__def_val:
+            new_arr[old_len:] = [self.__def_val] * old_len
+
         self.__block_pool.append((old_len, new_len))
         self.__array = new_arr
 
@@ -97,12 +207,12 @@ class BffrCache(ArrayContainer):
         """
         return self.__highest_indx + 1
 
-    def request_block(self, size):
+    def request_block(self, size) -> _Block:
         """
         get subarray not in use
 
         ! returned block is guaranteed to fill in buffer holes from the front
-        :return: __Block, consecutive vacant vertices from array of given size
+        :return: _Block, consecutive vacant vertices from array of given size
         """
         if size == 0:
             raise ValueError
@@ -122,8 +232,8 @@ class BffrCache(ArrayContainer):
                 self.__block_pool[0] = (s + size, e)  # simply replace
             size -= vacant_size
 
-        block = self.__Block(self, indices)
-        self.__block_inuse.push(block) # pushing into skip list
+        block = _Block(self, indices)
+        self.__block_inuse.push(block)  # pushing into skip list
         # update blocks inuse size
         self.__num_vertex_inuse += len(indices)
         self.__highest_indx = max(self.__highest_indx, indices[-1])
@@ -141,6 +251,9 @@ class BffrCache(ArrayContainer):
 
         if block not in self.__block_inuse:
             raise ValueError('block not of this cache, please access via block.release()')
+        # reset val
+        if self.__def_val:
+            block[:] = self.__def_val
         # stop tracking
         self.__block_inuse.remove(block)
 
@@ -156,9 +269,9 @@ class BffrCache(ArrayContainer):
             elif i == e + 1:
                 e = i
             else:  # consecutive finish, wrap as a block
-                heapq.heappush(self.__block_pool, (s, e+1))  # start, stop
+                heapq.heappush(self.__block_pool, (s, e + 1))  # start, stop
                 s = e = i  # start counting new consecutive
-        heapq.heappush(self.__block_pool, (s, e+1))  # dont forget remaining
+        heapq.heappush(self.__block_pool, (s, e + 1))  # dont forget remaining
         # count vertex in use
         self.__num_vertex_inuse -= len(block)
         # update highest index
@@ -166,7 +279,7 @@ class BffrCache(ArrayContainer):
             if self.__block_inuse:
                 self.__highest_indx = self.__block_inuse[-1].high_indx
             else:
-                self.__highest_indx = -1    # 0 size
+                self.__highest_indx = -1  # 0 size
 
     def refill_foremost(self, reset_val=None):
         """
@@ -190,19 +303,19 @@ class BffrCache(ArrayContainer):
             while True:
                 start, stop = self.__block_pool[0]
                 left = src_size - (stop - start)
-                if 0 <= left:   # fully taken or need more
+                if 0 <= left:  # fully taken or need more
                     heapq.heappop(self.__block_pool)
                     trg_idxs += list(range(start, stop))
-                else:   # underflow
-                    self.__block_pool[0] = (start+src_size, stop)
-                    trg_idxs = list(range(start, start+src_size))
+                else:  # underflow
+                    self.__block_pool[0] = (start + src_size, stop)
+                    trg_idxs = list(range(start, start + src_size))
                 if left <= 0:
                     break
             # copy data, reset released, and reset indices
             self.__array[trg_idxs] = self.__array[list(src_idxs)]
             if reset_val:
                 self.__array[src_idxs] = reset_val
-            setattr(src_block, f"_{src_block.__class__.__name__[2:]}__indices", trg_idxs)   # bad hidden access
+            setattr(src_block, f"_{src_block.__class__.__name__[2:]}__indices", trg_idxs)  # bad hidden access
             # relocated source block with new indices
             self.__block_inuse.push(src_block)
             if self.__block_inuse:
@@ -254,7 +367,7 @@ class BffrCache(ArrayContainer):
             if dtype.subdtype is not None:
                 dtype, shape = dtype.subdtype
             else:
-                shape = (1, )
+                shape = (1,)
             loc = self.__locs[name]
             tuples.append(ntuple(name, loc, shape, dtype, stride, offset))
         return tuple(tuples)
@@ -268,100 +381,3 @@ class BffrCache(ArrayContainer):
         :return:
         """
         raise NotImplementedError
-
-    class __Block:
-        """
-        redirector to buffer array
-
-        Syncs value update between sliced array and master array
-        """
-
-        def __init__(self, array_container, indices):
-            self.__cache = array_container
-            self.__indices = list(indices)
-
-        def __getitem__(self, item):
-            """
-            slice is used to update value of the array
-
-            Updated value always has to be push into container's array.
-            :param item:
-            :return:
-            """
-            return self.__cache.array[item][self.__indices]
-
-        def __setitem__(self, key, value):
-            """
-            ex) block['vtx'] = 10, 10, 10, 1
-
-            :param key:
-            :param value:
-            :return:
-            """
-            # for 1D setitem
-            if not isinstance(key, tuple):
-                self.__cache.array[key][self.__indices] = value
-            else:
-                self.__cache.array[key[0]][self.__indices[key[1]]] = value
-
-        def __len__(self):
-            return len(self.__indices)
-
-        def __str__(self):
-            return f"<Block {self.__indices}]>"
-
-        @property
-        def indices(self):
-            """
-            :return: tuple of array indices
-            """
-            return tuple(self.__indices)
-        #
-        # @property
-        # def size(self):
-        #     return len(self.__indices)
-
-        @property
-        def high_indx(self):
-            """
-            biggest index of blocks' indices
-
-            :return:
-            """
-            return self.__indices[-1]
-
-        @property
-        def arr(self):
-            """
-            debug access
-            :return:
-            """
-            return self.__cache.array
-
-        def release(self, reset_val=None):
-            """
-            end of usage, release memory
-
-            :param reset_val: value to fill released block with
-            :return:
-            """
-            self.__cache._release_block(self, reset_val)
-            # ! resetting has to be below
-            self.__cache = None
-            self.__indices = None
-
-        def release_refill(self, reset_val=None):
-            """
-            release and refill consecutively as a set op operation
-
-            ! This doesn't guarantee that released vertex will be filled.
-            It is guaranteed that foremost will be filled using lastest Block
-
-            :param reset_val: value to fill into released vertex by releasing and refilling
-            :return:
-            """
-            self.__cache._release_block(self, reset_val)
-            mapping = self.__cache.refill_foremost(reset_val)
-            self.__cache = None
-            self.__indices = None
-            return mapping

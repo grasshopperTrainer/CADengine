@@ -63,7 +63,7 @@ class Cursor(RenderDevice):
     Pane is a sheet of glass that together forms window plane
     """
 
-    def __init__(self, origin: (tuple, list), manager):
+    def __init__(self, pane, manager):
         """
 
         :param origin: (x, y), cursor origin in window space
@@ -71,11 +71,10 @@ class Cursor(RenderDevice):
         """
         super().__init__(manager)
 
-        if not (isinstance(origin, (tuple, list)) and len(origin) == 2):
-            raise TypeError
-        self.__origin = gt.Vec(origin[0], origin[1])
+        self.__pane = pane
 
-        self.__pos_local = gt.Vec(-origin[0], -origin[1])
+        self.__pos_global = gt.Vec(0, 0, 0)
+        self.__pos_local = gt.Vec(0, 0, 0)
         self.__pos_prev = gt.Vec(0, 0, 0)
         self.__accel = gt.Vec(0, 0, 0)
 
@@ -92,38 +91,39 @@ class Cursor(RenderDevice):
         m.append_mouse_scroll_callback(
             lambda *args, mouse, **kwargs: self.call_mouse_scroll_callback(*args, **kwargs, cursor=self))
 
-    def __update_pos_local(self, new_pos):
+    def __update_poses(self, new_pos):
         """
         update internal acceleration
         :param new_pos:
         :return:
         """
-        self.__accel = new_pos - self.__pos_local
-        self.__pos_local = new_pos - self.__origin
+        self.__accel = new_pos - self.__pos_global
+        self.__pos_global = new_pos
+        self.__pos_local = (new_pos - self.__pane.pos) / self.__pane.size
 
-    def __update_pos_global(self, new_pos):
-        new_local = new_pos + self.__origin
-        self.__update_pos_local(new_local)
+    # def __update_pos_global(self, new_pos):
+    #     new_local = new_pos + self.__origin
+    #     self.__update_poses(new_local)
 
     @property
     def pos_local(self):
         return self.__pos_local
 
-    @pos_local.setter
-    def pos_local(self, v):
-        if not (isinstance(v, (tuple, list, np.ndarray)) and len(v) == 2):
-            raise ValueError('given is not position like')
-        self.__update_pos_local(gt.Vec(*v))
+    # @pos_local.setter
+    # def pos_local(self, v):
+    #     if not (isinstance(v, (tuple, list, np.ndarray)) and len(v) == 2):
+    #         raise ValueError('given is not position like')
+    #     self.__update_poses(gt.Vec(*v))
 
     @property
     def pos_global(self):
-        return self.__pos_local + self.__origin
+        return self.__pos_global
 
-    @pos_global.setter
-    def pos_global(self, v):
-        if not (isinstance(v, (tuple, list, np.ndarray)) and len(v) == 2):
-            raise ValueError('given is not position like')
-        self.__update_pos_global(gt.Vec(*v))
+    # @pos_global.setter
+    # def pos_global(self, v):
+    #     if not (isinstance(v, (tuple, list, np.ndarray)) and len(v) == 2):
+    #         raise ValueError('given is not position like')
+    #     self.__update_pos_global(gt.Vec(*v))
 
     @property
     def accel(self):
@@ -177,7 +177,7 @@ class Cursor(RenderDevice):
         :return:
         """
         pos = mouse.pos_instant
-        self.__update_pos_local(pos)
+        self.__update_poses(pos)
 
     @callbackRegistry
     def call_cursor_pos_callback(self):
@@ -206,6 +206,7 @@ class Cursor(RenderDevice):
         ! 'enter' also include leaving the window
         :return:
         """
+
     @callbackRegistry
     def call_mouse_button_callback(self):
         pass
@@ -245,7 +246,7 @@ class CursorManager(RenderDeviceManager):
     def __init__(self, device_master):
         super().__init__(device_master)
         # default device
-        self.appendnew_cursor((0, 0))
+        self.appendnew_cursor(pane_id=0)
 
     def __getitem__(self, item) -> _Cursor:
         return super().__getitem__(item)
@@ -254,5 +255,5 @@ class CursorManager(RenderDeviceManager):
     def device_type(self):
         return Cursor
 
-    def appendnew_cursor(self, origin):
-        self._appendnew_device(Cursor(origin, self))
+    def appendnew_cursor(self, pane_id):
+        self._appendnew_device(Cursor(self.master.panes[pane_id], self))

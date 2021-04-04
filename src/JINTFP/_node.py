@@ -651,7 +651,7 @@ if __name__ == '__main__':
     m['b'].f = 10
     m['c'].f = m['a'].oup
     m['d'].f = m['a'].oup
-    m['d'].b = m['b'].oup
+    m['d'].custom_arg = m['b'].oup
     print(m['b'].oup)
     print(m['d'].oup)
     print()
@@ -659,9 +659,9 @@ if __name__ == '__main__':
     print(m['d'].oup)
     m['e'].f = 'C'
     m['f'].f = m['c'].oup
-    m['f'].b = m['d'].oup
+    m['f'].custom_arg = m['d'].oup
     m['g'].f = m['f'].oup
-    m['g'].b = m['d'].oup
+    m['g'].custom_arg = m['d'].oup
     m['g'].c = m['e'].oup
     print()
     print(m['g'].oup)

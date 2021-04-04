@@ -9,11 +9,12 @@ from .exporter import TxtrExporter
 
 class MetaTexture(OGLMetaEntity):
 
-    def __init__(self, target, iformat, width, height):
+    def __init__(self, target, iformat, width, height, name=None):
         self.__target = target
         self.__iformat = iformat
         self.__format = self.__iformat_to_format()
         self.__size = width, height
+        self.__name = name
 
     def __str__(self):
         return f"<MetaTexture: {self.__target}, {self.__iformat}>"
@@ -29,6 +30,10 @@ class MetaTexture(OGLMetaEntity):
     @property
     def size(self):
         return self.__size
+
+    @property
+    def name(self):
+        return self.__name
 
     @enum
     class TARGET:

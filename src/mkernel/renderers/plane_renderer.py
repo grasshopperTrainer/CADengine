@@ -2,12 +2,12 @@ import ctypes
 import OpenGL.GL as gl
 import numpy as np
 
-from .base import _Renderer, get_shader_fullpath
+from .base import Renderer, get_shader_fullpath
 import ckernel.render_context.opengl_context.meta_entities as meta
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
 
-class PlaneRenderer(_Renderer):
+class PlaneRenderer(Renderer):
     __prgrm = meta.MetaPrgrm(vrtx_path=get_shader_fullpath('shaders/plane_vrtx_shdr.glsl'),
                              geom_path=get_shader_fullpath('shaders/plane_geom_shdr.glsl'),
                              frgm_path=get_shader_fullpath('shaders/plane_frgm_shdr.glsl'))
