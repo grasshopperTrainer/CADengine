@@ -4,6 +4,7 @@ import heapq
 
 from .translators import npdtype_to_gldtype
 from global_tools.skip_list import SkipList
+from itertools import repeat
 
 
 class _Block:
@@ -131,14 +132,19 @@ class BffrCache(ArrayContainer):
 
     # initial size of array for placeholder
 
-    def __init__(self, dtype, locs, size=1):
+    def __init__(self, dtype, locs, size=1, def_val=None):
         # extra location data
         if not isinstance(locs, (list, tuple)):
             raise TypeError
         if len(locs) != len(dtype.fields):
             raise ValueError('each field has to have location values')
         self.__locs = {n: l for n, l in zip(dtype.names, locs)}
+        self.__def_val = def_val
+
         self.__array = np.ndarray(size, dtype=dtype)
+        if self.__def_val:
+            self.__array[:] = [self.__def_val]*len(self.__array)
+
         # for first fit allocation free space record,
         self.__block_pool = [(0, len(self.__array))]  # (start, stop) min heap
         self.__block_inuse = SkipList(key_provider=lambda x: x.indices[-1])
@@ -173,7 +179,11 @@ class BffrCache(ArrayContainer):
         old_len = len(self.__array)
         new_len = old_len * 2
         new_arr = np.ndarray(shape=new_len, dtype=self.__array.dtype)
+
         new_arr[:old_len] = self.__array
+        if self.__def_val:
+            new_arr[old_len:] = [self.__def_val] * old_len
+
         self.__block_pool.append((old_len, new_len))
         self.__array = new_arr
 
@@ -241,6 +251,9 @@ class BffrCache(ArrayContainer):
 
         if block not in self.__block_inuse:
             raise ValueError('block not of this cache, please access via block.release()')
+        # reset val
+        if self.__def_val:
+            block[:] = self.__def_val
         # stop tracking
         self.__block_inuse.remove(block)
 

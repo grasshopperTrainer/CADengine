@@ -13,6 +13,7 @@ from gkernel.color import Clr, ClrRGBA
 import gkernel.dtype.geometric as gt
 from gkernel.constants import ATOL
 
+from mkernel.global_id_provider import GIDP
 from .base import Shape
 
 
@@ -22,17 +23,14 @@ class Pgon(Shape):
     """
 
     def __init__(self, geo: gt.Pgon, renderer, model):
+        vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(geo)
+
         self.__model = model
 
-        self.__geo = None
-        self.__thk = None
-        self.__clr_edge = None
-        self.__clr_fill = None
-
-        vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(geo)
-        self.__renderer = renderer
         self.__vrtx_block = renderer.vbo.cache.request_block(size=len(vertices))
         self.__vrtx_block['vtx'] = vertices
+        self.__vrtx_block['cid'] = GIDP().register_entity(self).as_rgb_float()
+
         # add PRV at the end to draw separately
         offset = self.__vrtx_block.indices[0]  # min index
         self.__fill_indx_block = renderer.fill_ibo.cache.request_block(size=len(fill_indxs) + 1)
@@ -42,6 +40,11 @@ class Pgon(Shape):
         self.__edge_indx_block = renderer.edge_ibo.cache.request_block(size=len(edge_indxs) + 1)
         self.__edge_indx_block['idx', :-1] = [offset + i for i in edge_indxs]
         self.__edge_indx_block['idx', -1] = PRV
+
+        self.__geo = None
+        self.__thk = None
+        self.__clr_edge = None
+        self.__clr_fill = None
 
         self.__geo = geo
         self.thk = 0.5
@@ -119,6 +122,17 @@ class Pgon(Shape):
             self.__clr_fill[:] = v
         else:
             self.__clr_fill = v
+
+    def delete(self):
+        self.__vrtx_block.release()
+        self.__edge_indx_block.release()
+        self.__fill_indx_block.release()
+
+        GIDP.deregister(self)
+        self.__model.remove(self)
+
+        for k, v in self.__dict__.items():
+            setattr(self, k, None)
 
 
 class CAT(enum):

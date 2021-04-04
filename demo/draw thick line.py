@@ -31,7 +31,7 @@ class MyWindow(Window):
             self.lin_vec = gt.Vec(*(random.uniform(-1, 1) for _ in range(2))).amplify(random.randint(200, 500))
             self.offset_vec = gt.Vec.cross(gt.ZVec(), self.lin_vec).amplify(random.randint(10, 100))
             self.num_scratch = random.randint(0, 25)
-            self.thk = random.randint(0, 8)
+            self.thk = random.randint(2, 15)
 
         if self.fcount % 3 == 0:
             geo = gt.Lin.from_pnt_vec(self.ori + self.offset_vec * self.num_scratch, self.lin_vec)

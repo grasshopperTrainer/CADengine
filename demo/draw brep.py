@@ -1,5 +1,5 @@
 from gkernel.dtype.geometric.brep import Brep
-from mkernel import Model, Brep
+from mkernel import Model
 from wkernel import Window
 
 

@@ -2,7 +2,7 @@ import threading
 import weakref
 
 from .vicinity_picker import VicinityPicker
-from ..color_registry import GlobalColorRegistry
+from ..global_id_provider import GIDP
 from gkernel.color import ClrRGBA
 import mkernel.shapes as shp
 
@@ -158,7 +158,7 @@ class AModeler(Modeler):
         with window.context.gl:
             cid = id_picker.pick(cursor.pos_local, size=(1, 1))[0][0]
         clr = ClrRGBA(*cid).as_ubyte()[:3]
-        shape = GlobalColorRegistry().get_registered(clr)
+        shape = GIDP().get_registered(clr)
 
         if not shape:
             pos = self.__vp.pick(camera, cursor)[1]

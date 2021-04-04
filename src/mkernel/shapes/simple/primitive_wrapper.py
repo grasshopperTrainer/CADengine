@@ -2,38 +2,33 @@ from numbers import Number
 import numpy as np
 import gkernel.dtype.geometric as gt
 from gkernel.color.primitive import ClrRGBA, Clr
-from .base import Shape
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
-import weakref as wr
-from ..color_registry import GlobalColorRegistry
-from ..renderers.base import Renderer
+from mkernel.global_id_provider import GIDP
+from mkernel.renderers.base import Renderer
+from .base import SimpleShape
 
 
-class Ray(Shape):
+class Ray(SimpleShape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
 
-class Pnt(Shape):
+class Pnt(SimpleShape):
 
-    def __init__(self, geo, renderer:Renderer, model):
-        """
+    def __init__(self, geo, renderer: Renderer, model):
+        # request blocks
+        vb = renderer.vbo.cache.request_block(size=1)
+        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
+        # index block will be set at `frm` setter
+        super().__init__(model, vb, None)
 
-        """
         # enums
-        self.__model = model
         self.__form_square = self.__Form(renderer.square_ibo, 'SQUARE')
         self.__form_circle = self.__Form(renderer.circle_ibo, 'CIRCLE')
         self.__form_tirangle = self.__Form(renderer.triangle_ibo, 'TRIANGLE')
 
-        # set vertex attributes
-        self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
-        # set cid
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
-        # set index buffer
-        self.__indx_block = None
         self.__frm = None
         self.__geo = None
         self.__clr = None
@@ -65,7 +60,7 @@ class Pnt(Shape):
     def geo(self, v):
         if not isinstance(v, (tuple, list, gt.Pnt)):
             raise TypeError
-        self.__vrtx_block['vtx'] = v.T
+        self._vrtx_block['vtx'] = v.T
         if self.__geo is None:
             self.__geo = v
         else:
@@ -79,7 +74,7 @@ class Pnt(Shape):
     def clr(self, v):
         if not isinstance(v, (tuple, list, np.ndarray)):
             raise TypeError
-        self.__vrtx_block['clr'] = v
+        self._vrtx_block['clr'] = v
         if self.__clr is None:
             self.__clr = v
         else:
@@ -93,7 +88,7 @@ class Pnt(Shape):
     def dia(self, v):
         if not isinstance(v, Number):
             raise TypeError
-        self.__vrtx_block['dia'] = v
+        self._vrtx_block['dia'] = v
         self.__dia = v
 
     @property
@@ -113,27 +108,18 @@ class Pnt(Shape):
         # ignore if setting is redundant
         if self.__frm == v:
             return
-        # swap, index cache can be always tightly packed so refill
-        if self.__indx_block is not None:
-            self.__indx_block.release(PRV)
-        self.__indx_block = v.ibo.cache.request_block(size=1)
-        self.__indx_block['idx'] = self.__vrtx_block.indices
+        # swapping index block
+        # remove old
+        if self._indx_block is not None:
+            self._indx_block.release()
+
+        # set new
+        self._indx_block = v.ibo.cache.request_block(size=1)
+        self._indx_block['idx'] = self._vrtx_block.indices
         self.__frm = v
 
-
-    def delete(self):
-        # release OGL block
-        self.__vrtx_block.release()
-        self.__indx_block.release(reset_val=PRV)
-
-        GlobalColorRegistry().deregister(self)
-        self.__model.remove_shape(self)
-
-        for k, v in self.__dict__.items():
-            setattr(self, k, None)
-
     def __del__(self):
-        print("shape Pnt gced")
+        print("shape Pnt gc")
 
     class __Form:
         def __init__(self, ibo, name):
@@ -148,18 +134,18 @@ class Pnt(Shape):
             return f"<ENUM {self.__name}>"
 
 
-class Vec(Shape):
+class Vec(SimpleShape):
     pass
 
 
-class Lin(Shape):
+class Lin(SimpleShape):
     def __init__(self, geo, renderer, model):
-        self.__model = model
-        self.__vrtx_block = renderer.vbo.cache.request_block(size=2)
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
-        # set index
-        self.__indx_block = renderer.ibo.cache.request_block(size=2)
-        self.__indx_block['idx'] = self.__vrtx_block.indices
+        # request blocks
+        vb = renderer.vbo.cache.request_block(size=2)
+        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
+        ib = renderer.ibo.cache.request_block(size=2)
+        ib['idx'] = vb.indices
+        super().__init__(model, vb, ib)
 
         self.__geo = None
         self.__clr = None
@@ -177,7 +163,7 @@ class Lin(Shape):
     def geo(self, v):
         if not isinstance(v, gt.Lin):
             raise TypeError
-        self.__vrtx_block['vtx'] = v.T
+        self._vrtx_block['vtx'] = v.T
         if self.__geo is None:
             self.__geo = v
         else:
@@ -191,7 +177,7 @@ class Lin(Shape):
     def clr(self, v):
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__vrtx_block['clr'] = v
+        self._vrtx_block['clr'] = v
         if self.__clr is None:
             self.__clr = v
         else:
@@ -205,24 +191,24 @@ class Lin(Shape):
     def thk(self, v):
         if not isinstance(v, Number):
             raise TypeError
-        self.__vrtx_block['thk'] = v
+        self._vrtx_block['thk'] = v
         self.__thk = v
 
 
-class Plin(Shape):
+class Plin(SimpleShape):
     def __init__(self, geo, renderer, model):
         """
 
         :param vs: number of vertices coordinate that form polyline
         """
-        self.__model = model
         # this will check input validity
-        self.__vrtx_block = renderer.vbo.cache.request_block(size=len(geo))
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
+        vb = renderer.vbo.cache.request_block(size=len(geo))
+        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
         # +1 for primitive restart value
-        self.__indx_block = renderer.ibo.cache.request_block(size=len(geo) + 1)
-        self.__indx_block['idx', :-1] = self.__vrtx_block.indices
-        self.__indx_block['idx', -1] = PRV
+        ib = renderer.ibo.cache.request_block(size=len(geo) + 1)
+        ib['idx', :-1] = vb.indices
+        ib['idx', -1] = PRV
+        super().__init__(model, vb, ib)
 
         self.__geo = geo
         self.__clr = ClrRGBA()
@@ -240,7 +226,7 @@ class Plin(Shape):
     def geo(self, v):
         if not isinstance(v, gt.Plin):
             raise TypeError
-        self.__vrtx_block['vtx'] = v.T
+        self._vrtx_block['vtx'] = v.T
         self.__geo[:] = v
 
     @property
@@ -251,7 +237,7 @@ class Plin(Shape):
     def clr(self, v):
         if not isinstance(v, (tuple, list, Clr)):
             raise TypeError
-        self.__vrtx_block['clr'] = v
+        self._vrtx_block['clr'] = v
         self.__clr[:] = v
 
     @property
@@ -262,23 +248,19 @@ class Plin(Shape):
     def thk(self, v):
         if not isinstance(v, Number):
             raise TypeError
-        self.__vrtx_block['thk'] = v
+        self._vrtx_block['thk'] = v
         self.__thk = v
 
 
-class Tgl(Shape):
+class Tgl(SimpleShape):
     __is_render_edge = True
 
     def __init__(self, geo, renderer, model):
-        """
-        """
-        self.__model = model
-        self.__vrtx_block = renderer.vbo.cache.request_block(size=3)
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
-
-        # registering at ibo
-        self.__indx_block = renderer.ibo.cache.request_block(size=3)
-        self.__indx_block['idx'] = self.__vrtx_block.indices
+        vb = renderer.vbo.cache.request_block(size=3)
+        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
+        ib = renderer.ibo.cache.request_block(size=3)
+        ib['idx'] = vb.indices
+        super().__init__(model, vb, ib)
 
         # just filling correct placeholder
         self.__geo = None
@@ -299,7 +281,7 @@ class Tgl(Shape):
     def geo(self, v):
         if not isinstance(v, gt.Tgl):
             raise TypeError
-        self.__vrtx_block['vtx'] = v.T
+        self._vrtx_block['vtx'] = v.T
         if self.__geo is None:
             self.__geo = v
         else:
@@ -320,7 +302,7 @@ class Tgl(Shape):
         """
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__vrtx_block['fill_clr'] = v
+        self._vrtx_block['fill_clr'] = v
         if self.__fill_clr is None:
             self.__fill_clr = v
         else:
@@ -339,7 +321,7 @@ class Tgl(Shape):
         """
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self.__vrtx_block['edge_clr'] = v
+        self._vrtx_block['edge_clr'] = v
         if self.__edge_clr is None:
             self.__edge_clr = v
         else:
@@ -351,7 +333,7 @@ class Tgl(Shape):
 
     @edge_thk.setter
     def edge_thk(self, v):
-        self.__vrtx_block['edge_thk'] = v
+        self._vrtx_block['edge_thk'] = v
         self.__edge_thk = v
 
     def intersect(self, ray):

@@ -10,9 +10,12 @@ layout (location = 2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     float edgeThk;
     vec4 edgeClr;
+    vec3 cid;
 } vs_in[];
 
+
 out vec4 edgeClr;
+out vec3 cid;
 
 vec4 vec_bisector(vec4 a, vec4 b) {
     // calculate bisector unit vector between two vectors
@@ -54,6 +57,8 @@ void main() {
     }
 
     edgeClr = vs_in[0].edgeClr;
+    cid = vs_in[0].cid;
+
     emit(a, TM, zOff);
     emit(b, TM, zOff);
     emit(c, TM, zOff);

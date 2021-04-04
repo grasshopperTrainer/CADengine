@@ -7,8 +7,9 @@ from gkernel.color import ClrRGBA
 
 
 @Singleton
-class GlobalColorRegistry:
+class GIDP:
     """
+    Global ID Provider
     to provide cid for all shapes
 
     ! has to be thread safe
