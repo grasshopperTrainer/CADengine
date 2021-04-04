@@ -1,4 +1,4 @@
-import mkernel.shapes.primitive_wrapper as w
+import mkernel.shapes.simple.primitive_wrapper as w
 
 p = w.Pln((0,0,0), (1,0,0), (0,1,0), (0,0,1))
 a = w.Pnt(0,0,0)

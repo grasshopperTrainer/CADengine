@@ -1,10 +1,12 @@
 from mkernel.shapes.base import Shape
 from gkernel.color import *
-from mkernel.color_registry import GlobalColorRegistry
+from mkernel.global_id_provider import GIDP
 
 
 class Brep(Shape):
-    def __init__(self, geo, renderer):
+    def __init__(self, geo, renderer, model):
+        self.__model = model
+
         self.__geo = geo
         self.__renderer = renderer
 
@@ -37,7 +39,7 @@ class Brep(Shape):
         point_indx_block = self.__pnt_indx_cache.request_block(size=1)
 
         point = PointRenderEntity(vrtx, vrtx_block, point_vrtx_block, point_indx_block)
-        GlobalColorRegistry().register_entity(point)
+        GIDP().register_entity(point)
         self.__points.add(point)
         return vrtx
 
@@ -46,6 +48,9 @@ class Brep(Shape):
 
     def add_pgon(self):
         raise NotImplementedError
+
+    def delete(self):
+        raise
 
 
 class RenderEntity:

@@ -2,7 +2,7 @@ from gkernel.tools.intersector import Intersector as intx
 import gkernel.dtype.geometric as gt
 import mkernel.shapes as st
 import mkernel.renderers as rend
-from .color_registry import GlobalColorRegistry
+from .global_id_provider import GIDP
 
 
 class ModelIterator:

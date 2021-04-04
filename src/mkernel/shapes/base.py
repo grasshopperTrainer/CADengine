@@ -1,3 +1,7 @@
+from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
+from mkernel.global_id_provider import GIDP
+
+
 """
 ! shpae is a renderable thing.
 ! not all geometry is natively shape.
@@ -39,6 +43,7 @@ class Shape(metaclass=abc.ABCMeta):
         else:
             getattr(self, mname)[:] = arr
 
+    @abc.abstractmethod
     def delete(self):
         """
         explicitly release all attributes

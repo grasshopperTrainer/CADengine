@@ -1,6 +1,6 @@
 from wkernel import Window
 from mkernel import Model
-from mkernel.color_registry import GlobalColorRegistry
+from mkernel.global_id_provider import GIDP
 from gkernel.color import ClrRGBA
 import time
 
@@ -73,7 +73,7 @@ class MainWindow(Window):
                 # pick color id
                 clr = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))
                 clr = ClrRGBA(*clr[0][0]).as_ubyte()[:3]
-                e = GlobalColorRegistry().get_registered(clr)
+                e = GIDP().get_registered(clr)
                 print('POINTING AT', e)
 
 

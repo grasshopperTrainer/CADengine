@@ -1,6 +1,6 @@
 from wkernel import Window
 from mkernel import Model
-from mkernel.color_registry import GlobalColorRegistry
+from mkernel.global_id_provider import GIDP
 import gkernel.color as clr
 import gkernel.dtype.geometric as gt
 from akernel.environmental.ground import Ground
@@ -91,7 +91,7 @@ class MainWindow(Window):
                 # pos = p.cursor_pos(parameterize=True)
                 color = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))[0][0]
                 color = clr.ClrRGBA(*color).as_ubyte()[:3]
-                e = GlobalColorRegistry().get_registered(color)
+                e = GIDP().get_registered(color)
                 if e:
                     print(e)
 

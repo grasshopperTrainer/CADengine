@@ -1,17 +1,15 @@
-from .base import Shape
 import gkernel.dtype.geometric.primitive as gt
-from mkernel.color_registry import GlobalColorRegistry
+from mkernel.global_id_provider import GIDP
+from .base import SimpleShape
 
 
-class Pln(Shape):
+class Pln(SimpleShape):
     def __init__(self, geo, renderer, model):
-        self.__model = model
-
         self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
+        self.__vrtx_block['cid'] = GIDP().register_entity(self).as_rgb_float()
         self.__indx_block = renderer.ibo.cache.request_block(size=1)
         self.__indx_block['idx'] = self.__vrtx_block.indices
-
-        self.__vrtx_block['cid'] = GlobalColorRegistry().register_entity(self).as_rgb_float()
+        super().__init__(model, self.__vrtx_block, self.__indx_block)
 
         self.__geo = None
         self.__len = None

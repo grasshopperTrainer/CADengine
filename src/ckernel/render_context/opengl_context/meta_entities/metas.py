@@ -119,7 +119,7 @@ class MetaIndxBffr(_MetaBffr):
 
         :param dtype: str, describe IBO dtype, one of (uint, ushort, ubyte)
         """
-        self.__cache = BffrCache(np.dtype([('idx', dtype)]), (0,))
+        self.__cache = BffrCache(np.dtype([('idx', dtype)]), (0,), def_val=PRV)
         self.__cache.fill_array(PRV)
 
     @property
