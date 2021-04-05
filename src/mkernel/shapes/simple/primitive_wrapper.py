@@ -5,17 +5,17 @@ from gkernel.color.primitive import ClrRGBA, Clr
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 from mkernel.global_id_provider import GIDP
 from mkernel.renderers.base import Renderer
-from .base import SimpleShape
+from .base import SimpleGeoShape
 
 
-class Ray(SimpleShape):
+class Ray(SimpleGeoShape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
 
-class Pnt(SimpleShape):
+class Pnt(SimpleGeoShape):
 
     def __init__(self, geo, renderer: Renderer, model):
         # request blocks
@@ -134,11 +134,11 @@ class Pnt(SimpleShape):
             return f"<ENUM {self.__name}>"
 
 
-class Vec(SimpleShape):
+class Vec(SimpleGeoShape):
     pass
 
 
-class Lin(SimpleShape):
+class Lin(SimpleGeoShape):
     def __init__(self, geo, renderer, model):
         # request blocks
         vb = renderer.vbo.cache.request_block(size=2)
@@ -195,7 +195,7 @@ class Lin(SimpleShape):
         self.__thk = v
 
 
-class Plin(SimpleShape):
+class Plin(SimpleGeoShape):
     def __init__(self, geo, renderer, model):
         """
 
@@ -252,7 +252,7 @@ class Plin(SimpleShape):
         self.__thk = v
 
 
-class Tgl(SimpleShape):
+class Tgl(SimpleGeoShape):
     __is_render_edge = True
 
     def __init__(self, geo, renderer, model):

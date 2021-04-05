@@ -1,8 +1,7 @@
 from wkernel import Window
 from mkernel import Model, AModeler
-from akernel.environmental.ground import Ground
+from mkernel.shapes.ground import Ground
 import gkernel.color as clr
-import time
 
 
 class MyWindow(Window):
@@ -25,12 +24,10 @@ class MyWindow(Window):
         # attach dolly
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(camera_id=0, cursor_id=0, def_offset=500)
 
-        # ground
-        self.ground = Ground(clr.ClrRGBA(0.5, 0.5, 0.5, 0.5))
-
         self.modeler = AModeler()
         self.model = Model()
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        self.model.add_ground((.5, .5, .5, .5))
 
         self.count = 0
         self.t = None
@@ -40,11 +37,11 @@ class MyWindow(Window):
 
     def draw(self):
         self.count += 1
-        with self.devices.frames[0] as f:
-            f.clear(0, 0, 0, 0)
-            f.clear_depth()
+        with self.devices.frames[0] as rf:
+            rf.clear(0, 0, 0, 0)
+            rf.clear_depth()
 
-            with self.devices.frames[1] as f:
+            with self.devices.frames[1] as df:
                 self.modeler.listen(self.model,
                                     self,
                                     self.devices.mouse,
@@ -54,9 +51,8 @@ class MyWindow(Window):
                                     self.__id_picker)
 
                 # draw ground and model
-                f.clear(0, 0, 0, 0)
-                f.clear_depth()
-                self.ground.render(self.devices.cameras[0])
+                df.clear(0, 0, 0, 0)
+                df.clear_depth()
                 self.model.render()
 
                 # update camera move
@@ -67,7 +63,7 @@ class MyWindow(Window):
                 if coord != (0, 0, 0):
                     self.cad_dolly.set_ref_point(*coord)
 
-            f.render_pane_space_depth(tid=0)
+            df.render_pane_space_depth(aid=0)
 
 
 class DebuggerWindow(Window):

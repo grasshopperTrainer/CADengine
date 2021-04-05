@@ -131,7 +131,7 @@ class Intersector:
             return None
 
     @classmethod
-    def __Ray_Lin(self, ray):
+    def __Ray_Lin(cls, ray, lin):
         """
         ray line intersection
 
@@ -141,46 +141,46 @@ class Intersector:
         :return: point if intersects else None
         """
 
-        r = self.as_vec()   # line's vector
+        lv = lin.as_vec()   # line's vector
         s = ray.normal      # ray's vector
-        p, q = self.start, ray.origin
+        p, q = lin.start, ray.origin
         pq_vec = q - p
 
-        pq_r_norm = Vec.cross(pq_vec, r)
-        r_s_norm = Vec.cross(r, s)
+        pq_r_norm = Vec.cross(pq_vec, lv)
+        r_s_norm = Vec.cross(lv, s)
         if r_s_norm.is_zero(): # means line and ray is parallel
             if pq_r_norm.is_zero(): # means collinearity. notice parallel != collinear
                 # may be three cases
                 # 1. ray covers whole line -> return line itself
                 # 2. ray covers line fragment -> return new line fragment
                 # 3. ray covers no line -> return None
-                n, m = Vec.dot(pq_vec, r), Vec.dot(pq_vec, s)
-                line_param = n / r.length**2
+                n, m = Vec.dot(pq_vec, lv), Vec.dot(pq_vec, s)
+                line_param = n / lv.length**2
                 if 0 <= line_param <= 1:    # ray starts at on the line
                     if (line_param == 0 and m >= 0) or (line_param == 1 and m < 0): # 1.
-                        return self
+                        return ray
                     else:   # 2.
-                        start = self.start + r*line_param
-                        end = self.end if m >= 0 else self.start
+                        start = lin.start + lv*line_param
+                        end = lin.end if m >= 0 else lin.start
                         return Lin.from_pnts(start, end)
                 else:
                     if line_param < 0 and m < 0:   # 1.
-                        return self
+                        return ray
                     elif line_param > 1 and m < 0:
-                        return self.reversed()
+                        return ray.reversed()
                     else:   # 3.
                         return None
             else:
                 return None
         else:   # may be point intersection or not
-            param_l = Vec.cross(pq_vec, s).length/Vec.cross(r, s).length
-            param_r = Vec.cross(pq_vec, r).length/Vec.cross(r, s).length
+            param_l = Vec.cross(pq_vec, s).length/Vec.cross(lv, s).length
+            param_r = Vec.cross(pq_vec, lv).length/Vec.cross(lv, s).length
             if param_l == 0:
-                return self.start
+                return lin.start
             elif param_l == 1:
-                return self.end
+                return lin.end
             elif 0 < param_l < 1:
-                lin_intx_pnt = self.start + r*param_l
+                lin_intx_pnt = lin.start + lv*param_l
                 pnt_intx_lin = ray.origin + s*param_r
                 # check for coplanarity here
                 if lin_intx_pnt == pnt_intx_lin:

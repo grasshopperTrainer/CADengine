@@ -39,23 +39,23 @@ class BrepRenderer(Renderer):
 
     def render(self):
         self.__vrtx_vbo.push_cache()
-        self.__render_pnt()
-
-    def __render_pnt(self):
-        self.__pnt_vbo.push_cache()
-        self.__pnt_ibo.push_cache()
-        with self.__pnt_vao:
-            with self.__pnt_prgrm as prgrm:
-                window = get_current_ogl().manager.window
-                camera = window.devices.cameras.current
-                self.__pnt_prgrm.uniforms['PM'] = camera.body.PM
-                self.__pnt_prgrm.uniforms['VM'] = camera.tripod.VM
-                self.__pnt_prgrm.uniforms['MM'] = np.eye(4)
-                pane = window.devices.panes.current
-                self.__pnt_prgrm.uniforms['VPP'] = *pane.pos, *pane.size
-                self.__pnt_prgrm.push_uniforms()
-
-                gl.glDrawElements(gl.GL_POINTS,
-                                  self.__pnt_ibo.cache.active_size,
-                                  self.__pnt_ibo.cache.gldtype[0],
-                                  ct.c_void_p(0))
+        # self.__render_pnt()
+    #
+    # def __render_pnt(self):
+    #     self.__pnt_vbo.push_cache()
+    #     self.__pnt_ibo.push_cache()
+    #     with self.__pnt_vao:
+    #         with self.__pnt_prgrm as prgrm:
+    #             window = get_current_ogl().manager.window
+    #             camera = window.devices.cameras.current
+    #             self.__pnt_prgrm.uniforms['PM'] = camera.body.PM
+    #             self.__pnt_prgrm.uniforms['VM'] = camera.tripod.VM
+    #             self.__pnt_prgrm.uniforms['MM'] = np.eye(4)
+    #             pane = window.devices.panes.current
+    #             self.__pnt_prgrm.uniforms['VPP'] = *pane.pos, *pane.size
+    #             self.__pnt_prgrm.push_uniforms()
+    #
+    #             gl.glDrawElements(gl.GL_POINTS,
+    #                               self.__pnt_ibo.cache.active_size,
+    #                               self.__pnt_ibo.cache.gldtype[0],
+    #                               ct.c_void_p(0))

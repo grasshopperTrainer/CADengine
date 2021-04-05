@@ -54,7 +54,7 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         """
         with self.__lock:
             c = GlobalOGLContextStack.get_current()
-            if c.is_none:
+            if c is None:
                 raise OpenglUnboundError
 
             # serve meta context not context

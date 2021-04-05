@@ -1,8 +1,7 @@
 from wkernel import Window
 from mkernel import Model
 import gkernel.color as clr
-import gkernel.dtype.geometric as gt
-from akernel.environmental.ground import Ground
+from mkernel.shapes.ground import Ground
 import time
 
 

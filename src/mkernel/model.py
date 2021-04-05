@@ -3,6 +3,7 @@ import gkernel.dtype.geometric as gt
 import mkernel.shapes as st
 import mkernel.renderers as rend
 from .global_id_provider import GIDP
+import threading
 
 
 class ModelIterator:
@@ -21,14 +22,50 @@ class ModelIterator:
 class Model:
     def __init__(self):
         self.__shapes = {}
-        self._plane = gt.Pln()
+        self.__plane = gt.Pln()
         self.__renderers = {}
+        self.__Lock = threading.Lock()
+
+    @property
+    def lock(self):
+        """
+        User of threading has to take care of locking used entity
+        :return: Lock,
+        """
+        return self.__Lock
+
+    @property
+    def plane(self):
+        return self.__plane
 
     def __add_geo_helper(self, geo, shape_type, renderer_type):
+        """
+        helper for adding geometric shapes like Point, Vector
+
+        :param geo:
+        :param shape_type:
+        :param renderer_type:
+        :return:
+        """
         if shape_type not in self.__renderers:
             self.__renderers[shape_type] = renderer_type()
         renderer = self.__renderers[shape_type]
         shp = shape_type(geo, renderer, self)
+        self.__shapes.setdefault(shape_type, set()).add(shp)
+        return shp
+
+    def __add_nongeo_helper(self, shape_type, renderer_type, args):
+        """
+        helper for nongeometric shapes like ground
+
+        :param shape_type:
+        :param renderer_type:
+        :return:
+        """
+        if shape_type not in self.__renderers:
+            self.__renderers[shape_type] = renderer_type()
+        renderer = self.__renderers[shape_type]
+        shp = shape_type(*args, **{'renderer': renderer, 'model': self})
         self.__shapes.setdefault(shape_type, set()).add(shp)
         return shp
 
@@ -123,6 +160,14 @@ class Model:
         """
         return self.__add_geo_helper(geo=gt.Pln(o, x, y, z), shape_type=st.Pln, renderer_type=rend.PlaneRenderer)
 
+    def add_ground(self, color):
+        """
+
+        :param color: (r, g, b, a)
+        :return:
+        """
+        return self.__add_nongeo_helper(shape_type=st.Ground, renderer_type=rend.GroundRenderer, args=(color,))
+
     def remove_shape(self, shape):
         """
         remove geometry from the model
@@ -161,3 +206,16 @@ class Model:
         for r in self.__renderers.values():
             r.render()
 
+    def iter_shapes(self, typ=None):
+        """
+        iter all shapes
+        :param typ: type, iter only given type if given
+        :return:
+        """
+        if not typ:
+            for shapes in self.__shapes.values():
+                for s in shapes:
+                    yield s
+        else:
+            for s in self.__shapes[typ]:
+                yield s

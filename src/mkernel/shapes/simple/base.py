@@ -1,8 +1,8 @@
-from mkernel.shapes.base import Shape
+from mkernel.shapes.base import GeoShape
 from mkernel.global_id_provider import GIDP
 
 
-class SimpleShape(Shape):
+class SimpleGeoShape(GeoShape):
     """
     Those using single vertex block and single index block
     """

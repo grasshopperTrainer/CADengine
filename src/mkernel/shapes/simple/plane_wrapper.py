@@ -1,9 +1,9 @@
 import gkernel.dtype.geometric.primitive as gt
 from mkernel.global_id_provider import GIDP
-from .base import SimpleShape
+from .base import SimpleGeoShape
 
 
-class Pln(SimpleShape):
+class Pln(SimpleGeoShape):
     def __init__(self, geo, renderer, model):
         self.__vrtx_block = renderer.vbo.cache.request_block(size=1)
         self.__vrtx_block['cid'] = GIDP().register_entity(self).as_rgb_float()

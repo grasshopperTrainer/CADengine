@@ -3,7 +3,7 @@ from mkernel import Model
 from mkernel.global_id_provider import GIDP
 import gkernel.color as clr
 import gkernel.dtype.geometric as gt
-from akernel.environmental.ground import Ground
+from mkernel.shapes.ground import Ground
 import time
 
 

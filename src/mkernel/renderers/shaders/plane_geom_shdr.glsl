@@ -18,7 +18,7 @@ out vec3 fcid;
 
 // default colors
 const vec4 origin = vs_in[0].pln[0];
-const float thk = 0.02;
+const float thk = 0.01;
 const mat4 TM = PM * VM * MM;
 const vec4 clrs[3] = vec4[3](vec4(1, 0, 0, 1), vec4(0, 1, 0, 1), vec4(0, 0, 1, 1));
 const vec4 vectors[3] = vec4[3](vs_in[0].pln[1], vs_in[0].pln[2], vs_in[0].pln[3]);

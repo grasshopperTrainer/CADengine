@@ -169,11 +169,11 @@ class Frame(RenderDevice):
         texture = self.__frame_bffr.get_attachment(tid)
         self.__renderer.render_pane_space(texture, txtr_domain, pane_domain, pane_z)
 
-    def render_pane_space_depth(self, tid, txtr_domain=(0, 1, 0, 1), pane_domain=(-1, 1, -1, 1)):
+    def render_pane_space_depth(self, aid, txtr_domain=(0, 1, 0, 1), pane_domain=(-1, 1, -1, 1)):
         """
         render frame's given attachment on pane space with depth texture
 
-        :param tid: texture id, e.g.
+        :param aid: texture id, e.g.
                     0, 1 - integers for color attachment
                     'd' - depth attachment
                     'ds' - depth stencil attachment
@@ -181,7 +181,7 @@ class Frame(RenderDevice):
         :param pane_domain: (-1.~1., -1.~1., -1.~1., -1.~1.), texture space x0,y0, x1,y1 domain
         :return:
         """
-        color_txtr = self.__frame_bffr.get_attachment(tid)
+        color_txtr = self.__frame_bffr.get_attachment(aid)
         depth_txtr = self.__frame_bffr.get_attachment('d')
         self.__renderer.render_pane_space_depth(color_txtr, depth_txtr, txtr_domain, pane_domain)
 
@@ -228,6 +228,7 @@ class Frame(RenderDevice):
                     float - parameterized relative to texture size
         :return:
         """
+        aid = self.frame_bffr.get_autonym(aid)
         # parse pos expression
         texture = self.frame_bffr.get_attachment(aid)
         if isinstance(pos, gt.Vec):
@@ -312,7 +313,7 @@ class Frame(RenderDevice):
         :return:
         """
         raise NotImplementedError
-    
+
     def create_pixel_picker(self, aid) -> FramePixelPicker:
         return FramePixelPicker(self, aid)
 
@@ -396,6 +397,7 @@ class FrameFactory:
         :param target: target e.g. TEXTURE.TARGET.TWO_D
         :param iformat: internal format
         :param aid: int, color attachment id
+        :param name: str, texture name
         :return:
         """
         # guess texture id if not given
@@ -467,7 +469,7 @@ class FrameFactory:
             if aid in aids:
                 raise ValueError('color attachment location has to be unique')
             aids.append(aid)
-            textures.append(meta.MetaTexture(target, iformat, width, height))
+            textures.append(meta.MetaTexture(target, iformat, width, height, name))
 
         # render buffers
         # ! currently only one render buffer supported

@@ -207,6 +207,11 @@ class BffrCache(ArrayContainer):
         """
         return self.__highest_indx + 1
 
+    @property
+    def blocks(self):
+        for b in self.__block_inuse:
+            yield b
+
     def request_block(self, size) -> _Block:
         """
         get subarray not in use

@@ -1,3 +1,3 @@
 from .primitive import *
 from .complex import *
-from .brep import Brep
+from .brep.base import Brep

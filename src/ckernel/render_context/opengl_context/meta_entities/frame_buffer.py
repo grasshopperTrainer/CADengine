@@ -1,3 +1,5 @@
+import weakref as wr
+
 from .base import OGLMetaEntity
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from ckernel.render_context.opengl_context.meta_entities.txtr.body import MetaTexture
@@ -19,27 +21,29 @@ class MetaFrameBffr(OGLMetaEntity):
         if len(attachments) != len(aids):
             raise Exception('all locations for attachment has to be given, for that does not have location set `None`')
 
-        checked = {}
+        self.__attachments = {}
+        self.__aliases = {}
         # check aid syntax
         for att, aid in zip(attachments, aids):
             if isinstance(att, MetaTexture):
                 if not (isinstance(aid, int) or aid in ('d', 'ds')):
                     raise TypeError('incorrect location id')
-                if aid in checked:
+                if aid in self.__attachments:
                     raise ValueError('aid has to be unique')
             elif isinstance(att, MetaRenderBffr):
                 # if i is not None:
                 #     raise TypeError('render buffer should have None aid')
-                if aid in checked:
+                if aid in self.__attachments:
                     raise ValueError('aid has to be unique')
             else:
                 raise TypeError('Attachment should pass isinstance(a, (MetaTexture, MetaRenderBffr))')
-            # register for getitem
-            checked[aid] = att
-            if att.name is not None:
-                checked[att.name] = att.name
 
-        self.__attachments = checked
+            # register for getitem
+            self.__attachments[aid] = att
+            # name as alias, used when getitem
+            if att.name:
+                self.__aliases[att.name] = aid
+
         self.__color_attachment_names = [eval(f"gl.GL_COLOR_ATTACHMENT{i}") for i in aids if isinstance(i, int)]
 
     def __str__(self):
@@ -115,7 +119,17 @@ class MetaFrameBffr(OGLMetaEntity):
                     'ds' - depth stencil attachment
         :return:
         """
+        if aid in self.__aliases:
+            aid = self.__aliases[aid]
         return self.__attachments[aid]
+
+    def get_autonym(self, aid):
+        """
+        :return: str, aid if given is an alias
+        """
+        if aid in self.__aliases:
+            return self.__aliases[aid]
+        return aid
 
     def bind(self):
         """

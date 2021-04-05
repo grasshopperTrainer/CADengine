@@ -1,6 +1,6 @@
 from wkernel import Window
 from mkernel import Model
-from akernel.environmental.ground import Ground
+from mkernel.shapes.ground import Ground
 
 
 class MyWindow(Window):
@@ -65,7 +65,7 @@ class MyWindow(Window):
 
                     p = df.pick_pixels(2, self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
                     print(p)
-        df.render_pane_space_depth(tid=0)
+        df.render_pane_space_depth(aid=0)
 
 
 class SubWindow(Window):

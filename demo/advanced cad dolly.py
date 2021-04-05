@@ -1,6 +1,6 @@
 from wkernel import Window
 from mkernel import Model
-from akernel.environmental.ground import Ground
+from mkernel.shapes.ground import Ground
 import gkernel.color as clr
 
 
@@ -60,7 +60,7 @@ class MyWindow(Window):
                     self.cad_dolly.set_ref_point(*coord)
 
             with self.devices.panes[1]:
-                f.render_pane_space_depth(tid=0)
+                f.render_pane_space_depth(aid=0)
 
 
 class DebuggerWindow(Window):
