@@ -1,6 +1,6 @@
 from wkernel import Window
 from mkernel import Model
-from akernel.environmental.ground import Ground
+from skernel.environmental.ground import Ground
 from mkernel.modeler.vicinity_picker import VicinityPicker
 
 

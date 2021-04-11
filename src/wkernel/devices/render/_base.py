@@ -13,10 +13,10 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
         self.__master = master
 
     def __getitem__(self, item):
-        return self.__master.tracker.registry[self.device_type][item]
+        return self.__master.tracker.registry.get(self.device_type, item)
 
     def __len__(self):
-        return len(self.__master.tracker.registry[self.device_type])
+        return self.__master.tracker.registry.num_registered(self.device_type)
 
     def _appendnew_device(self, device):
         """
@@ -33,7 +33,7 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
 
     @property
     def current(self):
-        return self.__master.tracker.stack.get_current(self.device_type)
+        return self.__master.tracker.stack.peek(self.device_type)
 
     @property
     def master(self):
@@ -86,5 +86,5 @@ class RenderDevice(metaclass=abc.ABCMeta):
         get current from tracker
         :return:
         """
-        return self.__manager.master.tracker.stack.get_current(self.__class__)
+        return self.__manager.master.tracker.stack.peek(self.__class__)
 

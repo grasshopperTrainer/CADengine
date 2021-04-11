@@ -118,9 +118,6 @@ class Pnt(SimpleShape):
         self._indx_block['idx'] = self._vrtx_block.indices
         self.__frm = v
 
-    def __del__(self):
-        print("shape Pnt gc")
-
     class __Form:
         def __init__(self, ibo, name):
             self.__ibo = ibo

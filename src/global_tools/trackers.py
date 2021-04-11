@@ -19,6 +19,7 @@ class _TypewiseRegistry:
                 e.delete()
 
     """
+
     def __init__(self, reg_type=dict):
         """
         :param reg_type: dict-like instance, ex) dict or dict subclass or one of weakref dict instance
@@ -93,6 +94,15 @@ class _TypewiseRegistry:
     def is_empty(self, entity_cls):
         return not bool(self.__initget_subregistry(entity_cls))
 
+    def num_registered(self, entity_typ=None):
+        """
+        :param entity_typ:
+        :return: number of entities, if type not specified, summed length returned
+        """
+        if entity_typ:
+            return len(self.__registries[entity_typ])
+        else:
+            return sum(len(v) for v in self.__registries.values())
 
 
 class _TypewiseStack:
@@ -130,7 +140,6 @@ class _TypewiseStack:
         :param entity_type:
         :return: stack
         """
-        # FIXME: this causes an unauthorized intrusion into stack
         return self.__stacks[entity_type]
 
     @property
@@ -157,14 +166,14 @@ class _TypewiseStack:
             raise _EmptyStackError('cant pop from empty stack')
         return self.__stacks[entity_cls].pop()
 
-    def get_current(self, entity_type):
+    def peek(self, entity_type):
         if self.is_empty(entity_type):
             if entity_type in self.__bases:
                 return self.__bases[entity_type]
             return None
         return self.__initset_substack(entity_type)[-1]
 
-    def get_current_byname(self, entity_type_name):
+    def peek_byname(self, entity_type_name):
         """
         get current entity
 
@@ -173,18 +182,17 @@ class _TypewiseStack:
         """
         for key_cls in self.__stacks:
             if key_cls.name == entity_type_name:
-                return self.get_current(key_cls)
+                return self.peek(key_cls)
         raise _EmptyStackError('no current from empty stack')
 
     def is_empty(self, entity_cls):
         return not bool(self.__stacks.get(entity_cls, False))
 
-    def set_base_entity(self, entity):
+    def set_base(self, entity):
         """
         set base entity
 
-        Base entity is the one that is under the stack;
-        inpopable, returned when stack is empty
+        Base entity is the one that is fixed at the bottom of the stack
         :return:
         """
         self.__bases[entity.__class__] = entity
@@ -192,6 +200,11 @@ class _TypewiseStack:
 
 class TypewiseTracker:
     def __init__(self):
+        """
+        register and track OGL entities
+
+        Semantic container of registry and stack.
+        """
         self.__registry = _TypewiseRegistry()
         self.__stack = _TypewiseStack()
 

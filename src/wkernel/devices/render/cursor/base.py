@@ -246,7 +246,8 @@ class CursorManager(RenderDeviceManager):
     def __init__(self, device_master):
         super().__init__(device_master)
         # default device
-        self.appendnew_cursor(pane_id=0)
+        c = self.appendnew_cursor(pane_id=0)
+        self.master.tracker.stack.set_base(c)
 
     def __getitem__(self, item) -> _Cursor:
         return super().__getitem__(item)

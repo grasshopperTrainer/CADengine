@@ -71,21 +71,22 @@ class OGLEntity(metaclass=abc.ABCMeta):
 
     # binding context implement into context manager
     def __enter__(self):
-        entity_stack = get_current_ogl().entities.stack
-        if not entity_stack.is_empty(self.__class__) and entity_stack.get_current(self.__class__) == self:
-            entity_stack.push(self)
+        et = get_current_ogl().entity_tracker
+
+        if not et.stack.is_empty(self.__class__) and et.stack.peek(self.__class__) == self:
+            et.stack.push(self)
         else:
-            entity_stack.push(self)
+            et.stack.push(self)
             self.bind()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        entities = get_current_ogl().entities
-        entities.stack.pop(self.__class__)
+        et = get_current_ogl().entity_tracker
+        et.stack.pop(self.__class__)
         # control over matryoshka context
         # follow bind-only policy
-        if not entities.stack.is_empty(self.__class__):
-            entity = entities.stack.get_current(self.__class__)
+        if not et.stack.is_empty(self.__class__):
+            entity = et.stack.peek(self.__class__)
             entity.bind()
         else:
             # only if there is no entity to return binding

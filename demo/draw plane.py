@@ -4,7 +4,7 @@ draw screen sized plans
 
 from wkernel import Window
 from mkernel import Model
-from akernel.environmental.ground import Ground
+from skernel.environmental.ground import Ground
 
 
 class MyWindow(Window):

@@ -9,80 +9,87 @@ import ckernel.glfw_context.glfw_hooker as glfw
 
 class ContextCounter:
     """
-    counter like hotel counter
-    render threads are the visitors and want context as a room
-    counter should only assign a room to a thread
-    threads willing to have the room(context) has to wait in que
+    counter like a hotel counter
+
+    Render threads are the visitors and they have the exact room, context, for the request.
+    Counter should only assign a single room to a single visitor.
+    Visitor willing to have the room has to wait in que.
     """
-    __queue = weakref.WeakKeyDictionary()  # [context] = waiting count
+    __que = weakref.WeakKeyDictionary()  # __queue[context] = [condition ,waiting count]
+    __lock = threading.Lock()
 
     @classmethod
     def checkin(cls, context):
         """
-        render thread want to use a context
-        mark context in use and wait-mark if the context is already in use
+        request for the room
 
+        wait until context is free
         :param context:
         :return:
         """
-        if context in cls.__queue:
-            condition, count = cls.__queue[context]
+        if context in cls.__que:
+            with cls.__lock:
+                condition, count = cls.__que[context]
             with condition:
-                cls.__queue[context][1] = count + 1
+                cls.__que[context][1] = count + 1
                 condition.wait()
         else:
-            condition = threading.Condition()
-            cls.__queue[context] = [condition, 0]
+            with cls.__lock:
+                condition = threading.Condition()
+                cls.__que[context] = [condition, 0]
         return context
 
     @classmethod
     def checkout(cls, context):
         """
-        render thread return the context
+        return a context
 
         :param context:
         :return:
         """
-        if cls.__queue[context][1] == 0:  # no thread is waiting for the context
-            del cls.__queue[context]
-        else:
-            condition, count = cls.__queue[context]
-            with condition:
-                cls.__queue[context][1] = count - 1
-                condition.notify(1)  # wake one up
+        with cls.__lock:
+            if cls.__que[context][1] == 0:  # no thread is waiting for the context
+                del cls.__que[context]
+            else:
+                condition, count = cls.__que[context]
+                with condition:
+                    cls.__que[context][1] = count - 1
+                    condition.notify(1)  # wake one up
 
 
 class OGLSubContext(Renderer):
     def __init__(self, cntxt_manager):
         """
+        OpenGL context binder object
 
-        __entities: !not fully supported! better context know of its entities so
-        those could be removed when context itself is removed
+        Use context manager protocol to bind OGL context before calling any gl functions.
+        Context manager will also automatically block thread if requested context is used by another thread.
         :param cntxt_manager:
         """
         self.__manager = cntxt_manager
         self.__entity_tracker = TypewiseTracker()
-        self.__lock = threading.Lock()
 
     def __enter__(self):
         """
         put context in stack then make it current
 
-        1. report to GlobalStack for shortcut access
-        2. report to ContextCounter so thread doesnt call context in bound(at another thread)
-        :return:
+        1. report to GlobalOGLContextStack for shortcut access
+        2. report to ContextCounter so context is not called simultaneously by more than one thread
+        3. bind by calling glfw.make_context_current()
+
+        :return: gl object for calling gl functions
         """
         latest = GlobalOGLContextStack.get_current()
         GlobalOGLContextStack.put_current(self)
         if latest is not self:  # repetition doesnt need redundant binding
             with self.__manager.glfw as glfw_window:  # just reporting to glfw subcontext and getting glfw_window object
                 ContextCounter.checkin(self)  # 2. ask for context
-                glfw.make_context_current(glfw_window)
+                glfw.make_context_current(glfw_window)  # 3. actual binding
         return hooked_opengl
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
-        need to release window bound by make_context_current
+        release OGL context binding
 
         :param exc_type:
         :param exc_val:
@@ -90,24 +97,23 @@ class OGLSubContext(Renderer):
         :return:
         """
         GlobalOGLContextStack.pop_current()  # removing self
-        # return binding
         last = GlobalOGLContextStack.get_current()
         if last and last is self:
             pass
         else:
-            if last:
+            if last:  # return to latest binding
                 with last.manager.glfw as glfw_window:
                     glfw.make_context_current(glfw_window)
             else:
                 glfw.make_context_current(None)
-            ContextCounter.checkout(self)
+            ContextCounter.checkout(self)  # return possession
 
     @property
     def is_none(self):
         return False
 
     @property
-    def entities(self):
+    def entity_tracker(self) -> TypewiseTracker:
         return self.__entity_tracker
 
     @property

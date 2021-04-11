@@ -338,7 +338,7 @@ class FrameManager(RenderDeviceManager):
         ww, wh = self.window.glyph.size
         frame = Frame(self, _FrameBffr(0, gl.GL_FRAMEBUFFER), ww, wh)
         self._appendnew_device(frame)
-        self.master.tracker.stack.set_base_entity(frame)
+        self.master.tracker.stack.set_base(frame)
 
     def __getitem__(self, item) -> _Frame:
         """

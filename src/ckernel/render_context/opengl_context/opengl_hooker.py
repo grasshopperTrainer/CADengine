@@ -54,7 +54,7 @@ def __creator(func):
         for id in ids:
             obj = typ(id, *args)
             objs.append(obj)
-            GlobalOGLContextStack.get_current().entities.registry.register(obj)
+            GlobalOGLContextStack.get_current().entity_tracker.registry.register(obj)
         return objs[0] if len(objs) == 1 else objs
 
     return __wrapper

@@ -125,7 +125,7 @@ class PaneManager(RenderDeviceManager):
                                 h_exp=1.,
                                 parent=device_master.window)
         # to make it default
-        self.master.tracker.stack.set_base_entity(p)
+        self.master.tracker.stack.set_base(p)
 
     def __getitem__(self, item) -> _Pane:
         return super().__getitem__(item)
