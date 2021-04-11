@@ -5,7 +5,7 @@ import glfw
 from numbers import Number
 
 from wkernel.devices.bits import DrawInterface
-from ckernel.context_nodes import ContextManager
+from ckernel.context_tree import ContextManager
 from .glyph import GlyphNode, GlyphInterface
 from .devices.master import DeviceMaster
 from global_tools.callback_registry import callbackRegistry
@@ -65,11 +65,11 @@ class Window(DrawInterface, GlyphInterface):
 
             gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
 
-            glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
             # glfw.swap_interval(1)
 
         with self.__context.glfw as glfw_window:
             glfw.set_window_close_callback(glfw_window, self.__close_window)
+            glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
 
         # make view object
         self.__glyph = GlyphNode(0, 0, width, height, None, None, None, None)

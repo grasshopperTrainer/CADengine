@@ -6,10 +6,10 @@ import OpenGL.GL as gl
 @Singleton
 class ContextSpec:
     """
-    Store opengl specification for outer access
+    Store machine specific opengl context properties.
     """
 
-    # just for protection
+    # enums, property for protection
     @property
     def OGL_VERSION(self):
         return self.__OGL_VERSION
@@ -62,15 +62,15 @@ class ContextSpec:
     @classmethod
     def spec_check(cls):
         """
-                Tests GL behavior on GLFW context.
+        Tests GL behavior
 
-                Tested subjects are such as :
-                GL object shareness
-                GL vertax array objects' children binding
-                basic glfw-opengl info
+        Tested subjects are such as :
+        GL object shareness
+        GL vertax array objects' children binding
+        basic glfw-opengl info
 
-                :return: None
-                """
+        :return: None
+        """
         result_strings = ['', 'GLFW context specification result :', ]
 
         # not to display and window while going through multiple tests
