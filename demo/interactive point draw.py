@@ -1,7 +1,7 @@
 from wkernel import Window
 from mkernel import Model, AModeler
-from mkernel.shapes.ground import Ground
 import gkernel.color as clr
+import time
 
 
 class MyWindow(Window):
@@ -29,14 +29,10 @@ class MyWindow(Window):
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.model.add_ground((.5, .5, .5, .5))
 
-        self.count = 0
-        self.t = None
-
         self.__id_picker = self.devices.frames[1].create_pixel_picker(aid=1)
         self.__coord_picker = self.devices.frames[1].create_pixel_picker(aid=2)
 
     def draw(self):
-        self.count += 1
         with self.devices.frames[0] as rf:
             rf.clear(0, 0, 0, 0)
             rf.clear_depth()
@@ -58,8 +54,8 @@ class MyWindow(Window):
                 # update camera move
                 # extract coordinate texture value
                 txtr_pos = self.devices.cursors[0].pos_local * self.devices.frames[1].size
-                v = self.__coord_picker.pick(pos=txtr_pos.astype(int), size=(1, 1))
-                coord = clr.ClrRGBA(*v[0][0]).rgb
+                pv = self.__coord_picker.pick(pos=txtr_pos.astype(int), size=(1, 1))
+                coord = clr.ClrRGBA(*pv[0][0]).rgb
                 if coord != (0, 0, 0):
                     self.cad_dolly.set_ref_point(*coord)
 
@@ -69,7 +65,7 @@ class MyWindow(Window):
 class DebuggerWindow(Window):
     def __init__(self, mother):
         super().__init__(500, 500, 'sub window', shared=mother)
-        self.framerate = 5
+        self.framerate = 60
         self.ma = mother
 
         self.devices.panes.appendnew_pane(0, 0, 0.5, 0.5, self)

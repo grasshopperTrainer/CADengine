@@ -1,15 +1,15 @@
 from mkernel import Model, BModeler
 from wkernel import Window
-from mkernel.shapes.ground import Ground
-
 import gkernel.color as clr
+import gkernel.dtype.geometric as gt
 
 
 class MyWindow(Window):
     def __init__(self):
-        super().__init__(1000, 1200, 'my window 1', monitor=None, shared=None)
+        super().__init__(1000, 1000, 'my window 1', monitor=None, shared=None)
         self.fps = 120
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(0, 0, 500)
+        self.devices.cameras[0].tripod.lookat((0, 0, 100), (0, 0, 0), (0, 1, 0))
 
         # draw frame
         ff = self.devices.frames.factory
@@ -28,7 +28,7 @@ class MyWindow(Window):
         ff.append_depth_texture(target=ff.TXTR.TRGT.TWO_D,
                                 iformat=ff.TXTR.DEPTH_FRMT.DEPTH_COMPONENT,
                                 name='depth')
-        ff.set_size(1000, 1200)
+        ff.set_size(1000, 1000)
         draw_frame = ff.create()
 
         self.coord_picker = draw_frame.create_pixel_picker('coord')
@@ -43,19 +43,29 @@ class MyWindow(Window):
 
         self.modeler = BModeler(b)
 
+        self.axis = self.model.add_axis()
+        self.ref_plane = self.model.add_geo(gt.Pln())
+        # self.ref_pnt = self.model.add_pnt(0, 0, 0)
+        # self.ref_pnt.clr = 1, 1, 0, 1
+
     def draw(self, frame_count=None):
         # update cam
         coord = self.coord_picker.pick(pos=self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
         coord = clr.ClrRGBA(*coord[0][0]).rgb
-        self.cad_dolly.set_ref_point(*coord)
+        if coord != (.5, .5, .5):
+            self.ref_plane.geo = gt.Pln.from_ori_axies(gt.Pnt(*coord), *self.ref_plane.geo.axes)
+            self.cad_dolly.set_ref_point(*coord)
+            self.axis.draw_at(gt.Ray.from_pnt_vec(gt.Pnt(*coord), self.model.plane.axis_x))
+        # self.ref_pnt.geo = gt.Pnt(*coord)
+        # print(self.devices.cameras[0].body.dim)
 
         # do modeling
-        self.modeler.listen(self.model,
-                            self,
-                            self.devices.mouse,
-                            self.devices.cameras[0],
-                            self.devices.cursors[0],
-                            self.id_picker)
+        # self.modeler.listen(self.model,
+        #                     self,
+        #                     self.devices.mouse,
+        #                     self.devices.cameras[0],
+        #                     self.devices.cursors[0],
+        #                     self.id_picker)
 
         # draw on draw frame
         with self.devices.frames[1] as df:
@@ -72,4 +82,33 @@ class MyWindow(Window):
             df.render_pane_space_depth(aid=0, txtr_domain=(0, 1, 0, 1), pane_domain=(-1, 1, -1, 1))
 
 
-MyWindow().run_all()
+class DebuggerWindow(Window):
+    def __init__(self, mother):
+        super().__init__(500, 500, 'sub window', shared=mother)
+        self.framerate = 60
+        self.ma = mother
+
+        self.devices.panes.appendnew_pane(0, 0, 0.5, 0.5, self)
+        self.devices.panes.appendnew_pane(0.5, 0, 0.5, 0.5, self)
+        self.devices.panes.appendnew_pane(0.5, 0.5, 0.5, 0.5, self)
+        self.devices.panes.appendnew_pane(0, 0.5, 0.5, 0.5, self)
+
+    def draw(self):
+        with self.devices.frames[0] as f:
+            f.clear()
+            f.clear_depth()
+            mf = self.ma.devices.frames[1]
+            with self.devices.panes[1]:
+                mf.render_pane_space(0, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
+            with self.devices.panes[2]:
+                mf.render_pane_space(1, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
+            with self.devices.panes[3]:
+                mf.render_pane_space(2, (0, 1, 0, 1), (-1, 1, -1, 1))
+            with self.devices.panes[4]:
+                mf.render_pane_space('d', (0, 1, 0, 1), (-1, 1, -1, 1), 0)
+
+
+if __name__ == '__main__':
+    mw = MyWindow()
+    sw = DebuggerWindow(mw)
+    mw.run_all()

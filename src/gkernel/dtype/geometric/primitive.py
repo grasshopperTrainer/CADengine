@@ -14,7 +14,7 @@ from gkernel.constants import ATOL
 
 class Mat1(ArrayLikeData):
 
-    def __getattribute__(self, item):
+    def __getattr__(self, item):
         """
         some additional attribute automation
 
@@ -26,6 +26,25 @@ class Mat1(ArrayLikeData):
             vs = tuple(d[c] for c in item)
             return vs[0] if len(vs) == 1 else vs
         return super().__getattribute__(item)
+
+    def __setattr__(self, key, value):
+        if set(key).issubset(set('xyzw')):
+            d = dict(zip('xyzw', range(4)))
+
+            # check for key, value match
+            if len(key) == 1:
+                if hasattr(value, '__iter__'):
+                    raise ValueError()
+                else:
+                    value = (value, )
+            elif not hasattr(value, '__iter__'):
+                raise ValueError()
+
+            # fix value
+            for char, val in zip(key, value):
+                self[d[char], 0] = val
+            return
+        return super().__setattr__(key, value)
 
     # as Pnt and Vec is closely related in arithmetic calculation
     # all is defined here in inherited class

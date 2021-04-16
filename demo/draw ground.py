@@ -1,7 +1,6 @@
 from wkernel import Window
 from mkernel import Model
 import gkernel.color as clr
-from mkernel.shapes.ground import Ground
 import time
 
 
@@ -55,8 +54,8 @@ class MainWindow(Window):
         p3.frm = p3.FORM_TRIANGLE
 
         self.model = model
+        self.model.add_ground((.5,.5,.5,.5))
         self.is_rendered = False
-        self.ground = Ground(clr.ClrRGBA(.8, .8, .8, 1))
 
     def draw(self):
         with self.devices.frames[0] as deff:
@@ -72,13 +71,7 @@ class MainWindow(Window):
                     self.is_rendered = True
 
         with self.devices.panes[1] as p:
-            self.ground.render(cam)
             self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
-            # self.devices.frames[1].render_pane_space(0, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
-            # with self.devices.frames[1] as deff:
-            #     pos = p.cursor_pos(parameterize=True)
-            #     c = deff.pick_texture(tid=1, pos=pos, parameterized=True).as_byte
-            #     e = GlobalColorRegistry().get_registered(tuple(c))
 
 
 class SubWindow(Window):

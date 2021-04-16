@@ -2,6 +2,7 @@ import copy
 
 from gkernel.constants import DTYPE
 from .._NoneGeomDataType import *
+import gkernel.dtype.geometric as gt
 
 
 class Mat4(ArrayLikeData):
@@ -15,7 +16,7 @@ class TrnsfMat(Mat4):
 
     @property
     def I(self):
-        raise NotImplementedError('inverse not defined')
+        return np.linalg.inv(self)
 
     @property
     def str(self):
@@ -40,10 +41,14 @@ class TrnsfMat(Mat4):
         else:
             # try calculating
             try:
-                arr = np.dot(self.view(np.ndarray), other).view(other.__class__)
+                cls = other.__class__
+                if issubclass(other.__class__, gt.Vec):
+                    cls = gt.Vec
+                arr = np.dot(self.view(np.ndarray), other).view(cls)
                 return arr
             except Exception as e:
                 raise e
+
 
 class TrnsfMats(TrnsfMat):
     """

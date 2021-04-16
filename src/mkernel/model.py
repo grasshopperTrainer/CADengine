@@ -54,7 +54,7 @@ class Model:
         self.__shapes.setdefault(shape_type, set()).add(shp)
         return shp
 
-    def __add_nongeo_helper(self, shape_type, renderer_type, args):
+    def __add_nongeo_helper(self, shape_type, renderer_type, args=()):
         """
         helper for nongeometric shapes like ground
 
@@ -103,15 +103,15 @@ class Model:
         """
         return self.__add_geo_helper(geo=gt.Pnt(x, y, z), shape_type=st.Pnt, renderer_type=rend.PointRenderer)
 
-    def add_lin(self, vs, ve) -> st.Lin:
+    def add_lin(self, start, end) -> st.Lin:
         """
         add line
 
-        :param vs: (x, y, z), vertex start
-        :param ve: (x, y, z), vertex end
+        :param start: (x, y, z), vertex start
+        :param end: (x, y, z), vertex end
         :return: Lin shape
         """
-        return self.__add_geo_helper(geo=gt.Lin(vs, ve), shape_type=st.Lin, renderer_type=rend.LineRenderer)
+        return self.__add_geo_helper(geo=gt.Lin(start, end), shape_type=st.Lin, renderer_type=rend.LineRenderer)
 
     def add_tgl(self, v0, v1, v2) -> st.Tgl:
         """
@@ -167,6 +167,9 @@ class Model:
         :return:
         """
         return self.__add_nongeo_helper(shape_type=st.Ground, renderer_type=rend.GroundRenderer, args=(color,))
+
+    def add_axis(self) -> st.FlatAxis:
+        return self.__add_nongeo_helper(shape_type=st.FlatAxis, renderer_type=rend.FlatAxisRenderer)
 
     def remove_shape(self, shape):
         """

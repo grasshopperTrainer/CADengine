@@ -25,7 +25,7 @@ class VrtxAttrSchema(_GLSLParamSchema):
     """
     def __init__(self, dtype, locs):
         self._dtype = dtype
-        self._locs = locs
+        self._attr_locs = locs
 
     def __str__(self):
         return f"<{self.__class__.__name__}: {self._dtype}>"
@@ -37,15 +37,27 @@ class VrtxAttrSchema(_GLSLParamSchema):
         :param size: size o
         :return:
         """
-        cache = BffrCache(self._dtype, self._locs, size)
+        cache = BffrCache(self._dtype, self._attr_locs, size)
         return cache
 
-    def create_vrtx_bffr(self) -> MetaVrtxBffr:
+    def create_vrtx_bffr(self, attr_locs=None) -> MetaVrtxBffr:
         """
         create vertex buffer factory that describes entire vertex attribute set
         :return:
         """
-        return MetaVrtxBffr(self._dtype, self._locs)
+        if attr_locs is None:
+            dtype = self._dtype
+            attr_locs = self._attr_locs
+        else:
+            fields = list(self._dtype.fields.items())
+            new_fields = []
+            for i in attr_locs:
+                name = fields[i][0]
+                dt = fields[i][1][0]
+                new_fields.append((name, dt))
+            dtype = np.dtype(new_fields)
+
+        return MetaVrtxBffr(dtype, attr_locs)
 
     def union(self, other):
         """
@@ -53,10 +65,10 @@ class VrtxAttrSchema(_GLSLParamSchema):
         :return:
         """
         new_fields = {}
-        for n, l in zip(self._dtype.names, self._locs):
+        for n, l in zip(self._dtype.names, self._attr_locs):
             dt = self._dtype[n]
             new_fields[l] = (n, dt.base, dt.shape)
-        for n, l in zip(other._dtype.names, other._locs):
+        for n, l in zip(other._dtype.names, other._attr_locs):
             if l in new_fields and new_fields[l] != (n, other._dtype[n].base, other._dtype[n].shape):
                 raise
             else:

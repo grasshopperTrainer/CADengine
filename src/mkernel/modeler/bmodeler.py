@@ -72,7 +72,6 @@ class BModeler(Modeler):
         while True:
             with timer:
                 # render drawing line
-
                 cray = camera.frusrum_ray(*cursor.pos_local.xy)
                 pln = gt.Pln.from_ori_axies(svrtx.geo, *model.plane.axes)
                 dist, pnt, sign = self.__ap.pick(cray, pln)

@@ -34,7 +34,7 @@ class AModeler(Modeler):
             self.execute(self.point_delete, model, args=(window, camera, cursor, id_picker))
         self.__last_button_status[0] = mouse.get_button_status(0)
 
-    def point_add_select(self, window, camera, cursor, id_picker, model, mlock):
+    def point_add_select(self, window, camera, cursor, id_picker, model):
         """
         add new or select existing
 
@@ -42,7 +42,6 @@ class AModeler(Modeler):
         :param cursor:
         :param id_picker: FramePixelPicker,
         :param model:
-        :param mlock:
         :return:
         """
         # if selecting existing
@@ -53,8 +52,7 @@ class AModeler(Modeler):
 
         if not shape:
             pos = self.__vp.pick(camera, cursor)[1]
-            with mlock:
-                model.add_geo(pos)
+            model.add_geo(pos)
             if self.__selected:
                 self.__remove_selected()
         else:
@@ -66,7 +64,7 @@ class AModeler(Modeler):
                 else:
                     self.__set_selected(shape)
 
-    def point_delete(self, window, camera, cursor, id_picker, model, mlock):
+    def point_delete(self, window, camera, cursor, id_picker, model):
         """
 
         :param window:
@@ -74,7 +72,6 @@ class AModeler(Modeler):
         :param cursor:
         :param id_picker:
         :param model:
-        :param mlock:
         :return:
         """
         if self.__selected:

@@ -1,6 +1,5 @@
 from wkernel import Window
 from mkernel import Model
-from mkernel.shapes.ground import Ground
 import gkernel.color as clr
 
 
@@ -29,12 +28,9 @@ class MyWindow(Window):
         # attach dolly
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(camera_id=0, cursor_id=0, def_offset=500)
 
-        # ground
-        self.ground = Ground(clr.ClrRGBA(0.5, 0.5, 0.5, 0.5))
-
         self.model = Model()
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-
+        self.model.add_ground((.5, .5, .5, .5))
         a = 10
         for x in range(10):
             for y in range(10):
@@ -49,7 +45,6 @@ class MyWindow(Window):
                 f.clear(0, 0, 0, 0)
                 f.clear_depth()
                 self.model.render()
-                self.ground.render(self.devices.cameras[0])
 
                 # extract coordinate texture value
                 # print(self.devices.cursors[1].pos_local, self.devices.cursors[1].pos_global)
