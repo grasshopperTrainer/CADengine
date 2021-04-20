@@ -1,12 +1,8 @@
 import numpy as np
-import ctypes as ct
 
 from .base import Renderer
-from ckernel.render_context.opengl_context.bffr_cache import BffrCache
-import ckernel.render_context.opengl_context.meta_entities as meta
+import ckernel.render_context.opengl_context.entities.meta as meta
 from .base import get_shader_fullpath
-from ckernel.render_context.opengl_context.context_stack import get_current_ogl
-import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 
 class BrepRenderer(Renderer):

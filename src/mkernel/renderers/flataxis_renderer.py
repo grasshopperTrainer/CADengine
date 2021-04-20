@@ -1,8 +1,7 @@
 import os
 import OpenGL.GL as gl
-import numpy as np
 
-import ckernel.render_context.opengl_context.meta_entities as meta
+import ckernel.render_context.opengl_context.entities.meta as meta
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
 from .base import Renderer
@@ -17,8 +16,8 @@ class FlatAxisRenderer(Renderer):
                              frgm_path=os.path.join(__this_dir, '../renderers/shaders/flataxis_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__vbo = self.__prgrm.vrtxattr_schema.create_vrtx_bffr(attr_locs=(0, 1, 2, 3))
-        self.__cam_vbo = self.__prgrm.vrtxattr_schema.create_vrtx_bffr(attr_locs=(4, 5))
+        self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr(attr_locs=(0, 1, 2, 3))
+        self.__cam_vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr(attr_locs=(4, 5))
         self.__cam_vbo_block = self.__cam_vbo.cache.request_block(size=4)
         self.__ibo = meta.MetaIndxBffr(dtype='uint')
         self.__vao = meta.MetaVrtxArry(self.__vbo, self.__cam_vbo, indx_bffr=self.__ibo)
@@ -48,9 +47,7 @@ class FlatAxisRenderer(Renderer):
 
         self.__vbo.push_cache()
 
-        gl.glDrawBuffers(1, gl.GL_COLOR_ATTACHMENT0)
         with self.__prgrm:
+
             with self.__vao:
-                # gl.glDisable(gl.GL_DEPTH_TEST)
                 gl.glDrawArrays(gl.GL_QUADS, 0, 4)
-                # gl.glEnable(gl.GL_DEPTH_TEST)

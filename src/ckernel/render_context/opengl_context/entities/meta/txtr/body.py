@@ -1,5 +1,5 @@
 import numpy as np
-from ckernel.render_context.opengl_context.meta_entities.base import OGLMetaEntity
+from ckernel.render_context.opengl_context.entities.meta.base import OGLMetaEntity
 from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
 from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 import ckernel.render_context.opengl_context.opengl_hooker as gl
@@ -42,7 +42,7 @@ class MetaTexture(OGLMetaEntity):
         THREE_D = gl.GL_TEXTURE_3D
 
     def bind(self):
-        super(MetaTexture, self).bind()
+        super().bind()
         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
 
     def _create_entity(self):
@@ -123,7 +123,9 @@ class _MetaTextureAsUnit:
 
     def __enter__(self):
         gl.glActiveTexture(gl.GL_TEXTURE0 + self.__unit)
-        self.__mt.bind()
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
+
+        self.__mt.enter()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__mt.unbind()
+        self.__mt.exit()

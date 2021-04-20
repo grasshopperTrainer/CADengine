@@ -1,7 +1,7 @@
 import os
 import OpenGL.GL as gl
 
-import ckernel.render_context.opengl_context.meta_entities as meta
+import ckernel.render_context.opengl_context.entities.meta as meta
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
 from .base import Renderer
@@ -16,7 +16,7 @@ class GroundRenderer(Renderer):
                              frgm_path=os.path.join(__this_dir, '../renderers/shaders/ground_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__vbo = self.__prgrm.vrtxattr_schema.create_vrtx_bffr()
+        self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__vao = meta.MetaVrtxArry(self.__vbo)
 
     @property

@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 import numpy as np
 import ckernel.render_context.opengl_context.opengl_hooker as gl
@@ -7,6 +8,8 @@ from ..error import *
 from .shdr_parser import SimpleShdrParser
 from .shdr_parser import VrtxAttrSchema, UfrmSchema
 from global_tools.lazy import lazyProp
+from ckernel.render_context.opengl_context.context_stack import get_current_ogl
+from ckernel.render_context.opengl_context.entities.meta.frame import MetaFrameBffr
 
 
 class MetaPrgrm(OGLMetaEntity):
@@ -27,13 +30,28 @@ class MetaPrgrm(OGLMetaEntity):
         if frgm_path is not None:
             self.__read_source(frgm_path, gl.GL_FRAGMENT_SHADER)
 
+    def __enter__(self):
+        super().enter()
+        # bind draw buffers
+        frame = get_current_ogl().entity_stacker[MetaFrameBffr].peek_if()
+        if frame:
+            self.draw_bffr.bind()
+
     @lazyProp
-    def vrtxattr_schema(self) -> VrtxAttrSchema:
-        return SimpleShdrParser.parse_vrtx_attrs(self.__shdr_srcs[gl.GL_VERTEX_SHADER][1])
+    def vrtx_attr_schema(self) -> VrtxAttrSchema:
+        return SimpleShdrParser.parse_vrtx_attrs(self.__shdr_srcs[gl.GL_VERTEX_SHADER][0])
 
     @lazyProp
     def ufrm_schema(self) -> UfrmSchema:
-        return SimpleShdrParser.parse_uniforms(*[s for n, s in self.__shdr_srcs.values()])
+        return SimpleShdrParser.parse_uniforms(*[s for s, n in self.__shdr_srcs.values()])
+
+    @lazyProp
+    def frgm_outputs(self):
+        return SimpleShdrParser.parse_frgm_outputs(*self.__shdr_srcs[gl.GL_FRAGMENT_SHADER])
+
+    @lazyProp
+    def draw_bffr(self):
+        return self.frgm_outputs.create_draw_bffr()
 
     @lazyProp
     def __uniform_cache(self):
@@ -52,7 +70,8 @@ class MetaPrgrm(OGLMetaEntity):
         :return:
         """
         with open(file_path, mode='r') as file:
-            self.__shdr_srcs[shdr_type] = (file.name, file.read())
+            name = os.path.split(file.name)[-1]
+            self.__shdr_srcs[shdr_type] = (file.read(), name)
 
     def _create_entity(self):
         """
@@ -66,7 +85,7 @@ class MetaPrgrm(OGLMetaEntity):
 
         # create, compile, attach shaders
         shdrs = []
-        for shdr_type, (name, src) in self.__shdr_srcs.items():
+        for shdr_type, (src, name) in self.__shdr_srcs.items():
             if src:
                 shdr = gl.glCreateShader(shdr_type)
                 gl.glShaderSource(shdr, src)

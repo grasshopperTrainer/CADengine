@@ -5,10 +5,8 @@ in vec3 fcid;
 
 layout (location=0) out vec4 clr;
 layout (location=1) out vec4 cid;
-layout (location=2) out vec4 coord;
 
 void main() {
     clr = fclr;
     cid = vec4(fcid, 1);
-    coord = vec4(0, 0, 0, 0);
 }

@@ -11,12 +11,15 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
 
     def __init__(self, master):
         self.__master = master
+        self.__device_idx = 0
+        self.__devices = {}
 
     def __getitem__(self, item):
-        return self.__master.tracker.registry[self.device_type][item]
+        return self.__devices[item]
+        # return self.__master.tracker.registry[self.device_type][item]
 
     def __len__(self):
-        return len(self.__master.tracker.registry[self.device_type])
+        return len(self.__master.stacker.registry[self.device_type])
 
     def _appendnew_device(self, device):
         """
@@ -24,7 +27,10 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
 
         :return:
         """
-        self.__master.tracker.registry.register(device)
+        self.__devices[self.__device_idx] = device
+        self.__device_idx += 1
+
+        # self.__master.tracker.registry.register(device)
 
     @property
     @abc.abstractmethod
@@ -33,7 +39,7 @@ class RenderDeviceManager(metaclass=abc.ABCMeta):
 
     @property
     def current(self):
-        return self.__master.tracker.stack.get_current(self.device_type)
+        return self.__master.stacker[self.device_type].peek()
 
     @property
     def master(self):
@@ -64,14 +70,20 @@ class RenderDevice(metaclass=abc.ABCMeta):
         # giving registration responsibility to the terminal deivce
         self.__manager = manager
 
+    def enter(self):
+        self.__manager.master.stacker.push(self)
+        return self
+
+    def exit(self):
+        self.__manager.master.stacker[self.__class__].pop()
+
     # inheritor should provide context manager
     # but not through super just to notify IDE about the return type
     def __enter__(self):
-        self.__manager.master.tracker.stack.push(self)
-        return self
+        return self.enter()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__manager.master.tracker.stack.pop(self.__class__)
+        return self.exit()
 
     @property
     def manager(self) -> RenderDeviceManager:
@@ -86,5 +98,5 @@ class RenderDevice(metaclass=abc.ABCMeta):
         get current from tracker
         :return:
         """
-        return self.__manager.master.tracker.stack.get_current(self.__class__)
+        return self.__manager.master.stacker[self.__class__].peek()
 

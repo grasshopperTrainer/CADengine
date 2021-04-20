@@ -1,15 +1,15 @@
-import ctypes
+import numpy as np
 import abc
 from collections import namedtuple
+import ctypes
 
-import numpy as np
-
-import ckernel.render_context.opengl_context.opengl_hooker as gl
-from ckernel.render_context.opengl_context.meta_entities.error import *
-from ckernel.render_context.opengl_context.meta_entities.base import OGLMetaEntity
+from ckernel.render_context.opengl_context.entities.meta.base import OGLMetaEntity
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
-from ..translators import npdtype_to_gldtype
+from ckernel.render_context.opengl_context.translators import npdtype_to_gldtype
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
+import ckernel.render_context.opengl_context.opengl_hooker as gl
+
+from .error import *
 
 
 class _MetaBffr(OGLMetaEntity, metaclass=abc.ABCMeta):

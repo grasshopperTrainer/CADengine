@@ -6,7 +6,7 @@ common operations like binding, deleting
 import abc
 import numpy as np
 import ckernel.render_context.opengl_context.opengl_hooker as gl
-from .context_stack import get_current_ogl
+from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 from ckernel.context_spec import ContextSpec
 
 
@@ -71,25 +71,11 @@ class OGLEntity(metaclass=abc.ABCMeta):
 
     # binding context implement into context manager
     def __enter__(self):
-        entity_stack = get_current_ogl().entities.stack
-        if not entity_stack.is_empty(self.__class__) and entity_stack.get_current(self.__class__) == self:
-            entity_stack.push(self)
-        else:
-            entity_stack.push(self)
-            self.bind()
+        self.bind()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        entities = get_current_ogl().entities
-        entities.stack.pop(self.__class__)
-        # control over matryoshka context
-        # follow bind-only policy
-        if not entities.stack.is_empty(self.__class__):
-            entity = entities.stack.get_current(self.__class__)
-            entity.bind()
-        else:
-            # only if there is no entity to return binding
-            self.unbind()
+        self.unbind()
 
 
 # use under bar

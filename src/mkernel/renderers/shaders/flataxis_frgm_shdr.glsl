@@ -1,8 +1,8 @@
 #version 450 core
 
 layout (location=0) out vec4 clr;
-layout (location=1) out vec4 cid;
-layout (location=2) out vec4 coord;
+//layout (location=1) out vec4 cid;
+//layout (location=2) out vec4 coord;
 
 layout (location=0) uniform mat4 PM;
 layout (location=1) uniform mat4 VM;

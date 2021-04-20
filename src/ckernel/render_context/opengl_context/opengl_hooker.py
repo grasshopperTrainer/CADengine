@@ -1,11 +1,9 @@
 import numpy as np
 
-import importlib
 # for code completion
 import OpenGL.GL as gl
 from OpenGL.GL import *
-from .ogl_entities import OGLEntity, _Prgrm, _Bffr, _Shdr, _VrtxArry, _FrameBffr, _Texture, _RenderBffr
-from ckernel.render_context.opengl_context.context_stack import GlobalOGLContextStack
+from ckernel.render_context.opengl_context.entities.ogl_entities import OGLEntity, _Prgrm, _Bffr, _Shdr, _VrtxArry, _FrameBffr, _Texture, _RenderBffr
 from global_tools.enum import EnumVal
 
 # _context = []
@@ -54,7 +52,7 @@ def __creator(func):
         for id in ids:
             obj = typ(id, *args)
             objs.append(obj)
-            GlobalOGLContextStack.get_current().entities.registry.register(obj)
+            # GlobalOGLContextStack.get_current().entities.registry.register(obj)
         return objs[0] if len(objs) == 1 else objs
 
     return __wrapper

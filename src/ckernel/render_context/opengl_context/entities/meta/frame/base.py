@@ -1,10 +1,9 @@
-import weakref as wr
-
-from .base import OGLMetaEntity
+from ckernel.render_context.opengl_context.entities.meta.base import OGLMetaEntity
 import ckernel.render_context.opengl_context.opengl_hooker as gl
-from ckernel.render_context.opengl_context.meta_entities.txtr.body import MetaTexture
-from ..constant_enum import DrawTargetFormats as DTF
-from ..constant_enum import TextureTargets as TT
+from ckernel.render_context.opengl_context.entities.meta.txtr.body import MetaTexture
+from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
+from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
+from ckernel.render_context.opengl_context.entities.draw_bffr import DrawBffr
 
 
 class MetaFrameBffr(OGLMetaEntity):
@@ -44,7 +43,8 @@ class MetaFrameBffr(OGLMetaEntity):
             if att.name:
                 self.__aliases[att.name] = aid
 
-        self.__color_attachment_names = [eval(f"gl.GL_COLOR_ATTACHMENT{i}") for i in aids if isinstance(i, int)]
+        # self.__color_attachments = {eval(f"gl.GL_COLOR_ATTACHMENT{i}") for i in aids if isinstance(i, int)}
+        self._draw_bffr = DrawBffr([i for i in aids if isinstance(i, int)])
 
     def __str__(self):
         return f"<MetaFrameBffr >"
@@ -61,6 +61,14 @@ class MetaFrameBffr(OGLMetaEntity):
     @property
     def textures(self) -> MetaTexture:
         return self.__attachments.copy()
+
+    # @property
+    # def color_attachments(self):
+    #     return self.__color_attachments
+
+    @property
+    def draw_bffr(self):
+        return self._draw_bffr
 
     def _create_entity(self):
         if not self.__attachments:
@@ -138,8 +146,7 @@ class MetaFrameBffr(OGLMetaEntity):
         :return:
         """
         super().bind()
-        gl.glDrawBuffers(len(self.__color_attachment_names), self.__color_attachment_names)
-        # gl.glColorMaski(1, True, True, True, False)
+        self.draw_bffr.bind()
 
 
 class MetaRenderBffr(OGLMetaEntity):

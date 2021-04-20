@@ -1,6 +1,6 @@
 import weakref
-from collections import OrderedDict
 from global_tools.list_set import ListSet
+import abc
 
 
 class _TypewiseRegistry:
@@ -94,34 +94,17 @@ class _TypewiseRegistry:
         return not bool(self.__initget_subregistry(entity_cls))
 
 
-
-class _TypewiseStack:
-    """
-    Stack to record and track current entity of multiple types.
-
-    Stack here describes a temporal hierarchical order of entities.
-    The typical purpose of it is to track entity currency within python's context manager pattern.
-    ex)
-    class Foo:
-        def __init__(self):
-            self.__tracker = TypewiseStack()
-
-        def __enter__(self):
-            self.__tracker.put(self)
-
-        def __exit__(self, ...):
-            self.__tracker.pop(self)
-    """
-
+class TypewiseStacker:
     def __init__(self, stack_type=dict):
         """
+        stack container that holds stacks for each unique types
+
         :param stack_type: dict-like instance, ex) dict or dict subclass or one of weakref dict instance
         """
         dict_like = dict, weakref.WeakKeyDictionary, weakref.WeakValueDictionary
         if isinstance(stack_type, dict_like):
             raise TypeError('data type for registry and stack should be dict-like')
         self.__stacks = stack_type()
-        self.__bases = stack_type()
 
     def __getitem__(self, entity_type):
         """
@@ -131,55 +114,78 @@ class _TypewiseStack:
         :return: stack
         """
         # FIXME: this causes an unauthorized intrusion into stack
+        if entity_type not in self.__stacks:
+            if not isinstance(entity_type, type):
+                raise TypeError
+            new_stack = _SubStack()
+            self.__stacks[entity_type] = new_stack
+            self.__stacks[entity_type.__name__] = new_stack
         return self.__stacks[entity_type]
-
-    @property
-    def record(self):
-        return self.__stacks
-
-    def __initset_substack(self, entity_type):
-        """
-        initiate or set stack per entity type
-
-        :param entity_type:
-        :return:
-        """
-        return self.__stacks.setdefault(entity_type, [])
 
     # stack methods
     def push(self, entity):
-        self.__initset_substack(entity.__class__).append(entity)
+        stack = self[entity.__class__]
+        stack.push(entity)
 
-    def pop(self, entity_cls):
-        if not isinstance(entity_cls, type):
-            raise TypeError('entity type should be popped must be indicated')
-        if self.is_empty(entity_cls):
+    def set_base(self, entity):
+        stack = self[entity.__class__]
+        stack.set_base(entity)
+
+
+class _NoneBase:
+    def __str__(self):
+        return f"<NoneBase>"
+
+
+class _SubStack:
+    def __init__(self):
+        self.__stack = []
+        self.__base = _NoneBase()
+
+    def __str__(self):
+        return f"<Stack: {self.__base}, {self.__stack}>"
+
+    # stack methods
+    def push(self, entity):
+        self.__stack.append(entity)
+
+    def pop(self):
+        if self.__stack:
+            entity = self.__stack.pop()
+        elif self.has_base():
+            entity = self.__base
+        else:
             raise _EmptyStackError('cant pop from empty stack')
-        return self.__stacks[entity_cls].pop()
 
-    def get_current(self, entity_type):
-        if self.is_empty(entity_type):
-            if entity_type in self.__bases:
-                return self.__bases[entity_type]
+        return entity
+
+    def peek(self):
+        if self.__stack:
+            return self.__stack[-1]
+        elif self.has_base():
+            return self.__base
+        else:
+            raise _EmptyStackError('cant pop from empty stack')
+
+    def peek_if(self):
+        try:
+            return self.peek()
+        except _EmptyStackError:
             return None
-        return self.__initset_substack(entity_type)[-1]
+        except Exception as e:
+            raise e
 
-    def get_current_byname(self, entity_type_name):
-        """
-        get current entity
+    def has_base(self):
+        if isinstance(self.__base, _NoneBase):
+            return False
+        return True
 
-        :param entity_type_name:
-        :return:
-        """
-        for key_cls in self.__stacks:
-            if key_cls.name == entity_type_name:
-                return self.get_current(key_cls)
-        raise _EmptyStackError('no current from empty stack')
+    def is_empty(self):
+        if not isinstance(self.__base, _NoneBase) or self.__stack:
+            return False
+        return True
 
-    def is_empty(self, entity_cls):
-        return not bool(self.__stacks.get(entity_cls, False))
-
-    def set_base_entity(self, entity):
+    def set_base(self, entity):
         """
         set base entity
 
@@ -187,21 +193,7 @@ class _TypewiseStack:
         inpopable, returned when stack is empty
         :return:
         """
-        self.__bases[entity.__class__] = entity
-
-
-class TypewiseTracker:
-    def __init__(self):
-        self.__registry = _TypewiseRegistry()
-        self.__stack = _TypewiseStack()
-
-    @property
-    def registry(self) -> _TypewiseRegistry:
-        return self.__registry
-
-    @property
-    def stack(self) -> _TypewiseStack:
-        return self.__stack
+        self.__base = entity
 
 
 class _EmptyStackError(Exception):

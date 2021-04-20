@@ -1,7 +1,8 @@
 from ckernel.render_context.opengl_context.bffr_cache import BffrCache
-from ckernel.render_context.opengl_context.meta_entities.metas import MetaVrtxBffr
-import numpy as np
+from ckernel.render_context.opengl_context.entities.meta.others import MetaVrtxBffr
+from ckernel.render_context.opengl_context.entities.draw_bffr import DrawBffr
 
+import numpy as np
 
 """
 Schemas describes data structure of shader parameters
@@ -18,17 +19,18 @@ class _GLSLParamSchema:
     def locs(self):
         return self._locs
 
+    def __str__(self):
+        return f"<{self.__class__.__name__}: {self._dtype}>"
+
 
 class VrtxAttrSchema(_GLSLParamSchema):
     """
     Vertex attribute skema
     """
+
     def __init__(self, dtype, locs):
         self._dtype = dtype
         self._attr_locs = locs
-
-    def __str__(self):
-        return f"<{self.__class__.__name__}: {self._dtype}>"
 
     def create_bffr_cache(self, size) -> BffrCache:
         """
@@ -83,13 +85,11 @@ class UfrmSchema(_GLSLParamSchema):
     Uniform skema
 
     """
+
     def __init__(self, dtype, locs, def_val):
         self._dtype = dtype
         self._locs = locs
         self._def_val = def_val
-
-    def __str__(self):
-        return f"<{self.__class__.__name__}: {self._dtype}>"
 
     def create_bffr_cache(self, size):
         """
@@ -102,3 +102,13 @@ class UfrmSchema(_GLSLParamSchema):
             if val is not None:
                 cache.array[name][...] = val
         return cache
+
+
+class FrgmOutputSchema(_GLSLParamSchema):
+    def __init__(self, dtype: np.dtype, locs: (tuple, list)):
+        # useless for now
+        self._dtype = dtype
+        self._locs = set(locs)
+
+    def create_draw_bffr(self):
+        return DrawBffr(self._locs)

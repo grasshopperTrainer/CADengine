@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 import gkernel.dtype.geometric as gt
-import ckernel.render_context.opengl_context.meta_entities as meta
+import ckernel.render_context.opengl_context.entities.meta as meta
 import OpenGL.GL as gl
 
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
@@ -16,7 +16,7 @@ class _CursorRenderer:
                                  frgm_path=os.path.join(__path, 'dot_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__dot_vbo = self.__dot_prgrm.vrtxattr_schema.create_vrtx_bffr()
+        self.__dot_vbo = self.__dot_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__dot_vao = meta.MetaVrtxArry(self.__dot_vbo)
 
         self.__block = self.__dot_vbo.cache.request_block(size=1)

@@ -2,12 +2,11 @@ import os
 import weakref as wr
 import numpy as np
 from numbers import Number
-import ctypes
 
 from global_tools.enum import enum
 import ckernel.render_context.opengl_context.opengl_hooker as gl
-import ckernel.render_context.opengl_context.meta_entities as meta
-from ckernel.render_context.opengl_context.ogl_entities import _FrameBffr
+import ckernel.render_context.opengl_context.entities.meta as meta
+from ckernel.render_context.opengl_context.entities.meta.frame import DefaultFrameBffr
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
 import gkernel.dtype.geometric as gt
@@ -15,9 +14,7 @@ import gkernel.dtype.nongeometric.matrix as mx
 import gkernel.color as clr
 
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
-from global_tools.lazy import lazyProp
-from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
-from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
+from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF, TextureTargets as TT
 from .FramePixelPicker import FramePixelPicker
 
 
@@ -33,17 +30,17 @@ class FrameRenderer:
 
     def __init__(self):
         # quad set
-        self.__quad_vbo = self.__quad_prgrm.vrtxattr_schema.create_vrtx_bffr()
+        self.__quad_vbo = self.__quad_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__quad_block = self.__quad_vbo.cache.request_block(size=4)
         self.__quad_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
         self.__quad_vao = meta.MetaVrtxArry(self.__quad_vbo)
         # pane set
-        self.__pane_vbo = self.__pane_prgrm.vrtxattr_schema.create_vrtx_bffr()
+        self.__pane_vbo = self.__pane_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__pane_block = self.__pane_vbo.cache.request_block(size=4)
         self.__pane_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
         self.__pane_vao = meta.MetaVrtxArry(self.__pane_vbo)
         # pane depth set
-        self.__pane_depth_vbo = self.__pane_depth_prgrm.vrtxattr_schema.create_vrtx_bffr()
+        self.__pane_depth_vbo = self.__pane_depth_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__pane_depth_block = self.__pane_depth_vbo.cache.request_block(size=4)
         self.__pane_depth_block['tex_coord'] = (0, 0), (1, 0), (1, 1), (0, 1)
         self.__pane_depth_vao = meta.MetaVrtxArry(self.__pane_depth_vbo)
@@ -127,13 +124,14 @@ class Frame(RenderDevice):
         2. record current device
         :return:
         """
-        self.__frame_bffr.bind()  # binding for ogl operations
+        # ! binding for ogl operations
+        self.__frame_bffr.enter()
         return super().__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        if self.get_current() is not self:
-            self.get_current().frame_bffr.bind()
+        # ! unbind for ogl operations
+        self.__frame_bffr.exit()
 
     def __str__(self):
         return f"<Frame {self.__size}>"
@@ -279,7 +277,6 @@ class Frame(RenderDevice):
         :param stencil: bool, flag clean stencil
         :return:
         """
-
         gl.glClearColor(r, g, b, a)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
@@ -337,9 +334,9 @@ class FrameManager(RenderDeviceManager):
         # default device just binds 0 to get back to glfw provided buffer
         # ! assigning concrete frame buffer
         ww, wh = self.window.glyph.size
-        frame = Frame(self, _FrameBffr(0, gl.GL_FRAMEBUFFER), ww, wh)
+        frame = Frame(self, DefaultFrameBffr(self.window), ww, wh)
         self._appendnew_device(frame)
-        self.master.tracker.stack.set_base_entity(frame)
+        self.master.stacker.set_base(frame)
 
     def __getitem__(self, item) -> _Frame:
         """

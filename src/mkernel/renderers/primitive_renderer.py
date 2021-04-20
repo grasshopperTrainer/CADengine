@@ -1,10 +1,9 @@
 import os
+import ctypes
 
-import ckernel.render_context.opengl_context.meta_entities as meta
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
-from ckernel.render_context.opengl_context.meta_entities.prgrm.schemas import VrtxAttrSchema
-from ckernel.render_context.opengl_context.meta_entities import *
-from ckernel.constants import RENDER_DEFAULT_FLOAT as RDF
+import ckernel.render_context.opengl_context.entities.meta as meta
+import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 from global_tools.singleton import Singleton
 from .base import Renderer, get_shader_fullpath
@@ -57,15 +56,15 @@ class PointRenderer(Renderer):
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_frgm_shdr.glsl'))
 
     # shared vertex buffer
-    __vbo = __square_prgrm.vrtxattr_schema.create_vrtx_bffr()
+    __vbo = __square_prgrm.vrtx_attr_schema.create_vrtx_bffr()
 
     def __init__(self):
-        self.__circle_ibo = MetaIndxBffr('uint')
-        self.__circle_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__circle_ibo)
-        self.__square_ibo = MetaIndxBffr('uint')
-        self.__square_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__square_ibo)
-        self.__triangle_ibo = MetaIndxBffr('uint')
-        self.__triangle_vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__triangle_ibo)
+        self.__circle_ibo = meta.MetaIndxBffr('uint')
+        self.__circle_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__circle_ibo)
+        self.__square_ibo = meta.MetaIndxBffr('uint')
+        self.__square_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__square_ibo)
+        self.__triangle_ibo = meta.MetaIndxBffr('uint')
+        self.__triangle_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__triangle_ibo)
 
     @property
     def vbo(self):
@@ -175,9 +174,9 @@ class LineRenderer(Renderer):
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__vbo = self.__sharp_prgrm.vrtxattr_schema.create_vrtx_bffr()
-        self.__ibo = MetaIndxBffr(dtype='uint')
-        self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
+        self.__vbo = self.__sharp_prgrm.vrtx_attr_schema.create_vrtx_bffr()
+        self.__ibo = meta.MetaIndxBffr(dtype='uint')
+        self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
     @property
     def vbo(self):
@@ -220,9 +219,9 @@ class PolylineRenderer(Renderer):
     )
 
     def __init__(self):
-        self.__vbo = self.__sharp_prgrm.vrtxattr_schema.create_vrtx_bffr()
-        self.__ibo = MetaIndxBffr(dtype='uint')
-        self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
+        self.__vbo = self.__sharp_prgrm.vrtx_attr_schema.create_vrtx_bffr()
+        self.__ibo = meta.MetaIndxBffr(dtype='uint')
+        self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
     @property
     def vbo(self):
@@ -282,9 +281,9 @@ class TriangleRenderer(Renderer):
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__vbo = self.__prgrm.vrtxattr_schema.union(self.__prgrm.vrtxattr_schema).create_vrtx_bffr()
-        self.__ibo = MetaIndxBffr('uint')
-        self.__vao = MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
+        self.__vbo = self.__prgrm.vrtx_attr_schema.union(self.__prgrm.vrtx_attr_schema).create_vrtx_bffr()
+        self.__ibo = meta.MetaIndxBffr('uint')
+        self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
     @property
     def vbo(self):

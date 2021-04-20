@@ -2,11 +2,8 @@ import weakref
 import abc
 import threading
 
-import numpy as np
-
-from ckernel.render_context.opengl_context.ogl_entities import OGLEntity
-from ckernel.render_context.opengl_context.context_stack import GlobalOGLContextStack, OpenglUnboundError
-from .error import *
+from ckernel.render_context.opengl_context.entities.ogl_entities import OGLEntity
+from ckernel.render_context.opengl_context.context_stack import get_current_ogl, OpenglUnboundError
 from global_tools.lazy import lazyProp
 
 
@@ -53,7 +50,7 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         :return: entity for current context
         """
         with self.__lock:
-            c = GlobalOGLContextStack.get_current()
+            c = get_current_ogl()
             if c is None:
                 raise OpenglUnboundError
 
@@ -92,13 +89,34 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
     def unbind(self):
         self.get_concrete().unbind()
 
+    def enter(self):
+        """
+        explicit context manager caller
+        :return:
+        """
+        get_current_ogl().entity_stacker[self.__class__].push(self)
+        self.bind()
+        return self
+
+    def exit(self):
+        """
+        explicit context manager exit
+        :return:
+        """
+        stacker = get_current_ogl().entity_stacker[self.__class__]
+        stacker.pop()
+        if stacker.is_empty():
+            self.unbind()
+        elif stacker.peek() != self:
+            stacker.peek().bind()
+
     def __enter__(self):
         """
         connector method, access entity through context manager patter when binding is needed
 
         :return:
         """
-        return self.get_concrete().__enter__()
+        return self.enter()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
@@ -109,4 +127,4 @@ class OGLMetaEntity(metaclass=abc.ABCMeta):
         :param exc_tb:
         :return:
         """
-        return self.get_concrete().__exit__(exc_type, exc_val, exc_tb)
+        return self.exit()

@@ -37,14 +37,14 @@ class MyWindow(Window):
         # create model
         model = Model()
         self.model = model
-        self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.model.add_ground((.3, .3, .3, .3))
-        b = self.model.add_brep()  # set root?
+        self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        # b = self.model.add_brep()  # set root?
 
-        self.modeler = BModeler(b)
+        # self.modeler = BModeler(b)
 
         self.axis = self.model.add_axis()
-        self.ref_plane = self.model.add_geo(gt.Pln())
+        # self.ref_plane = self.model.add_geo(gt.Pln())
         # self.ref_pnt = self.model.add_pnt(0, 0, 0)
         # self.ref_pnt.clr = 1, 1, 0, 1
 
@@ -52,10 +52,9 @@ class MyWindow(Window):
         # update cam
         coord = self.coord_picker.pick(pos=self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
         coord = clr.ClrRGBA(*coord[0][0]).rgb
-        if coord != (.5, .5, .5):
-            self.ref_plane.geo = gt.Pln.from_ori_axies(gt.Pnt(*coord), *self.ref_plane.geo.axes)
-            self.cad_dolly.set_ref_point(*coord)
-            self.axis.draw_at(gt.Ray.from_pnt_vec(gt.Pnt(*coord), self.model.plane.axis_x))
+        # self.ref_plane.geo = gt.Pln.from_ori_axies(gt.Pnt(*coord), *self.ref_plane.geo.axes)
+        self.cad_dolly.set_ref_point(*coord)
+        self.axis.draw_at(gt.Ray.from_pnt_vec(gt.Pnt(*coord), self.model.plane.axis_x))
         # self.ref_pnt.geo = gt.Pnt(*coord)
         # print(self.devices.cameras[0].body.dim)
 
@@ -66,6 +65,7 @@ class MyWindow(Window):
         #                     self.devices.cameras[0],
         #                     self.devices.cursors[0],
         #                     self.id_picker)
+
 
         # draw on draw frame
         with self.devices.frames[1] as df:

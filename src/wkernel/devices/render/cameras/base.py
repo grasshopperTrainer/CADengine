@@ -218,7 +218,7 @@ class CameraManager(RenderDeviceManager):
             near=5,
             far=100_000).set_frustum_shape('p').create()
         c.tripod.lookat(eye=(0, 0, 100), at=(0, 0, 0), up=(0, 1, 0))
-        self.master.tracker.stack.set_base_entity(c)
+        self.master.stacker.set_base(c)
 
     def __getitem__(self, item) -> _Camera:
         return super(CameraManager, self).__getitem__(item)

@@ -3,7 +3,7 @@ import weakref
 from ckernel.render_context._renderer import Renderer
 import ckernel.render_context.opengl_context.opengl_hooker as hooked_opengl
 from .context_stack import GlobalOGLContextStack
-from global_tools.trackers import TypewiseTracker
+from ckernel.tools.stacker import TypewiseStacker
 import ckernel.glfw_context.glfw_hooker as glfw
 
 
@@ -61,7 +61,7 @@ class OGLSubContext(Renderer):
         :param cntxt_manager:
         """
         self.__manager = cntxt_manager
-        self.__entity_tracker = TypewiseTracker()
+        self.__entity_stacker = TypewiseStacker()
         self.__lock = threading.Lock()
 
     def __enter__(self):
@@ -107,8 +107,8 @@ class OGLSubContext(Renderer):
         return False
 
     @property
-    def entities(self):
-        return self.__entity_tracker
+    def entity_stacker(self):
+        return self.__entity_stacker
 
     @property
     def manager(self):

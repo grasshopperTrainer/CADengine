@@ -1,6 +1,6 @@
 import ctypes as ct
 
-import ckernel.render_context.opengl_context.meta_entities as meta
+import ckernel.render_context.opengl_context.entities.meta as meta
 from .base import Renderer, get_shader_fullpath
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 import ckernel.render_context.opengl_context.opengl_hooker as gl
@@ -20,7 +20,7 @@ class PolygonRenderer(Renderer):
         frgm_path=get_shader_fullpath('shaders/pgon/pgonSharpEdge_frgm_shdr.glsl')
     )
 
-    __vbo = __fill_prgrm.vrtxattr_schema.create_vrtx_bffr()
+    __vbo = __fill_prgrm.vrtx_attr_schema.create_vrtx_bffr()
 
     def __init__(self):
         self.__fill_ibo = meta.MetaIndxBffr(dtype='uint')

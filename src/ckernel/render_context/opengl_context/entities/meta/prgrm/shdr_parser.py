@@ -1,5 +1,4 @@
 import re
-import numpy as np
 
 from .schemas import *
 
@@ -81,6 +80,36 @@ class SimpleShdrParser:
         )?
 ;                       # end of statement
     """, re.VERBOSE | re.MULTILINE)
+
+    __frgm_output_patt = re.compile("""
+        ^                           # begining of a line
+        (                           # optional layout
+            (?P<layout>             # grouping
+                [ ]*                # witespace
+                    layout          # keyword
+                [ ]*                # witespace
+                    \([ ]*          # parenthesis
+                        location    # keyword
+                        [ ]*=[ ]*   # equal sign
+                        (?P<loc>    # grouping
+                            \d+     # anonymous index
+                        )
+                    [ ]*\)
+            )
+        )?
+        [ ]*                        # witespace
+            out                     # keyword
+        [ ]+                        # one or more witespace
+            (?P<dtype>              # grouping
+                [a-zA-Z]+[\w]*      # type name starting with alph
+            )
+        [ ]+                        # one or more witespace
+            (?P<name>               # grouping
+                [a-zA-Z]+[\w]*      # var name starting with alph
+            )
+    ;                       # end of statement
+        """, re.VERBOSE | re.MULTILINE)
+
     __dtype_patt = re.compile('([a-zA-Z]*)([\d].*)?')
 
     @classmethod
@@ -166,7 +195,7 @@ class SimpleShdrParser:
                 if val:
                     if dtype.startswith('mat'):
                         shape = dtype.replace('mat', '')
-                        if shape in ('2', '3', '4'):    # eye set with value
+                        if shape in ('2', '3', '4'):  # eye set with value
                             parsed_val = np.eye(4)
                             for i in range(int(shape)):
                                 parsed_val[i, i] = val
@@ -196,6 +225,51 @@ class SimpleShdrParser:
                         'uint': 'uint32',
                         'float': 'float32',
                         'double': 'float64'}
+
+    @classmethod
+    def parse_frgm_outputs(cls, frgm_src, name):
+        """
+        parse output type and locations
+
+        ! this is a part of automating gl.glDrawBuffers()
+        ! fragment outputs must have layout declaration
+        :param frgm_src: str, fragment shader source
+        :param name: str, name of fragment src
+        :return: FrgmOutputSchema,
+        """
+        unique = set()
+        args = {}
+        for m in re.finditer(cls.__frgm_output_patt, frgm_src):
+            # check layout declaration
+            d = m.groupdict()
+            if d['layout'] is None:
+                raise SyntaxError(f"src:{name}, {m.group()} <- vertex attribute's layout not declared")
+
+            # location
+            loc = int(d['loc'])
+            pair = (d['name'], loc)
+            for u in unique:
+                if sum([i == j for i, j in zip(pair, u)]) == 1:  # XOR
+                    raise ValueError('location values has to be unique')
+            unique.add(pair)
+
+            # attribute
+            if d['dtype'].startswith('mat'):
+                raise Exception("""using matrix makes location qualifier ambiguous
+                        please for now, use independed vectors""")
+
+            dtype = cls.__translate_dtype(d['name'], d['dtype'])
+            if d['name'] in args:
+                raise Exception('attribute contradictory')
+            args[d['name']] = (loc, dtype)
+
+        # align by layout location
+        if args:
+            args = sorted(args.values())
+            locs, dtype = zip(*args)
+            return FrgmOutputSchema(np.dtype(list(dtype)), locs)
+        else:
+            return None
 
     @classmethod
     def __translate_dtype(cls, name, dtype):
