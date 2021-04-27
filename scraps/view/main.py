@@ -1,5 +1,5 @@
 from gkernel.dtype.geometric.primitive import Pnt, Tgl
-from mkernel.model import *
+from mkernel.model.amodel import *
 from wkernel import Window
 
 
@@ -28,7 +28,7 @@ class W(Window):
                 print(self.cameras[0].tripod.plane.r.origin)
                 print(self.cameras[0].body.PM.r * self.cameras[0].tripod.VM.r * Pnt(0, 0))
                 a = 100
-                model = Model()
+                model = AModel()
                 model.append_shape(Tgl((0, 0, 0), (a, 0, 0), (0, a, 0)))
                 model.append_shape(Tgl((0, 0, 0), (-a, 0, 0), (0, -a, 0)))
                 model.append_shape(Tgl((a, a, 0), (a, 0, 0), (0, a, 0)))

@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import AModel
 import gkernel.color as clr
 from mkernel.shapes.ground import Ground
 import time
@@ -34,7 +34,7 @@ if __name__ == '__main__':
             self.devices.cameras.attach_fps_dolly(camera_id=0, cursor_id=0)
 
             # draw something
-            model = Model()
+            model = AModel()
 
             for x in range(3):
                 for y in range(3):

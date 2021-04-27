@@ -41,6 +41,8 @@ class GeoShape(Shape):
     """
     Interface for a shape object.
     """
+    def __init__(self):
+        self.__do_render_id = True
 
     @property
     @abc.abstractmethod

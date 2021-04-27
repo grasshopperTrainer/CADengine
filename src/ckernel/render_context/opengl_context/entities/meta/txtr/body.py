@@ -35,12 +35,6 @@ class MetaTexture(OGLMetaEntity):
     def name(self):
         return self.__name
 
-    @enum
-    class TARGET:
-        ONE_D = gl.GL_TEXTURE_1D
-        TWO_D = gl.GL_TEXTURE_2D
-        THREE_D = gl.GL_TEXTURE_3D
-
     def bind(self):
         super().bind()
         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)

@@ -1,4 +1,4 @@
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 
 
@@ -12,7 +12,7 @@ class MyWindow(Window):
         self.devices.cameras.attach_fps_dolly(0, 0)
 
         # create model
-        self.model = Model()
+        self.model = AModel()
         l = 100
         self.model.add_plin([0, 0, 0], [l, 0, 0], [0, l, l], [l, l, l])
         k = 50

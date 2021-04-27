@@ -3,4 +3,3 @@ from .polygon_renderer import *
 from .brep_renderer import BrepRenderer
 from .plane_renderer import PlaneRenderer
 from .groudn_renderer import GroundRenderer
-from .flataxis_renderer import FlatAxisRenderer

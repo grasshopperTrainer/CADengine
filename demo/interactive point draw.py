@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model, AModeler
+from mkernel import AModel, AModeler
 import gkernel.color as clr
 import time
 
@@ -25,7 +25,7 @@ class MyWindow(Window):
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(camera_id=0, cursor_id=0, def_offset=500)
 
         self.modeler = AModeler()
-        self.model = Model()
+        self.model = AModel()
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.model.add_ground((.5, .5, .5, .5))
 

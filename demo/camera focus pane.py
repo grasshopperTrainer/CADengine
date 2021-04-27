@@ -1,4 +1,4 @@
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 
 
@@ -15,7 +15,7 @@ class MyWindow(Window):
         self.devices.cameras[1].focus_pane(pane=self.devices.panes[1], focus=(0, 0, 0), clip_off=100)
 
         # create model
-        model1 = Model()
+        model1 = AModel()
         self.model1 = model1
         hpw, hph = [d/2 for d in self.devices.panes[1].size.xy]
         model1.add_pnt(0, 0, 0)

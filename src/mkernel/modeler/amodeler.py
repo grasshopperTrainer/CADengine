@@ -52,7 +52,7 @@ class AModeler(Modeler):
 
         if not shape:
             pos = self.__vp.pick(camera, cursor)[1]
-            model.add_geo(pos)
+            model.add_geo_shape(pos)
             if self.__selected:
                 self.__remove_selected()
         else:

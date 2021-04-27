@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import AModel
 from mkernel.global_id_provider import GIDP
 from gkernel.color import ClrRGBA
 import time
@@ -31,7 +31,7 @@ class MainWindow(Window):
         self.devices.panes.appendnew_pane(0.1, 0.1, 0.6, 0.6, self)
 
         # create model
-        model = Model()
+        model = AModel()
         p0 = model.add_pnt(0, 0, 0)
         p0.dia = 2
         p0.clr = 1, 1, 0, 1

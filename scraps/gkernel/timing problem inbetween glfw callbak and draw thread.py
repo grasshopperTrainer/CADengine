@@ -1,6 +1,6 @@
 import glfw
 
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 
 
@@ -13,7 +13,7 @@ class MyWindow(Window):
         self.cameras.attach_fps_dolly(0)
 
         # create model
-        self.model = Model()
+        self.model = AModel()
         e = 100
         self.model.append_shape(Tgl([0, 0, 0], [e, 0, 0], [0, e, 0]))
         self.model.append_shape(Tgl([0, 0, 0], [0, e, 0], [0, 0, e]))

@@ -1,5 +1,5 @@
 import gkernel.dtype.geometric as gt
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 import random
 
@@ -15,7 +15,7 @@ class MyWindow(Window):
         d.move_spd = 50
 
         # model for drawing
-        self.model = Model()
+        self.model = AModel()
         self.pnt_count = 0
 
     def draw(self, frame_count=None):

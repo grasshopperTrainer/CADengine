@@ -1,3 +1,3 @@
 from .amodeler import AModeler
-from .bmodeler import BModeler
+from mkernel.modeler.bmodeler.base import BModeler
 from .vicinity_picker import VicinityPicker

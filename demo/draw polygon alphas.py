@@ -1,4 +1,4 @@
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 import gkernel.dtype.geometric as gt
 from gkernel.color import *
@@ -14,7 +14,7 @@ class MyWindow(Window):
         self.devices.cameras[0].focus_pane(pane=self.devices.panes[0], focus=(0, 0, 0), clip_off=100)
 
         # create model
-        model1 = Model()
+        model1 = AModel()
         plns = []
         self.model1 = model1
         pw, ph = self.devices.panes[0].size.xy
@@ -351,7 +351,7 @@ class MyWindow(Window):
                              (0, 0, 0)))
 
         for pgon, pln in zip(pgons, plns):
-            model1.add_geo(pln.orient(pgon, gt.Pln())).thk = 5
+            model1.add_geo_shape(pln.orient(pgon, gt.Pln())).thk = 5
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:

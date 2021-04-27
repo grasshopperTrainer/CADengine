@@ -14,7 +14,8 @@ class ContextCounter:
     counter should only assign a room to a thread
     threads willing to have the room(context) has to wait in que
     """
-    __queue = weakref.WeakKeyDictionary()  # [context] = waiting count
+    __que = weakref.WeakKeyDictionary()  # [context] = waiting count
+    __que_lock = threading.Lock()
 
     @classmethod
     def checkin(cls, context):
@@ -22,17 +23,20 @@ class ContextCounter:
         render thread want to use a context
         mark context in use and wait-mark if the context is already in use
 
-        :param context:
+        :param context: requested
         :return:
         """
-        if context in cls.__queue:
-            condition, count = cls.__queue[context]
+        cls.__que_lock.acquire()
+        if context in cls.__que:
+            condition, count = cls.__que[context]
             with condition:
-                cls.__queue[context][1] = count + 1
+                cls.__que[context][1] = count + 1
+                cls.__que_lock.release()
                 condition.wait()
-        else:
+        else:   # context is not used by any
             condition = threading.Condition()
-            cls.__queue[context] = [condition, 0]
+            cls.__que[context] = [condition, 0]
+            cls.__que_lock.release()
         return context
 
     @classmethod
@@ -43,13 +47,16 @@ class ContextCounter:
         :param context:
         :return:
         """
-        if cls.__queue[context][1] == 0:  # no thread is waiting for the context
-            del cls.__queue[context]
+        cls.__que_lock.acquire()
+        if cls.__que[context][1] == 0:  # no thread is waiting for the context
+            del cls.__que[context]
+            cls.__que_lock.release()
         else:
-            condition, count = cls.__queue[context]
+            condition, count = cls.__que[context]
             with condition:
-                cls.__queue[context][1] = count - 1
-                condition.notify(1)  # wake one up
+                cls.__que[context][1] = count - 1
+                cls.__que_lock.release()
+                condition.notify()  # wake one up
 
 
 class OGLSubContext(Renderer):
@@ -74,7 +81,7 @@ class OGLSubContext(Renderer):
         """
         latest = GlobalOGLContextStack.get_current()
         GlobalOGLContextStack.put_current(self)
-        if latest is not self:  # repetition doesnt need redundant binding
+        if latest is not self:  # repetition doesnt require redundant binding
             with self.__manager.glfw as glfw_window:  # just reporting to glfw subcontext and getting glfw_window object
                 ContextCounter.checkin(self)  # 2. ask for context
                 glfw.make_context_current(glfw_window)

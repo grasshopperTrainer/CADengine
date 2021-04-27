@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import AModel
 from mkernel.global_id_provider import GIDP
 import gkernel.color as clr
 import gkernel.dtype.geometric as gt
@@ -33,7 +33,7 @@ class MainWindow(Window):
         self.devices.cameras.attach_fps_dolly(camera_id=0, cursor_id=0)
 
         # draw something
-        model = Model()
+        model = AModel()
 
         for x in range(3):
             for y in range(3):

@@ -1,6 +1,6 @@
 import gkernel.dtype.geometric as gt
 
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 import random
 
@@ -17,7 +17,7 @@ class MyWindow(Window):
         d.move_boost = 10
         d.move_spd = 5
         # create model
-        self.model = Model()
+        self.model = AModel()
 
         self.num_scratch = 0
         self.ori = None
@@ -35,7 +35,7 @@ class MyWindow(Window):
 
         if self.fcount % 3 == 0:
             geo = gt.Lin.from_pnt_vec(self.ori + self.offset_vec * self.num_scratch, self.lin_vec)
-            lin = self.model.add_geo(geo)
+            lin = self.model.add_geo_shape(geo)
             lin.thk = self.thk
             self.num_scratch -= 1
         self.fcount += 1

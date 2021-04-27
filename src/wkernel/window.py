@@ -37,7 +37,9 @@ class Window(DrawInterface, GlyphInterface):
 
             gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
 
+
             glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
+            glfw.window_hint(glfw.CONTEXT_RELEASE_BEHAVIOR, glfw.RELEASE_BEHAVIOR_NONE)
             # glfw.swap_interval(1)
 
         with self.__context.glfw as glfw_window:
@@ -49,8 +51,8 @@ class Window(DrawInterface, GlyphInterface):
         self._render_thread = threading.Thread(target=self.__run, name=name)
         self._pipelines = []
 
-        self.__frame_rate = 30
-        self.__timer = FPSTimer(self.__frame_rate)
+        self.__fps = 30
+        self.__timer = FPSTimer(self.__fps)
         self.__num_draw_frame = None
         self.__frame_count = 0
 
@@ -61,8 +63,30 @@ class Window(DrawInterface, GlyphInterface):
 
         self.__flag_indraw = False
 
+        # simply synchronizer for rendering
+        # self.__sync_lock = threading.Lock()
+        # self.__sync_count = 0
+
     def __str__(self):
         return f"<Window: {self.__name}>"
+    #
+    # def __enter__(self):
+    #     """
+    #     use it to synchronize rendering
+    #
+    #     calling render function under 'with window:' will guarantee
+    #     window wait for that calling thread to return before swap
+    #     :return:
+    #     """
+    #     with self.__sync_lock:
+    #         while self.__flag_indraw:
+    #             continue
+    #         self.__sync_count += 1
+    #
+    # def __exit__(self, exc_type, exc_val, exc_tb):
+    #     with self.__sync_lock:
+    #         self.__sync_count -= 1
+
     @property
     def glyph(self) -> GlyphNode:
         """
@@ -81,13 +105,13 @@ class Window(DrawInterface, GlyphInterface):
         return self.__device_manager
 
     @property
-    def framerate(self):
+    def fps(self):
         """
         window render frame rate per sec
 
         :return:
         """
-        return self.__frame_rate
+        return self.__fps
 
     @property
     def context(self):
@@ -98,8 +122,8 @@ class Window(DrawInterface, GlyphInterface):
         """
         return self.__context
 
-    @framerate.setter
-    def framerate(self, per_sec):
+    @fps.setter
+    def fps(self, per_sec):
         """
         set frame rate per second
         
@@ -108,7 +132,7 @@ class Window(DrawInterface, GlyphInterface):
         """
         if not isinstance(per_sec, Number):
             raise TypeError
-        self.__frame_rate = per_sec
+        self.__fps = per_sec
         self.__timer.tfps = per_sec
 
     @property
@@ -129,6 +153,7 @@ class Window(DrawInterface, GlyphInterface):
             while not glfw.window_should_close(glfw_window):
                 if self.__frame_count == self.__num_draw_frame:
                     break  # if number of drawn frame is targeted number of frame drawn
+
                 with self.__timer:  # __exit__ of timer will hold thread by time.sleep()
                     with self.__context.gl:
                         self.call_predraw_callback()

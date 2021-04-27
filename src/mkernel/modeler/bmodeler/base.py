@@ -1,18 +1,12 @@
-from .base import Modeler
+from mkernel.modeler.base import Modeler
 from gkernel.color import ClrRGBA
 from mkernel.global_id_provider import GIDP
 from mkernel.shapes.brep_wrapper import Brep
-from .vicinity_picker import VicinityPicker
-from .axis_picker import AxisPicker
+from mkernel.modeler.vicinity_picker import VicinityPicker
+from mkernel.modeler.axis_picker.picker import AxisPicker
 
 import gkernel.dtype.geometric as gt
 from global_tools import FPSTimer
-from gkernel.tools.intersector import Intersector
-
-
-class Repeater:
-    def __init__(self, fps):
-        self.__trgt_fps = fps
 
 
 class BModeler(Modeler):
@@ -20,14 +14,28 @@ class BModeler(Modeler):
         super().__init__()
         self.__curr_brep = root_brep
         self.__last_button_stat = {i: 0 for i in range(3)}
+
+        self.__frame_bffr = None
         self.__vp = VicinityPicker(offset=500)
-        self.__ap = AxisPicker()
+        self.__ap = None
+
+    def __checkinit_pickers(self, model):
+        """
+        lazy initiation for axis picker
+
+        :param model:
+        :return:
+        """
+        if not self.__ap:
+            self.__ap = AxisPicker(model)
 
     def listen(self, model, window, mouse, camera, cursor, id_picker):
         """
         listen each frame and activate draw logics
         :return:
         """
+        self.__checkinit_pickers(model)
+
         left_button = mouse.get_button_status(0)
         if not self.active_exec_count and left_button == 1 and self.__last_button_stat[0] == 0:
             self.execute(command=self.__left_button_press,
@@ -68,20 +76,28 @@ class BModeler(Modeler):
         xyz = svrtx.geo.xyz
         tline = model.add_lin(xyz, xyz)
 
+        # draw snapping axis
+        ap = AxisPicker(model)
+        axes = model.plane.axes
+        for axis in axes:
+            ap.append_axis(gt.Ray.from_pnt_vec(origin=svrtx.geo, normal=axis))
+
         timer = FPSTimer(target_fps=window.fps)
         while True:
             with timer:
-                # render drawing line
-                cray = camera.frusrum_ray(*cursor.pos_local.xy)
-                pln = gt.Pln.from_ori_axies(svrtx.geo, *model.plane.axes)
-                dist, pnt, sign = self.__ap.pick(cray, pln)
-                if dist < 2:
-                    tend = pnt
-                    tline.clr = {'x': (1, 0, 0, 1), 'y': (0, 1, 0, 1), 'z': (0, 0, 1, 1)}[sign]
-                else:
+
+                # check for axis snap
+                with window.context.gl:
+                    oid = id_picker.pick(pos=cursor.pos_local, size=(1, 1))[0][0]
+                    oid = ClrRGBA(*oid).as_ubyte()[:3]
+                    axis = GIDP().get_registered(oid)
+                # snap on to the axis
+                if ap.is_axis(axis):
+                    tend = ap.closest_pnt()
+                else:   # pick vicinity
                     tend = self.__vp.pick(camera, cursor)[1]
                     tline.clr = 1, 1, 1, 1
-                tline.geo = gt.Lin.from_pnts(tline.geo.start, tend)
+                    tline.geo = gt.Lin.from_pnts(tline.geo.start, tend)
 
                 left_pressed = False
                 if window.devices.mouse.get_button_status(0) == 1 and self.__last_button_stat[0] == 0:
@@ -100,7 +116,7 @@ class BModeler(Modeler):
                     if shape is None:
                         evrtx = self.__curr_brep.geo.add_vrtx(tend)
                         line = self.__curr_brep.geo.topology.define_line_edge(svrtx, evrtx)
-                        shape = model.add_geo(line.geo)
+                        shape = model.add_geo_shape(line.geo)
                         shape.thk = 0.5
                         shape.clr = 1, 1, 1, 1
 

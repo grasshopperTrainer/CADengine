@@ -32,7 +32,7 @@ class Brep(GeoShape):
         # type check?
         pnt = vrtx.geo
         # add point shape
-        shp = self.__model.add_geo(pnt)
+        shp = self.__model.add_geo_shape(pnt)
         self.__sub_shapes.setdefault(shp.__class__, set()).add(shp)
         return shp
 

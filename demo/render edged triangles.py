@@ -1,4 +1,4 @@
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 
 
@@ -12,7 +12,7 @@ class MyWindow(Window):
         self.devices.cameras.attach_fps_dolly(0, 0)
 
         # create model
-        self.model = Model()
+        self.model = AModel()
         # create triangles
         e = 50
         t0 = self.model.add_tgl([0, 0, 0], [e, 0, 0], [0, e, 0])

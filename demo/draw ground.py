@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import AModel
 import gkernel.color as clr
 import time
 
@@ -29,7 +29,7 @@ class MainWindow(Window):
         self.devices.cameras[0].tripod.lookat(eye=(100, 50, 30), at=(0, 0, 0), up=(0, 0, 1))
 
         # draw something
-        model = Model()
+        model = AModel()
 
         for x in range(3):
             for y in range(3):

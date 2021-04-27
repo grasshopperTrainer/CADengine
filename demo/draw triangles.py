@@ -1,4 +1,4 @@
-from mkernel import Model
+from mkernel import AModel
 from wkernel import Window
 
 """
@@ -13,7 +13,7 @@ class MyWindow(Window):
         self.devices.cameras[0].tripod.lookat((200, 100, 200), (0, 0, 0), (0, 0, 1))
 
         # create model
-        self.model = Model()
+        self.model = AModel()
         e = 100
         self.model.add_tgl([0, 0, 0], [e, 0, 0], [0, e, 0]).clr_fill = 1, 0, 0, 1
         self.model.add_tgl([0, 0, 0], [0, e, 0], [0, 0, e]).clr_fill = 0, 1, 0, 1

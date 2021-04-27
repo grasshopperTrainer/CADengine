@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import AModel
 from mkernel.shapes.ground import Ground
 from mkernel.modeler.vicinity_picker import VicinityPicker
 
@@ -14,7 +14,7 @@ class MyWindow(Window):
                              up=(0, 0, 1))
         # self.devices.cameras.attach_fps_dolly(0, 0)
 
-        self.model = Model()
+        self.model = AModel()
         self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.ground = Ground([.5] * 4)
         self.picker = VicinityPicker(500)
@@ -35,7 +35,7 @@ class MyWindow(Window):
                     clr = 1, 0, 0, 0.5
                 else:
                     clr = 0, 1, 0, 0.5
-                self.model.add_geo(P).clr = clr
+                self.model.add_geo_shape(P).clr = clr
 
 w = MyWindow()
 w.run_all()

@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import AModel
 from mkernel.shapes.ground import Ground
 
 
@@ -22,7 +22,7 @@ class MyWindow(Window):
         ff.create()
 
         # set model
-        self.model = Model()
+        self.model = AModel()
         self.model.add_pnt(0, 0, 0)
         t = self.model.add_tgl((10, 0, 5), (0, 10, 5), (0, 0, 5))
         t.edge_clr = 1, 0, 0, 1
@@ -33,7 +33,7 @@ class MyWindow(Window):
         pl = self.model.add_plin([0, 0, 0], [-5, 0, 10], [10, 0, 50])
         pl.clr = 1, 1, 1, 1
 
-        self.origin = Model()
+        self.origin = AModel()
         self.origin.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
         a = 10

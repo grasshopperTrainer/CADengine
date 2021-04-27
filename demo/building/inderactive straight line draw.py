@@ -1,4 +1,4 @@
-from mkernel import Model, BModeler
+from mkernel import AModel, BModeler
 from wkernel import Window
 import gkernel.color as clr
 import gkernel.dtype.geometric as gt
@@ -7,7 +7,7 @@ import gkernel.dtype.geometric as gt
 class MyWindow(Window):
     def __init__(self):
         super().__init__(1000, 1000, 'my window 1', monitor=None, shared=None)
-        self.fps = 120
+        self.fps = 30
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(0, 0, 500)
         self.devices.cameras[0].tripod.lookat((0, 0, 100), (0, 0, 0), (0, 1, 0))
 
@@ -35,42 +35,33 @@ class MyWindow(Window):
         self.id_picker = draw_frame.create_pixel_picker('id')
 
         # create model
-        model = Model()
+        model = AModel()
         self.model = model
         self.model.add_ground((.3, .3, .3, .3))
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+
+
+        self.modeler = BModeler(self.model.add_brep())
         # b = self.model.add_brep()  # set root?
-
-        # self.modeler = BModeler(b)
-
-        self.axis = self.model.add_axis()
-        # self.ref_plane = self.model.add_geo(gt.Pln())
-        # self.ref_pnt = self.model.add_pnt(0, 0, 0)
-        # self.ref_pnt.clr = 1, 1, 0, 1
 
     def draw(self, frame_count=None):
         # update cam
         coord = self.coord_picker.pick(pos=self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
         coord = clr.ClrRGBA(*coord[0][0]).rgb
-        # self.ref_plane.geo = gt.Pln.from_ori_axies(gt.Pnt(*coord), *self.ref_plane.geo.axes)
         self.cad_dolly.set_ref_point(*coord)
-        self.axis.draw_at(gt.Ray.from_pnt_vec(gt.Pnt(*coord), self.model.plane.axis_x))
-        # self.ref_pnt.geo = gt.Pnt(*coord)
-        # print(self.devices.cameras[0].body.dim)
 
         # do modeling
-        # self.modeler.listen(self.model,
-        #                     self,
-        #                     self.devices.mouse,
-        #                     self.devices.cameras[0],
-        #                     self.devices.cursors[0],
-        #                     self.id_picker)
-
+        self.modeler.listen(self.model,
+                            self,
+                            self.devices.mouse,
+                            self.devices.cameras[0],
+                            self.devices.cursors[0],
+                            self.id_picker)
 
         # draw on draw frame
         with self.devices.frames[1] as df:
-            with self.devices.cameras[0] as cam:
-                with self.devices.panes[0] as pane:
+            with self.devices.cameras[0]:
+                with self.devices.panes[0]:
                     df.clear(.5, .5, .5, 1)
                     df.clear_depth()
                     self.model.render()

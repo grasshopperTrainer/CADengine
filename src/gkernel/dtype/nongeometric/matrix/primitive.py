@@ -2,7 +2,6 @@ import copy
 
 from gkernel.constants import DTYPE
 from .._NoneGeomDataType import *
-import gkernel.dtype.geometric as gt
 
 
 class Mat4(ArrayLikeData):
@@ -42,8 +41,6 @@ class TrnsfMat(Mat4):
             # try calculating
             try:
                 cls = other.__class__
-                if issubclass(other.__class__, gt.Vec):
-                    cls = gt.Vec
                 arr = np.dot(self.view(np.ndarray), other).view(cls)
                 return arr
             except Exception as e:

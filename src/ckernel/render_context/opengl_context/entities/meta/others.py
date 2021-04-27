@@ -59,8 +59,7 @@ class MetaVrtxBffr(_MetaBffr):
             raise ValueError('attr_loc has to have unique values')
         if len(self.__attr_desc.fields) != len(attr_locs):
             raise ValueError('all attribute has to have location value')
-        self.__attr_loc = attr_locs
-
+        self.__attr_locs = attr_locs
         # cache shareness
         # decide whether to use single cache for all entities per context
         self.__cache = BffrCache(attr_desc, attr_locs)
@@ -80,7 +79,7 @@ class MetaVrtxBffr(_MetaBffr):
 
     @property
     def attr_loc(self):
-        return self.__attr_loc
+        return self.__attr_locs
 
     @property
     def attr_props(self):
@@ -92,7 +91,7 @@ class MetaVrtxBffr(_MetaBffr):
         tuples = []
         ntuple = namedtuple('interleave_prop', 'name, loc, size, dtype, stride, offset')
         stride = self.__attr_desc.itemsize
-        for (name, (dtype, offset)), loc in zip(self.__attr_desc.fields.items(), self.__attr_loc):
+        for (name, (dtype, offset)), loc in zip(self.__attr_desc.fields.items(), self.__attr_locs):
             # for shape 1 not having subdtype
             if dtype.subdtype is None:
                 size = 1

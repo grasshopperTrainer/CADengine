@@ -1,8 +1,6 @@
 #version 450 core
 
-layout (location=0) out vec4 clr;
-//layout (location=1) out vec4 cid;
-//layout (location=2) out vec4 coord;
+layout (location=1) out vec4 cid;
 
 layout (location=0) uniform mat4 PM;
 layout (location=1) uniform mat4 VM;
@@ -17,7 +15,8 @@ in vsAttr {
     vec3 fcoord;
     vec3 coord;
     float thk;
-} vs_in;
+    vec3 cid;
+} fs_in;
 
 
 const vec3 cori = cam_ori.xyz;
@@ -55,11 +54,11 @@ mat4 move_mat(float x, float y, float z) {
 void main() {
     vec3 eye = vec3(0, 0, 0);
     // pixel ray
-    vec3 pixel_ray = normalize(vs_in.fcoord - vs_in.ncoord);
+    vec3 pixel_ray = normalize(fs_in.fcoord - fs_in.ncoord);
 
     // view space ray
-    vec3 p0 = (VM * vec4(vs_in.ori, 1)).xyz;
-    vec3 p1 = (VM * vec4(vs_in.ori+vs_in.dir, 1)).xyz;
+    vec3 p0 = (VM * vec4(fs_in.ori, 1)).xyz;
+    vec3 p1 = (VM * vec4(fs_in.ori+fs_in.dir, 1)).xyz;
 
     // flat ray vec
     vec3 flat_p0 = intx_ray_pln(eye, p0-eye, vec3(0, 0, -near), vec3(0, 0, 1));
@@ -72,15 +71,15 @@ void main() {
     vec2 norm_flat_p0 = (SM * vec4(flat_p0.xy, 0, 1)).xy;
 
     // calculate distance between ray and pixel
-    vec2 I = (intx_ray_pnt(vec3(norm_flat_p0, 0), flat_dir, vs_in.coord.xyz)).xy;
-    float d = distance(I, vs_in.coord.xy);
+    vec2 I = (intx_ray_pnt(vec3(norm_flat_p0, 0), flat_dir, fs_in.coord.xyz)).xy;
+    float d = distance(I, fs_in.coord.xy);
 
     // find half thickness
 //    float ht =
 
     // render result
     if (d < 0.01) {
-        clr = vec4(1, 1, 1, 1);
+        cid = vec4(fs_in.cid, 1);
     } else {
         discard;
     }

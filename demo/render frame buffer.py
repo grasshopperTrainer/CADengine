@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import Model
+from mkernel import AModel
 import time
 
 
@@ -22,7 +22,7 @@ class MainWindow(Window):
         # create pane
         self.devices.panes.appendnew_pane(0, 0, 0.6, 0.6, self)
 
-        model = Model()
+        model = AModel()
         p0 = model.add_pnt(0, 0, 0)
         p0.dia = 2
         p0.clr = 1, 1, 0, 1
