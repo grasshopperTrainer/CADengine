@@ -4,8 +4,8 @@ layout (points) in;
 layout (triangle_strip, max_vertices = 4) out;
 
 // camera plane coordinates and render pos
-layout (location=5) uniform mat4 fn_coord;
-layout (location=6) uniform mat4 ff_coord;
+layout (location=6) uniform mat4 fn_coord;
+layout (location=7) uniform mat4 ff_coord;
 
 // match vertex order
 const vec2 pos[] = {vec2(-1, -1), vec2(1, -1), vec2(-1, 1), vec2(1, 1)};

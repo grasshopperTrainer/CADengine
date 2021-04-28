@@ -39,8 +39,9 @@ class AxisRenderer(Renderer):
 
         self.__prgrm.uniforms['PM'] = camera.body.PM
         self.__prgrm.uniforms['VM'] = camera.tripod.VM
-        self.__prgrm.uniforms['near'] = camera.body.near
+        self.__prgrm.uniforms['pane_size'] = devices.panes.current.glyph.size
         self.__prgrm.uniforms['LRBT'] = camera.body.dim[:4]
+        self.__prgrm.uniforms['cam_near'] = camera.body.near
         self.__prgrm.uniforms['cam_ori'] = camera.tripod.plane.origin.T
         self.__prgrm.uniforms['fn_coord'] = camera.near_clipping_face
         self.__prgrm.uniforms['ff_coord'] = camera.far_clipping_face

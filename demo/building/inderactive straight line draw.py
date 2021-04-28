@@ -6,7 +6,7 @@ import gkernel.dtype.geometric as gt
 
 class MyWindow(Window):
     def __init__(self):
-        super().__init__(400, 1000, 'my window 1', monitor=None, shared=None)
+        super().__init__(800, 1000, 'my window 1', monitor=None, shared=None)
         self.fps = 30
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(0, 0, 500)
         self.devices.cameras[0].tripod.lookat((0, 0, 100), (0, 0, 0), (0, 1, 0))

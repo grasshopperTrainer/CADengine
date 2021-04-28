@@ -10,7 +10,7 @@ class Axis(NongeoShape):
         self.__vrtx_block['oid'] = GIDP().register_entity(self).as_rgba_float()
 
         self.__geo = self.geo = geo
-        self.__thk = self.thk = 5  # pixel thickness
+        self.__thk = self.thk = 16  # pixel thickness
 
     @property
     def geo(self):
