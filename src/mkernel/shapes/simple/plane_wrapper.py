@@ -1,15 +1,15 @@
 import gkernel.dtype.geometric.primitive as gt
 from mkernel.global_id_provider import GIDP
-from .base import SimpleGeoShape
+from ..base import GeoShape
 
 
-class Pln(SimpleGeoShape):
-    def __init__(self, geo, renderer, model):
+class Pln(GeoShape):
+    def __init__(self, geo, renderer):
         vb = renderer.vbo.cache.request_block(size=1)
-        oid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
+        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
         ib = renderer.ibo.cache.request_block(size=1)
         ib['idx'] = vb.indices
-        super().__init__(model, vb, ib, oid)
+        super().__init__(goid, (vb, ), (ib, ))
 
         self._geo = self.geo = geo
         # think it as % of ndc
@@ -25,10 +25,10 @@ class Pln(SimpleGeoShape):
             raise TypeError
         self._geo[:] = v
         v = v.T
-        self._vrtx_block['ori'] = v[0]
-        self._vrtx_block['x'] = v[1]
-        self._vrtx_block['y'] = v[2]
-        self._vrtx_block['z'] = v[3]
+        self.vrtx_block['ori'] = v[0]
+        self.vrtx_block['x'] = v[1]
+        self.vrtx_block['y'] = v[2]
+        self.vrtx_block['z'] = v[3]
 
     @property
     def len(self):
@@ -39,4 +39,4 @@ class Pln(SimpleGeoShape):
         if not isinstance(v, (int, float)):
             raise TypeError
         self.__len = v
-        self._vrtx_block['len'] = v
+        self.vrtx_block['len'] = v

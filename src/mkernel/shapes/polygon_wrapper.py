@@ -129,7 +129,6 @@ class Pgon(GeoShape):
         self.__fill_indx_block.release()
 
         GIDP.deregister(self)
-        self.__model.remove(self)
 
         for k, v in self.__dict__.items():
             setattr(self, k, None)

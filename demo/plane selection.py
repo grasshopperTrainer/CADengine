@@ -1,7 +1,7 @@
 from wkernel import Window
 from mkernel import AModel
 from mkernel.shapes.ground import Ground
-from mkernel.modeler.vicinity_picker import VicinityPicker
+from mkernel.control.vicinity_picker import VicinityPicker
 
 
 class MyWindow(Window):

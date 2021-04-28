@@ -85,7 +85,7 @@ void main() {
     vec2 I = (intx_ray_pnt(vec3(flat_p0.xy, 0), flat_dir, flat_pixel_coord.xyz)).xy;
     float d = distance(I, flat_pixel_coord.xy);
 
-//     find half thickness
+    //     find half thickness
     float ht = fs_in.thk * width/(pane_size.x*2);
 
     // render result

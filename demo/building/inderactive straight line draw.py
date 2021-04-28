@@ -40,7 +40,6 @@ class MyWindow(Window):
         self.model.add_ground((.3, .3, .3, .3))
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
-
         self.modeler = BModeler(self.model.add_brep())
         # b = self.model.add_brep()  # set root?
 
@@ -63,7 +62,8 @@ class MyWindow(Window):
         with self.devices.frames[1] as df:
             with self.devices.cameras[0]:
                 with self.devices.panes[0]:
-                    df.clear(.5, .5, .5, 1)
+                    df.clear_texture(1, 0, 0, 0, 1)
+                    df.clear(0, 0, 0, 1)
                     df.clear_depth()
                     self.model.render()
 

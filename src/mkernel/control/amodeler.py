@@ -8,7 +8,7 @@ import mkernel.shapes as shp
 
 class AModeler(Modeler):
     """
-    Default, engine-embedded modeler
+    Default, engine-embedded control
     """
 
     def __init__(self):
