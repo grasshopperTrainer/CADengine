@@ -75,6 +75,7 @@ class BModeler(Modeler):
         # temporary drawing line
         xyz = svrtx.geo.xyz
         tline = model.add_lin(xyz, xyz)
+        tline.do_render_id = False
 
         # draw snapping axis
         ap = AxisPicker(model)

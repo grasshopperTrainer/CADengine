@@ -1,6 +1,6 @@
 #version 450 core
 
-layout (location=1) out vec4 cid;
+layout (location=1) out vec4 oid;
 
 layout (location=0) uniform mat4 PM;
 layout (location=1) uniform mat4 VM;
@@ -15,7 +15,7 @@ in vsAttr {
     vec3 fcoord;
     vec3 coord;
     float thk;
-    vec3 cid;
+    vec4 oid;
 } fs_in;
 
 
@@ -79,7 +79,7 @@ void main() {
 
     // render result
     if (d < 0.01) {
-        cid = vec4(fs_in.cid, 1);
+        oid = fs_in.oid;
     } else {
         discard;
     }

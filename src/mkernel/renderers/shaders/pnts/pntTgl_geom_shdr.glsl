@@ -8,13 +8,13 @@ layout (location = 1) uniform mat4 VM = mat4(1.0);
 layout (location = 2) uniform mat4 PM = mat4(1.0);
 
 in vsOut {
-    vec3 cid;
+    vec4 oid;
     vec4 clr;
     float dia;
 } vs_in[];
 
 out gsOut {
-    vec3 cid;
+    vec4 oid;
     vec4 clr;
     vec4 coord;
 } gs_out;
@@ -29,7 +29,7 @@ void emit_vertex(vec4 pos) {
 }
 
 void main() {
-    gs_out.cid = vs_in[0].cid;
+    gs_out.oid = vs_in[0].oid;
     // invariants
     gs_out.clr = vs_in[0].clr;
     float rad = vs_in[0].dia/2;//circumcircle

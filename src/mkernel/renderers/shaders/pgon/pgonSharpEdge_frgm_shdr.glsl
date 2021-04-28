@@ -1,12 +1,12 @@
 #version 450 core
 
 in vec4 edgeClr;
-in vec3 cid;
+in vec4 oid;
 
 layout (location = 0) out vec4 fclr;
-layout (location = 1) out vec4 fcid;
+layout (location = 1) out vec4 foid;
 
 void main() {
     fclr = edgeClr;
-    fcid = vec4(cid, 1);
+    foid = oid;
 }

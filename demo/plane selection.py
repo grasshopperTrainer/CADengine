@@ -15,8 +15,8 @@ class MyWindow(Window):
         # self.devices.cameras.attach_fps_dolly(0, 0)
 
         self.model = AModel()
+        self.model.add_ground([.5] * 4)
         self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-        self.ground = Ground([.5] * 4)
         self.picker = VicinityPicker(500)
 
     def draw(self):
@@ -25,7 +25,6 @@ class MyWindow(Window):
             df.clear_depth()
 
             with self.devices.cameras[0] as c:
-                self.ground.render(c)
                 self.model.render()
 
                 k, P = self.picker.pick(c, self.devices.cursors[0])

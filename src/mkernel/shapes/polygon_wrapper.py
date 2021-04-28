@@ -29,7 +29,7 @@ class Pgon(GeoShape):
 
         self.__vrtx_block = renderer.vbo.cache.request_block(size=len(vertices))
         self.__vrtx_block['vtx'] = vertices
-        self.__vrtx_block['cid'] = GIDP().register_entity(self).as_rgb_float()
+        self.__vrtx_block['oid'] = GIDP().register_entity(self).as_rgba_float()
 
         # add PRV at the end to draw separately
         offset = self.__vrtx_block.indices[0]  # min index

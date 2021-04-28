@@ -24,7 +24,8 @@ class AxisPicker:
         return entity in self.__axes
 
     def closest_pnt(self):
-        print('ddd')
+        return
+        raise NotImplementedError
 
     def remove_all(self):
         raise NotImplementedError

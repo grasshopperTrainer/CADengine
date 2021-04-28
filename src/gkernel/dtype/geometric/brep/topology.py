@@ -54,7 +54,7 @@ class Topology:
     #     self.__vertices.append(ve)
     #     return edge
     #
-    # def get_coincident_vertex(self, pnt):
+    # def get_coinoident_vertex(self, pnt):
     #     for v in self.__vertices:
     #         if v.point == pnt:
     #             return v

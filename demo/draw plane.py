@@ -19,8 +19,8 @@ class MyWindow(Window):
         self.model = AModel()
         self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.model.add_pln((10, 23, 10), (6, 4, 24), (5, 6, 10), (2, 100, 1))
+        self.model.add_ground((1, 1, 1, 1))
         # self.model.add_pnt(0, 0, 0)
-        self.ground = Ground([.5] * 4)
 
     def draw(self):
         with self.devices.frames[0] as df:
@@ -28,7 +28,6 @@ class MyWindow(Window):
             df.clear_depth()
 
             with self.devices.cameras[0] as c:
-                self.ground.render(c)
                 self.model.render()
 
 

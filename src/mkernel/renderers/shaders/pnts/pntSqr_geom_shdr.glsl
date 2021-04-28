@@ -10,11 +10,11 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 in vsOut {
     vec4 clr;
     float dia;
-    vec3 cid;
+    vec4 oid;
 } vs_in[];
 
 out vec4 clr;
-out vec3 cid;
+out vec4 oid;
 out vec4 coord;
 
 const mat4 VMM = VM * MM;
@@ -29,7 +29,7 @@ void emit_vertex(vec4 pos) {
 void main() {
     // invariants
     clr = vs_in[0].clr;
-    cid = vs_in[0].cid;
+    oid = vs_in[0].oid;
     float rad = vs_in[0].dia/2;
     vec4 pnt = VMM*gl_in[0].gl_Position;
     // vectors of identical size

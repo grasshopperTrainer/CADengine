@@ -10,11 +10,11 @@ layout (location = 2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     float thk;
     vec4 clr;
-    vec3 cid;
+    vec4 oid;
 } vs_in[];
 
 out vec4 fclr;
-out vec3 fcid;
+out vec4 foid;
 out vec4 fcoord;
 
 const mat4 VMM = VM * MM;
@@ -24,7 +24,7 @@ const float hthk = vs_in[0].thk/2.0;
 void emit_vertex(vec4 pos) {
     // invariants
     fclr = vs_in[0].clr;
-    fcid = vs_in[0].cid;
+    foid = vs_in[0].oid;
 
     fcoord = IVMM * pos;
     gl_Position = PM * pos;

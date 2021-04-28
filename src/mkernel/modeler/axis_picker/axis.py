@@ -8,7 +8,7 @@ class Axis(NongeoShape):
         self.__indx_block = renderer.ibo.cache.request_block(size=4)
         self.__indx_block['idx'] = self.__vrtx_block.indices
         self.__vrtx_block['pos'] = (-1, -1), (1, -1), (1, 1), (-1, 1)
-        self.__vrtx_block['cid'] = GIDP().register_entity(self).as_rgb_float()
+        self.__vrtx_block['oid'] = GIDP().register_entity(self).as_rgba_float()
 
         self.__geo = self.geo = geo
         self.__thk = self.thk = 5  # pixel thickness

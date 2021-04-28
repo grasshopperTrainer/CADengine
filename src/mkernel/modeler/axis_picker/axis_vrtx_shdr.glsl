@@ -4,7 +4,7 @@
 layout (location=0) in vec4 ori;
 layout (location=1) in vec4 dir;
 layout (location=2) in float thk;
-layout (location=3) in vec3 cid;
+layout (location=3) in vec4 oid;
 layout (location=4) in vec2 pos;
 
 // camera near plane corner coordinates
@@ -18,7 +18,7 @@ out vsAttr {
     vec3 fcoord;
     vec3 coord;
     float thk;
-    vec3 cid;
+    vec4 oid;
 } vs_out;
 
 void main() {
@@ -28,7 +28,7 @@ void main() {
     vs_out.fcoord = fcoord.xyz;
     vs_out.coord = vec3(pos, 0);
     vs_out.thk = thk;
-    vs_out.cid = cid;
+    vs_out.oid = oid;
 
     gl_Position = vec4(pos, 0, 1);
 }
