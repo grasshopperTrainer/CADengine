@@ -73,20 +73,23 @@ void main() {
     vec3 flat_dir = normalize(flat_p1 - flat_p0);
 
     // scale frustum near plane to match NDC near plane
-    mat4 SM = scale_mat(2/(LRBT.y - LRBT.x), 2/(LRBT.w - LRBT.z), 1); // scale up to given near plane size
-    mat4 MM = move_mat((LRBT.y + LRBT.x)/2, (LRBT.w + LRBT.z)/2, -near); // move if needed
-    vec2 norm_flat_p0 = (SM * MM * vec4(flat_p0.xy, 0, 1)).xy;
+    float width = LRBT.y - LRBT.x;
+    float height = LRBT.w - LRBT.z;
+    vec3 frustum_ori = vec3((LRBT.x + LRBT.y)/2, (LRBT.z + LRBT.w)/2, -near);
+    mat4 SM = scale_mat(width/2, height/2, 1); // scale up to given near plane size
+    mat4 MM = move_mat(frustum_ori.x, frustum_ori.y, -frustum_ori.z); // move if frustum not centered
+    vec4 flat_pixel_coord = MM * SM * vec4(fs_in.ndc_coord, 1);
 
     // calculate distance between ray and pixel
-    vec2 I = (intx_ray_pnt(vec3(norm_flat_p0, 0), flat_dir, fs_in.ndc_coord.xyz)).xy;
-    float d = distance(I, fs_in.ndc_coord.xy);
+    vec2 I = (intx_ray_pnt(vec3(flat_p0.xy, 0), flat_dir, flat_pixel_coord.xyz)).xy;
+    float d = distance(I, flat_pixel_coord.xy);
 
 
     // find half thickness
 //    float ht =
 
     // render result
-    if (d < 0.02) {
+    if (d < 0.08) {
         oid = fs_in.oid;
         vec3 cam_ray = normalize(fs_in.ff_coord - fs_in.fn_coord);
         vec3 k = intx_ray_ray(fs_in.ori, fs_in.dir, cam_ori.xyz, cam_ray);
