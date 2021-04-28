@@ -1,25 +1,25 @@
 #version 450 core
 
 layout (location=1) out vec4 oid;
+layout (location=2) out vec4 coord;
 
 layout (location=0) uniform mat4 PM;
 layout (location=1) uniform mat4 VM;
 layout (location=2) uniform float near;
-layout (location=3) uniform vec4 cam_ori;
-layout (location=4) uniform vec4 LRBT; // texture size
+layout (location=3) uniform vec4 LRBT; // near frustum dim
+layout (location=4) uniform vec4 cam_ori;
 
-in vsAttr {
+in gsAttr {
     vec3 ori;
     vec3 dir;
-    vec3 ncoord;
-    vec3 fcoord;
-    vec3 coord;
     float thk;
     vec4 oid;
+
+    // ndc coordinat, frustum near, far plane coord
+    vec3 ndc_coord;
+    vec3 fn_coord;
+    vec3 ff_coord;
 } fs_in;
-
-
-const vec3 cori = cam_ori.xyz;
 
 vec3 intx_ray_pln(vec3 rori, vec3 rvec, vec3 pori, vec3 pnorm) {
     float t = dot(pnorm, pori - rori) / dot(pnorm, rvec);
@@ -29,6 +29,15 @@ vec3 intx_ray_pln(vec3 rori, vec3 rvec, vec3 pori, vec3 pnorm) {
 vec3 intx_ray_pnt(vec3 rori, vec3 rvec, vec3 pnt) {
     float t = dot(rvec, pnt - rori);
     return rori + t * rvec;
+}
+vec3 intx_ray_ray(vec3 aOri, vec3 aVec, vec3 bOri, vec3 bVec) {
+    vec3 cVec = bOri - aOri;
+    vec3 v0 = cross(aVec, bVec);
+    vec3 v1 = cross(cVec, bVec);
+
+    float t = dot(v1, v0) / pow(length(v0), 2);
+    vec3 I = aOri + aVec * t;
+    return I;
 }
 
 mat4 scale_mat(float x, float y, float z) {
@@ -53,14 +62,12 @@ mat4 move_mat(float x, float y, float z) {
 
 void main() {
     vec3 eye = vec3(0, 0, 0);
-    // pixel ray
-    vec3 pixel_ray = normalize(fs_in.fcoord - fs_in.ncoord);
 
-    // view space ray
+    // view space ray reference points
     vec3 p0 = (VM * vec4(fs_in.ori, 1)).xyz;
-    vec3 p1 = (VM * vec4(fs_in.ori+fs_in.dir, 1)).xyz;
+    vec3 p1 = (VM * vec4(fs_in.ori + fs_in.dir, 1)).xyz;
 
-    // flat ray vec
+    // ray vec on flat camera near plane
     vec3 flat_p0 = intx_ray_pln(eye, p0-eye, vec3(0, 0, -near), vec3(0, 0, 1));
     vec3 flat_p1 = intx_ray_pln(eye, p1-eye, vec3(0, 0, -near), vec3(0, 0, 1));
     vec3 flat_dir = normalize(flat_p1 - flat_p0);
@@ -68,18 +75,22 @@ void main() {
     // scale frustum near plane to match NDC near plane
     mat4 SM = scale_mat(2/(LRBT.y - LRBT.x), 2/(LRBT.w - LRBT.z), 1); // scale up to given near plane size
     mat4 MM = move_mat((LRBT.y + LRBT.x)/2, (LRBT.w + LRBT.z)/2, -near); // move if needed
-    vec2 norm_flat_p0 = (SM * vec4(flat_p0.xy, 0, 1)).xy;
+    vec2 norm_flat_p0 = (SM * MM * vec4(flat_p0.xy, 0, 1)).xy;
 
     // calculate distance between ray and pixel
-    vec2 I = (intx_ray_pnt(vec3(norm_flat_p0, 0), flat_dir, fs_in.coord.xyz)).xy;
-    float d = distance(I, fs_in.coord.xy);
+    vec2 I = (intx_ray_pnt(vec3(norm_flat_p0, 0), flat_dir, fs_in.ndc_coord.xyz)).xy;
+    float d = distance(I, fs_in.ndc_coord.xy);
+
 
     // find half thickness
 //    float ht =
 
     // render result
-    if (d < 0.01) {
+    if (d < 0.02) {
         oid = fs_in.oid;
+        vec3 cam_ray = normalize(fs_in.ff_coord - fs_in.fn_coord);
+        vec3 k = intx_ray_ray(fs_in.ori, fs_in.dir, cam_ori.xyz, cam_ray);
+        coord = vec4(k, 1);
     } else {
         discard;
     }

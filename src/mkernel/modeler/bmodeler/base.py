@@ -29,7 +29,7 @@ class BModeler(Modeler):
         if not self.__ap:
             self.__ap = AxisPicker(model)
 
-    def listen(self, model, window, mouse, camera, cursor, id_picker):
+    def listen(self, model, window, mouse, camera, cursor, id_picker, coord_picker):
         """
         listen each frame and activate draw logics
         :return:
@@ -40,11 +40,11 @@ class BModeler(Modeler):
         if not self.active_exec_count and left_button == 1 and self.__last_button_stat[0] == 0:
             self.execute(command=self.__left_button_press,
                          model=model,
-                         args=(window, camera, cursor, id_picker),
+                         args=(window, camera, cursor, id_picker, coord_picker),
                          block_exec=True)
         self.__last_button_stat[0] = left_button
 
-    def __left_button_press(self, window, camera, cursor, id_picker, model):
+    def __left_button_press(self, window, camera, cursor, id_picker, coord_picker, model):
         """
         actions for left button press
         :return:
@@ -64,14 +64,14 @@ class BModeler(Modeler):
                 pnt = self.__curr_brep.add_vrtx(vrtx)
                 pnt.dia = 0
 
-                self.execute(self.__draw_drawing_line, model, args=(window, vrtx, camera, cursor, id_picker))
+                self.execute(self.__draw_drawing_line, model, args=(window, vrtx, camera, cursor, id_picker, coord_picker))
             else:
                 print('ddd')
 
         else:
             print('selected')
 
-    def __draw_drawing_line(self, window, svrtx, camera, cursor, id_picker, model):
+    def __draw_drawing_line(self, window, svrtx, camera, cursor, id_picker, coord_picker, model):
         # temporary drawing line
         xyz = svrtx.geo.xyz
         tline = model.add_lin(xyz, xyz)
@@ -94,11 +94,29 @@ class BModeler(Modeler):
                     axis = GIDP().get_registered(oid)
                 # snap on to the axis
                 if ap.is_axis(axis):
-                    tend = ap.closest_pnt()
-                else:   # pick vicinity
-                    tend = self.__vp.pick(camera, cursor)[1]
-                    tline.clr = 1, 1, 1, 1
-                    tline.geo = gt.Lin.from_pnts(tline.geo.start, tend)
+                    # tend = ap.closest_pnt()
+                    with window.context.gl:
+                        coord = coord_picker.pick(cursor.pos_global.astype(int), size=(1, 1))[0][0]
+                    print(coord)
+                    #
+                    # ray = camera.frusrum_ray(*cursor.pos_local.xy)
+                    # pln = gt.Pln(o=svrtx.geo.xyz)
+                    # for k, axis in zip('xyz', pln.axes):
+                    #     av = axis
+                    #     bv = ray.as_vec()
+                    #
+                    #     cv = ray.origin - pln.origin
+                    #     v0 = gt.Vec.cross(av, bv)
+                    #     v1 = gt.Vec.cross(cv, bv)
+                    #     # intersection points
+                    #     t = gt.Vec.dot(v1, v0) / (v0.length ** 2)
+                    #     p0 = pln.origin + av * t
+                    #     if k == 'y':
+                    #         print(p0, coord)
+                # else:   # pick vicinity
+                tend = self.__vp.pick(camera, cursor)[1]
+                tline.clr = 1, 1, 1, 1
+                tline.geo = gt.Lin.from_pnts(tline.geo.start, tend)
 
                 left_pressed = False
                 if window.devices.mouse.get_button_status(0) == 1 and self.__last_button_stat[0] == 0:

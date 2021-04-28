@@ -56,7 +56,8 @@ class MyWindow(Window):
                             self.devices.mouse,
                             self.devices.cameras[0],
                             self.devices.cursors[0],
-                            self.id_picker)
+                            self.id_picker,
+                            self.coord_picker)
 
         # draw on draw frame
         with self.devices.frames[1] as df:

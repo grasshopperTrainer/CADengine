@@ -93,6 +93,9 @@ class Camera(RenderDevice):
         """
         return frustum near clipping face in WCS
 
+        order:
+        3 2
+        0 1
         :return: Plin
         """
         pln = self.tripod.plane

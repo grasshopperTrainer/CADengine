@@ -13,16 +13,14 @@ class AxisRenderer(Renderer):
     """
     __this_dir = os.path.dirname(__file__)
     __prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__this_dir, 'axis_vrtx_shdr.glsl'),
+                             geom_path=os.path.join(__this_dir, 'axis_geom_shdr.glsl'),
                              frgm_path=os.path.join(__this_dir, 'axis_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr(attr_locs=(0, 1, 2, 3, 4))
-
-        self.__vbo_shared = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr(attr_locs=(5, 6))
-        self.__vbo_shared_block = self.__vbo_shared.cache.request_block(size=4)
+        self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr()
 
         self.__ibo = meta.MetaIndxBffr(dtype='uint')
-        self.__vao = meta.MetaVrtxArry(self.__vbo, self.__vbo_shared, indx_bffr=self.__ibo)
+        self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
     @property
     def vbo(self):
@@ -42,20 +40,18 @@ class AxisRenderer(Renderer):
         self.__prgrm.uniforms['PM'] = camera.body.PM
         self.__prgrm.uniforms['VM'] = camera.tripod.VM
         self.__prgrm.uniforms['near'] = camera.body.near
-        self.__prgrm.uniforms['cam_ori'] = camera.tripod.plane.origin.T
         self.__prgrm.uniforms['LRBT'] = camera.body.dim[:4]
+        self.__prgrm.uniforms['cam_ori'] = camera.tripod.plane.origin.T
+        self.__prgrm.uniforms['fn_coord'] = camera.near_clipping_face
+        self.__prgrm.uniforms['ff_coord'] = camera.far_clipping_face
         self.__prgrm.push_uniforms()
 
-        self.__vbo_shared_block['ncoord'] = camera.near_clipping_face.T
-        self.__vbo_shared_block['fcoord'] = camera.far_clipping_face.T
-        self.__vbo_shared.push_cache()
-
         self.__vbo.push_cache()
+        self.__ibo.push_cache()
 
         with self.__prgrm:
             with self.__vao:
-                gl.glDrawArrays(gl.GL_QUADS, 0, self.__ibo.cache.active_size)
-                # gl.glDrawElements(gl.GL_QUADS,
-                #                   self.__ibo.cache.active_size,
-                #                   self.__ibo.cache.gldtype[0],
-                #                   ctypes.c_void_p(0))
+                gl.glDrawElements(gl.GL_POINTS,
+                                  self.__ibo.cache.active_size,
+                                  self.__ibo.cache.gldtype[0],
+                                  ctypes.c_void_p(0))
