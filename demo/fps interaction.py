@@ -65,7 +65,7 @@ class MainWindow(Window):
 
         self.model = model
         self.is_rendered = False
-        self.ground = Ground(clr.ClrRGBA(.8, .8, .8, 1))
+        self.model.add_ground((.8, .8, .8, 1))
 
     def draw(self):
         with self.devices.frames[0] as deff:
@@ -85,7 +85,6 @@ class MainWindow(Window):
                 self.is_rendered = True
 
         with self.devices.panes[1] as p:
-            self.ground.render(cam)
             self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
             with self.devices.frames[1] as deff:
                 # pos = p.cursor_pos(parameterize=True)

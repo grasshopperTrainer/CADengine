@@ -9,7 +9,6 @@ in vec3 ffar;
 in vec4 fclr;
 
 layout (location=0) out vec4 clr;
-layout (location=1) out vec4 cid;
 layout (location=2) out vec4 coord;
 
 float compute_depth(vec3 P) {

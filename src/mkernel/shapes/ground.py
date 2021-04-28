@@ -5,8 +5,7 @@ import OpenGL.GL as gl
 
 
 class Ground(NongeoShape):
-    def __init__(self, color, renderer, model):
-        self.__model = model
+    def __init__(self, color, renderer):
         self.__block = renderer.vbo.cache.request_block(size=4)
         l = 1
         self.__block['pos'] = (-l, -l, 0), (l, -l, 0), (l, l, 0), (-l, l, 0)  # cover whole NDC
@@ -24,8 +23,6 @@ class Ground(NongeoShape):
 
     def delete(self):
         self.__block.release()
-
-        self.__model.remove_shape(self)
 
         for k in self.__dict__.keys():
             setattr(self, k, None)

@@ -11,11 +11,11 @@ in vsOut {
     float edgeThk;
     vec4 edgeClr;
     vec4 fillClr;
-    vec3 cid;
+    vec4 oid;
 } vs_in[];
 
 out vec4 fclr;
-out vec3 fcid;
+out vec4 foid;
 out vec4 fcoord;
 
 const mat4 TM = PM * VM * MM;
@@ -63,7 +63,7 @@ void main() {
     vec3 outer1 = pnt_offset(p1, v12, -v01, -thk);
     vec3 outer2 = pnt_offset(p2, -v02, -v12, -thk);
 
-    fcid = vs_in[0].cid;
+    foid = vs_in[0].oid;
     fclr = vs_in[0].edgeClr;
     // edges
     emit(inner0);

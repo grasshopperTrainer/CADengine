@@ -38,7 +38,7 @@ class Window(DrawInterface, GlyphInterface):
             gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
 
 
-            glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
+            # glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
             glfw.window_hint(glfw.CONTEXT_RELEASE_BEHAVIOR, glfw.RELEASE_BEHAVIOR_NONE)
             # glfw.swap_interval(1)
 

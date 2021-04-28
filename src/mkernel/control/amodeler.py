@@ -8,7 +8,7 @@ import mkernel.shapes as shp
 
 class AModeler(Modeler):
     """
-    Default, engine-embedded modeler
+    Default, engine-embedded control
     """
 
     def __init__(self):
@@ -28,6 +28,7 @@ class AModeler(Modeler):
         :param spp:
         :return:
         """
+        # for left button press
         if mouse.get_button_status(0) and self.__last_button_status[0] != 1:
             self.execute(self.point_add_select, model, args=(window, camera, cursor, id_picker))
         elif keyboard.get_key_status('v'):
@@ -46,8 +47,8 @@ class AModeler(Modeler):
         """
         # if selecting existing
         with window.context.gl:
-            cid = id_picker.pick(cursor.pos_local, size=(1, 1))[0][0]
-        clr = ClrRGBA(*cid).as_ubyte()[:3]
+            oid = id_picker.pick(cursor.pos_local, size=(1, 1))[0][0]
+        clr = ClrRGBA(*oid).as_ubyte()[:3]
         shape = GIDP().get_registered(clr)
 
         if not shape:

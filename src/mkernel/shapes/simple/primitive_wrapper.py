@@ -5,39 +5,36 @@ from gkernel.color.primitive import ClrRGBA, Clr
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 from mkernel.global_id_provider import GIDP
 from mkernel.renderers.base import Renderer
-from .base import SimpleGeoShape
+from ..base import GeoShape
 
 
-class Ray(SimpleGeoShape):
+class Ray(GeoShape):
 
     @classmethod
     def get_cls_renderer(cls):
         return None
 
 
-class Pnt(SimpleGeoShape):
+class Pnt(GeoShape):
 
-    def __init__(self, geo, renderer: Renderer, model):
+    def __init__(self, geo, renderer: Renderer):
         # request blocks
         vb = renderer.vbo.cache.request_block(size=1)
-        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
+        oid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
+        ib = renderer.square_ibo.cache.request_block(size=1)
+        ib['idx'] = vb.indices
         # index block will be set at `frm` setter
-        super().__init__(model, vb, None)
+        super().__init__(oid, (vb, ), (ib, ))
 
         # enums
         self.__form_square = self.__Form(renderer.square_ibo, 'SQUARE')
         self.__form_circle = self.__Form(renderer.circle_ibo, 'CIRCLE')
         self.__form_tirangle = self.__Form(renderer.triangle_ibo, 'TRIANGLE')
 
-        self.__frm = None
-        self.__geo = None
-        self.__clr = None
-        self.__dia = None
-
-        self.frm = self.FORM_SQUARE
         self.geo = geo
         self.clr = ClrRGBA(1, 1, 1, 1)
-        self.dia = 5
+        self.__frm, self.frm = None, self.FORM_SQUARE
+        self.__dia = self.dia = 5
 
     # form constants
     @property
@@ -53,34 +50,6 @@ class Pnt(SimpleGeoShape):
         return self.__form_tirangle
 
     @property
-    def geo(self):
-        return self.__geo
-
-    @geo.setter
-    def geo(self, v):
-        if not isinstance(v, (tuple, list, gt.Pnt)):
-            raise TypeError
-        self._vrtx_block['vtx'] = v.T
-        if self.__geo is None:
-            self.__geo = v
-        else:
-            self.__geo[:] = v
-
-    @property
-    def clr(self):
-        return self.__clr
-
-    @clr.setter
-    def clr(self, v):
-        if not isinstance(v, (tuple, list, np.ndarray)):
-            raise TypeError
-        self._vrtx_block['clr'] = v
-        if self.__clr is None:
-            self.__clr = v
-        else:
-            self.__clr[:] = v
-
-    @property
     def dia(self):
         return self.__dia
 
@@ -88,7 +57,7 @@ class Pnt(SimpleGeoShape):
     def dia(self, v):
         if not isinstance(v, Number):
             raise TypeError
-        self._vrtx_block['dia'] = v
+        self.vrtx_block['dia'] = v
         self.__dia = v
 
     @property
@@ -110,12 +79,12 @@ class Pnt(SimpleGeoShape):
             return
         # swapping index block
         # remove old
-        if self._indx_block is not None:
-            self._indx_block.release()
+        if self.indx_block is not None:
+            self.indx_block.release()
 
         # set new
-        self._indx_block = v.ibo.cache.request_block(size=1)
-        self._indx_block['idx'] = self._vrtx_block.indices
+        self._indx_block = (v.ibo.cache.request_block(size=1), )
+        self.indx_block['idx'] = self.vrtx_block.indices
         self.__frm = v
 
     def __del__(self):
@@ -134,54 +103,22 @@ class Pnt(SimpleGeoShape):
             return f"<ENUM {self.__name}>"
 
 
-class Vec(SimpleGeoShape):
+class Vec(GeoShape):
     pass
 
 
-class Lin(SimpleGeoShape):
-    def __init__(self, geo, renderer, model):
+class Lin(GeoShape):
+    def __init__(self, geo, renderer):
         # request blocks
         vb = renderer.vbo.cache.request_block(size=2)
-        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
+        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
         ib = renderer.ibo.cache.request_block(size=2)
         ib['idx'] = vb.indices
-        super().__init__(model, vb, ib)
-
-        self.__geo = None
-        self.__clr = None
-        self.__thk = None
+        super().__init__(goid, (vb, ), (ib, ))
 
         self.geo = geo
         self.clr = ClrRGBA(0, 0, 0, 1)
-        self.thk = 1
-
-    @property
-    def geo(self):
-        return self.__geo
-
-    @geo.setter
-    def geo(self, v):
-        if not isinstance(v, gt.Lin):
-            raise TypeError
-        self._vrtx_block['vtx'] = v.T
-        if self.__geo is None:
-            self.__geo = v
-        else:
-            self.__geo[:] = v
-
-    @property
-    def clr(self):
-        return self.__clr
-
-    @clr.setter
-    def clr(self, v):
-        if not isinstance(v, (list, tuple, np.ndarray)):
-            raise TypeError
-        self._vrtx_block['clr'] = v
-        if self.__clr is None:
-            self.__clr = v
-        else:
-            self.__clr[:] = v
+        self.__thk = self.thk = 1
 
     @property
     def thk(self):
@@ -191,54 +128,28 @@ class Lin(SimpleGeoShape):
     def thk(self, v):
         if not isinstance(v, Number):
             raise TypeError
-        self._vrtx_block['thk'] = v
+        self.vrtx_block['thk'] = v
         self.__thk = v
 
 
-class Plin(SimpleGeoShape):
-    def __init__(self, geo, renderer, model):
+class Plin(GeoShape):
+    def __init__(self, geo, renderer):
         """
 
         :param vs: number of vertices coordinate that form polyline
         """
         # this will check input validity
         vb = renderer.vbo.cache.request_block(size=len(geo))
-        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
+        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
         # +1 for primitive restart value
         ib = renderer.ibo.cache.request_block(size=len(geo) + 1)
         ib['idx', :-1] = vb.indices
         ib['idx', -1] = PRV
-        super().__init__(model, vb, ib)
-
-        self.__geo = geo
-        self.__clr = ClrRGBA()
-        self.__thk = 1
+        super().__init__(goid, (vb, ), (ib, ))
 
         self.geo = geo
         self.clr = ClrRGBA(0, 0, 0, 1)
-        self.thk = 1
-
-    @property
-    def geo(self):
-        return self.__geo
-
-    @geo.setter
-    def geo(self, v):
-        if not isinstance(v, gt.Plin):
-            raise TypeError
-        self._vrtx_block['vtx'] = v.T
-        self.__geo[:] = v
-
-    @property
-    def clr(self):
-        return self.__clr
-
-    @clr.setter
-    def clr(self, v):
-        if not isinstance(v, (tuple, list, Clr)):
-            raise TypeError
-        self._vrtx_block['clr'] = v
-        self.__clr[:] = v
+        self.__thk = self.thk = 1
 
     @property
     def thk(self):
@@ -248,48 +159,38 @@ class Plin(SimpleGeoShape):
     def thk(self, v):
         if not isinstance(v, Number):
             raise TypeError
-        self._vrtx_block['thk'] = v
+        self.vrtx_block['thk'] = v
         self.__thk = v
 
 
-class Tgl(SimpleGeoShape):
+class Tgl(GeoShape):
     __is_render_edge = True
 
-    def __init__(self, geo, renderer, model):
+    def __init__(self, geo, renderer):
         vb = renderer.vbo.cache.request_block(size=3)
-        vb['cid'] = GIDP().register_entity(self).as_rgb_float()
+        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
         ib = renderer.ibo.cache.request_block(size=3)
         ib['idx'] = vb.indices
-        super().__init__(model, vb, ib)
+        super().__init__(goid, (vb, ), (ib, ))
 
-        # just filling correct placeholder
-        self.__geo = None
-        self.__fill_clr = None
-        self.__edge_clr = None
-        self.__edge_thk = None
         # actual value assignment
         self.geo = geo
-        self.clr_fill = ClrRGBA(1, 1, 1, 1)
-        self.edge_clr = ClrRGBA(0, 0, 0, 1)
-        self.edge_thk = 0.5
+        self.__clr_fill = self.clr_fill = ClrRGBA(1, 1, 1, 1)
+        self.__clr_edge = self.clr_edge = ClrRGBA(0, 0, 0, 1)
+        self.__edge_thk = self.edge_thk = 0.5
 
     @property
-    def geo(self):
-        return self.__geo
+    def clr(self):
+        return self.__clr_fill, self.__clr_edge
 
-    @geo.setter
-    def geo(self, v):
-        if not isinstance(v, gt.Tgl):
-            raise TypeError
-        self._vrtx_block['vtx'] = v.T
-        if self.__geo is None:
-            self.__geo = v
-        else:
-            self.__geo[:] = v
+    @clr.setter
+    def clr(self, v):
+        self.clr_fill = v
+        self.clr_edge = v
 
     @property
     def clr_fill(self):
-        return self.__fill_clr
+        return self.__clr_fill
 
     @clr_fill.setter
     def clr_fill(self, v):
@@ -302,18 +203,18 @@ class Tgl(SimpleGeoShape):
         """
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self._vrtx_block['fill_clr'] = v
-        if self.__fill_clr is None:
-            self.__fill_clr = v
+        self.vrtx_block['fill_clr'] = v
+        if self.__clr_fill is None:
+            self.__clr_fill = v
         else:
-            self.__fill_clr[:] = v
+            self.__clr_fill[:] = v
 
     @property
-    def edge_clr(self):
-        return self.__edge_clr
+    def clr_edge(self):
+        return self.__clr_edge
 
-    @edge_clr.setter
-    def edge_clr(self, v):
+    @clr_edge.setter
+    def clr_edge(self, v):
         """
         set edge color
 
@@ -321,11 +222,11 @@ class Tgl(SimpleGeoShape):
         """
         if not isinstance(v, (list, tuple, np.ndarray)):
             raise TypeError
-        self._vrtx_block['edge_clr'] = v
-        if self.__edge_clr is None:
-            self.__edge_clr = v
+        self.vrtx_block['edge_clr'] = v
+        if self.__clr_edge is None:
+            self.__clr_edge = v
         else:
-            self.__edge_clr[:] = v
+            self.__clr_edge[:] = v
 
     @property
     def edge_thk(self):
@@ -333,7 +234,7 @@ class Tgl(SimpleGeoShape):
 
     @edge_thk.setter
     def edge_thk(self, v):
-        self._vrtx_block['edge_thk'] = v
+        self.vrtx_block['edge_thk'] = v
         self.__edge_thk = v
 
     def intersect(self, ray):

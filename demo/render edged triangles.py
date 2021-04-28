@@ -25,7 +25,7 @@ class MyWindow(Window):
         t2.clr_fill = 0, 0, i, a
         # set edge color
         for t in (t0, t1, t2):
-            t.edge_clr = 1, 1, 1, 1
+            t.clr_edge = 1, 1, 1, 1
             t.edge_thk = 5
 
     def draw(self, frame_count=None):

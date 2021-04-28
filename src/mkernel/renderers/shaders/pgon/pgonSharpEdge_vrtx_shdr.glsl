@@ -3,19 +3,19 @@
 layout (location = 0) in vec4 vtx;
 layout (location = 1) in float edge_thk;
 layout (location = 2) in vec4 edge_clr;
-layout (location = 3) in vec3 cid;
+layout (location = 3) in vec4 oid;
 
 out vsOut {
     float edgeThk;
     vec4 edgeClr;
-    vec3 cid;
+    vec4 oid;
 } vs_out;
 
 void main() {
     // for geometry shader
     vs_out.edgeThk = edge_thk;
     vs_out.edgeClr = edge_clr;
-    vs_out.cid = cid;
+    vs_out.oid = oid;
 
     gl_Position = vtx;
 }

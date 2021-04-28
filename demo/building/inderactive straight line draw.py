@@ -6,7 +6,7 @@ import gkernel.dtype.geometric as gt
 
 class MyWindow(Window):
     def __init__(self):
-        super().__init__(1000, 1000, 'my window 1', monitor=None, shared=None)
+        super().__init__(800, 1000, 'my window 1', monitor=None, shared=None)
         self.fps = 30
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(0, 0, 500)
         self.devices.cameras[0].tripod.lookat((0, 0, 100), (0, 0, 0), (0, 1, 0))
@@ -28,7 +28,7 @@ class MyWindow(Window):
         ff.append_depth_texture(target=ff.TXTR.TRGT.TWO_D,
                                 iformat=ff.TXTR.DEPTH_FRMT.DEPTH_COMPONENT,
                                 name='depth')
-        ff.set_size(1000, 1000)
+        ff.set_size(*self.glyph.size)
         draw_frame = ff.create()
 
         self.coord_picker = draw_frame.create_pixel_picker('coord')
@@ -39,7 +39,6 @@ class MyWindow(Window):
         self.model = model
         self.model.add_ground((.3, .3, .3, .3))
         self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-
 
         self.modeler = BModeler(self.model.add_brep())
         # b = self.model.add_brep()  # set root?
@@ -56,13 +55,15 @@ class MyWindow(Window):
                             self.devices.mouse,
                             self.devices.cameras[0],
                             self.devices.cursors[0],
-                            self.id_picker)
+                            self.id_picker,
+                            self.coord_picker)
 
         # draw on draw frame
         with self.devices.frames[1] as df:
             with self.devices.cameras[0]:
                 with self.devices.panes[0]:
-                    df.clear(.5, .5, .5, 1)
+                    df.clear_texture(1, 0, 0, 0, 1)
+                    df.clear(0, 0, 0, 1)
                     df.clear_depth()
                     self.model.render()
 
@@ -75,7 +76,7 @@ class MyWindow(Window):
 
 class DebuggerWindow(Window):
     def __init__(self, mother):
-        super().__init__(500, 500, 'sub window', shared=mother)
+        super().__init__(400, 1000, 'sub window', shared=mother)
         self.framerate = 60
         self.ma = mother
 

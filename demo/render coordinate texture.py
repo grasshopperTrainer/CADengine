@@ -25,7 +25,7 @@ class MyWindow(Window):
         self.model = AModel()
         self.model.add_pnt(0, 0, 0)
         t = self.model.add_tgl((10, 0, 5), (0, 10, 5), (0, 0, 5))
-        t.edge_clr = 1, 0, 0, 1
+        t.clr_edge = 1, 0, 0, 1
         t.edge_thk = 5
         l = self.model.add_lin((10, 0, 10), (0, -100, 0))
         l.clr = 1, 0, 1, 1

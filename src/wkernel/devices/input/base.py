@@ -359,5 +359,9 @@ class Keyboard(_InputDevice):
         """
         return cls.__key_dict.key_to_char(key, mods)
 
-    def get_key_status(self, char):
-        return glfw.get_key(self.window.context.glfw_window, self.__key_dict.char_to_key(char))
+    def get_key_status(self, signature):
+        """
+        :param signature: char for character key, name for mod keys; e.g. 'lshift'
+        :return:
+        """
+        return glfw.get_key(self.window.context.glfw_window, self.__key_dict.char_to_key(signature))

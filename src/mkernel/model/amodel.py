@@ -86,7 +86,7 @@ class AModel(Model):
 
         :return:
         """
-        return self.add_shape(args=(gt.Brep(),), shape_type=st.Brep, renderer_type=rend.BrepRenderer)
+        return self.add_shape(args=(gt.Brep(), self), shape_type=st.Brep, renderer_type=rend.BrepRenderer)
 
     def add_pln(self, o, x, y, z):
         """

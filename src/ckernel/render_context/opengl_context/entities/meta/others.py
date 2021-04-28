@@ -61,7 +61,7 @@ class MetaVrtxBffr(_MetaBffr):
             raise ValueError('all attribute has to have location value')
         self.__attr_locs = attr_locs
         # cache shareness
-        # decide whether to use single cache for all entities per context
+        # deoide whether to use single cache for all entities per context
         self.__cache = BffrCache(attr_desc, attr_locs)
 
     def _create_entity(self):

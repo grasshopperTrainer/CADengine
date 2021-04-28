@@ -10,7 +10,7 @@ from gkernel.color import ClrRGBA
 class GIDP:
     """
     Global ID Provider
-    to provide cid for all shapes
+    to provide oid for all shapes
 
     ! has to be thread safe
     """
@@ -26,14 +26,20 @@ class GIDP:
 
         self.__lock = threading.Lock()
 
-    def register_entity(self, entity):
+    def register_entity(self, entity, color_comp_sig=None):
         """
         register color id with the entity
 
         ! thread safe
         :param entity:
-        :return: cid
+        :param color_comp_sig:
+        :return: oid
         """
+        if color_comp_sig is None:
+            ccomp_sig = 'rgb'
+        else:
+            raise NotImplementedError
+
         with self.__lock:
             if entity in self.__entity_oid:
                 return _OIDConverter(self.__entity_oid[entity])
@@ -47,7 +53,7 @@ class GIDP:
             # converto into color
             self.__entity_oid[entity] = oid
             self.__oid_entity[oid] = entity
-            return _OIDConverter(oid, self.__ccomp_bsize)
+            return _OIDConverter(oid, ccomp_sig, self.__ccomp_bsize)
 
     def deregister(self, entity):
         """
@@ -74,7 +80,7 @@ class GIDP:
 
     def get_registered(self, oid):
         """
-        return entity if given cid is valid
+        return entity if given oid is valid
 
         :param oid: (int, int, int) tuple of 3 ubyte-like values
         :return:
@@ -103,8 +109,9 @@ class _OIDConverter:
     Converts id into required form
     """
 
-    def __init__(self, oid, ccomp_bsize):
+    def __init__(self, oid, ccomp_sig, ccomp_bsize):
         self.__oid = oid
+        self.__ccomp_sig = ccomp_sig
         self.__ccomp_bsize = ccomp_bsize
 
     def asint(self):
@@ -118,16 +125,22 @@ class _OIDConverter:
         :return: tuple, rgb value in float range (0 ~ max color component value)
         """
         cmax = 2 ** self.__ccomp_bsize - 1
-        cid = self.as_rgb_unsigned()
-        return tuple(c / cmax for c in cid)
+        oid = self.as_rgb_unsigned()
+        return tuple(c / cmax for c in oid)
+
+    def as_rgba_float(self):
+        if self.__ccomp_sig == 'rgb':
+            return *self.as_rgb_float(), 1
+        else:
+            raise NotImplementedError
 
     def as_rgb_unsigned(self):
         """
         :return: tuple, rgb as unsigned value
         """
         color_bits = bin(self.__oid)[2:].rjust(self.__ccomp_bsize * 3, '0')
-        cid = tuple(int(color_bits[i * self.__ccomp_bsize:(i + 1) * self.__ccomp_bsize], 2) for i in range(3))
-        return cid
+        oid = tuple(int(color_bits[i * self.__ccomp_bsize:(i + 1) * self.__ccomp_bsize], 2) for i in range(3))
+        return oid
 
     def ashex(self):
         raise NotImplementedError

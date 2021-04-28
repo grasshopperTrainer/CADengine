@@ -1,2 +1,2 @@
 from .model import *
-from .modeler import *
+from .control import *

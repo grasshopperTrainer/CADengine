@@ -79,17 +79,17 @@ class Geometries:
         start, end = curve.start, curve.end
 
         # 0. check existence
-        pcurve = self.get_coincident_curve(curve)
-        pstart = self.get_coincident_curve(start)
-        pend = self.get_coincident_curve(end)
+        pcurve = self.get_coinoident_curve(curve)
+        pstart = self.get_coinoident_curve(start)
+        pend = self.get_coinoident_curve(end)
         if all([g is not None for g in (pcurve, pstart, pend)]):
             raise Exception('trying to register pre-existing curve')
 
-        # 1. check coincident edge
+        # 1. check coinoident edge
         if not pcurve:
             self.__curve.setdefault(curve.__class__, []).append(curve)
             pcurve = curve
-        # 2. check coincident points
+        # 2. check coinoident points
         if not pstart:
             self.__point.setdefault(start.__class__, RedBlackTree()).insert(start)
             pstart = start
@@ -107,7 +107,7 @@ class Geometries:
 
         :return:
         """
-        present = self.get_coincident_curve(curve)
+        present = self.get_coinoident_curve(curve)
         if present:
             return present
         else:
@@ -123,14 +123,14 @@ class Geometries:
         :param point:
         :return:
         """
-        present = self.get_coincident_point(point)
+        present = self.get_coinoident_point(point)
         if present:
             return present
         else:
             self.__point.setdefault(point.__class__, RedBlackTree()).insert(point)
             return point
 
-    def get_coincident_curve(self, curve):
+    def get_coinoident_curve(self, curve):
         """
         check if curve pre exists
 
@@ -149,7 +149,7 @@ class Geometries:
                 return obj
         return None
 
-    def get_coincident_point(self, point):
+    def get_coinoident_point(self, point):
         if point.__class__ not in self.__point:
             return None
 

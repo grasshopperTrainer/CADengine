@@ -50,7 +50,7 @@ class Model:
         if shape_type not in self.__renderers:
             self.__renderers[shape_type] = renderer_type()
         renderer = self.__renderers[shape_type]
-        shp = shape_type(*args, renderer, self)
+        shp = shape_type(*args, renderer)
         self.__shapes.setdefault(shape_type, set()).add(shp)
         return shp
 
@@ -64,6 +64,7 @@ class Model:
         """
         if shape in self.__shapes.get(shape.__class__, {}):
             self.__shapes[shape.__class__].remove(shape)
+            shape.delete()
 
     def iterator(self):
         """

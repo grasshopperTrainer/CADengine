@@ -3,7 +3,7 @@
 layout (location = 0) in vec4 vtx;
 layout (location = 1) in vec4 clr;
 layout (location = 2) in float dia;
-layout (location = 3) in vec3 cid;
+layout (location = 3) in vec4 oid;
 
 layout (location = 0) uniform mat4 MM = mat4(1.0);
 layout (location = 1) uniform mat4 VM = mat4(1.0);
@@ -11,7 +11,7 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 layout (location = 4) uniform vec4 VPP; // viewport pixel property (posx, posy, width, height)
 
 out vsOut {
-    vec3 cid;
+    vec4 oid;
     vec4 fclr;
     vec2 radVec;
     vec2 center;
@@ -19,7 +19,7 @@ out vsOut {
 } vs_out;
 
 void main() {
-    vs_out.cid = cid;
+    vs_out.oid = oid;
     vs_out.fclr = clr;
     vs_out.coord = vtx;
 
