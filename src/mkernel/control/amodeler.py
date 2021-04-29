@@ -1,99 +1,185 @@
-import weakref
-from .base import Modeler
-from .vicinity_picker import VicinityPicker
-from ..global_id_provider import GIDP
-from gkernel.color import ClrRGBA
-import mkernel.shapes as shp
+from mkernel.global_id_provider import GIDP
+from mkernel.view.viewer import Viewer
+from mkernel.model.amodel import AModel
+import mkernel.model.shapes as st
+import gkernel.dtype.geometric as gt
 
 
-class AModeler(Modeler):
-    """
-    Default, engine-embedded control
-    """
-
+class AModeler:
     def __init__(self):
-        super().__init__()
-        self.__vp = VicinityPicker(offset=500)
-        self.__last_button_status = {0: 0, 1: 0, 2: 0}
-
-        self.__selected = None
-        self.__selection_color = 1, 1, 0, 1
-
-    def listen(self, model, window, mouse, keyboard, camera, cursor, id_picker):
         """
-        check condition and trigger commands
+        shape creator
 
-        :param window:
         :param model:
-        :param spp:
+        """
+        self.__viewer = Viewer(self)
+        self.__model = AModel(self)
+
+    @property
+    def model(self):
+        return self.__model
+
+    def add_shape(self, args, shape_type):
+        """
+        helper for adding geometric shapes like Point, Vector
+
+        :param geo:
+        :param shape_type:
+        :param renderer_type:
         :return:
         """
-        # for left button press
-        if mouse.get_button_status(0) and self.__last_button_status[0] != 1:
-            self.execute(self.point_add_select, model, args=(window, camera, cursor, id_picker))
-        elif keyboard.get_key_status('v'):
-            self.execute(self.point_delete, model, args=(window, camera, cursor, id_picker))
-        self.__last_button_status[0] = mouse.get_button_status(0)
+        shape = shape_type(*args, model=self.__model)
+        self.__model.add_shape(shape)
+        return shape
 
-    def point_add_select(self, window, camera, cursor, id_picker, model):
+    def update_viewer_cache(self, shape, arg_name, value):
         """
-        add new or select existing
+        viewer knows how to update cache
 
-        :param camera:
-        :param cursor:
-        :param id_picker: FramePixelPicker,
-        :param model:
+        :param entity:
+        :param arg_name:
+        :param value:
         :return:
         """
-        # if selecting existing
-        with window.context.gl:
-            oid = id_picker.pick(cursor.pos_local, size=(1, 1))[0][0]
-        clr = ClrRGBA(*oid).as_ubyte()[:3]
-        shape = GIDP().get_registered(clr)
+        self.__viewer.update_cache(shape, arg_name, value)
+    #
+    # def remove_shape(self, shape):
+    #     """
+    #     remove geometry from the model
+    #
+    #     Method does nothing if geometry is not in the model.
+    #     :param shape:
+    #     :return:
+    #     """
+    #     if shape in self.__shapes.get(shape.__class__, {}):
+    #         self.__shapes[shape.__class__].remove(shape)
+    #         shape.delete()
+    #
+    # def iterator(self):
+    #     """
+    #     iter all shapes in model
+    #     :return:
+    #     """
+    #     for shape in self.__shapes:
+    #         if isinstance(shape, Model):  # if its a sub model iter it
+    #             for child_shape in shape.iterator():
+    #                 yield child_shape
+    #         else:
+    #             yield shape
+    #
+    # def iter_shapes(self, typ=None):
+    #     """
+    #     iter all shapes
+    #     :param typ: type, iter only given type if given
+    #     :return:
+    #     """
+    #     if not typ:
+    #         for shapes in self.__shapes.values():
+    #             for s in shapes:
+    #                 yield s
+    #     else:
+    #         for s in self.__shapes[typ]:
+    #             yield s
 
-        if not shape:
-            pos = self.__vp.pick(camera, cursor)[1]
-            model.add_geo_shape(pos)
-            if self.__selected:
-                self.__remove_selected()
-        else:
-            if isinstance(shape, shp.Pnt):
-                if self.__selected:
-                    if self.__selected[0]() != shape:
-                        self.__remove_selected()
-                        self.__set_selected(shape)
-                else:
-                    self.__set_selected(shape)
+    #
+    # def add_geo_shape(self, geo):
+    #     """
+    #     add given geometry
+    #
+    #     :return:
+    #     """
+    #     if isinstance(geo, gt.Pnt):
+    #         return self.add_shape(args=(geo, ), shape_type=st.Pnt, renderer_type=rend.PointRenderer)
+    #     elif isinstance(geo, gt.Lin):
+    #         return self.add_shape(args=(geo, ), shape_type=st.Lin, renderer_type=rend.LineRenderer)
+    #     elif isinstance(geo, gt.Tgl):
+    #         return self.add_shape(args=(geo, ), shape_type=st.Tgl, renderer_type=rend.TriangleRenderer)
+    #     elif isinstance(geo, gt.Pgon):
+    #         return self.add_shape(args=(geo, ), shape_type=st.Pgon, renderer_type=rend.PolygonRenderer)
+    #     elif isinstance(geo, gt.Plin):
+    #         return self.add_shape(args=(geo, ), shape_type=st.Plin, renderer_type=rend.PolylineRenderer)
+    #     elif isinstance(geo, gt.Brep):
+    #         return self.add_shape(args=(geo, ), shape_type=st.Brep, renderer_type=rend.BrepRenderer)
+    #     elif isinstance(geo, gt.Pln):
+    #         return self.add_shape(args=(geo, ), shape_type=st.Pln, renderer_type=rend.PlaneRenderer)
+    #     else:
+    #         raise NotImplementedError
 
-    def point_delete(self, window, camera, cursor, id_picker, model):
+    def add_pnt(self, x, y, z) -> st.Pnt:
         """
+        add point
 
-        :param window:
-        :param camera:
-        :param cursor:
-        :param id_picker:
-        :param model:
+        :param x: Number, coordinate x
+        :param y: Number, coordinate y
+        :param z: Number, coordinate z
+        :return: Pnt shape
+        """
+        return self.add_shape(args=(gt.Pnt(x, y, z),), shape_type=st.Pnt)
+
+    def add_lin(self, start, end) -> st.Lin:
+        """
+        add line
+
+        :param start: (x, y, z), vertex start
+        :param end: (x, y, z), vertex end
+        :return: Lin shape
+        """
+        return self.add_shape(args=(gt.Lin(start, end),), shape_type=st.Lin)
+
+    def add_tgl(self, v0, v1, v2) -> st.Tgl:
+        """
+        add triangle
+
+        :param v0: (x, y, z), vertex 0
+        :param v1: (x, y, z), vertex 1
+        :param v2: (x, y, z), vertex 2
         :return:
         """
-        if self.__selected:
-            if self.__selected[0]() is not None:
-                self.__selected[0]().delete()
-        self.__selected = None
+        return self.add_shape(args=(gt.Tgl(v0, v1, v2),), shape_type=st.Tgl)
 
-    def __remove_selected(self):
+    def add_plin(self, *vs) -> st.Plin:
         """
-        remove selected
+        add polyline
+        :param vs:
+        :return:
+        """
+        return self.add_shape(args=(gt.Plin(*vs),), shape_type=st.Plin)
+
+    def add_pgon(self, *vs) -> st.Pgon:
+        """
+        add polygon
+
+        :param vs: vertices
+        :return:
+        """
+        return self.add_shape(args=(gt.Pgon(*vs),), shape_type=st.Pgon)
+
+    def add_brep(self):
+        """
 
         :return:
         """
-        if self.__selected[0]() is not None:
-            self.__selected[0]().clr = self.__selected[1]
-        self.__selected = None
+        return self.add_shape(args=(gt.Brep(), self), shape_type=st.Brep)
 
-    def __set_selected(self, geo):
+    def add_pln(self, o, x, y, z):
         """
-        cache geometry as selected
+
+        coordinate values of:
+        :param o: (x, y, z), origin
+        :param x: (x, y, z), x axis
+        :param y: (x, y, z), y axis
+        :param z: (x, y, z), z axis
         :return:
         """
-        self.__selected = weakref.ref(geo), geo.clr.copy()
-        geo.clr = (1, 1, 0, 1)
+        return self.add_shape(args=(gt.Pln(o, x, y, z),), shape_type=st.Pln)
+
+    def add_ground(self, color):
+        """
+
+        :param color: (r, g, b, a)
+        :return:
+        """
+        return self.add_shape(args=(color,), shape_type=st.Ground)
+
+    def render(self):
+        self.__viewer.render()

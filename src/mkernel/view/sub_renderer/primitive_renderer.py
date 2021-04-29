@@ -7,14 +7,15 @@ import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 from global_tools.singleton import Singleton
 from .base import Renderer, get_shader_fullpath
+import weakref as wr
 
 """
-Three renderers of dimensional primitives.
+Three sub_renderer of dimensional primitives.
 
 A primitive renderer does not only render of its kind.
 High dimensional entity is a combination of lower dimensional primitives.
 So, a triangle can be viewed in lines and points.
-This is why three renderers are atomic.
+This is why three sub_renderer are atomic.
 
 Shape holdes buffer, buffer cache and vertex array(vao)
 , while,
@@ -55,10 +56,8 @@ class PointRenderer(Renderer):
         geom_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_geom_shdr.glsl'),
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_frgm_shdr.glsl'))
 
-    # shared vertex buffer
-    __vbo = __square_prgrm.vrtx_attr_schema.create_vrtx_bffr()
-
     def __init__(self):
+        self.__vbo = self.__square_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__circle_ibo = meta.MetaIndxBffr('uint')
         self.__circle_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__circle_ibo)
         self.__square_ibo = meta.MetaIndxBffr('uint')
@@ -66,24 +65,64 @@ class PointRenderer(Renderer):
         self.__triangle_ibo = meta.MetaIndxBffr('uint')
         self.__triangle_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__triangle_ibo)
 
-    @property
-    def vbo(self):
-        return self.__vbo
+        self.__blocks = wr.WeakKeyDictionary()
+        self.__ibos = {'s': self.__square_ibo,
+                       't': self.__triangle_ibo,
+                       'c': self.__circle_ibo}
 
-    @property
-    def circle_ibo(self):
-        return self.__circle_ibo
+    def update_cache(self, shape, arg_name, val):
+        if arg_name in ('geo', 'clr', 'dia'):
+            self.__blocks[shape]['vrtx'][arg_name] = val
+        elif arg_name == 'frm':
+            if val not in self.__ibos:
+                raise ValueError("form value has to be one of 's'quare, 't'riangle, 'c'ircle")
+            # swap ibo
+            ibo = self.__blocks[shape]['ibo']
+            new_ibo = self.__ibos[val]
+            if ibo == new_ibo:
+                return
+            if ibo:
+                self.__blocks[shape]['indx'].release()
+            self.__blocks[shape]['ibo'] = new_ibo
+            indx_block = new_ibo.cache.request_block(size=1)
+            self.__blocks[shape]['indx'] = indx_block
+            # put index value
+            indx_block['idx'] = self.__blocks[shape]['vrtx'].indices
+        elif arg_name == 'idx':
+            self.__blocks[shape]['indx'][arg_name] = val
+        else:
+            raise AttributeError
 
-    @property
-    def square_ibo(self):
-        return self.__square_ibo
+    def add_shape(self, shape):
+        """
+        if present, ignore, else add
 
-    @property
-    def triangle_ibo(self):
-        return self.__triangle_ibo
+        :param shape:
+        :return:
+        """
+        if shape in self.__blocks:
+            return
+        data = {'vrtx': self.__vbo.cache.request_block(size=1),
+                'indx': None,
+                'ibo': None}
+
+        self.__blocks[shape] = data
+        wr.finalize(shape, self.blocks_finalizer, data)
+
+    def blocks_finalizer(self, blocks: dict):
+        """
+        automatically release blocks when blocks dict looses shape
+        :param blocks:
+        :return:
+        """
+        if blocks['vrtx']:
+            blocks['vrtx'].release()
+        if blocks['indx']:
+            blocks['indx'].release()
+        blocks.clear()
 
     def render(self):
-        self.vbo.push_cache()
+        self.__vbo.push_cache()
         self.__render_square()
         self.__render_circle()
         self.__render_triangle()

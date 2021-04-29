@@ -1,8 +1,8 @@
-from mkernel.shapes.base import GeoShape
+from mkernel.model.shapes.base import MetaShape
 from mkernel.global_id_provider import GIDP
 
 
-class Axis(GeoShape):
+class Axis(MetaShape):
     def __init__(self, geo, renderer):
         vb = renderer.vbo.cache.request_block(size=1)
         ib = renderer.ibo.cache.request_block(size=1)

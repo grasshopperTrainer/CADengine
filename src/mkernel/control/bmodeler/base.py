@@ -1,7 +1,7 @@
 from mkernel.control.base import Modeler
 from gkernel.color import ClrRGBA
 from mkernel.global_id_provider import GIDP
-from mkernel.shapes.brep_wrapper import Brep
+from mkernel.model.shapes import Brep
 from mkernel.control.vicinity_picker import VicinityPicker
 from mkernel.control.axis_picker.picker import AxisPicker
 

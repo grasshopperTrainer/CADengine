@@ -12,3 +12,11 @@ class Renderer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def render(self):
         pass
+
+    # @abc.abstractmethod
+    def update_cache(self, shape, arg_name, value):
+        pass
+
+    # @abc.abstractmethod
+    def add_shape(self, shape):
+        pass

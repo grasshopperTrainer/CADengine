@@ -4,7 +4,7 @@ import OpenGL.GL as gl
 import ckernel.render_context.opengl_context.entities.meta as meta
 from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 
-from mkernel.renderers.base import Renderer
+from mkernel.view.sub_renderer import Renderer
 import ctypes
 
 class AxisRenderer(Renderer):

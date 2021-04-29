@@ -1,10 +1,8 @@
-from mkernel.shapes.base import NongeoShape
-from ..renderers.groudn_renderer import GroundRenderer
+# from mkernel.model.shapes.base import NongeoShape
 from gkernel.color.primitive import ClrRGBA
-import OpenGL.GL as gl
 
 
-class Ground(NongeoShape):
+class Ground:
     def __init__(self, color, renderer):
         self.__block = renderer.vbo.cache.request_block(size=4)
         l = 1

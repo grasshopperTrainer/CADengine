@@ -1,10 +1,8 @@
-from mkernel.shapes.base import Shape
-from gkernel.color import *
-from mkernel.global_id_provider import GIDP
+from mkernel.model.shapes.base import MetaShape
 import gkernel.dtype.geometric as gt
 
 
-class Brep(Shape):
+class Brep(MetaShape):
     def __init__(self, geo: gt.Brep, model, renderer):
         self.__model = model
         self.__geo = geo

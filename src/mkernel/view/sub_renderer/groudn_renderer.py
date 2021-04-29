@@ -12,8 +12,8 @@ class GroundRenderer(Renderer):
     draw infinite ground
     """
     __this_dir = os.path.dirname(__file__)
-    __prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__this_dir, '../renderers/shaders/ground_vrtx_shdr.glsl'),
-                             frgm_path=os.path.join(__this_dir, '../renderers/shaders/ground_frgm_shdr.glsl'))
+    __prgrm = meta.MetaPrgrm(vrtx_path=os.path.join(__this_dir, 'shaders/ground_vrtx_shdr.glsl'),
+                             frgm_path=os.path.join(__this_dir, 'shaders/ground_frgm_shdr.glsl'))
 
     def __init__(self):
         self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr()

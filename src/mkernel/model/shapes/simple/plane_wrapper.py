@@ -1,9 +1,9 @@
 import gkernel.dtype.geometric.primitive as gt
 from mkernel.global_id_provider import GIDP
-from ..base import GeoShape
+from ..base import MetaShape
 
 
-class Pln(GeoShape):
+class Pln(MetaShape):
     def __init__(self, geo, renderer):
         vb = renderer.vbo.cache.request_block(size=1)
         goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()

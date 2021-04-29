@@ -16,8 +16,8 @@ class GIDP:
     """
 
     def __init__(self):
-        self.__entity_oid = wr.WeakKeyDictionary()
-        self.__oid_entity = wr.WeakValueDictionary()
+        self.__entity_goid = wr.WeakKeyDictionary()
+        self.__goid_entity = wr.WeakValueDictionary()
 
         # color component bit size
         self.__ccomp_bsize = 8
@@ -41,19 +41,19 @@ class GIDP:
             raise NotImplementedError
 
         with self.__lock:
-            if entity in self.__entity_oid:
-                return _OIDConverter(self.__entity_oid[entity])
+            if entity in self.__entity_goid:
+                return _GOID(self.__entity_goid[entity])
 
             # find vacant id
             while True:
                 oid = random.randint(*self.__oid_range)
-                if oid not in self.__oid_entity:
+                if oid not in self.__goid_entity:
                     break
-
+            goid = _GOID(oid, ccomp_sig, self.__ccomp_bsize)
             # converto into color
-            self.__entity_oid[entity] = oid
-            self.__oid_entity[oid] = entity
-            return _OIDConverter(oid, ccomp_sig, self.__ccomp_bsize)
+            self.__entity_goid[entity] = goid
+            self.__goid_entity[goid] = entity
+            return goid
 
     def deregister(self, entity):
         """
@@ -63,11 +63,11 @@ class GIDP:
         :return:
         """
         with self.__lock:
-            if entity not in self.__entity_oid:
+            if entity not in self.__entity_goid:
                 raise
-            oid = self.__entity_oid[entity]
-            del self.__entity_oid[entity]
-            del self.__oid_entity[oid]
+            goid = self.__entity_goid[entity]
+            del self.__entity_goid[entity]
+            del self.__goid_entity[goid]
 
     def is_registered(self, entity):
         """
@@ -78,47 +78,50 @@ class GIDP:
         """
         return entity in self.__entity_id
 
-    def get_registered(self, oid):
+    def get_registered(self, goid):
         """
-        return entity if given oid is valid
+        return entity if given goid object
 
-        :param oid: (int, int, int) tuple of 3 ubyte-like values
+        :param goid: _GOID
         :return:
         """
-        # maybe need to separate?
-        # normalize oid
-        if not isinstance(oid, int):
-            if isinstance(oid, (tuple, list)) and len(oid) == 3:
-                if all(isinstance(c, float) for c in oid):
-                    cmax = 2 ** self.__ccomp_bsize - 1
-                    oid = [int(cmax*c) for c in oid]
-                elif all(isinstance(c, int) for c in oid):
-                    pass
-                else:
-                    raise ValueError
-                oid = int(''.join(bin(c)[2:].rjust(self.__ccomp_bsize, '0') for c in oid), 2)
-            else:
-                raise ValueError
-
+        if not isinstance(goid, _GOID):
+            raise
         with self.__lock:
-            return self.__oid_entity.get(oid, None)
+            return self.__goid_entity.get(goid, None)
+
+    def get_registered_byvalue(self, v):
+        """
+
+        :return:
+        """
+        if isinstance(v, np.ndarray):
+            raise
+        else:
+            raise NotImplementedError
 
 
-class _OIDConverter:
+class _GOID:
     """
-    Converts id into required form
+    Global Object IDentifier
     """
 
     def __init__(self, oid, ccomp_sig, ccomp_bsize):
-        self.__oid = oid
+        self.__raw = oid
         self.__ccomp_sig = ccomp_sig
         self.__ccomp_bsize = ccomp_bsize
 
-    def asint(self):
+    def __str__(self):
+        return f"<GOID {self.__raw}>"
+
+    def __hash__(self):
+        return hash(self.__raw)
+
+    def as_int(self):
         """
         :return: raw id as unsigned int
         """
-        return self.__oid
+        return self.__raw
 
     def as_rgb_float(self):
         """
@@ -138,7 +141,7 @@ class _OIDConverter:
         """
         :return: tuple, rgb as unsigned value
         """
-        color_bits = bin(self.__oid)[2:].rjust(self.__ccomp_bsize * 3, '0')
+        color_bits = bin(self.__raw)[2:].rjust(self.__ccomp_bsize * 3, '0')
         oid = tuple(int(color_bits[i * self.__ccomp_bsize:(i + 1) * self.__ccomp_bsize], 2) for i in range(3))
         return oid
 

@@ -1,15 +1,13 @@
 from numbers import Number
 import numpy as np
-import gkernel.dtype.geometric as gt
-from gkernel.color.primitive import ClrRGBA, Clr
+from gkernel.color.primitive import ClrRGBA
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 from mkernel.global_id_provider import GIDP
-from mkernel.renderers.base import Renderer
-from ..base import GeoShape
+from mkernel.view.sub_renderer import Renderer
+from .base import GeoShape
 
 
 class Ray(GeoShape):
-
     @classmethod
     def get_cls_renderer(cls):
         return None
@@ -17,90 +15,29 @@ class Ray(GeoShape):
 
 class Pnt(GeoShape):
 
-    def __init__(self, geo, renderer: Renderer):
-        # request blocks
-        vb = renderer.vbo.cache.request_block(size=1)
-        oid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
-        ib = renderer.square_ibo.cache.request_block(size=1)
-        ib['idx'] = vb.indices
-        # index block will be set at `frm` setter
-        super().__init__(oid, (vb, ), (ib, ))
-
-        # enums
-        self.__form_square = self.__Form(renderer.square_ibo, 'SQUARE')
-        self.__form_circle = self.__Form(renderer.circle_ibo, 'CIRCLE')
-        self.__form_tirangle = self.__Form(renderer.triangle_ibo, 'TRIANGLE')
-
-        self.geo = geo
-        self.clr = ClrRGBA(1, 1, 1, 1)
-        self.__frm, self.frm = None, self.FORM_SQUARE
-        self.__dia = self.dia = 5
-
-    # form constants
-    @property
-    def FORM_SQUARE(self):
-        return self.__form_square
-
-    @property
-    def FORM_CIRCLE(self):
-        return self.__form_circle
-
-    @property
-    def FORM_TRIANGLE(self):
-        return self.__form_tirangle
+    def __init__(self, geo):
+        super().__init__(geo, clr=(1, 1, 1, 1))
+        self._frm = self.frm = 's'
+        self._dia = self.dia = 10
 
     @property
     def dia(self):
-        return self.__dia
+        return self._dia
 
     @dia.setter
-    def dia(self, v):
-        if not isinstance(v, Number):
-            raise TypeError
-        self.vrtx_block['dia'] = v
-        self.__dia = v
+    def dia(self, val):
+        self.model.update_viewer_cache(self, 'dia', val)
 
     @property
     def frm(self):
-        return self.__frm
+        return self._frm
 
     @frm.setter
-    def frm(self, v):
-        """
-        register at corresponding index buffer
-
-        :param v:
-        :return:
-        """
-        if not isinstance(v, self.__Form):
-            raise TypeError
-        # ignore if setting is redundant
-        if self.__frm == v:
-            return
-        # swapping index block
-        # remove old
-        if self.indx_block is not None:
-            self.indx_block.release()
-
-        # set new
-        self._indx_block = (v.ibo.cache.request_block(size=1), )
-        self.indx_block['idx'] = self.vrtx_block.indices
-        self.__frm = v
+    def frm(self, val):
+        self.model.update_viewer_cache(self, 'frm', val)
 
     def __del__(self):
         print("shape Pnt gc")
-
-    class __Form:
-        def __init__(self, ibo, name):
-            self.__ibo = ibo
-            self.__name = name
-
-        @property
-        def ibo(self):
-            return self.__ibo
-
-        def __str__(self):
-            return f"<ENUM {self.__name}>"
 
 
 class Vec(GeoShape):

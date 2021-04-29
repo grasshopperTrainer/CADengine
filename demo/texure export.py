@@ -1,7 +1,7 @@
 from wkernel import Window
 from mkernel import AModel
 import gkernel.color as clr
-from mkernel.shapes.ground import Ground
+from mkernel.model.shapes import Ground
 import time
 
 

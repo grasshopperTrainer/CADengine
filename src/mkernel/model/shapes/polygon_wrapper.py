@@ -14,10 +14,10 @@ import gkernel.dtype.geometric as gt
 from gkernel.constants import ATOL
 
 from mkernel.global_id_provider import GIDP
-from .base import GeoShape
+from .base import MetaShape
 
 
-class Pgon(GeoShape):
+class Pgon(MetaShape):
     """
     Polygon shape
     """
