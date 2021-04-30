@@ -1,21 +1,16 @@
-from numbers import Number
-import numpy as np
 from gkernel.color.primitive import ClrRGBA
-from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
-from mkernel.global_id_provider import GIDP
-from .base import GeoShape
+from ..base import GeoShape
 
 
 class Ray(GeoShape):
-    @classmethod
-    def get_cls_renderer(cls):
-        return None
+    def __dataset_size__(self):
+        return 2
 
 
 class Pnt(GeoShape):
 
     def __init__(self, parent, geo):
-        super().__init__(parent, geo, clr=(1, 1, 1, 1))
+        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
         self._frm = self.frm = 's'
         self._dia = self.dia = 10
 
@@ -35,56 +30,43 @@ class Pnt(GeoShape):
     def frm(self, val):
         self.parent.update_viewer_cache(self, 'frm', val)
 
+    def __dataset_size__(self):
+        return 1
+
     def __del__(self):
         print("shape Pnt gc")
 
 
 class Vec(GeoShape):
-    pass
+    def __dataset_size__(self):
+        return 1
 
 
 class Lin(GeoShape):
-    def __init__(self, geo, renderer):
-        # request blocks
-        vb = renderer.vbo.cache.request_block(size=2)
-        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
-        ib = renderer.ibo.cache.request_block(size=2)
-        ib['idx'] = vb.indices
-        super().__init__(goid, (vb, ), (ib, ))
-
-        self.geo = geo
-        self.clr = ClrRGBA(0, 0, 0, 1)
-        self.__thk = self.thk = 1
+    def __init__(self, parent, geo):
+        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
+        self._thk = self.thk = 1
 
     @property
     def thk(self):
-        return self.__thk
+        return self._thk
 
     @thk.setter
-    def thk(self, v):
-        if not isinstance(v, Number):
-            raise TypeError
-        self.vrtx_block['thk'] = v
-        self.__thk = v
+    def thk(self, val):
+        self._thk = val
+        self.parent.update_viewer_cache(self, 'thk', val)
+
+    def __dataset_size__(self):
+        return 2
 
 
 class Plin(GeoShape):
-    def __init__(self, geo, renderer):
+    def __init__(self, parent, geo):
         """
 
         :param vs: number of vertices coordinate that form polyline
         """
-        # this will check input validity
-        vb = renderer.vbo.cache.request_block(size=len(geo))
-        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
-        # +1 for primitive restart value
-        ib = renderer.ibo.cache.request_block(size=len(geo) + 1)
-        ib['idx', :-1] = vb.indices
-        ib['idx', -1] = PRV
-        super().__init__(goid, (vb, ), (ib, ))
-
-        self.geo = geo
-        self.clr = ClrRGBA(0, 0, 0, 1)
+        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
         self.__thk = self.thk = 1
 
     @property
@@ -92,92 +74,69 @@ class Plin(GeoShape):
         return self.__thk
 
     @thk.setter
-    def thk(self, v):
-        if not isinstance(v, Number):
-            raise TypeError
-        self.vrtx_block['thk'] = v
-        self.__thk = v
+    def thk(self, val):
+        self.__thk = val
+        self.parent.update_viewer_cache(self, 'thk', val)
+
+    def __dataset_size__(self):
+        return len(self.geo)
 
 
 class Tgl(GeoShape):
-    __is_render_edge = True
+    def __init__(self, parent, geo):
+        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
 
-    def __init__(self, geo, renderer):
-        vb = renderer.vbo.cache.request_block(size=3)
-        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
-        ib = renderer.ibo.cache.request_block(size=3)
-        ib['idx'] = vb.indices
-        super().__init__(goid, (vb, ), (ib, ))
-
-        # actual value assignment
-        self.geo = geo
-        self.__clr_fill = self.clr_fill = ClrRGBA(1, 1, 1, 1)
-        self.__clr_edge = self.clr_edge = ClrRGBA(0, 0, 0, 1)
-        self.__edge_thk = self.edge_thk = 0.5
+        self._clr_fill = self.clr_fill = ClrRGBA(1, 1, 1, 1)
+        self._clr_edge = self.clr_edge = ClrRGBA(0, 0, 0, 1)
+        self._edge_thk = self.edge_thk = 0.5
 
     @property
     def clr(self):
-        return self.__clr_fill, self.__clr_edge
+        return self._clr_fill, self._clr_edge
 
     @clr.setter
-    def clr(self, v):
-        self.clr_fill = v
-        self.clr_edge = v
+    def clr(self, val):
+        self.clr_fill = val
+        self.clr_edge = val
 
     @property
     def clr_fill(self):
-        return self.__clr_fill
+        return self._clr_fill
 
     @clr_fill.setter
-    def clr_fill(self, v):
+    def clr_fill(self, val):
         """
         set fill color
 
-        currently all vertex has color value and are all the same
-        :param v: color value, in default color format is RGBA
+        :param val: color value, in default color format is RGBA
         :return:
         """
-        if not isinstance(v, (list, tuple, np.ndarray)):
-            raise TypeError
-        self.vrtx_block['fill_clr'] = v
-        if self.__clr_fill is None:
-            self.__clr_fill = v
-        else:
-            self.__clr_fill[:] = v
+        self._clr_fill = val
+        self.parent.update_viewer_cache(self, 'clr_fill', val)
 
     @property
     def clr_edge(self):
-        return self.__clr_edge
+        return self._clr_edge
 
     @clr_edge.setter
-    def clr_edge(self, v):
+    def clr_edge(self, val):
         """
         set edge color
 
+        :param val: color value, in default color format is RGBA
         :return:
         """
-        if not isinstance(v, (list, tuple, np.ndarray)):
-            raise TypeError
-        self.vrtx_block['edge_clr'] = v
-        if self.__clr_edge is None:
-            self.__clr_edge = v
-        else:
-            self.__clr_edge[:] = v
+        self._clr_edge = val
+        self.parent.update_viewer_cache(self, 'clr_edge', val)
 
     @property
     def edge_thk(self):
-        return self.__edge_thk
+        return self._edge_thk
 
     @edge_thk.setter
-    def edge_thk(self, v):
-        self.vrtx_block['edge_thk'] = v
-        self.__edge_thk = v
+    def edge_thk(self, val):
+        self._edge_thk = val
+        self.parent.update_viewer_cache(self, 'edge_thk', val)
 
-    def intersect(self, ray):
-        raise NotImplementedError
-
-    @classmethod
-    def set_render_edge(cls, b):
-        if not isinstance(b, bool):
-            raise TypeError
-        cls.__render_edge = b
+    def __dataset_size__(self):
+        return 3

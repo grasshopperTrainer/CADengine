@@ -27,3 +27,6 @@ class AModel(ModelNode):
 
     def update_viewer_cache(self, shape, arg_name, value):
         self.__modeler.update_viewer_cache(shape, arg_name, value)
+
+    def __dataset_size__(self):
+        return 0

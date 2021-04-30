@@ -13,12 +13,35 @@ class AModeler:
         """
         self.__viewer = Viewer(self)
 
-    def create_model(self, parent):
-        if parent and parent.modeler is not self:
-            raise ValueError('given parent is not a member ot this modeler')
-        return AModel(parent, self)
+    def add_model(self, parent):
+        return self.add_shape(parent, (self,), AModel)
 
-    def add_shape(self, model, args, shape_type):
+    def add_raw(self, parent, raw):
+        """
+        add shape from raw renderable
+
+        :param parent:
+        :param raw:
+        :return:
+        """
+        if isinstance(raw, gt.Pnt):
+            return self.add_shape(parent, args=(raw,), shape_type=st.Pnt)
+        elif isinstance(raw, gt.Lin):
+            return self.add_shape(parent, args=(raw,), shape_type=st.Lin)
+        elif isinstance(raw, gt.Tgl):
+            return self.add_shape(parent, args=(raw,), shape_type=st.Tgl)
+        elif isinstance(raw, gt.Pgon):
+            return self.add_shape(parent, args=(raw,), shape_type=st.Pgon)
+        elif isinstance(raw, gt.Plin):
+            return self.add_shape(parent, args=(raw,), shape_type=st.Plin)
+        elif isinstance(raw, gt.Brep):
+            return self.add_shape(parent, args=(raw,), shape_type=st.Brep)
+        elif isinstance(raw, gt.Pln):
+            return self.add_shape(parent, args=(raw,), shape_type=st.Pln)
+        else:
+            raise NotImplementedError
+
+    def add_shape(self, parent, args, shape_type):
         """
         helper for adding geometric shapes like Point, Vector
 
@@ -27,8 +50,9 @@ class AModeler:
         :param renderer_type:
         :return:
         """
-        shape = shape_type(model, *args)
-        model.add_child(shape)
+        shape = shape_type(parent, *args)
+        if parent:
+            parent.add_child(shape)
         self.__viewer.malloc_shape(shape)
         return shape
 

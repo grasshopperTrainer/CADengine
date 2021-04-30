@@ -1,4 +1,4 @@
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 
 
@@ -12,7 +12,8 @@ class MyWindow(Window):
         self.devices.cameras.attach_fps_dolly(0, 0)
 
         # create model
-        model1 = AModel()
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
         v0 = [0, 0, 0]
         v1 = [20, 0, 0]
         v2 = [25, 15, 0]
@@ -23,26 +24,24 @@ class MyWindow(Window):
         v7 = [-20, 5, 0]
         vrtxs = [v0, v1, v2, v3, v4, v5, v6, v7, v0]
         # triangles draw
-        model1.add_tgl(v0, v1, v4)
-        model1.add_tgl(v1, v2, v4)
-        model1.add_tgl(v2, v3, v4)
-        model1.add_tgl(v0, v4, v6)
-        model1.add_tgl(v0, v6, v7)
-        model1.add_tgl(v4, v5, v6)
+        self.modeler.add_tgl(self.model, v0, v1, v4)
+        self.modeler.add_tgl(self.model, v1, v2, v4)
+        self.modeler.add_tgl(self.model, v2, v3, v4)
+        self.modeler.add_tgl(self.model, v0, v4, v6)
+        self.modeler.add_tgl(self.model, v0, v6, v7)
+        self.modeler.add_tgl(self.model, v4, v5, v6)
 
         for i in range(len(vrtxs)):
             x, y, z = vrtxs[i]
             vrtxs[i] = x, y+30, z
-        p = model1.add_pgon(*vrtxs)
+        p = self.modeler.add_pgon(self.model, *vrtxs)
         p.thk = 2
-
-        self.model1 = model1
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 1)
                 # e = 100
-                self.model1.render()
+                self.modeler.render()
 
 MyWindow().run_all()

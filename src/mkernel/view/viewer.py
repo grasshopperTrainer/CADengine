@@ -1,5 +1,6 @@
 import mkernel.model.shapes as st
-import mkernel.view.sub_renderer as rend
+import mkernel.view.renderers as rend
+from mkernel.model.amodel import AModel
 
 
 class RendererDict(dict):
@@ -10,7 +11,8 @@ class RendererDict(dict):
         st.Pgon: rend.PolygonRenderer,
         st.Plin: rend.PolylineRenderer,
         st.Brep: rend.BrepRenderer,
-        st.Pln: rend.PlaneRenderer}
+        st.Pln: rend.PlaneRenderer,
+        AModel: rend.ModelRenderer}
 
     def __getitem__(self, item):
         if not isinstance(item, type):

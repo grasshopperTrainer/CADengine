@@ -10,12 +10,12 @@ from .base import Renderer, get_shader_fullpath
 import weakref as wr
 
 """
-Three sub_renderer of dimensional primitives.
+Three renderers of dimensional primitives.
 
 A primitive renderer does not only render of its kind.
 High dimensional entity is a combination of lower dimensional primitives.
 So, a triangle can be viewed in lines and points.
-This is why three sub_renderer are atomic.
+This is why three renderers are atomic.
 
 Shape holdes buffer, buffer cache and vertex array(vao)
 , while,
@@ -57,6 +57,8 @@ class PointRenderer(Renderer):
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/pnts/pntTgl_frgm_shdr.glsl'))
 
     def __init__(self):
+        super().__init__()
+
         self.__vbo = self.__square_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__circle_ibo = meta.MetaIndxBffr('uint')
         self.__circle_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__circle_ibo)
@@ -65,64 +67,39 @@ class PointRenderer(Renderer):
         self.__triangle_ibo = meta.MetaIndxBffr('uint')
         self.__triangle_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__triangle_ibo)
 
-        self.__dataset = wr.WeakKeyDictionary()
         self.__ibos = {'s': self.__square_ibo,
                        't': self.__triangle_ibo,
                        'c': self.__circle_ibo}
 
     def update_cache(self, shape, arg_name, val):
         if arg_name in ('geo', 'clr', 'dia'):
-            self.__dataset[shape]['vrtx'][arg_name] = val
+            self.datasets[shape]['vrtx'][arg_name] = val
         elif arg_name == 'frm':
             if val not in self.__ibos:
                 raise ValueError("form value has to be one of 's'quare, 't'riangle, 'c'ircle")
             # swap ibo
-            ibo = self.__dataset[shape]['ibo']
+            ibo = self.datasets[shape]['ibo']
             new_ibo = self.__ibos[val]
             if ibo == new_ibo:
                 return
             if ibo:
-                self.__dataset[shape]['indx'].release()
-            self.__dataset[shape]['ibo'] = new_ibo
+                self.datasets[shape]['indx'].release()
+            self.datasets[shape]['ibo'] = new_ibo
             indx_block = new_ibo.cache.request_block(size=1)
-            self.__dataset[shape]['indx'] = indx_block
+            self.datasets[shape]['indx'] = indx_block
             # put index value
-            indx_block['idx'] = self.__dataset[shape]['vrtx'].indices
-        elif arg_name == 'idx':
-            self.__dataset[shape]['indx'][arg_name] = val
+            indx_block['idx'] = self.datasets[shape]['vrtx'].indices
         else:
             raise AttributeError
 
-    def malloc_shape(self, shape):
-        """
-        if present, ignore, else add
+    def create_dataset(self, size):
+        dataset = {'vrtx': self.__vbo.cache.request_block(size),
+                'indx': self.__square_ibo.request_block(size),
+                'ibo': self.__square_ibo}
+        dataset['indx']['idx'] = dataset['vrtx'].indices
+        return dataset
 
-        :param shape:
-        :return:
-        """
-        if shape in self.__dataset:
-            return
-        data = {'vrtx': self.__vbo.cache.request_block(size=1),
-                'indx': None,
-                'ibo': None}
-
-        self.__dataset[shape] = data
-        wr.finalize(shape, self.__free_finalizer__, data)
-
-    def free_shape(self, shape):
-        """
-        if present, remove
-
-        Think WeakKeyDictionary as a safety measure.
-        Modeler will still call this method when shape call itself to `delete`
-        :param shape:
-        :return:
-        """
-        if shape not in self.__dataset:
-            return
-        self.__free_finalizer__(self.__dataset.pop(shape))
-
-    def __free_finalizer__(self, dataset: dict):
+    def free_finalizer(self, dataset: dict):
         """
         automatically release blocks when blocks dict looses shape
         :param dataset:
@@ -228,17 +205,29 @@ class LineRenderer(Renderer):
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/linSharp_frgm_shdr.glsl'))
 
     def __init__(self):
+        super().__init__()
         self.__vbo = self.__sharp_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__ibo = meta.MetaIndxBffr(dtype='uint')
         self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
-    @property
-    def vbo(self):
-        return self.__vbo
+    def create_dataset(self, size):
+        dataset = {'vrtx': self.__vbo.cache.request_block(size),
+                   'indx': self.__ibo.cache.request_block(size)}
+        dataset['indx']['idx'] = dataset['vrtx'].indices
+        return dataset
 
-    @property
-    def ibo(self):
-        return self.__ibo
+    def free_finalizer(self, dataset):
+        if dataset:
+            for v in dataset.values():
+                v.release()
+            dataset.clear()
+
+    def update_cache(self, shape, arg_name, value):
+        dataset = self.datasets[shape]
+        if arg_name in ('geo', 'clr','thk'):
+            dataset['vrtx'][arg_name] = value
+        else:
+            raise AttributeError
 
     def render(self):
         self.__vbo.push_cache()
@@ -273,17 +262,25 @@ class PolylineRenderer(Renderer):
     )
 
     def __init__(self):
+        super().__init__()
         self.__vbo = self.__sharp_prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__ibo = meta.MetaIndxBffr(dtype='uint')
         self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
-    @property
-    def vbo(self):
-        return self.__vbo
+    def create_dataset(self, size):
+        dataset = {'vrtx': self.__vbo.cache.request_block(size),
+                   'indx': self.__ibo.cache.request_block(size)}
+        dataset['indx']['idx'] = dataset['vrtx'].indices
+        return dataset
 
-    @property
-    def ibo(self):
-        return self.__ibo
+    def free_finalizer(self, dataset):
+        if dataset:
+            dataset['vrtx'].release()
+            dataset['indx'].release()
+            dataset.clear()
+
+    def update_cache(self, shape, arg_name, value):
+        self.datasets[shape]['vrtx'][arg_name] = value
 
     def render(self):
         self.__vbo.push_cache()
@@ -335,17 +332,26 @@ class TriangleRenderer(Renderer):
         frgm_path=os.path.join(os.path.dirname(__file__), 'shaders/tgls/tglSharpEdge_frgm_shdr.glsl'))
 
     def __init__(self):
+        super().__init__()
+
         self.__vbo = self.__prgrm.vrtx_attr_schema.union(self.__prgrm.vrtx_attr_schema).create_vrtx_bffr()
         self.__ibo = meta.MetaIndxBffr('uint')
         self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
-    @property
-    def vbo(self):
-        return self.__vbo
+    def create_dataset(self, size):
+        vb = self.__vbo.cache.request_block(size)
+        ib = self.__ibo.cache.request_block(size)
+        ib['idx'] = vb.indices
+        return {'vrtx': vb, 'indx': ib}
 
-    @property
-    def ibo(self):
-        return self.__ibo
+    def free_finalizer(self, dataset):
+        if dataset:
+            for block in dataset.values():
+                block.release()
+            dataset.clear()
+
+    def update_cache(self, shape, arg_name, value):
+        self.datasets[shape]['vrtx'][arg_name] = value
 
     def __update_global_ufrm(self, prgrm):
         """

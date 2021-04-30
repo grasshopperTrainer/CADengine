@@ -1,5 +1,4 @@
-import gkernel.dtype.geometric as gt
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 import random
 
@@ -15,19 +14,20 @@ class MyWindow(Window):
         d.move_spd = 50
 
         # model for drawing
-        self.model = AModel()
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(None)
         self.pnt_count = 0
 
     def draw(self, frame_count=None):
         if self.pnt_count < 100_000_000 and self.framerate % 10 == 0:
-            p = self.model.add_pnt(*(random.randint(-10000, 10000) for _ in range(3)))
-            p.frm = random.choice((p.FORM_CIRCLE, p.FORM_SQUARE, p.FORM_TRIANGLE))
+            p = self.modeler.add_pnt(self.model, *(random.randint(-10000, 10000) for _ in range(3)))
+            p.frm = random.choice(('t', 'c', 's'))
             p.dia = random.randint(10, 100)
             self.pnt_count += 1
 
         with self.devices.panes[0] as p:
             p.clear(.1, .1, .1, 1)
             with self.devices.cameras[0]:
-                self.model.render()
+                self.modeler.render()
 
 MyWindow().run_all()

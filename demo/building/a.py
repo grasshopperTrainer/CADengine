@@ -38,7 +38,7 @@ class MyWindow(Window):
 
         # create model
         self.modeler = AModeler()
-        self.root_model = self.modeler.create_model(None)
+        self.root_model = self.modeler.add_model(None)
         self.point = self.modeler.add_pnt(self.root_model, 0, 0, 0)
         self.flag = False
 

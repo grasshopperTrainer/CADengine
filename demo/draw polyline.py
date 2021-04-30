@@ -1,4 +1,4 @@
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 
 
@@ -12,17 +12,18 @@ class MyWindow(Window):
         self.devices.cameras.attach_fps_dolly(0, 0)
 
         # create model
-        self.model = AModel()
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(None)
         l = 100
-        self.model.add_plin([0, 0, 0], [l, 0, 0], [0, l, l], [l, l, l])
+        self.modeler.add_plin(self.model, [0, 0, 0], [l, 0, 0], [0, l, l], [l, l, l])
         k = 50
-        self.model.add_plin([k, 0, k], [0, k, k], [k, k, k*2])
+        self.modeler.add_plin(self.model, [k, 0, k], [0, k, k], [k, k, k*2])
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 0)
-                self.model.render()
+                self.modeler.render()
 
 
 MyWindow().run_all()

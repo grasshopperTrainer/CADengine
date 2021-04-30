@@ -12,126 +12,67 @@ from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 from gkernel.color import Clr, ClrRGBA
 import gkernel.dtype.geometric as gt
 from gkernel.constants import ATOL
-
-from mkernel.global_id_provider import GIDP
-from .base import MetaShape
+from .base import GeoShape
 
 
-class Pgon(MetaShape):
+class Pgon(GeoShape):
     """
     Polygon shape
     """
 
-    def __init__(self, geo: gt.Pgon, renderer, model):
+    def __init__(self, parent, geo: gt.Pgon):
         vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(geo)
+        self.__size = len(vertices)
+        super().__init__(parent, vertices, clr=(1, 1, 1, 1))
+        self.parent.update_viewer_cache(self, 'fill_indxs', fill_indxs)
+        self.parent.update_viewer_cache(self, 'edge_indxs', edge_indxs)
 
-        self.__model = model
-
-        self.__vrtx_block = renderer.vbo.cache.request_block(size=len(vertices))
-        self.__vrtx_block['vtx'] = vertices
-        self.__vrtx_block['oid'] = GIDP().register_entity(self).as_rgba_float()
-
-        # add PRV at the end to draw separately
-        offset = self.__vrtx_block.indices[0]  # min index
-        self.__fill_indx_block = renderer.fill_ibo.cache.request_block(size=len(fill_indxs) + 1)
-        self.__fill_indx_block['idx', :-1] = [offset + i if i != PRV else PRV for i in fill_indxs]
-        self.__fill_indx_block['idx', -1] = PRV
-
-        self.__edge_indx_block = renderer.edge_ibo.cache.request_block(size=len(edge_indxs) + 1)
-        self.__edge_indx_block['idx', :-1] = [offset + i for i in edge_indxs]
-        self.__edge_indx_block['idx', -1] = PRV
-
-        self.__geo = None
-        self.__thk = None
-        self.__clr_edge = None
-        self.__clr_fill = None
-
-        self.__geo = geo
-        self.thk = 0.5
-        self.clr_edge = ClrRGBA(0, 0, 0, 1)
-        self.clr_fill = ClrRGBA(1, 1, 1, 1)
+        self._edge_thk = self.thk = 0.5
+        self._clr_edge = self.clr_edge = ClrRGBA(0, 0, 0, 1)
+        self._clr_fill = self.clr_fill = ClrRGBA(1, 1, 1, 1)
 
     def __str__(self):
-        return f"<Pgon >"
-
-    @property
-    def geo(self):
-        return self.__geo
-
-    @geo.setter
-    def geo(self, v):
-        if not isinstance(v, gt.Pgon):
-            raise
-        vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(v)
-        if len(vertices) != len(self.__vrtx_block):
-            self.__vrtx_block.resize(size=len(v))
-        else:
-            self.__vrtx_block['vtx'] = vertices
-            self.__geo[:] = v
-
-    @property
-    def thk(self):
-        return self.__thk
-
-    @thk.setter
-    def thk(self, v):
-        if not isinstance(v, Number):
-            raise TypeError
-        self.__vrtx_block['edge_thk'] = v
-        self.__thk = v
+        return f"<Pgon {self.__size}>"
 
     @property
     def clr(self):
-        return self.__clr_edge, self.__clr_fill
+        return self.clr_fill, self.clr_edge
 
     @clr.setter
-    def clr(self, v):
-        if isinstance(v, Clr):
-            edge, fill = v
-        elif isinstance(v, (tuple, list)) and len(v) == 2:
-            edge, fill = v
-        else:
-            raise TypeError
-        self.clr_edge = edge
-        self.clr_fill = fill
+    def clr(self, val):
+        self._clr = val
+        self.clr_fill = val
+        self.clr_edge = val
 
     @property
     def clr_edge(self):
-        return self.__clr_edge
+        return self._clr_edge
 
     @clr_edge.setter
-    def clr_edge(self, v):
-        if not isinstance(v, Clr):
-            raise TypeError
-        self.__vrtx_block['clr_edge'] = v
-        if self.__clr_edge is not None:
-            self.__clr_edge[:] = v
-        else:
-            self.__clr_edge = v
+    def clr_edge(self, val):
+        self._clr_edge = val
+        self.parent.update_viewer_cache(self, 'clr_edge', val)
 
     @property
     def clr_fill(self):
-        return self.__clr_fill
+        return self._clr_fill
 
     @clr_fill.setter
-    def clr_fill(self, v):
-        if not isinstance(v, Clr):
-            raise TypeError
-        self.__vrtx_block['clr_fill'] = v
-        if self.__clr_fill is not None:
-            self.__clr_fill[:] = v
-        else:
-            self.__clr_fill = v
+    def clr_fill(self, val):
+        self._clr_fill = val
+        self.parent.update_viewer_cache(self, 'clr_fill', val)
 
-    def delete(self):
-        self.__vrtx_block.release()
-        self.__edge_indx_block.release()
-        self.__fill_indx_block.release()
+    @property
+    def edge_thk(self):
+        return self._edge_thk
 
-        GIDP.deregister(self)
+    @edge_thk.setter
+    def edge_thk(self, val):
+        self._edge_thk = val
+        self.parent.update_viewer_cache(self, 'edge_thk', val)
 
-        for k, v in self.__dict__.items():
-            setattr(self, k, None)
+    def __dataset_size__(self):
+        return self.__size
 
 
 class CAT(enum):

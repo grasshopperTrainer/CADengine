@@ -2,8 +2,8 @@
 
 layout (location = 0) in vec4 geo;
 layout (location = 1) in float edge_thk;
-layout (location = 2) in vec4 edge_clr;
-layout (location = 3) in vec4 fill_clr;
+layout (location = 2) in vec4 clr_edge;
+layout (location = 3) in vec4 clr_fill;
 layout (location = 4) in vec4 oid;
 
 layout (location = 0) uniform mat4 PM;
@@ -20,8 +20,8 @@ out vsOut {
 void main() {
     // for geometry shader
     vs_out.edgeThk = edge_thk;
-    vs_out.edgeClr = edge_clr;
-    vs_out.fillClr = fill_clr;
+    vs_out.edgeClr = clr_edge;
+    vs_out.fillClr = clr_fill;
     vs_out.oid = oid;
 
     gl_Position = geo;

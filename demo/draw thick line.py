@@ -1,6 +1,6 @@
 import gkernel.dtype.geometric as gt
 
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 import random
 
@@ -17,7 +17,8 @@ class MyWindow(Window):
         d.move_boost = 10
         d.move_spd = 5
         # create model
-        self.model = AModel()
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
 
         self.num_scratch = 0
         self.ori = None
@@ -35,7 +36,7 @@ class MyWindow(Window):
 
         if self.fcount % 3 == 0:
             geo = gt.Lin.from_pnt_vec(self.ori + self.offset_vec * self.num_scratch, self.lin_vec)
-            lin = self.model.add_geo_shape(geo)
+            lin = self.modeler.add_raw(self.model, geo)
             lin.thk = self.thk
             self.num_scratch -= 1
         self.fcount += 1
@@ -43,7 +44,7 @@ class MyWindow(Window):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 1)
-                self.model.render()
+                self.modeler.render()
 
 
 MyWindow().run_all()
