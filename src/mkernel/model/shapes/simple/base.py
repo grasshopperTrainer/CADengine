@@ -23,3 +23,4 @@ class GeoShape(metaclass=MetaShape):
     def clr(self, val):
         self._clr = val
         self.model.update_viewer_cache(self, 'clr', val)
+

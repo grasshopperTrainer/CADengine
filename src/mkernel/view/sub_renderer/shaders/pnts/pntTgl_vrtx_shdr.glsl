@@ -1,6 +1,6 @@
 #version 450 core
 
-layout (location = 0) in vec4 vtx;
+layout (location = 0) in vec4 geo;
 layout (location = 1) in vec4 clr;
 layout (location = 2) in float dia;
 layout (location = 3) in vec4 oid;
@@ -17,5 +17,5 @@ void main() {
     vs_out.clr = clr;
     vs_out.dia = dia;
     // transformation done in geometry shader
-    gl_Position = vtx;
+    gl_Position = geo;
 }

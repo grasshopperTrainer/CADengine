@@ -1,6 +1,6 @@
 #version 450 core
 
-layout (location = 0) in vec4 vtx;
+layout (location = 0) in vec4 geo;
 layout (location = 3) in vec4 fill_clr;
 layout (location = 4) in vec4 oid;
 
@@ -14,7 +14,7 @@ out vec4 fcoord;
 
 void main() {
     fclr = fill_clr;
-    fcoord = vtx;
+    fcoord = geo;
     foid = oid;
-    gl_Position = PM*VM*MM*vtx;
+    gl_Position = PM*VM*MM*geo;
 }

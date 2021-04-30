@@ -1,6 +1,6 @@
 #version 450
 
-layout(location = 0) in vec4 vtx;
+layout(location = 0) in vec4 geo;
 layout(location = 1) in float edge_thk;
 layout(location = 2) in vec4 clr_edge;
 layout(location = 3) in vec4 clr_fill;
@@ -19,5 +19,5 @@ void main() {
     vs_out.fclr = clr_fill;
     vs_out.oid = oid;
 
-    gl_Position = PM*VM*MM*vtx;
+    gl_Position = PM*VM*MM*geo;
 }

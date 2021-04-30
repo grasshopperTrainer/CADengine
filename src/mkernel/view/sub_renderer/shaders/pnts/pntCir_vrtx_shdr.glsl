@@ -1,6 +1,6 @@
 #version 450 core
 
-layout (location = 0) in vec4 vtx;
+layout (location = 0) in vec4 geo;
 layout (location = 1) in vec4 clr;
 layout (location = 2) in float dia;
 layout (location = 3) in vec4 oid;
@@ -21,10 +21,10 @@ out vsOut {
 void main() {
     vs_out.oid = oid;
     vs_out.fclr = clr;
-    vs_out.coord = vtx;
+    vs_out.coord = geo;
 
     // camera space point
-    vec4 csPnt = VM*MM*vtx;
+    vec4 csPnt = VM*MM*geo;
     // radius vector at normalized device coordinate
     // ! PM will squach vector in relative with viewport ratio
     vec4 csRadVec = PM*vec4(dia/2, dia/2, csPnt.z, 1);

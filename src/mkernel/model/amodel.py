@@ -17,11 +17,12 @@ class AModel:
         self.__plane = gt.Pln()
 
     @property
+    def shapes(self):
+        return self.__shapes
+
+    @property
     def plane(self):
         return self.__plane
-
-    def add_shape(self, shape):
-        self.__shapes.add(shape)
 
     def update_viewer_cache(self, shape, arg_name, value):
         self.__modeler.update_viewer_cache(shape, arg_name, value)

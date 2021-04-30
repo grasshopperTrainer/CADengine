@@ -29,8 +29,19 @@ class AModeler:
         :return:
         """
         shape = shape_type(*args, model=self.__model)
-        self.__model.add_shape(shape)
+        self.__model.shapes.add(shape)
+        self.__viewer.malloc_shape(shape)
         return shape
+
+    def remove_shape(self, shape):
+        """
+        signal viewer to remove shape trace
+
+        :param shape:
+        :return:
+        """
+        self.__model.shapes.remove(shape)
+        self.__viewer.free_shape(shape)
 
     def update_viewer_cache(self, shape, arg_name, value):
         """
@@ -42,68 +53,6 @@ class AModeler:
         :return:
         """
         self.__viewer.update_cache(shape, arg_name, value)
-    #
-    # def remove_shape(self, shape):
-    #     """
-    #     remove geometry from the model
-    #
-    #     Method does nothing if geometry is not in the model.
-    #     :param shape:
-    #     :return:
-    #     """
-    #     if shape in self.__shapes.get(shape.__class__, {}):
-    #         self.__shapes[shape.__class__].remove(shape)
-    #         shape.delete()
-    #
-    # def iterator(self):
-    #     """
-    #     iter all shapes in model
-    #     :return:
-    #     """
-    #     for shape in self.__shapes:
-    #         if isinstance(shape, Model):  # if its a sub model iter it
-    #             for child_shape in shape.iterator():
-    #                 yield child_shape
-    #         else:
-    #             yield shape
-    #
-    # def iter_shapes(self, typ=None):
-    #     """
-    #     iter all shapes
-    #     :param typ: type, iter only given type if given
-    #     :return:
-    #     """
-    #     if not typ:
-    #         for shapes in self.__shapes.values():
-    #             for s in shapes:
-    #                 yield s
-    #     else:
-    #         for s in self.__shapes[typ]:
-    #             yield s
-
-    #
-    # def add_geo_shape(self, geo):
-    #     """
-    #     add given geometry
-    #
-    #     :return:
-    #     """
-    #     if isinstance(geo, gt.Pnt):
-    #         return self.add_shape(args=(geo, ), shape_type=st.Pnt, renderer_type=rend.PointRenderer)
-    #     elif isinstance(geo, gt.Lin):
-    #         return self.add_shape(args=(geo, ), shape_type=st.Lin, renderer_type=rend.LineRenderer)
-    #     elif isinstance(geo, gt.Tgl):
-    #         return self.add_shape(args=(geo, ), shape_type=st.Tgl, renderer_type=rend.TriangleRenderer)
-    #     elif isinstance(geo, gt.Pgon):
-    #         return self.add_shape(args=(geo, ), shape_type=st.Pgon, renderer_type=rend.PolygonRenderer)
-    #     elif isinstance(geo, gt.Plin):
-    #         return self.add_shape(args=(geo, ), shape_type=st.Plin, renderer_type=rend.PolylineRenderer)
-    #     elif isinstance(geo, gt.Brep):
-    #         return self.add_shape(args=(geo, ), shape_type=st.Brep, renderer_type=rend.BrepRenderer)
-    #     elif isinstance(geo, gt.Pln):
-    #         return self.add_shape(args=(geo, ), shape_type=st.Pln, renderer_type=rend.PlaneRenderer)
-    #     else:
-    #         raise NotImplementedError
 
     def add_pnt(self, x, y, z) -> st.Pnt:
         """

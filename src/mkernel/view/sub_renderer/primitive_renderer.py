@@ -65,61 +65,76 @@ class PointRenderer(Renderer):
         self.__triangle_ibo = meta.MetaIndxBffr('uint')
         self.__triangle_vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__triangle_ibo)
 
-        self.__blocks = wr.WeakKeyDictionary()
+        self.__dataset = wr.WeakKeyDictionary()
         self.__ibos = {'s': self.__square_ibo,
                        't': self.__triangle_ibo,
                        'c': self.__circle_ibo}
 
     def update_cache(self, shape, arg_name, val):
         if arg_name in ('geo', 'clr', 'dia'):
-            self.__blocks[shape]['vrtx'][arg_name] = val
+            self.__dataset[shape]['vrtx'][arg_name] = val
         elif arg_name == 'frm':
             if val not in self.__ibos:
                 raise ValueError("form value has to be one of 's'quare, 't'riangle, 'c'ircle")
             # swap ibo
-            ibo = self.__blocks[shape]['ibo']
+            ibo = self.__dataset[shape]['ibo']
             new_ibo = self.__ibos[val]
             if ibo == new_ibo:
                 return
             if ibo:
-                self.__blocks[shape]['indx'].release()
-            self.__blocks[shape]['ibo'] = new_ibo
+                self.__dataset[shape]['indx'].release()
+            self.__dataset[shape]['ibo'] = new_ibo
             indx_block = new_ibo.cache.request_block(size=1)
-            self.__blocks[shape]['indx'] = indx_block
+            self.__dataset[shape]['indx'] = indx_block
             # put index value
-            indx_block['idx'] = self.__blocks[shape]['vrtx'].indices
+            indx_block['idx'] = self.__dataset[shape]['vrtx'].indices
         elif arg_name == 'idx':
-            self.__blocks[shape]['indx'][arg_name] = val
+            self.__dataset[shape]['indx'][arg_name] = val
         else:
             raise AttributeError
 
-    def add_shape(self, shape):
+    def malloc_shape(self, shape):
         """
         if present, ignore, else add
 
         :param shape:
         :return:
         """
-        if shape in self.__blocks:
+        if shape in self.__dataset:
             return
         data = {'vrtx': self.__vbo.cache.request_block(size=1),
                 'indx': None,
                 'ibo': None}
 
-        self.__blocks[shape] = data
-        wr.finalize(shape, self.blocks_finalizer, data)
+        self.__dataset[shape] = data
+        wr.finalize(shape, self.__free_finalizer__, data)
 
-    def blocks_finalizer(self, blocks: dict):
+    def free_shape(self, shape):
         """
-        automatically release blocks when blocks dict looses shape
-        :param blocks:
+        if present, remove
+
+        Think WeakKeyDictionary as a safety measure.
+        Modeler will still call this method when shape call itself to `delete`
+        :param shape:
         :return:
         """
-        if blocks['vrtx']:
-            blocks['vrtx'].release()
-        if blocks['indx']:
-            blocks['indx'].release()
-        blocks.clear()
+        if shape not in self.__dataset:
+            return
+        self.__free_finalizer__(self.__dataset.pop(shape))
+
+    def __free_finalizer__(self, dataset: dict):
+        """
+        automatically release blocks when blocks dict looses shape
+        :param dataset:
+        :return:
+        """
+        # for gc being late
+        if dataset:
+            if dataset['vrtx']:
+                dataset['vrtx'].release()
+            if dataset['indx']:
+                dataset['indx'].release()
+            dataset.clear()
 
     def render(self):
         self.__vbo.push_cache()

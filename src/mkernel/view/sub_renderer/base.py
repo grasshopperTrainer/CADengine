@@ -18,5 +18,11 @@ class Renderer(metaclass=abc.ABCMeta):
         pass
 
     # @abc.abstractmethod
-    def add_shape(self, shape):
+    def malloc_shape(self, shape):
+        pass
+
+    def free_shape(self, shape):
+        pass
+
+    def __free_finalizer__(self):
         pass

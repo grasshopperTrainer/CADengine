@@ -12,6 +12,8 @@ import numpy as np
 """
 
 import abc
+
+
 #
 #
 # class Shape(metaclass=abc.ABCMeta):

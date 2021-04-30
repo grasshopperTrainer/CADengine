@@ -38,10 +38,15 @@ class MyWindow(Window):
 
         # create model
         self.modeler = AModeler()
-        self.modeler.add_pnt(0, 0, 0)
+        self.point = self.modeler.add_pnt(0, 0, 0)
+        self.flag = False
 
     def draw(self, frame_count=None):
         # update cam
+        if self.devices.mouse.get_button_status(1) == 1 and not self.flag:
+            self.modeler.remove_shape(self.point)
+            self.flag = True
+
         coord = self.coord_picker.pick(pos=self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
         coord = clr.ClrRGBA(*coord[0][0]).rgb
         self.cad_dolly.set_ref_point(*coord)
