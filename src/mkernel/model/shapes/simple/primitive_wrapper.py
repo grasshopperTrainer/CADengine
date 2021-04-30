@@ -3,7 +3,6 @@ import numpy as np
 from gkernel.color.primitive import ClrRGBA
 from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 from mkernel.global_id_provider import GIDP
-from mkernel.view.sub_renderer import Renderer
 from .base import GeoShape
 
 
@@ -15,8 +14,8 @@ class Ray(GeoShape):
 
 class Pnt(GeoShape):
 
-    def __init__(self, geo):
-        super().__init__(geo, clr=(1, 1, 1, 1))
+    def __init__(self, parent, geo):
+        super().__init__(parent, geo, clr=(1, 1, 1, 1))
         self._frm = self.frm = 's'
         self._dia = self.dia = 10
 
@@ -26,7 +25,7 @@ class Pnt(GeoShape):
 
     @dia.setter
     def dia(self, val):
-        self.model.update_viewer_cache(self, 'dia', val)
+        self.parent.update_viewer_cache(self, 'dia', val)
 
     @property
     def frm(self):
@@ -34,7 +33,7 @@ class Pnt(GeoShape):
 
     @frm.setter
     def frm(self, val):
-        self.model.update_viewer_cache(self, 'frm', val)
+        self.parent.update_viewer_cache(self, 'frm', val)
 
     def __del__(self):
         print("shape Pnt gc")

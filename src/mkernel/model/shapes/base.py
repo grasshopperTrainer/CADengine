@@ -51,10 +51,8 @@ class MetaShape(type):
         """
         my_type = super().__new__(cls, name, base, dic)
         # add hidden property
-        my_type.__model = None
         my_type.__goid = None
         my_type.goid = property(fget=cls.goid)
-        my_type.model = property(fget=cls.model)
         return my_type
 
     def __call__(cls, *args, **kwargs):
@@ -67,7 +65,6 @@ class MetaShape(type):
         """
         obj = cls.__new__(cls)
         # force attribute
-        obj.__model = kwargs.pop('model')
         obj.__goid = GIDP().register_entity(obj)
         obj.__init__(*args, **kwargs)
         return obj
@@ -75,7 +72,3 @@ class MetaShape(type):
     @staticmethod
     def goid(self):
         return self.__goid
-
-    @staticmethod
-    def model(self):
-        return self.__model

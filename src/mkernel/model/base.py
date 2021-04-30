@@ -16,20 +16,4 @@ class ModelIterator:
 
 
 class Model:
-    def __init__(self):
-        self.__shapes = {}
-        self.__plane = gt.Pln()
-        self.__renderers = {}
-        self.__Lock = threading.Lock()
-
-    @property
-    def lock(self):
-        """
-        User of threading has to take care of locking by himself
-        :return: Lock,
-        """
-        return self.__Lock
-
-    @property
-    def plane(self):
-        return self.__plane
+    pass

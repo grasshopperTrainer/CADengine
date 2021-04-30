@@ -1,8 +1,11 @@
 from mkernel.model.shapes.base import MetaShape
+from mkernel.model.tree import ModelNode
+import weakref as wr
 
 
-class GeoShape(metaclass=MetaShape):
-    def __init__(self, geo, clr):
+class GeoShape(ModelNode, metaclass=MetaShape):
+    def __init__(self, parent, geo, clr):
+        super().__init__(parent)
         self._geo = self.geo = geo
         self._clr = self.clr = clr
 
@@ -13,7 +16,7 @@ class GeoShape(metaclass=MetaShape):
     @geo.setter
     def geo(self, val):
         self._geo = val
-        self.model.update_viewer_cache(self, 'geo', val.T)
+        self.parent.update_viewer_cache(self, 'geo', val.T)
 
     @property
     def clr(self):
@@ -22,5 +25,5 @@ class GeoShape(metaclass=MetaShape):
     @clr.setter
     def clr(self, val):
         self._clr = val
-        self.model.update_viewer_cache(self, 'clr', val)
+        self.parent.update_viewer_cache(self, 'clr', val)
 
