@@ -94,7 +94,7 @@ class PointRenderer(Renderer):
 
     def create_dataset(self, size):
         dataset = {'vrtx': self.__vbo.cache.request_block(size),
-                'indx': self.__square_ibo.request_block(size),
+                'indx': self.__square_ibo.cache.request_block(size),
                 'ibo': self.__square_ibo}
         dataset['indx']['idx'] = dataset['vrtx'].indices
         return dataset

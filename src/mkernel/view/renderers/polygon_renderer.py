@@ -8,9 +8,6 @@ from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 
 
 class PolygonRenderer(Renderer):
-    """
-
-    """
     __fill_prgrm = meta.MetaPrgrm(
         vrtx_path=get_shader_fullpath('shaders/pgon/pgonFill_vrtx_shdr.glsl'),
         frgm_path=get_shader_fullpath('shaders/pgon/pgonFill_frgm_shdr.glsl'))
@@ -86,7 +83,6 @@ class PolygonRenderer(Renderer):
         self.__edge_ibo.push_cache()
         with self.__edge_vao:
             with self.__edge_prgrm as prgrm:
-                # update uniforms
                 self.__update_umiforms(prgrm)
                 gl.glDrawElements(gl.GL_LINE_STRIP_ADJACENCY,
                                   self.__edge_ibo.cache.active_size,

@@ -27,7 +27,7 @@ class Pgon(GeoShape):
         self.parent.update_viewer_cache(self, 'fill_indxs', fill_indxs)
         self.parent.update_viewer_cache(self, 'edge_indxs', edge_indxs)
 
-        self._edge_thk = self.thk = 0.5
+        self._edge_thk = self.edge_thk = 0.5
         self._clr_edge = self.clr_edge = ClrRGBA(0, 0, 0, 1)
         self._clr_fill = self.clr_fill = ClrRGBA(1, 1, 1, 1)
 
