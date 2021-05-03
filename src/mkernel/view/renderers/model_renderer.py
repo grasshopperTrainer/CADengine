@@ -8,7 +8,7 @@ class ModelRenderer(Renderer):
     def update_cache(self, shape, arg_name, value):
         pass
 
-    def free_finalizer(self):
+    def free_finalizer(self, dataset):
         pass
 
     def create_dataset(self, size):

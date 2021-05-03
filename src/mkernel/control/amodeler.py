@@ -50,9 +50,7 @@ class AModeler:
         :param renderer_type:
         :return:
         """
-        shape = shape_type(parent, *args)
-        if parent:
-            parent.add_child(shape)
+        shape = shape_type(*args, __parent=parent) # hidden kwarg
         self.__viewer.malloc_shape(shape)
         return shape
 

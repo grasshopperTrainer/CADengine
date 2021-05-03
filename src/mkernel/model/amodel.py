@@ -1,19 +1,18 @@
 import gkernel.dtype.geometric as gt
-from .tree import ModelNode
+from .shapes.base import Shape
 
 """
 Model is simply a data structure storing shapes
 """
 
 
-class AModel(ModelNode):
-    def __init__(self, parent, modeler):
+class AModel(Shape):
+    def __init__(self, modeler):
         """
         Shape tree.
         Simply record shape set. Compared with BModeler,
         this does not support winged edge data structure
         """
-        super().__init__(parent)
         self.__modeler = modeler
         self.__plane = gt.Pln()
 

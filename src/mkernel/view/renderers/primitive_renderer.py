@@ -273,7 +273,7 @@ class PolylineRenderer(Renderer):
         dataset['indx']['idx'] = dataset['vrtx'].indices
         return dataset
 
-    def free_finalizer(self, dataset):
+    def free_finalizer(self, dataset, *args, **kargs):
         if dataset:
             dataset['vrtx'].release()
             dataset['indx'].release()

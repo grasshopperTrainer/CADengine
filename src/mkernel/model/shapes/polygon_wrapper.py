@@ -12,27 +12,37 @@ from ckernel.constants import PRIMITIVE_RESTART_VAL as PRV
 from gkernel.color import Clr, ClrRGBA
 import gkernel.dtype.geometric as gt
 from gkernel.constants import ATOL
-from .base import GeoShape
+from .base import Shape
 
 
-class Pgon(GeoShape):
+class Pgon(Shape):
     """
     Polygon shape
     """
 
-    def __init__(self, parent, geo: gt.Pgon):
+    def __init__(self, geo: gt.Pgon):
         vertices, fill_indxs, edge_indxs = _Trapezoidator().gen_quad_strip(geo)
         self.__size = len(vertices)
-        super().__init__(parent, vertices, clr=(1, 1, 1, 1))
         self.parent.update_viewer_cache(self, 'fill_indxs', fill_indxs)
         self.parent.update_viewer_cache(self, 'edge_indxs', edge_indxs)
 
-        self._edge_thk = self.edge_thk = 0.5
+        self._geo = self.geo = vertices
+        self._clr = self.clr = 1, 1, 1, 1
+        self._edge_thk = self.edge_thk = 1
         self._clr_edge = self.clr_edge = ClrRGBA(0, 0, 0, 1)
         self._clr_fill = self.clr_fill = ClrRGBA(1, 1, 1, 1)
 
     def __str__(self):
         return f"<Pgon {self.__size}>"
+
+    @property
+    def geo(self):
+        return self._geo
+
+    @geo.setter
+    def geo(self, val):
+        self._geo = val
+        self.parent.update_viewer_cache(self, 'geo', val)
 
     @property
     def clr(self):

@@ -1,4 +1,4 @@
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 
 
@@ -12,12 +12,14 @@ class MyWindow(Window):
         self.devices.cameras.attach_fps_dolly(0, 0)
 
         # create model
-        self.model = AModel()
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(None)
+
         # create triangles
         e = 50
-        t0 = self.model.add_tgl([0, 0, 0], [e, 0, 0], [0, e, 0])
-        t1 = self.model.add_tgl([0, 0, 0], [0, e, 0], [0, 0, e])
-        t2 = self.model.add_tgl([0, 0, 0], [e, 0, 0], [0, 0, e])
+        t0 = self.modeler.add_tgl(self.model, [0, 0, 0], [e, 0, 0], [0, e, 0])
+        t1 = self.modeler.add_tgl(self.model, [0, 0, 0], [0, e, 0], [0, 0, e])
+        t2 = self.modeler.add_tgl(self.model, [0, 0, 0], [e, 0, 0], [0, 0, e])
         # set fill color
         i, a = 1, 1
         t0.clr_fill = i, 0, 0, a
@@ -32,6 +34,6 @@ class MyWindow(Window):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 1)
-                self.model.render()
+                self.modeler.render()
 
 MyWindow().run_all()

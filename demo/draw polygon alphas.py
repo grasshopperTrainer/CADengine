@@ -352,7 +352,7 @@ class MyWindow(Window):
                              (0, 0, 0)))
 
         for pgon, pln in zip(pgons, plns):
-            self.modeler.add_raw(model, pln.orient(pgon, gt.Pln())).thk = 5
+            self.modeler.add_raw(model, pln.orient(pgon, gt.Pln())).edge_thk = 5
         self.model = model
 
     def draw(self, frame_count=None):

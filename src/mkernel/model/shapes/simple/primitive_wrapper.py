@@ -1,16 +1,18 @@
 from gkernel.color.primitive import ClrRGBA
-from ..base import GeoShape
+from .base import SimpleGeoShape
 
 
-class Ray(GeoShape):
-    def __dataset_size__(self):
+class Ray(SimpleGeoShape):
+
+    @staticmethod
+    def __dataset_size__():
         return 2
 
 
-class Pnt(GeoShape):
+class Pnt(SimpleGeoShape):
 
-    def __init__(self, parent, geo):
-        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
+    def __init__(self, geo):
+        super().__init__(geo, clr=(1, 1, 1, 1))
         self._frm = self.frm = 's'
         self._dia = self.dia = 10
 
@@ -30,21 +32,24 @@ class Pnt(GeoShape):
     def frm(self, val):
         self.parent.update_viewer_cache(self, 'frm', val)
 
-    def __dataset_size__(self):
+    @staticmethod
+    def __dataset_size__():
         return 1
 
     def __del__(self):
         print("shape Pnt gc")
 
 
-class Vec(GeoShape):
-    def __dataset_size__(self):
+class Vec(SimpleGeoShape):
+
+    @staticmethod
+    def __dataset_size__():
         return 1
 
 
-class Lin(GeoShape):
-    def __init__(self, parent, geo):
-        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
+class Lin(SimpleGeoShape):
+    def __init__(self, geo):
+        super().__init__(geo, clr=(1, 1, 1, 1))
         self._thk = self.thk = 1
 
     @property
@@ -56,35 +61,14 @@ class Lin(GeoShape):
         self._thk = val
         self.parent.update_viewer_cache(self, 'thk', val)
 
-    def __dataset_size__(self):
+    @staticmethod
+    def __dataset_size__():
         return 2
 
 
-class Plin(GeoShape):
-    def __init__(self, parent, geo):
-        """
-
-        :param vs: number of vertices coordinate that form polyline
-        """
-        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
-        self.__thk = self.thk = 1
-
-    @property
-    def thk(self):
-        return self.__thk
-
-    @thk.setter
-    def thk(self, val):
-        self.__thk = val
-        self.parent.update_viewer_cache(self, 'thk', val)
-
-    def __dataset_size__(self):
-        return len(self.geo)
-
-
-class Tgl(GeoShape):
-    def __init__(self, parent, geo):
-        super().__init__(parent, geo.T, clr=(1, 1, 1, 1))
+class Tgl(SimpleGeoShape):
+    def __init__(self, geo):
+        super().__init__(geo, clr=(1, 1, 1, 1))
 
         self._clr_fill = self.clr_fill = ClrRGBA(1, 1, 1, 1)
         self._clr_edge = self.clr_edge = ClrRGBA(0, 0, 0, 1)
@@ -138,5 +122,28 @@ class Tgl(GeoShape):
         self._edge_thk = val
         self.parent.update_viewer_cache(self, 'edge_thk', val)
 
-    def __dataset_size__(self):
+    @staticmethod
+    def __dataset_size__():
         return 3
+
+
+class Plin(SimpleGeoShape):
+    def __init__(self, geo):
+        """
+
+        :param vs: number of vertices coordinate that form polyline
+        """
+        super().__init__(geo, clr=(1, 1, 1, 1))
+        self.__thk = self.thk = 1
+
+    @property
+    def thk(self):
+        return self.__thk
+
+    @thk.setter
+    def thk(self, val):
+        self.__thk = val
+        self.parent.update_viewer_cache(self, 'thk', val)
+
+    def __dataset_size__(self):
+        return self.geo.shape[0]

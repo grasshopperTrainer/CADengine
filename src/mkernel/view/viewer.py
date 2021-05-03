@@ -12,7 +12,8 @@ class RendererDict(dict):
         st.Plin: rend.PolylineRenderer,
         st.Brep: rend.BrepRenderer,
         st.Pln: rend.PlaneRenderer,
-        AModel: rend.ModelRenderer}
+        AModel: rend.ModelRenderer,
+        st.Ground: rend.GroundRenderer}
 
     def __getitem__(self, item):
         if not isinstance(item, type):

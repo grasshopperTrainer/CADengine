@@ -13,17 +13,26 @@ class PlaneRenderer(Renderer):
                              frgm_path=get_shader_fullpath('shaders/plane_frgm_shdr.glsl'))
 
     def __init__(self):
+        super().__init__()
+
         self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__ibo = meta.MetaIndxBffr(dtype='uint')
         self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
-    @property
-    def vbo(self):
-        return self.__vbo
+    def create_dataset(self, size):
+        vb = self.__vbo.cache.request_block(size)
+        ib = self.__ibo.cache.request_block(size)
+        ib['idx'] = vb.indices
+        return {'vrtx': vb, 'indx': ib}
 
-    @property
-    def ibo(self):
-        return self.__ibo
+    def free_finalizer(self, dataset):
+        if dataset:
+            for block in dataset.values():
+                block.release()
+            dataset.clear()
+
+    def update_cache(self, shape, arg_name, value):
+        self.datasets[shape]['vrtx'][arg_name] = value
 
     def render(self):
         with self.__prgrm:
@@ -41,4 +50,3 @@ class PlaneRenderer(Renderer):
                                   self.__ibo.cache.active_size,
                                   self.__ibo.cache.gldtype[0],
                                   ctypes.c_void_p(0))
-

@@ -1,8 +1,8 @@
-from mkernel.model.shapes.base import MetaShape
+from mkernel.model.shapes.base import _MetaShape
 import gkernel.dtype.geometric as gt
 
 
-class Brep(MetaShape):
+class Brep(_MetaShape):
     def __init__(self, geo: gt.Brep, model, renderer):
         self.__model = model
         self.__geo = geo
