@@ -11,11 +11,11 @@ in vsOut {
     float edgeThk;
     vec4 edgeClr;
     vec4 fillClr;
-    vec4 goid;
+    uint goid;
 } vs_in[];
 
 out vec4 fclr;
-out vec4 foid;
+out uint foid;
 out vec4 fcoord;
 
 const mat4 TM = PM * VM * MM;

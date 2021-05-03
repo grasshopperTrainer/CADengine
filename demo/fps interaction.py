@@ -18,7 +18,7 @@ class MainWindow(Window):
                                       iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
                                       aid=0)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      iformat=ffactory.TXTR.CLR_FRMT.RGB.RGB,
+                                      iformat=ffactory.TXTR.CLR_FRMT.RED.R32UI,
                                       aid=1)  # color id texture
         ffactory.append_depth_texture(target=ffactory.TXTR.TRGT.TWO_D,
                                       iformat=ffactory.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
@@ -87,11 +87,10 @@ class MainWindow(Window):
             self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
             with self.devices.frames[1] as deff:
                 # pos = p.cursor_pos(parameterize=True)
-                color = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))[0][0]
-                color = clr.ClrRGBA(*color).as_ubyte()[:3]
-                e = GIDP().get_registered_byvalue(color)
+                goid = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))[0][0]
+                e = GIDP().get_registered(goid)
                 if e:
-                    print(e)
+                    print(goid, e)
 
 
 class SubWindow(Window):
@@ -107,6 +106,7 @@ class SubWindow(Window):
     def draw(self):
         time.sleep(0.1)
         with self.devices.frames[0] as f:
+            f.clear()
             f.clear_depth()
             with self.devices.panes[1]:
                 self.ma.devices.frames[1].render_pane_space(0, (0, 1, 0, 1), (-1, 1, -1, 1), 0)

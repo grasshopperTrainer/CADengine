@@ -55,10 +55,10 @@ class EnumVal:
         self.__v = v
 
     def __str__(self):
-        return f"<enum: {self.__v.__str__()}>"
+        return self.__v.__str__()
 
     def __repr__(self):
-        return self.__str__()
+        return f"<enum: {self.__v.__str__()}>"
 
     @property
     def v(self):

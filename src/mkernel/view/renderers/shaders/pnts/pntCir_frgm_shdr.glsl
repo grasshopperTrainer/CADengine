@@ -3,7 +3,7 @@
 layout (location = 4) uniform vec4 VPP; // viewport pixel property (posx, posy, width, height)
 
 in vsOut {
-    vec4 goid;
+    flat uint goid;
     vec4 fclr;
     vec2 radVec;
     vec2 center;
@@ -11,7 +11,7 @@ in vsOut {
 } vs_in;
 
 layout (location = 0) out vec4 frag_clr;
-layout (location = 1) out vec4 goid;
+layout (location = 1) out uint goid;
 layout (location = 2) out vec4 frag_coord;
 
 float inf = 1.0/ 0.0;

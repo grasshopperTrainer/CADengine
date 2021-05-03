@@ -31,7 +31,7 @@ class MainWindow(Window):
         # draw something
         self.modeler = AModeler()
         self.model = self.modeler.add_model(parent=None)
-
+        self.modeler.add_ground(self.model, (1, 1, 1, 1))
         for x in range(3):
             for y in range(3):
                 p = self.modeler.add_pnt(self.model, x*20, y*20, 0)
@@ -98,4 +98,4 @@ class SubWindow(Window):
 window_main = MainWindow()
 window_sub = SubWindow(window_main)
 
-window_main.run_all(1)
+window_main.run_all(2)

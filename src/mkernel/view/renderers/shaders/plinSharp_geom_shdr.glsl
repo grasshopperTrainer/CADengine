@@ -10,11 +10,11 @@ layout (location = 2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     float thk;
     vec4 clr;
-    vec4 goid;
+    uint goid;
 } vs_in[];
 
 out vec4 fclr;
-out vec4 foid;
+out uint foid;
 out vec4 fcoord;
 
 const mat4 VMM = VM * MM;

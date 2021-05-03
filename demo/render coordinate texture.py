@@ -1,6 +1,5 @@
 from wkernel import Window
 from mkernel import AModeler
-from mkernel.model.shapes import Ground
 
 
 class MyWindow(Window):

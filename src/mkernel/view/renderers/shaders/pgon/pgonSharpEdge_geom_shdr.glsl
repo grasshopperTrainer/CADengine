@@ -10,12 +10,12 @@ layout (location = 2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     float edgeThk;
     vec4 edgeClr;
-    vec4 goid;
+    uint goid;
 } vs_in[];
 
 
 out vec4 edgeClr;
-out vec4 goid;
+out uint goid;
 
 vec4 vec_bisector(vec4 a, vec4 b) {
     // calculate bisector unit vector between two vectors

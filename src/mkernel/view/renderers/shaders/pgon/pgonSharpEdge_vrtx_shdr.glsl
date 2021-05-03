@@ -3,12 +3,12 @@
 layout (location = 0) in vec4 geo;
 layout (location = 1) in float edge_thk;
 layout (location = 2) in vec4 clr_edge;
-layout (location = 3) in vec4 goid;
+layout (location = 3) in uint goid;
 
 out vsOut {
     float edgeThk;
     vec4 edgeClr;
-    vec4 goid;
+    uint goid;
 } vs_out;
 
 void main() {

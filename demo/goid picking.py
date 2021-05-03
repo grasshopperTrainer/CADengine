@@ -1,17 +1,17 @@
 from wkernel import Window
 from mkernel import AModeler
 from mkernel.global_id_provider import GIDP
-from gkernel.color import ClrRGBA
 import time
 
 """
 picking entity by color id texture
 """
 
+
 class MainWindow(Window):
     def __init__(self):
         super().__init__(500, 1000, 'mywindow')
-        self.framerate = 5
+        self.fps = 1
 
         # create frame
         w, h = self.glyph.size
@@ -41,7 +41,6 @@ class MainWindow(Window):
         p1.dia = 5
         p1.clr = 1, 1, 0, 1
         p1.frm = 'c'
-
         p2 = self.modeler.add_pnt(self.model, 20, 20, 20)
         p2.dia = 5
         p2.clr = 1, 1, 0, 1
@@ -72,10 +71,10 @@ class MainWindow(Window):
                 pos -= self.devices.panes[1].pos
                 pos /= self.devices.panes[1].size
                 # pick color id
-                clr = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))
-                clr = ClrRGBA(*clr[0][0]).as_ubyte()[:3]
-                e = GIDP().get_registered_byvalue(clr)
-                print('POINTING AT', e)
+                goid = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))[0][0]
+                if goid:
+                    e = GIDP().get_registered(goid)
+                    print('POINTING AT', e)
 
 
 class SubWindow(Window):

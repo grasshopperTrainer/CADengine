@@ -4,7 +4,7 @@ from mkernel.model.shapes.base import Shape
 
 class Pln(Shape):
     def __init__(self, geo: gt.Pln):
-        self.parent.update_viewer_cache(self, 'goid', self.goid.as_rgba_float())
+        self.parent.update_viewer_cache(self, 'goid', self.goid)
         self._geo = self.geo = geo
         self._len = self.len = 0.25  # think it as % of ndc
 

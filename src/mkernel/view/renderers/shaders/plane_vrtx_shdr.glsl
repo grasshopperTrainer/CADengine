@@ -7,12 +7,12 @@ layout (location=2) in vec4 y;
 layout (location=3) in vec4 z;
 
 layout (location=4) in float len;
-layout (location=5) in vec4 goid;
+layout (location=5) in uint goid;
 
 out vsOut {
     mat4 pln;
     float len;
-    vec4 goid;
+    uint goid;
 } vs_out;
 
 void main() {

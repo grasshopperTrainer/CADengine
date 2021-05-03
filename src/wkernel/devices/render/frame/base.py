@@ -248,21 +248,9 @@ class Frame(RenderDevice):
         else:
             raise
 
-        # get format
-        if DTF.COLOR.RG.has_member(texture.iformat):
-            frmt = gl.GL_RED
-        elif DTF.COLOR.RG.has_member(texture.iformat):
-            frmt = gl.GL_RG
-        elif DTF.COLOR.RGB.has_member(texture.iformat):
-            frmt = gl.GL_RGB
-        elif DTF.COLOR.RGBA.has_member(texture.iformat):
-            frmt = gl.GL_RGBA
-        else:
-            raise NotImplementedError
-
         gl.glReadBuffer(src)
         # is returning raw array okay?
-        return gl.glReadPixels(x, y, w, h, frmt, gl.GL_FLOAT)
+        return gl.glReadPixels(x, y, w, h, texture.format, texture.type)
 
     def clear(self, r=0, g=0, b=0, a=1):
         """
@@ -292,8 +280,16 @@ class Frame(RenderDevice):
         :return:
         """
         texture = self.frame_bffr.get_attachment(id)
-        color = np.array((r, g, b, a), dtype=np.float32)
-        gl.glClearTexImage(texture.get_concrete(), 0, texture.iformat, gl.GL_FLOAT, color)
+        if texture.type == gl.GL_FLOAT:
+            dtype = 'float'
+        elif texture.type == gl.GL_UNSIGNED_INT:
+            dtype = 'uint'
+        elif texture.type == gl.GL_UNSIGNED_BYTE:
+            dtype = 'ubyte'
+        elif texture.type == gl.GL_INT:
+            dtype = 'int'
+        color = np.array((r, g, b, a), dtype=dtype)
+        gl.glClearTexImage(texture.get_concrete(), 0, texture.format, texture.type, color)
 
     def clear_depth(self):
         """

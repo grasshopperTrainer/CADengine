@@ -3,7 +3,7 @@
 layout (location = 0) in vec4 geo;
 layout (location = 1) in vec4 clr;
 layout (location = 2) in float dia;
-layout (location = 3) in vec4 goid;
+layout (location = 3) in uint goid;
 
 layout (location = 0) uniform mat4 MM = mat4(1.0);
 layout (location = 1) uniform mat4 VM = mat4(1.0);
@@ -11,7 +11,7 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 layout (location = 4) uniform vec4 VPP; // viewport pixel property (posx, posy, width, height)
 
 out vsOut {
-    vec4 goid;
+    uint goid;
     vec4 fclr;
     vec2 radVec;
     vec2 center;
