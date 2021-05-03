@@ -35,43 +35,43 @@ class MainWindow(Window):
         for x in range(3):
             for y in range(3):
                 p = self.modeler.add_pnt(self.model, x*20, y*20, 0)
-                # p.dia = 5
-                # p.clr = 1, 0, 0, 1
-                # p.frm = 's'
-        #
-        # p1 = self.modeler.add_pnt(self.model, 12, 12, 12)
-        # p1.dia = 5
-        # p1.clr = 1, 0, 0, 1
-        # p1.frm = 's'
-        #
-        # p2 = self.modeler.add_pnt(self.model, 10, 10, 10)
-        # p2.dia = 5
-        # p2.clr = 1, 1, 0, 1
-        # p2.frm = 't'
-        #
-        # p3 = self.modeler.add_pnt(self.model, 80, 30, 0)
-        # p3.dia = 5
-        # p3.clr = 1, 1, 1, 1
-        # p3.frm = 't'
-        #
-        # self.modeler.add_ground(self.model, (.5,.5,.5,.5))
-        # self.is_rendered = False
+                p.dia = 5
+                p.clr = 1, 0, 0, 1
+                p.frm = 's'
+
+        p1 = self.modeler.add_pnt(self.model, 12, 12, 12)
+        p1.dia = 5
+        p1.clr = 1, 0, 0, 1
+        p1.frm = 's'
+
+        p2 = self.modeler.add_pnt(self.model, 10, 10, 10)
+        p2.dia = 5
+        p2.clr = 1, 1, 0, 1
+        p2.frm = 't'
+
+        p3 = self.modeler.add_pnt(self.model, 80, 30, 0)
+        p3.dia = 5
+        p3.clr = 1, 1, 1, 1
+        p3.frm = 't'
+
+        self.modeler.add_ground(self.model, (.5,.5,.5,.5))
+        self.is_rendered = False
 
     def draw(self):
         with self.devices.frames[0] as deff:
             deff.clear(0, 0, 0, 1)
             deff.clear_depth()
-        # with self.devices.cameras[0] as cam:
-        #     if not self.is_rendered:
-        #         with self.devices.frames[1] as f:
-        #             f.clear_depth()
-        #             f.clear_texture(0, .5, .5, .5, 1)
-        #             f.clear_texture(1, 0, 0, 0, 1)
-            self.modeler.render()
-                    # self.is_rendered = True
+        with self.devices.cameras[0] as cam:
+            if not self.is_rendered:
+                with self.devices.frames[1] as f:
+                    f.clear_depth()
+                    f.clear_texture(0, .5, .5, .5, 1)
+                    f.clear_texture(1, 0, 0, 0, 1)
+                    self.modeler.render()
+                    self.is_rendered = True
 
-        # with self.devices.panes[1] as p:
-        #     self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
+        with self.devices.panes[1] as p:
+            self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
 
 
 class SubWindow(Window):
@@ -96,6 +96,6 @@ class SubWindow(Window):
                         self.ma.devices.frames[1].render_pane_space('d', (0, 1, 0, 1), (-1, 1, -1, 1), 0)
 
 window_main = MainWindow()
-# window_sub = SubWindow(window_main)
+window_sub = SubWindow(window_main)
 
 window_main.run_all(1)

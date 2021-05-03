@@ -7,18 +7,18 @@ layout (location=2) in vec4 y;
 layout (location=3) in vec4 z;
 
 layout (location=4) in float len;
-layout (location=5) in vec4 oid;
+layout (location=5) in vec4 goid;
 
 out vsOut {
     mat4 pln;
     float len;
-    vec4 oid;
+    vec4 goid;
 } vs_out;
 
 void main() {
     // vector to points
     vs_out.pln = mat4(ori, x, y, z);
     vs_out.len = len;
-    vs_out.oid = oid;
+    vs_out.goid = goid;
     gl_Position = ori;   // column major?
 }

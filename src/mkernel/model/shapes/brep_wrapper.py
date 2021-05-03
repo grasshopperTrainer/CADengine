@@ -4,6 +4,7 @@ import gkernel.dtype.geometric as gt
 
 class Brep(_MetaShape):
     def __init__(self, geo: gt.Brep, model, renderer):
+
         self.__model = model
         self.__geo = geo
         self.__renderer = renderer

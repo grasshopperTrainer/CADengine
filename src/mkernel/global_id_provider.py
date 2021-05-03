@@ -42,14 +42,14 @@ class GIDP:
 
         with self.__lock:
             if entity in self.__entity_goid:
-                return _GOID(self.__entity_goid[entity])
+                return GOID(self.__entity_goid[entity])
 
             # find vacant id
             while True:
                 oid = random.randint(*self.__oid_range)
                 if oid not in self.__goid_entity:
                     break
-            goid = _GOID(oid, ccomp_sig, self.__ccomp_bsize)
+            goid = GOID(oid, ccomp_sig, self.__ccomp_bsize)
             # converto into color
             self.__entity_goid[entity] = goid
             self.__goid_entity[goid] = entity
@@ -85,23 +85,26 @@ class GIDP:
         :param goid: _GOID
         :return:
         """
-        if not isinstance(goid, _GOID):
+        if not isinstance(goid, GOID):
             raise
         with self.__lock:
             return self.__goid_entity.get(goid, None)
 
-    def get_registered_byvalue(self, v):
+    def get_registered_byvalue(self, val):
         """
 
         :return:
         """
-        if isinstance(v, np.ndarray):
-            raise
+        if isinstance(val, np.ndarray):
+            if val.dtype == 'ubyte':
+                goid = int(''.join(bin(v)[2:].rjust(8, '0') for v in val), 2)
+                goid = GOID(goid, 'rgb', 8)
+            return self.__goid_entity.get(goid, None)
         else:
             raise NotImplementedError
 
 
-class _GOID:
+class GOID:
     """
     Global Object IDentifier
     """
@@ -116,6 +119,9 @@ class _GOID:
 
     def __hash__(self):
         return hash(self.__raw)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def as_int(self):
         """

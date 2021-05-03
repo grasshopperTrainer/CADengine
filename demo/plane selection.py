@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import AModel
+from mkernel import AModeler
 from mkernel.control.vicinity_picker import VicinityPicker
 
 
@@ -13,9 +13,10 @@ class MyWindow(Window):
                              up=(0, 0, 1))
         # self.devices.cameras.attach_fps_dolly(0, 0)
 
-        self.model = AModel()
-        self.model.add_ground([.5] * 4)
-        self.model.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
+        self.modeler.add_ground(self.model, [.5] * 4)
+        self.modeler.add_pln(self.model, (0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.picker = VicinityPicker(500)
 
     def draw(self):
@@ -24,7 +25,7 @@ class MyWindow(Window):
             df.clear_depth()
 
             with self.devices.cameras[0] as c:
-                self.model.render()
+                self.modeler.render()
 
                 k, P = self.picker.pick(c, self.devices.cursors[0])
                 if k == 'xy':
@@ -33,7 +34,7 @@ class MyWindow(Window):
                     clr = 1, 0, 0, 0.5
                 else:
                     clr = 0, 1, 0, 0.5
-                self.model.add_geo_shape(P).clr = clr
+                self.modeler.add_raw(self.model, P).clr = clr
 
 w = MyWindow()
 w.run_all()

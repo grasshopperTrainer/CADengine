@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import AModel
+from mkernel import AModeler
 from mkernel.model.shapes import Ground
 
 
@@ -22,33 +22,32 @@ class MyWindow(Window):
         ff.create()
 
         # set model
-        self.model = AModel()
-        self.model.add_pnt(0, 0, 0)
-        t = self.model.add_tgl((10, 0, 5), (0, 10, 5), (0, 0, 5))
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
+        self.modeler.add_ground(self.model, (.5, .5, .5, 1))
+        self.modeler.add_pnt(self.model, 0, 0, 0)
+        t = self.modeler.add_tgl(self.model, (10, 0, 5), (0, 10, 5), (0, 0, 5))
         t.clr_edge = 1, 0, 0, 1
         t.edge_thk = 5
-        l = self.model.add_lin((10, 0, 10), (0, -100, 0))
+        l = self.modeler.add_lin(self.model, (10, 0, 10), (0, -100, 0))
         l.clr = 1, 0, 1, 1
 
-        pl = self.model.add_plin([0, 0, 0], [-5, 0, 10], [10, 0, 50])
+        pl = self.modeler.add_plin(self.model, [0, 0, 0], [-5, 0, 10], [10, 0, 50])
         pl.clr = 1, 1, 1, 1
 
-        self.origin = AModel()
-        self.origin.add_pln((0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        self.modeler.add_pln(self.model, (0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
         a = 10
         for x in range(10):
             for y in range(10):
                 for z in range(1):
-                    p = self.model.add_pnt(a*x, a*y, a*z)
-                    p.frm = p.FORM_CIRCLE
+                    p = self.modeler.add_pnt(self.model, a * x, a * y, a * z)
+                    p.frm = 'c'
                     p.dia = 3
                     if z % 2 == 0:
-                        p.frm = p.FORM_TRIANGLE
-                    if (x+y+z) % 2 == 0:
-                        p.frm = p.FORM_SQUARE
-
-        self.ground = Ground([.5] * 4)
+                        p.frm = 't'
+                    if (x + y + z) % 2 == 0:
+                        p.frm = 's'
 
     def draw(self):
         with self.devices.frames[0] as df:
@@ -59,9 +58,7 @@ class MyWindow(Window):
                 with self.devices.frames[1] as df:
                     df.clear(0, 0, 0, 1)
                     df.clear_depth()
-                    self.ground.render(c)
-                    self.origin.render()
-                    self.model.render()
+                    self.modeler.render()
 
                     p = df.pick_pixels(2, self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
                     print(p)
@@ -91,6 +88,7 @@ class SubWindow(Window):
                 mf.render_pane_space(2, (0, 1, 0, 1), (-1, 1, -1, 1))
             with self.devices.panes[4]:
                 mf.render_pane_space('d', (0, 1, 0, 1), (-1, 1, -1, 1), 0)
+
 
 window_main = MyWindow()
 window_sub = SubWindow(window_main)

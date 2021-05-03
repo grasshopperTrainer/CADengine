@@ -3,7 +3,7 @@
 layout (location = 4) uniform vec4 VPP; // viewport pixel property (posx, posy, width, height)
 
 in vsOut {
-    vec4 oid;
+    vec4 goid;
     vec4 fclr;
     vec2 radVec;
     vec2 center;
@@ -11,13 +11,13 @@ in vsOut {
 } vs_in;
 
 layout (location = 0) out vec4 frag_clr;
-layout (location = 1) out vec4 oid;
+layout (location = 1) out vec4 goid;
 layout (location = 2) out vec4 frag_coord;
 
 float inf = 1.0/ 0.0;
 
 void main() {
-    oid = vs_in.oid;
+    goid = vs_in.goid;
     // fragment coordinated in NDC
     vec2 fc = ((gl_FragCoord.xy-VPP.xy)/VPP.zw-0.5)*2;
     // vector

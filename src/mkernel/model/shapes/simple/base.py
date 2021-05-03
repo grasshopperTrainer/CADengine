@@ -3,7 +3,8 @@ from ..base import Shape
 
 class SimpleGeoShape(Shape):
     def __init__(self, geo, clr):
-        self._geo = self.geo = geo.T
+        self.parent.update_viewer_cache(self, 'goid', self.goid.as_rgba_float())
+        self._geo = self.geo = geo
         self._clr = self.clr = clr
 
     @property
@@ -13,7 +14,7 @@ class SimpleGeoShape(Shape):
     @geo.setter
     def geo(self, val):
         self._geo = val
-        self.parent.update_viewer_cache(self, 'geo', val)
+        self.parent.update_viewer_cache(self, 'geo', val.T)
 
     @property
     def clr(self):

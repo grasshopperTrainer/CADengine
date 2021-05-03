@@ -1,7 +1,7 @@
 #version 450 core
 
 in vec4 clr;
-in vec4 oid;
+in vec4 goid;
 in vec4 coord;
 
 layout(location=0) out vec4 fclr;
@@ -10,6 +10,6 @@ layout(location=2) out vec4 fcoord;
 
 void main() {
     fclr = clr;
-    id_clr = oid;
+    id_clr = goid;
     fcoord = coord;
 }

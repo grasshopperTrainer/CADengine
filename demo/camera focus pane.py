@@ -1,4 +1,4 @@
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 
 
@@ -15,22 +15,22 @@ class MyWindow(Window):
         self.devices.cameras[1].focus_pane(pane=self.devices.panes[1], focus=(0, 0, 0), clip_off=100)
 
         # create model
-        model1 = AModel()
-        self.model1 = model1
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
+
         hpw, hph = [d/2 for d in self.devices.panes[1].size.xy]
-        model1.add_pnt(0, 0, 0)
+        self.modeler.add_pnt(self.model, 0, 0, 0)
         for dx in (-1, 1):
             for dy in (-1, 1):
                 for z in range(-500, 1, 100):
-                    p = model1.add_pnt(hpw*dx, hph*dy, z)
-                    p.frm = p.FORM_CIRCLE
+                    p = self.modeler.add_pnt(self.model, hpw*dx, hph*dy, z)
+                    p.frm = 'c'
                     p.dia = 30
 
     def draw(self, frame_count=None):
         with self.devices.panes[1] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 1)
-                # e = 100
-                self.model1.render()
+                self.modeler.render()
 
 MyWindow().run_all(1)

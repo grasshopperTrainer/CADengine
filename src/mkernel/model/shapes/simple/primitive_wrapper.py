@@ -14,7 +14,7 @@ class Pnt(SimpleGeoShape):
     def __init__(self, geo):
         super().__init__(geo, clr=(1, 1, 1, 1))
         self._frm = self.frm = 's'
-        self._dia = self.dia = 10
+        self._dia = self.dia = 5
 
     @property
     def dia(self):
@@ -133,17 +133,18 @@ class Plin(SimpleGeoShape):
 
         :param vs: number of vertices coordinate that form polyline
         """
+        self.__size = geo.shape[1]
         super().__init__(geo, clr=(1, 1, 1, 1))
-        self.__thk = self.thk = 1
+        self._thk = self.thk = 1
 
     @property
     def thk(self):
-        return self.__thk
+        return self._thk
 
     @thk.setter
     def thk(self, val):
-        self.__thk = val
+        self._thk = val
         self.parent.update_viewer_cache(self, 'thk', val)
 
     def __dataset_size__(self):
-        return self.geo.shape[0]
+        return self.__size

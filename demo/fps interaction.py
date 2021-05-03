@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import AModel
+from mkernel import AModeler
 from mkernel.global_id_provider import GIDP
 import gkernel.color as clr
 import gkernel.dtype.geometric as gt
@@ -32,39 +32,39 @@ class MainWindow(Window):
         self.devices.cameras.attach_fps_dolly(camera_id=0, cursor_id=0)
 
         # draw something
-        model = AModel()
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
+        self.modeler.add_ground(self.model, (.8, .8, .8, 1))
 
         for x in range(3):
             for y in range(3):
-                p = model.add_pnt(x*20, y*20, 0)
+                p = self.modeler.add_pnt(self.model, x*20, y*20, 0)
                 p.dia = 5
                 p.clr = 1, 0, 0, 1
-                p.frm = p.FORM_CIRCLE
+                p.frm = 'c'
 
-        p1 = model.add_pnt(12, 12, 12)
+        p1 = self.modeler.add_pnt(self.model, 12, 12, 12)
         p1.dia = 5
         p1.clr = 1, 0, 0, 1
-        p1.frm = p1.FORM_CIRCLE
+        p1.frm = 'c'
 
-        p2 = model.add_pnt(10, 10, 10)
+        p2 = self.modeler.add_pnt(self.model, 10, 10, 10)
         p2.dia = 5
         p2.clr = 1, 1, 0, 1
-        p2.frm = p2.FORM_TRIANGLE
+        p2.frm = 't'
 
-        p3 = model.add_pnt(80, 30, 0)
+        p3 = self.modeler.add_pnt(self.model, 80, 30, 0)
         p3.dia = 5
         p3.clr = 1, 1, 1, 1
-        p3.frm = p3.FORM_TRIANGLE
+        p3.frm = 't'
 
         self._ref_pnts = []
         for _ in range(4):
-            pnt = model.add_pnt(0, 0, 0)
+            pnt = self.modeler.add_pnt(self.model, 0, 0, 0)
             pnt.dia = 0.05
             self._ref_pnts.append(pnt)
 
-        self.model = model
         self.is_rendered = False
-        self.model.add_ground((.8, .8, .8, 1))
 
     def draw(self):
         with self.devices.frames[0] as deff:
@@ -80,7 +80,7 @@ class MainWindow(Window):
                 f.clear_depth()
                 f.clear_texture(0, .5, .5, .5, 1)
                 f.clear_texture(1, 0, 0, 0, 1)
-                self.model.render()
+                self.modeler.render()
                 self.is_rendered = True
 
         with self.devices.panes[1] as p:
@@ -89,7 +89,7 @@ class MainWindow(Window):
                 # pos = p.cursor_pos(parameterize=True)
                 color = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))[0][0]
                 color = clr.ClrRGBA(*color).as_ubyte()[:3]
-                e = GIDP().get_registered(color)
+                e = GIDP().get_registered_byvalue(color)
                 if e:
                     print(e)
 

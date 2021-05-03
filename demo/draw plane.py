@@ -21,7 +21,6 @@ class MyWindow(Window):
         self.modeler.add_pln(self.model, (0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
         self.modeler.add_pln(self.model, (10, 23, 10), (6, 4, 24), (5, 6, 10), (2, 100, 1))
         self.modeler.add_ground(self.model, (1, 1, 1, 1))
-        # self.model.add_pnt(0, 0, 0)
 
     def draw(self):
         with self.devices.frames[0] as df:

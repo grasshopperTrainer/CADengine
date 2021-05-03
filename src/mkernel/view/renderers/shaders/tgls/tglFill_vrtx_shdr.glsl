@@ -2,7 +2,7 @@
 
 layout (location = 0) in vec4 geo;
 layout (location = 3) in vec4 fill_clr;
-layout (location = 4) in vec4 oid;
+layout (location = 4) in vec4 goid;
 
 layout (location = 0) uniform mat4 PM;
 layout (location = 1) uniform mat4 VM;
@@ -15,6 +15,6 @@ out vec4 fcoord;
 void main() {
     fclr = fill_clr;
     fcoord = geo;
-    foid = oid;
+    foid = goid;
     gl_Position = PM*VM*MM*geo;
 }

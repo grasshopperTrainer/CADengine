@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import AModel
+from mkernel import AModeler
 import gkernel.color as clr
 from mkernel.model.shapes import Ground
 import time
@@ -34,41 +34,40 @@ if __name__ == '__main__':
             self.devices.cameras.attach_fps_dolly(camera_id=0, cursor_id=0)
 
             # draw something
-            model = AModel()
+            self.modeler = AModeler()
+            self.model = self.modeler.add_model(parent=None)
 
             for x in range(3):
                 for y in range(3):
-                    p = model.add_pnt(x*20, y*20, 0)
+                    p = self.modeler.add_pnt(self.model, x*20, y*20, 0)
                     p.dia = 5
                     p.clr = 1, 0, 0, 1
-                    p.frm = p.FORM_CIRCLE
+                    p.frm = 'c'
 
-            p1 = model.add_pnt(12, 12, 12)
+            p1 = self.modeler.add_pnt(self.model, 12, 12, 12)
             p1.dia = 5
             p1.clr = 1, 0, 0, 1
-            p1.frm = p1.FORM_CIRCLE
+            p1.frm = 'c'
 
-            p2 = model.add_pnt(10, 10, 10)
+            p2 = self.modeler.add_pnt(self.model, 10, 10, 10)
             p2.dia = 5
             p2.clr = 1, 1, 0, 1
-            p2.frm = p2.FORM_TRIANGLE
+            p2.frm = 't'
 
-            p3 = model.add_pnt(80, 30, 0)
+            p3 = self.modeler.add_pnt(self.model, 80, 30, 0)
             p3.dia = 5
             p3.clr = 1, 1, 1, 1
-            p3.frm = p3.FORM_TRIANGLE
+            p3.frm = 't'
 
-            self.ref0 = model.add_pnt(0, 0, 0)
-            self.ref1 = model.add_pnt(0, 0, 0)
-            self.ref2 = model.add_pnt(0, 0, 0)
+            self.ref0 = self.modeler.add_pnt(self.model, 0, 0, 0)
+            self.ref1 = self.modeler.add_pnt(self.model, 0, 0, 0)
+            self.ref2 = self.modeler.add_pnt(self.model, 0, 0, 0)
 
             self.ref0.dia = 0.5
             self.ref1.dia = 0.5
             self.ref2.dia = 0.5
-            self.ref1.frm = p1.FORM_TRIANGLE
-
-            self.model = model
-            self.ground = Ground(clr.ClrRGBA(.8, .8, .8, 1))
+            self.ref1.frm = 't'
+            self.modeler.add_ground(self.model, clr.ClrRGBA(.8, .8, .8, 1))
             self.count = 0
 
             print('press "1" to export current scene')
@@ -84,10 +83,9 @@ if __name__ == '__main__':
                 f.clear_depth()
                 f.clear_texture(0, .5, .5, .5, 1)
                 f.clear_texture(1, 0, 0, 0, 1)
-                self.model.render()
+                self.modeler.render()
 
             with self.devices.panes[1]:
-                self.ground.render(self.devices.cameras[0])
                 self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
                 if self.devices.keyboard.get_key_status('1'):
                     self.devices.frames[1].frame_bffr.textures[0].image_export(f"{self.count}.jpg")

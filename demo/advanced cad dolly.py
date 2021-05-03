@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import AModel
+from mkernel import AModeler
 import gkernel.color as clr
 
 
@@ -28,13 +28,15 @@ class MyWindow(Window):
         # attach dolly
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(camera_id=0, cursor_id=0, def_offset=500)
 
-        self.model = AModel()
-        self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-        self.model.add_ground((.5, .5, .5, .5))
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
+
+        self.modeler.add_pln(self.model, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        self.modeler.add_ground(self.model, (.5, .5, .5, .5))
         a = 10
         for x in range(10):
             for y in range(10):
-                self.model.add_pnt(x * a, y * a, a)
+                self.modeler.add_pnt(self.model, x * a, y * a, a)
 
     def draw(self):
         with self.devices.frames[0] as f:
@@ -44,7 +46,7 @@ class MyWindow(Window):
             with self.devices.frames[1] as f:
                 f.clear(0, 0, 0, 0)
                 f.clear_depth()
-                self.model.render()
+                self.modeler.render()
 
                 # extract coordinate texture value
                 # print(self.devices.cursors[1].pos_local, self.devices.cursors[1].pos_global)

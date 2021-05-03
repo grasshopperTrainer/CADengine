@@ -52,6 +52,7 @@ class PolygonRenderer(Renderer):
             ib['idx', -1] = PRV
             dataset[arg_name] = ib
         else:
+            print(arg_name, value)
             self.datasets[shape]['vrtx'][arg_name] = value
 
     def render(self):

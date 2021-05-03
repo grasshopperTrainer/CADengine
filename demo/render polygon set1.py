@@ -1,4 +1,4 @@
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 import gkernel.dtype.geometric as gt
 from gkernel.color import *
@@ -14,16 +14,16 @@ class MyWindow(Window):
         self.devices.cameras[0].focus_pane(pane=self.devices.panes[0], focus=(0, 0, 0), clip_off=100)
 
         # create model
-        model1 = AModel()
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
         plns = []
-        self.model1 = model1
         pw, ph = self.devices.panes[0].size.xy
         n = 6
         nw, nh = pw // n, ph // n
         for x in range(-pw // 2 + nw, pw // 2 - nw + 1, nw):
             for y in range(-ph // 2 + nh, ph // 2 - nh + 1, nh):
                 plns.append(gt.Pln(o=(x, y, 0)))
-                model1.add_pnt(x, y, 1).clr = ClrRGBA(1, 1, 0, 1)
+                self.modeler.add_pnt(self.model, x, y, 1).clr = ClrRGBA(1, 1, 0, 1)
 
         e = 100
         q = e / 4
@@ -253,14 +253,13 @@ class MyWindow(Window):
                              (0, 0, 0)))
 
         for pgon, pln in zip(pgons, plns):
-            model1.add_geo_shape(pln.orient(pgon, gt.Pln())).thk = 5
+            self.modeler.add_raw(self.model, pln.orient(pgon, gt.Pln())).edge_thk = 5
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 1)
-                # e = 100
-                self.model1.render()
+                self.modeler.render()
 
 
 MyWindow().run_all(1)

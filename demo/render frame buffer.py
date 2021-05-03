@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import AModel
+from mkernel import AModeler
 import time
 
 
@@ -22,21 +22,20 @@ class MainWindow(Window):
         # create pane
         self.devices.panes.appendnew_pane(0, 0, 0.6, 0.6, self)
 
-        model = AModel()
-        p0 = model.add_pnt(0, 0, 0)
+        self.modeler = AModeler()
+        self.model = self.modeler.add_model(parent=None)
+        p0 = self.modeler.add_pnt(self.model, 0, 0, 0)
         p0.dia = 2
         p0.clr = 1, 1, 0, 1
-        p1 = model.add_pnt(10, 10, 10)
+        p1 = self.modeler.add_pnt(self.model, 10, 10, 10)
         p1.dia = 5
         p1.clr = 1, 1, 0, 1
-        p1.frm = p1.FORM_CIRCLE
+        p1.frm = 'c'
 
-        P2 = model.add_pnt(20, 20, 20)
+        P2 = self.modeler.add_pnt(self.model, 20, 20, 20)
         P2.dia = 5
         P2.clr = 1, 1, 0, 1
-        P2.frm = P2.FORM_TRIANGLE
-
-        self.model = model
+        P2.frm = 't'
         self.is_rendered = False
 
     def draw(self):
@@ -48,7 +47,7 @@ class MainWindow(Window):
                 off.clear_depth()
                 off.clear_texture(0, .5, .5, .5, 1)
                 off.clear_texture(1, 0, 0, 0, 1)
-                self.model.render()
+                self.modeler.render()
                 self.is_rendered = True
             off.render_pane_space(0, (0, 1, 0, 1), (-1, 1, -1, 1), 0.9)
 

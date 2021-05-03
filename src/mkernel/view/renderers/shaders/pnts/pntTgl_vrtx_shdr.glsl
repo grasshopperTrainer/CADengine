@@ -3,16 +3,16 @@
 layout (location = 0) in vec4 geo;
 layout (location = 1) in vec4 clr;
 layout (location = 2) in float dia;
-layout (location = 3) in vec4 oid;
+layout (location = 3) in vec4 goid;
 
 out vsOut {
-    vec4 oid;
+    vec4 goid;
     vec4 clr;
     float dia;
 } vs_out;
 
 void main() {
-    vs_out.oid = oid;
+    vs_out.goid = goid;
     // as vector so
     vs_out.clr = clr;
     vs_out.dia = dia;

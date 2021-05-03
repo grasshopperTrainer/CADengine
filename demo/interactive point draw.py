@@ -1,5 +1,5 @@
 from wkernel import Window
-from mkernel import AModel, AModeler
+from mkernel import AModeler
 import gkernel.color as clr
 import time
 
@@ -25,9 +25,9 @@ class MyWindow(Window):
         self.cad_dolly = self.devices.cameras.attach_cad_dolly(camera_id=0, cursor_id=0, def_offset=500)
 
         self.modeler = AModeler()
-        self.model = AModel()
-        self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-        self.model.add_ground((.5, .5, .5, .5))
+        self.model = self.modeler.add_model(parent=None)
+        self.modeler.add_ground(self.model, (.5, .5, .5, .5))
+        self.modeler.add_pln(self.model, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
         self.__id_picker = self.devices.frames[1].create_pixel_picker(aid=1)
         self.__coord_picker = self.devices.frames[1].create_pixel_picker(aid=2)
@@ -38,18 +38,18 @@ class MyWindow(Window):
             rf.clear_depth()
 
             with self.devices.frames[1] as df:
-                self.modeler.listen(self.model,
-                                    self,
-                                    self.devices.mouse,
-                                    self.devices.keyboard,
-                                    self.devices.cameras[0],
-                                    self.devices.cursors[0],
-                                    self.__id_picker)
+                # self.modeler.listen(self.model,
+                #                     self,
+                #                     self.devices.mouse,
+                #                     self.devices.keyboard,
+                #                     self.devices.cameras[0],
+                #                     self.devices.cursors[0],
+                #                     self.__id_picker)
 
                 # draw ground and model
                 df.clear(0, 0, 0, 0)
                 df.clear_depth()
-                self.model.render()
+                self.modeler.render()
 
                 # update camera move
                 # extract coordinate texture value

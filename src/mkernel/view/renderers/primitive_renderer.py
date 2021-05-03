@@ -72,9 +72,7 @@ class PointRenderer(Renderer):
                        'c': self.__circle_ibo}
 
     def update_cache(self, shape, arg_name, val):
-        if arg_name in ('geo', 'clr', 'dia'):
-            self.datasets[shape]['vrtx'][arg_name] = val
-        elif arg_name == 'frm':
+        if arg_name == 'frm':
             if val not in self.__ibos:
                 raise ValueError("form value has to be one of 's'quare, 't'riangle, 'c'ircle")
             # swap ibo
@@ -90,7 +88,7 @@ class PointRenderer(Renderer):
             # put index value
             indx_block['idx'] = self.datasets[shape]['vrtx'].indices
         else:
-            raise AttributeError
+            self.datasets[shape]['vrtx'][arg_name] = val
 
     def create_dataset(self, size):
         dataset = {'vrtx': self.__vbo.cache.request_block(size),
@@ -223,11 +221,7 @@ class LineRenderer(Renderer):
             dataset.clear()
 
     def update_cache(self, shape, arg_name, value):
-        dataset = self.datasets[shape]
-        if arg_name in ('geo', 'clr','thk'):
-            dataset['vrtx'][arg_name] = value
-        else:
-            raise AttributeError
+        self.datasets[shape]['vrtx'][arg_name] = value
 
     def render(self):
         self.__vbo.push_cache()

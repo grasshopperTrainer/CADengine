@@ -11,7 +11,7 @@ in vsOut {
     float edgeThk;
     vec4 edgeClr;
     vec4 fillClr;
-    vec4 oid;
+    vec4 goid;
 } vs_in[];
 
 out vec4 fclr;
@@ -63,7 +63,7 @@ void main() {
     vec3 outer1 = pnt_offset(p1, v12, -v01, -thk);
     vec3 outer2 = pnt_offset(p2, -v02, -v12, -thk);
 
-    foid = vs_in[0].oid;
+    foid = vs_in[0].goid;
     fclr = vs_in[0].edgeClr;
     // edges
     emit(inner0);

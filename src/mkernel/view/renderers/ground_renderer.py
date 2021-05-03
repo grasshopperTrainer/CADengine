@@ -1,4 +1,3 @@
-import os
 import OpenGL.GL as gl
 
 import ckernel.render_context.opengl_context.entities.meta as meta

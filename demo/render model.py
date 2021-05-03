@@ -1,4 +1,4 @@
-from mkernel import AModel
+from mkernel import AModeler
 from wkernel import Window
 
 
@@ -12,28 +12,26 @@ class MyWindow(Window):
         self.devices.cameras.attach_fps_dolly(0, 0)
 
         # create model
-        model1 = AModel()
-        model2 = AModel()
+        self.modeler1 = AModeler()
+        self.modeler2 = AModeler()
 
-        # model1.add_pnt(0, 0, 0)
-        # model1.add_pnt(0, 10, 1q0)
+        self.model1 = self.modeler1.add_model(parent=None)
+        self.model2 = self.modeler1.add_model(parent=None)
 
         for i in range(10):
-            pnt = model2.add_pnt(0, i * 10, i * 10)
-            pnt.frm = pnt.FORM_CIRCLE
+            pnt = self.modeler2.add_pnt(self.model2, 0, i * 10, i * 10)
+            pnt.frm = 'c'
             pnt.dia = i
-        model1.add_lin([0, 0, 0], [-20, 20, 20])
-        model1.add_tgl([0, 0, 0], [10, 0, 0], [0, 10, 0])
-        self.model1 = model1
-        self.model2 = model2
+        self.modeler1.add_lin(self.model1, [0, 0, 0], [-20, 20, 20])
+        self.modeler1.add_tgl(self.model1, [0, 0, 0], [10, 0, 0], [0, 10, 0])
 
     def draw(self, frame_count=None):
         with self.devices.panes[0] as p:
             with self.devices.cameras[0] as c:
                 p.clear(.5, .5, .5, 1)
                 # e = 100
-                self.model1.render()
-                self.model2.render()
+                self.modeler1.render()
+                self.modeler2.render()
 
 
 MyWindow().run_all()
