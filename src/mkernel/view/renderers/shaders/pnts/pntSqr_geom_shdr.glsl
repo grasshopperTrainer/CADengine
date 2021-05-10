@@ -10,27 +10,29 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 in vsOut {
     vec4 clr;
     float dia;
-    uint goid;
-} vs_in[];
+    uvec3 goid;
+} gs_in[];
 
-out vec4 clr;
-out uint goid;
-out vec4 coord;
+out gsOut {
+    vec4 clr;
+    vec4 coord;
+    uvec3 goid;
+} gs_out;
 
 const mat4 VMM = VM * MM;
 const mat4 IVMM = inverse(VMM);
 
 void emit_vertex(vec4 pos) {
-    coord = IVMM * pos;
+    gs_out.coord = IVMM * pos;
     gl_Position = PM*pos;
     EmitVertex();
 }
 
 void main() {
     // invariants
-    clr = vs_in[0].clr;
-    goid = vs_in[0].goid;
-    float rad = vs_in[0].dia/2;
+    gs_out.clr = gs_in[0].clr;
+    gs_out.goid = gs_in[0].goid;
+    float rad = gs_in[0].dia/2;
     vec4 pnt = VMM*gl_in[0].gl_Position;
     // vectors of identical size
     vec4 movex = vec4(1, 0, 0, 0) * rad;

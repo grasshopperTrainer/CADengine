@@ -11,28 +11,29 @@ in vsOut {
     float thk;
     vec4 clr;
     uint goid;
-} vs_in[];
+} gs_in[];
 
-out vec4 fclr;
-out uint foid;
-out vec4 fcoord;
+out gsOut {
+    vec4 clr;
+    uint oid;
+    vec4 coord;
+} gs_out;
 
 const mat4 VMM = VM * MM;
 const mat4 IVMM = inverse(VMM);
-const float hthk = vs_in[0].thk/2.0;
+const float hthk = gs_in[0].thk/2.0;
 
 void emit_vertex(vec4 pos) {
     // invariants
-    fclr = vs_in[0].clr;
-    foid = vs_in[0].goid;
+    gs_out.clr = gs_in[0].clr;
+    gs_out.oid = gs_in[0].goid;
 
-    fcoord = IVMM * pos;
+    gs_out.coord = IVMM * pos;
     gl_Position = PM * pos;
     EmitVertex();
 }
 
 void main() {
-    float thk = vs_in[0].thk;
     // transformed as so models are at position
     // with camera at origin and facing negetive z
     vec4 p0 = VMM*gl_in[0].gl_Position;

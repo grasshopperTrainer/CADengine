@@ -42,6 +42,8 @@ class MainWindow(Window):
                 p.dia = 5
                 p.clr = 1, 0, 0, 1
                 p.frm = 'c'
+                if x == y:
+                    p.active_goid = False
 
         p1 = self.modeler.add_pnt(self.model, 12, 12, 12)
         p1.dia = 5

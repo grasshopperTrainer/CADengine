@@ -8,6 +8,7 @@ layout (location=3) in vec4 z;
 
 layout (location=4) in float len;
 layout (location=5) in uint goid;
+layout (location=6) in int active_goid;
 
 out vsOut {
     mat4 pln;
@@ -19,6 +20,6 @@ void main() {
     // vector to points
     vs_out.pln = mat4(ori, x, y, z);
     vs_out.len = len;
-    vs_out.goid = goid;
+    vs_out.goid = goid*active_goid;
     gl_Position = ori;   // column major?
 }

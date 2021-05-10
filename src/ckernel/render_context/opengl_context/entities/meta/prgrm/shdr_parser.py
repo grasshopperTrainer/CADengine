@@ -110,7 +110,7 @@ class SimpleShdrParser:
     ;                       # end of statement
         """, re.VERBOSE | re.MULTILINE)
 
-    __dtype_patt = re.compile('([a-zA-Z]*)([\d].*)?')
+    __dtype_patt = re.compile("""([uibd])?([a-zA-Z]+)([\d][.]*)?""")
 
     @classmethod
     def parse_vrtx_shdr(cls, src):
@@ -279,29 +279,33 @@ class SimpleShdrParser:
         :param dtype: str, glsl dtype
         :return: (name, dtype, shape), numpy dtype field description
         """
-        suf, pref = re.match(cls.__dtype_patt, dtype).groups()
-        if suf in cls.__singular_types:  # singular types
-            return name, cls.__singular_types[suf]
-        elif pref is not None:  # complex types
-            pref = list(map(lambda x: int(x), pref.split('x')))
-            if suf == 'vec':  # vector types
-                if suf.startswith('d'):
-                    suf = 'float64'
-                elif suf.startswith('i'):
-                    suf = 'int'
-                elif suf.startswith('u'):
-                    suf = 'uint'
+        comp_type, layout_type, shape = re.match(cls.__dtype_patt, dtype).groups()
+
+        if layout_type in cls.__singular_types:  # singular types
+            return name, cls.__singular_types[layout_type]
+
+        if shape is not None:  # complex types
+            shape = list(map(int, shape.split('x')))
+            if layout_type == 'vec':  # vector types
+                if comp_type == 'd':
+                    layout_type = 'float64'
+                elif comp_type == 'i':
+                    layout_type = 'int'
+                elif comp_type == 'u':
+                    layout_type = 'uint'
+                elif comp_type == 'b':
+                    layout_type = 'bool'
                 else:
-                    suf = 'float32'
-                pref = pref[0]
-            elif suf == 'mat':  # matrix types
-                if suf.startswith('d'):
-                    suf = 'float64'
+                    layout_type = 'float32'
+                shape = shape[0]
+            elif layout_type == 'mat':  # matrix types
+                if comp_type == 'd':
+                    layout_type = 'float64'
                 else:
-                    suf = 'float32'
-                pref = tuple(pref * 2) if len(pref) == 1 else tuple(pref)
+                    layout_type = 'float32'
+                shape = tuple(shape * 2) if len(shape) == 1 else tuple(shape)
             else:
-                raise NotImplementedError(name, suf)
-            return name, suf, pref
-        else:
-            raise NotImplementedError
+                raise NotImplementedError(name, layout_type)
+            return name, layout_type, shape
+
+        raise NotImplementedError

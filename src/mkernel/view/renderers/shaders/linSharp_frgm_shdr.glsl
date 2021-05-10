@@ -1,15 +1,19 @@
 #version 450 core
 
-in vec4 fclr;
-flat in uint foid;
-in vec4 fcoord;
+
+in gsOut {
+    vec4 clr;
+    flat uint oid;
+    vec4 coord;
+} fs_in;
+
 
 layout (location = 0) out vec4 clr;
 layout (location = 1) out uint goid;
 layout (location = 2) out vec4 coord;
 
 void main() {
-    clr = fclr;
-    goid = foid;
-    coord = fcoord;
+    clr = fs_in.clr;
+    goid = fs_in.oid;
+    coord = fs_in.coord;
 }

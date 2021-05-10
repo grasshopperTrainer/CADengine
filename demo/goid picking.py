@@ -72,9 +72,9 @@ class MainWindow(Window):
                 pos /= self.devices.panes[1].size
                 # pick color id
                 goid = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))[0][0]
-                if goid:
-                    e = GIDP().get_registered(goid)
-                    print('POINTING AT', e)
+                if goid is not None:
+                    e = GIDP().get_registered(goid[:3])
+                    print(e)
 
 
 class SubWindow(Window):

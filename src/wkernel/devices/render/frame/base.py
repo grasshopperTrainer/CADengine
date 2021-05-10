@@ -250,6 +250,7 @@ class Frame(RenderDevice):
 
         gl.glReadBuffer(src)
         # is returning raw array okay?
+        print(texture.format, texture.type)
         return gl.glReadPixels(x, y, w, h, texture.format, texture.type)
 
     def clear(self, r=0, g=0, b=0, a=1):
