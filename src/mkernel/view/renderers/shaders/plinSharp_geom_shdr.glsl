@@ -10,12 +10,14 @@ layout (location = 2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     float thk;
     vec4 clr;
-    uint goid;
+    vec4 goid;
 } vs_in[];
 
-out vec4 fclr;
-out uint foid;
-out vec4 fcoord;
+out gsOut {
+    vec4 clr;
+    vec4 goid;
+    vec4 coord;
+} gs_out;
 
 const mat4 VMM = VM * MM;
 const mat4 IVMM = inverse(VMM);
@@ -23,10 +25,10 @@ const float hthk = vs_in[0].thk/2.0;
 
 void emit_vertex(vec4 pos) {
     // invariants
-    fclr = vs_in[0].clr;
-    foid = vs_in[0].goid;
+    gs_out.clr = vs_in[0].clr;
+    gs_out.goid = vs_in[0].goid;
 
-    fcoord = IVMM * pos;
+    gs_out.coord = IVMM * pos;
     gl_Position = PM * pos;
     EmitVertex();
 }

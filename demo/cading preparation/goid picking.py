@@ -91,7 +91,7 @@ class SubWindow(Window):
             with self.devices.frames[0] as f:
                 f.clear()
                 f.clear_depth()
-                self.ma.devices.frames[1].render_pane_space(1, (-1, 1, -1, 1), (0, 1, 0, 1), 0)
+                self.ma.devices.frames[1].render_pane_space(1, (0, 1, 0, 1), (-1, 1, -1, 1), 0)
 
 
 window_main = MainWindow()

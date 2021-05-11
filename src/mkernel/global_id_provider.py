@@ -81,6 +81,8 @@ class GIDP:
         :param goid: _GOID
         :return:
         """
+        if not isinstance(goid, GOID):
+            raise TypeError('use ~_byvalue version for encoded goid')
         with self.__lock:
             return self.__goid_entity.get(goid, None)
 

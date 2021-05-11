@@ -18,7 +18,7 @@ class MainWindow(Window):
                                       iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
                                       aid=0)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      iformat=ffactory.TXTR.CLR_FRMT.RED.R32UI,
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGB10_A2,
                                       aid=1)  # color id texture
         ffactory.append_depth_texture(target=ffactory.TXTR.TRGT.TWO_D,
                                       iformat=ffactory.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
@@ -42,8 +42,6 @@ class MainWindow(Window):
                 p.dia = 5
                 p.clr = 1, 0, 0, 1
                 p.frm = 'c'
-                if x == y:
-                    p.active_goid = False
 
         p1 = self.modeler.add_pnt(self.model, 12, 12, 12)
         p1.dia = 5
@@ -90,7 +88,7 @@ class MainWindow(Window):
             with self.devices.frames[1] as deff:
                 # pos = p.cursor_pos(parameterize=True)
                 goid = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))[0][0]
-                e = GIDP().get_registered(goid)
+                e = GIDP().get_registered_byvalue(int(goid) >> 2)
                 if e:
                     print(goid, e)
 

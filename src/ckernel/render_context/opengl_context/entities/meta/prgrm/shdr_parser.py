@@ -264,7 +264,7 @@ class SimpleShdrParser:
         else:
             return None
 
-    __singular_types = {'sampler': 'int32',
+    __singular_types = {'sampler2D': 'int32',
                         'bool': 'bool',
                         'int': 'int32',
                         'uint': 'uint32',
@@ -281,7 +281,7 @@ class SimpleShdrParser:
         """
         # for bool(b ool) this comes first
         if dtype.startswith(tuple(cls.__singular_types.keys())):  # singular types
-            return name, cls.__singular_types[dtype], 1
+            return name, cls.__singular_types[dtype]
 
         comp_type, layout_type, shape = re.match(cls.__dtype_patt, dtype).groups()
         if shape is not None:  # complex types

@@ -1,14 +1,14 @@
 #version 450
 
 in vsOut {
-    vec4 fclr;
-    flat uint goid;
-} vs_out;
+    vec4 clr;
+    flat vec4 goid;
+} fs_in;
 
-layout(location = 0) out vec4 fclr;
-layout(location = 1) out uint goid;
+layout(location = 0) out vec4 clr;
+layout(location = 1) out vec4 goid;
 
 void main() {
-    fclr = vs_out.fclr;
-    goid = vs_out.goid;
+    clr = fs_in.clr;
+    goid = fs_in.goid;
 }

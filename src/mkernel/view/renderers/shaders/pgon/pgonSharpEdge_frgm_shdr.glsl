@@ -1,12 +1,14 @@
 #version 450 core
 
-in vec4 edgeClr;
-flat in uint goid;
+in gsOut {
+    vec4 edgeClr;
+    vec4 goid;
+} fs_in;
 
-layout (location = 0) out vec4 fclr;
-layout (location = 1) out uint foid;
+layout (location = 0) out vec4 clr;
+layout (location = 1) out vec4 goid;
 
 void main() {
-    fclr = edgeClr;
-    foid = goid;
+    clr = fs_in.edgeClr;
+    goid = fs_in.goid;
 }

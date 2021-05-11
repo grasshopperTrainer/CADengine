@@ -10,11 +10,13 @@ layout (location=2) uniform mat4 MM = mat4(1.0);
 in vsOut {
     mat4 pln;
     float len;
-    uint goid;
+    vec4 goid;
 } vs_in[];
 
-out vec4 fclr;
-out uint foid;
+out gsOut {
+    vec4 clr;
+    vec4 goid;
+} gs_out;
 
 // default colors
 const vec4 origin = vs_in[0].pln[0];
@@ -25,8 +27,8 @@ const vec4 vectors[3] = vec4[3](vs_in[0].pln[1], vs_in[0].pln[2], vs_in[0].pln[3
 
 
 void emit_vertex(vec4 pos, vec4 clr) {
-    fclr = clr;
-    foid = vs_in[0].goid;
+    gs_out.clr = clr;
+    gs_out.goid = vs_in[0].goid;
 
     gl_Position = TM * pos;
     EmitVertex();
