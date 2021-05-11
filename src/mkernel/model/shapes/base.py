@@ -99,4 +99,7 @@ class _MetaShape(type):
 
 
 class Shape(metaclass=_MetaShape):
+    """
+    metaclass applicated inheritable
+    """
     pass

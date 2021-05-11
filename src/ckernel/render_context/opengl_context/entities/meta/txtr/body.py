@@ -91,10 +91,13 @@ class MetaTexture(OGLMetaEntity):
 
     @staticmethod
     def __parse_type(iformat):
+        # special cases
+        if iformat.v == gl.GL_RGB10_A2UI:
+            return gl.GL_UNSIGNED_INT_10_10_10_2
+        elif iformat.v == gl.GL_RGB10_A2:
+            return gl.GL_UNSIGNED_INT_10_10_10_2
+
         if 'UI' in str(iformat):
-            # special cases
-            if iformat == gl.GL_RGB10_A2UI:
-                return gl.GL_UNSIGNED_INT_10_10_10_2
             return gl.GL_UNSIGNED_INT
         elif 'I' in str(iformat):
             return gl.GL_INT

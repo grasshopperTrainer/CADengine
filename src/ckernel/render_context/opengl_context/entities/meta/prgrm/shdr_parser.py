@@ -219,13 +219,6 @@ class SimpleShdrParser:
         else:
             return None
 
-    __singular_types = {'sampler': 'int32',
-                        'bool': 'bool',
-                        'int': 'int32',
-                        'uint': 'uint32',
-                        'float': 'float32',
-                        'double': 'float64'}
-
     @classmethod
     def parse_frgm_outputs(cls, frgm_src, name):
         """
@@ -271,6 +264,13 @@ class SimpleShdrParser:
         else:
             return None
 
+    __singular_types = {'sampler': 'int32',
+                        'bool': 'bool',
+                        'int': 'int32',
+                        'uint': 'uint32',
+                        'float': 'float32',
+                        'double': 'float64'}
+
     @classmethod
     def __translate_dtype(cls, name, dtype):
         """
@@ -279,11 +279,11 @@ class SimpleShdrParser:
         :param dtype: str, glsl dtype
         :return: (name, dtype, shape), numpy dtype field description
         """
+        # for bool(b ool) this comes first
+        if dtype.startswith(tuple(cls.__singular_types.keys())):  # singular types
+            return name, cls.__singular_types[dtype], 1
+
         comp_type, layout_type, shape = re.match(cls.__dtype_patt, dtype).groups()
-
-        if layout_type in cls.__singular_types:  # singular types
-            return name, cls.__singular_types[layout_type]
-
         if shape is not None:  # complex types
             shape = list(map(int, shape.split('x')))
             if layout_type == 'vec':  # vector types
@@ -308,4 +308,5 @@ class SimpleShdrParser:
                 raise NotImplementedError(name, layout_type)
             return name, layout_type, shape
 
+        print(dtype, comp_type, layout_type, shape)
         raise NotImplementedError

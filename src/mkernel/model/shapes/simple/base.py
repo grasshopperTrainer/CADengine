@@ -4,11 +4,11 @@ import numpy as np
 
 class SimpleGeoShape(Shape):
     def __init__(self, geo, clr):
-        print(self.goid.as_rgb_uint(), self.goid.as_raw())
-        self.parent.update_viewer_cache(self, 'goid', self.goid.as_rgb_uint())
+        self.parent.update_viewer_cache(self, 'goid', self.goid.as_rgb_float())
+        self.parent.update_viewer_cache(self, 'goid_flag', True)
         self._geo = self.geo = geo
         self._clr = self.clr = clr
-        self._active_goid = 1
+        self._goid_flag = True
 
     @property
     def geo(self):
@@ -29,14 +29,14 @@ class SimpleGeoShape(Shape):
         self.parent.update_viewer_cache(self, 'clr', val)
 
     @property
-    def active_goid(self):
-        return self._active_goid
+    def goid_flag(self):
+        return self._goid_flag
 
-    @active_goid.setter
-    def active_goid(self, val):
+    @goid_flag.setter
+    def goid_flag(self, val):
         booled = bool(val)
-        self._active_goid = booled
-        self.parent.update_viewer_cache(self, 'active_goid', int(booled))
+        self._goid_flag = booled
+        self.parent.update_viewer_cache(self, 'goid_flag', int(booled))
 
     def __dataset_size__(self):
         """

@@ -163,10 +163,11 @@ class MetaVrtxArry(OGLMetaEntity):
                     for _, loc, size, dtype, stride, offset in bffr_fct.attr_props:
                         gldtype = npdtype_to_gldtype(dtype)
                         offset_ptr = ctypes.c_void_p(offset)
-                        # print(_, loc, size, (dtype, gldtype), stride, (offset, offset_ptr))
+                        print(_, loc, size, (dtype, gldtype), stride, (offset, offset_ptr))
 
                         gl.glEnableVertexAttribArray(loc)  # ! dont forget
-                        if gldtype in (gl.GL_BYTE, gl.GL_UNSIGNED_BYTE, gl.GL_SHORT, gl.GL_UNSIGNED_SHORT, gl.GL_INT, gl.GL_UNSIGNED_INT):
+                        if gldtype in (gl.GL_BYTE, gl.GL_UNSIGNED_BYTE, gl.GL_SHORT, gl.GL_UNSIGNED_SHORT, gl.GL_INT,
+                                       gl.GL_UNSIGNED_INT):
                             gl.glVertexAttribIPointer(loc,  # index
                                                       size,  # size
                                                       gldtype,  # type
@@ -176,6 +177,12 @@ class MetaVrtxArry(OGLMetaEntity):
                             gl.glVertexAttribLPointer(loc,
                                                       size,
                                                       gldtype,
+                                                      stride,
+                                                      offset_ptr)
+                        elif gldtype == gl.GL_BOOL:  # but shader is uncompilable with bool type...
+                            gl.glVertexAttribIPointer(loc,
+                                                      size,
+                                                      gl.GL_UNSIGNED_BYTE,
                                                       stride,
                                                       offset_ptr)
                         else:

@@ -9,13 +9,13 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 
 in vsOut {
     vec4 clr;
-    uvec3 goid;
+    vec4 goid;
     float dia;
 } vs_in[];
 
 out gsOut {
     vec4 clr;
-    uvec3 goid;
+    vec4 goid;
     vec4 coord;
 } gs_out;
 

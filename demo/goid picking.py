@@ -34,17 +34,20 @@ class MainWindow(Window):
         self.modeler = AModeler()
         self.model = self.modeler.add_model(parent=None)
 
-        p0 = self.modeler.add_pnt(self.model, 0, 0, 0)
-        p0.dia = 2
-        p0.clr = 1, 1, 0, 1
-        p1 = self.modeler.add_pnt(self.model, 10, 10, 10)
-        p1.dia = 5
+        p0 = self.modeler.add_pnt(self.model, 5, 5, 5)
+        p0.dia = 10
+        p0.clr = 0, 0, 1, 1
+        p0.goid_flag = True
+        p2 = self.modeler.add_pnt(self.model, 15, 15, 15)
+        p2.dia = 10
+        p2.clr = 1, 0, 0, 1
+        p2.frm = 't'
+        p2.goid_flag = True
+        p1 = self.modeler.add_pnt(self.model, 10, 10, 20)
+        p1.dia = 10
         p1.clr = 1, 1, 0, 1
         p1.frm = 'c'
-        p2 = self.modeler.add_pnt(self.model, 20, 20, 20)
-        p2.dia = 5
-        p2.clr = 1, 1, 0, 1
-        p2.frm = 't'
+        p1.goid_flag = False
 
         self.is_rendered = False
 
@@ -73,7 +76,7 @@ class MainWindow(Window):
                 # pick color id
                 goid = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))[0][0]
                 if goid is not None:
-                    e = GIDP().get_registered(goid[:3])
+                    e = GIDP().get_registered_byvalue(int(goid) >> 2)  # for last two bits being alpha
                     print(e)
 
 
@@ -84,13 +87,14 @@ class SubWindow(Window):
 
     def draw(self):
         time.sleep(0.1)
-        with self.devices.frames[0] as f:
-            f.clear_depth()
-            if self.ma.is_rendered:
+        with self.devices.panes[0]:
+            with self.devices.frames[0] as f:
+                f.clear()
+                f.clear_depth()
                 self.ma.devices.frames[1].render_pane_space(1, (-1, 1, -1, 1), (0, 1, 0, 1), 0)
 
 
 window_main = MainWindow()
-# window_sub = SubWindow(window_main)
+window_sub = SubWindow(window_main)
 
 window_main.run_all()

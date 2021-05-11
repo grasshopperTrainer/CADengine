@@ -249,8 +249,6 @@ class Frame(RenderDevice):
             raise
 
         gl.glReadBuffer(src)
-        # is returning raw array okay?
-        print(texture.format, texture.type)
         return gl.glReadPixels(x, y, w, h, texture.format, texture.type)
 
     def clear(self, r=0, g=0, b=0, a=1):
@@ -285,10 +283,14 @@ class Frame(RenderDevice):
             dtype = 'float'
         elif texture.type == gl.GL_UNSIGNED_INT:
             dtype = 'uint'
+        elif texture.type == gl.GL_UNSIGNED_INT_10_10_10_2:
+            dtype = 'uint'
         elif texture.type == gl.GL_UNSIGNED_BYTE:
             dtype = 'ubyte'
         elif texture.type == gl.GL_INT:
             dtype = 'int'
+        else:
+            raise NotImplementedError
         color = np.array((r, g, b, a), dtype=dtype)
         gl.glClearTexImage(texture.get_concrete(), 0, texture.format, texture.type, color)
 
