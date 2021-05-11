@@ -3,7 +3,8 @@
 layout (location = 0) in vec4 geo;
 layout (location = 1) in vec4 clr;
 layout (location = 2) in float dia;
-layout (location = 3) in vec4 goid;
+layout (location = 3) in vec3 goid;
+layout (location = 4) in int goid_flag;
 
 layout (location = 0) uniform mat4 MM = mat4(1.0);
 layout (location = 1) uniform mat4 VM = mat4(1.0);
@@ -11,15 +12,15 @@ layout (location = 2) uniform mat4 PM = mat4(1.0);
 layout (location = 4) uniform vec4 VPP; // viewport pixel property (posx, posy, width, height)
 
 out vsOut {
-    vec4 goid;
     vec4 fclr;
+    vec4 goid;
     vec2 radVec;
     vec2 center;
     vec4 coord;
 } vs_out;
 
 void main() {
-    vs_out.goid = goid;
+    vs_out.goid = vec4(goid, goid_flag);
     vs_out.fclr = clr;
     vs_out.coord = geo;
 

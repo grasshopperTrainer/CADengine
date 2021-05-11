@@ -1,4 +1,4 @@
-from mkernel.global_id_provider import GIDP, GOID
+from mkernel.global_id_provider import GIDP
 import weakref as wr
 
 """
@@ -68,7 +68,7 @@ class _MetaShape(type):
         return obj
 
     @staticmethod
-    def goid(self) -> GOID:
+    def goid(self):
         return self.__goid
 
     @staticmethod
@@ -99,4 +99,7 @@ class _MetaShape(type):
 
 
 class Shape(metaclass=_MetaShape):
+    """
+    metaclass applicated inheritable
+    """
     pass

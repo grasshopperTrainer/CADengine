@@ -161,13 +161,36 @@ class MetaVrtxArry(OGLMetaEntity):
             for bffr_fct in self.__bffr_factories:
                 with bffr_fct.get_concrete():
                     for _, loc, size, dtype, stride, offset in bffr_fct.attr_props:
+                        gldtype = npdtype_to_gldtype(dtype)
+                        offset_ptr = ctypes.c_void_p(offset)
+
                         gl.glEnableVertexAttribArray(loc)  # ! dont forget
-                        gl.glVertexAttribPointer(index=loc,
-                                                 size=size,
-                                                 type=npdtype_to_gldtype(dtype),
-                                                 normalized=gl.GL_FALSE,
-                                                 stride=stride,
-                                                 pointer=ctypes.c_void_p(offset))  # ! must feed c_void_p
+                        if gldtype in (gl.GL_BYTE, gl.GL_UNSIGNED_BYTE, gl.GL_SHORT, gl.GL_UNSIGNED_SHORT, gl.GL_INT,
+                                       gl.GL_UNSIGNED_INT):
+                            gl.glVertexAttribIPointer(loc,  # index
+                                                      size,  # size
+                                                      gldtype,  # type
+                                                      stride,  # stride
+                                                      offset_ptr)  # pointer
+                        elif gldtype == gl.GL_DOUBLE:
+                            gl.glVertexAttribLPointer(loc,
+                                                      size,
+                                                      gldtype,
+                                                      stride,
+                                                      offset_ptr)
+                        elif gldtype == gl.GL_BOOL:  # but shader is uncompilable with bool type...
+                            gl.glVertexAttribIPointer(loc,
+                                                      size,
+                                                      gl.GL_UNSIGNED_BYTE,
+                                                      stride,
+                                                      offset_ptr)
+                        else:
+                            gl.glVertexAttribPointer(index=loc,
+                                                     size=size,
+                                                     type=gldtype,
+                                                     normalized=gl.GL_FALSE,
+                                                     stride=stride,
+                                                     pointer=offset_ptr)  # ! must feed c_void_p
             # bind ibo with vao
             if self.__indx_bffr_factory:
                 ibo = self.__indx_bffr_factory.get_concrete()

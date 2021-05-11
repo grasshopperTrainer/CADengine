@@ -8,14 +8,14 @@ layout (location = 1) uniform mat4 VM = mat4(1.0);
 layout (location = 2) uniform mat4 PM = mat4(1.0);
 
 in vsOut {
-    vec4 goid;
     vec4 clr;
+    vec4 goid;
     float dia;
 } vs_in[];
 
 out gsOut {
-    vec4 goid;
     vec4 clr;
+    vec4 goid;
     vec4 coord;
 } gs_out;
 

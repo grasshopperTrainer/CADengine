@@ -114,8 +114,8 @@ class PointRenderer(Renderer):
     def render(self):
         self.__vbo.push_cache()
         self.__render_square()
-        self.__render_circle()
         self.__render_triangle()
+        self.__render_circle()
 
     def __render_square(self):
         if not self.__square_ibo.cache.active_size:

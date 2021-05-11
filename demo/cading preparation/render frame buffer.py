@@ -14,7 +14,7 @@ class MainWindow(Window):
                                       iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
                                       aid=0)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      iformat=ffactory.TXTR.CLR_FRMT.RGB.RGB,
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGB10_A2,
                                       aid=1)
         ffactory.append_render_buffer(iformat=ffactory.RNDR.DEPTH_STENCIL.DEPTH24_STENCIL8,
                                       aid='ds')
@@ -60,6 +60,7 @@ class SubWindow(Window):
     def draw(self):
         time.sleep(0.1)
         with self.devices.frames[0] as f:
+            f.clear()
             f.clear_depth()
             if self.ma.is_rendered:
                 self.ma.devices.frames[1].render_pane_space(1, (0, 1, 0, 1), (-1, 1, -1, 1), 0)

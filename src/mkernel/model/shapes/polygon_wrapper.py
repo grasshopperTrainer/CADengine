@@ -26,7 +26,7 @@ class Pgon(Shape):
         self.parent.update_viewer_cache(self, 'fill_indxs', fill_indxs)
         self.parent.update_viewer_cache(self, 'edge_indxs', edge_indxs)
 
-        self.parent.update_viewer_cache(self, 'goid', self.goid.as_rgba_float())
+        self.parent.update_viewer_cache(self, 'goid', self.goid.as_rgb_float())
         self._geo = self.geo = vertices
         self._clr = self.clr = 1, 1, 1, 1
         self._edge_thk = self.edge_thk = 1
