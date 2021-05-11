@@ -21,7 +21,7 @@ class MainWindow(Window):
                                       iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGBA,
                                       aid=0)
         ffactory.append_color_texture(target=ffactory.TXTR.TRGT.TWO_D,
-                                      iformat=ffactory.TXTR.CLR_FRMT.RGB.RGB,
+                                      iformat=ffactory.TXTR.CLR_FRMT.RGBA.RGB10_A2,
                                       aid=1)
         ffactory.append_render_buffer(iformat=ffactory.RNDR.DEPTH_STENCIL.DEPTH24_STENCIL8,
                                       aid='ds')
