@@ -7,6 +7,7 @@ from ckernel.render_context.opengl_context.context_stack import get_current_ogl
 from mkernel.view.renderers import Renderer
 import ctypes
 
+
 class AxisRenderer(Renderer):
     """
     draw camera flat thickened axis

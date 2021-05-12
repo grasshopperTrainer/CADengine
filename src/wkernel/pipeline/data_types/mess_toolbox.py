@@ -1,5 +1,5 @@
 """
-Small tools I don't know yet where they belong to.
+Small util I don't know yet where they belong to.
 
 In the end, this module should be empty
 """

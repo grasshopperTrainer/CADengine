@@ -1,22 +1,7 @@
-from mkernel.control.base import Modeler
-from gkernel.color import ClrRGBA
-from mkernel.global_id_provider import GIDP
-from mkernel.model.shapes import Brep
-from mkernel.control.vicinity_picker import VicinityPicker
-from mkernel.control.axis_picker.picker import AxisPicker
-
-import gkernel.dtype.geometric as gt
-from global_tools import FPSTimer
 
 
-class BModeler(Modeler):
-    def __init__(self, root_brep: Brep):
-        super().__init__()
-        self.__curr_brep = root_brep
-        self.__last_button_stat = {i: 0 for i in range(3)}
 
-        self.__frame_bffr = None
-        self.__vp = VicinityPicker(offset=500)
+class BController:
 
     def listen(self, model, window, mouse, camera, cursor, id_picker, coord_picker):
         """

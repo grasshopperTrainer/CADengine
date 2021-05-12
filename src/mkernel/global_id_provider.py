@@ -10,7 +10,8 @@ from gkernel.color import ClrRGBA
 # can be expanded in farther implementation
 _BITDEPTH = 30
 _COMP_BITDEPTH = 10
-_COMP_BITMAX = 2**_COMP_BITDEPTH - 1
+_COMP_BITMAX = 2 ** _COMP_BITDEPTH - 1
+
 
 @Singleton
 class GIDP:
@@ -86,37 +87,30 @@ class GIDP:
         with self.__lock:
             return self.__goid_entity.get(goid, None)
 
-    def get_registered_byvalue(self, value):
-        if isinstance(value, int):
-            return self.get_registered(GOID(value))
-        elif isinstance(value, (np.ndarray, tuple, list)):
-            return self.get_registered(GOID.from_array(value))
-        raise NotImplementedError
+    def get_registered_byvalue(self, value, bitpattern=None):
+        """
+        decode value into goid and return object of that goid
+
+        :param value:
+        :param bitpattern:
+        :return:
+        """
+        # integer with alpha e.g. gl.GL_RGB10_A2
+        if isinstance(value, (int, np.uintc)):
+            if 3 < len(bitpattern):
+                value >>= bitpattern[3]
+            with self.__lock:
+                return self.__goid_entity.get(value, None)
+        raise NotImplementedError(value, type(value))
 
 
 class GOID:
-    """
-    Global Object IDentifier
-    """
-
-    @classmethod
-    def from_array(cls, arr):
-        """
-        derive GOID raw integer value from array
-
-        :param arr:
-        :return:
-        """
-        if isinstance(arr, np.ndarray):
-            if len(arr) == 3 and arr.dtype == np.dtype('uint'):
-                bitmap = ''.join([bin(v)[2:].rjust(_COMP_BITDEPTH, '0')[:_COMP_BITDEPTH] for v in arr])
-                return cls(int(bitmap, 2))
-        elif len(arr) == 3 and isinstance(arr, bytes):
-            bitmap = ''.join([bin(v)[2:].rjust(_COMP_BITDEPTH, '0')[:_COMP_BITDEPTH] for v in arr])
-            return cls(int(bitmap, 2))
-        raise NotImplementedError
-
     def __init__(self, raw):
+        """
+        Global Object IDentifier
+
+        id containter + encoder
+        """
         self.__raw = raw
 
     def __str__(self):
@@ -153,7 +147,7 @@ class GOID:
     # def as_rgb_uint(self):
     #     return np.array([int(c, 2) for c in self.__get_color_bits()], dtype='uint32')
     def as_rgb_float(self):
-        return np.array([int(c, 2)/_COMP_BITMAX for c in self.__get_color_bits()], dtype='float')
+        return np.array([int(c, 2) / _COMP_BITMAX for c in self.__get_color_bits()], dtype='float')
 
 
 if __name__ == '__main__':

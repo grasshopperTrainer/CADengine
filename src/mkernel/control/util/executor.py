@@ -6,7 +6,7 @@ class ExecutionUndoneError(Exception):
         return f'Command is still running'
 
 
-class Modeler:
+class Executor:
     """
     This class is inheritable.
 
@@ -54,7 +54,7 @@ class Modeler:
             raise ExecutionUndoneError()
         return self.__exec_results.pop(thread)
 
-    def execute(self, command, model, args=(), kwargs={}, block_exec=True):
+    def execute(self, command, args=(), kwargs={}, block_exec=True):
         """
         run command within separate thread
 
@@ -62,17 +62,13 @@ class Modeler:
         Return it when you need the result.
 
         :param command: function to run
-        :param model: model to modify
         :param args: tuple, args to feed into the command
         :param kwargs: dict, keyword args to feed into the command
         :param block_exec: bool, whether to block exection
-                            ! commands submitted with True will be executed one at a time,
-                            but commands submitted with False goes around this restriction.
+                            ! commands submitted with True will be executed once at a time,
+                            else goes around this restriction.
         :return: Thread, this is a ticket for the returned value of the command
         """
-        # include model and model lock
-        kwargs['model'] = model
-
         # run single command if execution is locked
         t = threading.Thread(target=self.__executor(comm=command, block=block_exec), args=args, kwargs=kwargs)
         t.start()

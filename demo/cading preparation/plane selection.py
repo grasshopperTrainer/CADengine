@@ -1,6 +1,7 @@
 from wkernel import Window
 from mkernel import AModeler
-from mkernel.control.vicinity_picker import VicinityPicker
+from mkernel.control.util.vicinity_picker import VicinityPicker
+import gkernel.dtype.geometric as gt
 
 
 class MyWindow(Window):
@@ -17,7 +18,7 @@ class MyWindow(Window):
         self.model = self.modeler.add_model(parent=None)
         self.modeler.add_ground(self.model, [.5] * 4)
         self.modeler.add_pln(self.model, (0, 0, 0.001), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-        self.picker = VicinityPicker(500)
+        self.picker = VicinityPicker()
 
     def draw(self):
         with self.devices.frames[0] as df:
@@ -27,14 +28,16 @@ class MyWindow(Window):
             with self.devices.cameras[0] as c:
                 self.modeler.render()
 
-                k, P = self.picker.pick(c, self.devices.cursors[0])
-                if k == 'xy':
-                    clr = 0, 0, 1, 0.5
-                elif k == 'yz':
-                    clr = 1, 0, 0, 0.5
-                else:
-                    clr = 0, 1, 0, 0.5
-                self.modeler.add_raw(self.model, P).clr = clr
+                selection = self.picker.pick(gt.Pln(), c, self.devices.cursors[0])
+                if selection:
+                    key, point = selection
+                    if key == 'xy':
+                        clr = 0, 0, 1, 0.5
+                    elif key == 'yz':
+                        clr = 1, 0, 0, 0.5
+                    else:
+                        clr = 0, 1, 0, 0.5
+                    self.modeler.add_raw(self.model, point).clr = clr
 
 w = MyWindow()
 w.run_all()

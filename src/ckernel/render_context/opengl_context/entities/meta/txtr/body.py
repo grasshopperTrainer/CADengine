@@ -1,6 +1,6 @@
 import numpy as np
 from ckernel.render_context.opengl_context.entities.meta.base import OGLMetaEntity
-from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
+from ckernel.render_context.opengl_context.constant_enum import TextureFormats as DTF
 from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from global_tools.enum import enum
@@ -92,9 +92,9 @@ class MetaTexture(OGLMetaEntity):
     @staticmethod
     def __parse_type(iformat):
         # special cases
-        if iformat.v == gl.GL_RGB10_A2UI:
+        if iformat.val == gl.GL_RGB10_A2UI:
             return gl.GL_UNSIGNED_INT_10_10_10_2
-        elif iformat.v == gl.GL_RGB10_A2:
+        elif iformat.val == gl.GL_RGB10_A2:
             return gl.GL_UNSIGNED_INT_10_10_10_2
 
         if 'UI' in str(iformat):

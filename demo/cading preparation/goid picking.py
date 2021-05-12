@@ -74,7 +74,7 @@ class MainWindow(Window):
                 pos -= self.devices.panes[1].pos
                 pos /= self.devices.panes[1].size
                 # pick color id
-                goid = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))[0][0]
+                goid = rf.pick_pixels(aid=1, pos=pos, size=(1, 1))[0][0][0]
                 if goid is not None:
                     e = GIDP().get_registered_byvalue(int(goid) >> 2)  # for last two bits being alpha
                     print(e)

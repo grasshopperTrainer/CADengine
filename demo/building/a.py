@@ -1,9 +1,7 @@
-from mkernel.control.amodeler import AModeler
-from mkernel.model.amodel import AModel
+from mkernel.control.modeler.amodeler import AModeler
 
 from wkernel import Window
 import gkernel.color as clr
-import gkernel.dtype.geometric as gt
 
 
 class MyWindow(Window):

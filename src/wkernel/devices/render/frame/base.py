@@ -14,7 +14,7 @@ import gkernel.dtype.nongeometric.matrix as mx
 import gkernel.color as clr
 
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
-from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF, TextureTargets as TT
+from ckernel.render_context.opengl_context.constant_enum import TextureFormats as TF, TextureTargets as TT
 from .FramePixelPicker import FramePixelPicker
 
 
@@ -213,7 +213,7 @@ class Frame(RenderDevice):
         texture = self.__frame_bffr.get_attachment(aid)
         self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
 
-    def pick_pixels(self, aid, pos, size) -> clr.Clr:
+    def pick_pixels(self, aid, pos, size):
         """
         pick texture pixel of a given attachment id, position
 
@@ -224,7 +224,7 @@ class Frame(RenderDevice):
         :param size: (width, height) picking area
                     int   - absolute pixel area
                     float - parameterized relative to texture size
-        :return:
+        :return: (pixel_val, bitpattern) peripheral if to help decode returned value
         """
         aid = self.frame_bffr.get_autonym(aid)
         # parse pos expression
@@ -249,7 +249,7 @@ class Frame(RenderDevice):
             raise
 
         gl.glReadBuffer(src)
-        return gl.glReadPixels(x, y, w, h, texture.format, texture.type)
+        return gl.glReadPixels(x, y, w, h, texture.format, texture.type), texture.iformat.bitpattern
 
     def clear(self, r=0, g=0, b=0, a=1):
         """
@@ -358,13 +358,13 @@ class FrameFactory:
     @enum
     class TXTR:
         TRGT = TT
-        CLR_FRMT = DTF.COLOR
-        DEPTH_FRMT = DTF.NONECOLOR.DEPTH
+        CLR_FRMT = TF.COLOR
+        DEPTH_FRMT = TF.NONECOLOR.DEPTH
 
     @enum
     class RNDR:
-        DEPTH = DTF.NONECOLOR.DEPTH
-        DEPTH_STENCIL = DTF.NONECOLOR.DEPTH_STENCIL
+        DEPTH = TF.NONECOLOR.DEPTH
+        DEPTH_STENCIL = TF.NONECOLOR.DEPTH_STENCIL
 
     # TODO: fix color attachment allocation
     def __init__(self, manager):
@@ -419,7 +419,7 @@ class FrameFactory:
         :param iformat: internal format
         :return:
         """
-        if iformat not in DTF.NONECOLOR.DEPTH:
+        if iformat not in TF.NONECOLOR.DEPTH:
             raise TypeError
 
         # check uniqueness
