@@ -1,6 +1,5 @@
 from wkernel import Window
 from mkernel import AModeler
-import gkernel.color as clr
 import time
 
 

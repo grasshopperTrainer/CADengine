@@ -7,16 +7,17 @@ from .glfw_context.none_context import GLFWNoneContext
 from .context_spec import ContextSpec
 
 
+# these are node classes for drawing context tree
 class ContextMaster:
     """
-    Draws tree structure of contexts
+    The singular root for context tree.
+    From here context tree is built: ContextMaster -> MetaContext -> ContextManager -> (GLFWContext, OGLContext, window)
 
-    To deal with glfw context's constrain, like event poll only being run in main thread, it is required to
-    have whole view of contexts if glfw is running.
-    This class organizes contexts into tree like structure. Root is singleton of current tree and children are
-    metacontext. Grandchildren would be ContextManager then.
+    To deal with glfw contexting constrain, like event poll only being run in main thread,
+    it is required to have a whole view of contexts in a process.
+    Some functions are provided for launching and managing window crowd.
 
-    Deals with global initiation of context
+    ! Deals with global initiation of context
     """
 
     __is_context_launched = False
@@ -34,22 +35,35 @@ class ContextMaster:
             return
         if not raw_glfw.init():
             raise Exception('glfw init error')
+        # check and record machine specific properties
         ContextSpec().spec_check()
         cls.__is_context_launched = True
 
     @classmethod
-    def _add_meta_context(cls, mc):
+    def add_meta_context(cls, mc):
         """
         track meta context
+
         :param mc:
         :return:
         """
         cls.__context_tree.add(mc)
 
     @classmethod
+    def remove_meta_context(cls, meta_context):
+        """
+        release meta context from tracking
+
+        :param meta_context:
+        :return:
+        """
+        cls.__context_tree.remove(meta_context)
+
+    @classmethod
     def iter_meta_context(cls):
         """
         iter `MetaContext` inisde tree
+
         :return:
         """
         for mc in cls.__context_tree:
@@ -57,6 +71,11 @@ class ContextMaster:
 
     @classmethod
     def iter_all_windows(cls):
+        """
+        return generator for all windows in a process
+
+        :return:
+        """
         for mc in cls.iter_meta_context():
             for c in mc.iter_contexts():
                 yield c.window
@@ -83,49 +102,29 @@ class ContextMaster:
         :param window: `Window` removed
         :return:
         """
-        for mc in cls.iter_meta_context():
-            for c in mc.iter_contexts():
-                if c.window == window:
-                    c._destroy()  # how to define module private in python
-                    mc._remove_context(c)
-                    if mc.is_empty:
-                        mc._destroy()
-                        cls._remove_meta_context(mc)
-                    return True
-        raise Exception('window set to be removed not found')
-
-    @classmethod
-    def _remove_meta_context(cls, meta_context):
-        """
-        release meta context from tracking
-
-        :param meta_context:
-        :return:
-        """
-        cls.__context_tree.remove(meta_context)
+        context = window.context
+        mcontext = context.meta_context
+        context.destroy()
+        mcontext.remove_context(context)
+        if mcontext.is_empty:
+            mcontext.destroy()
+            cls.remove_meta_context(mcontext)
 
 
 class MetaContext:
     """
-    Represent shared context
+    Context node for shared context.
 
-    Even shared context has to have separate contexts. Primarily, all windows have distinct glfw context
-    as window property is all different; ex. size position, title, etc. Whats common is OpenGL State machine.
-    Yet Even State machine is not totally 'shared'. Vertex array buffer is not shared among Contexts.
-    So, every window has to have unique context built of a pair of sub context; glfw_cntx, opengl_ctnx.
-    In such a situation this Meta~ class binds contexts that are shared which, hopefully in the future implementation,
-    would provide functionality of auto complete shrareness amongst shared OpenGL contexts.
-
-    This class is medium container of shared contexts.
+    ! doesn't do much for now, but is here to expand shared context functionality.
     """
 
     def __init__(self, context):
         """
-        ! do not call from outside. Access only allowed by `MetaContext.checkbuild_meta()`
+        ! private, do not call from outside. Access only allowed by `MetaContext.checkbuild_meta()`
         """
         self.__context_set = weakref.WeakSet()
         self.__context_set.add(context)
-        ContextMaster._add_meta_context(self)
+        ContextMaster.add_meta_context(self)
 
     @property
     def is_empty(self):
@@ -137,13 +136,13 @@ class MetaContext:
         return not bool(self.__context_set)
 
     @classmethod
-    def _checkbuild_meta(cls, window, shared):
+    def checkbuild_meta(cls, window, shared):
         """
-        find `MetaContext` and build if nonexistent
+        find `MetaContext` and build if nonexistent and return
 
         :param window: to check context of
         :param shared: shared window
-        :return:
+        :return: MetaContext instance
         """
         if shared is None:
             return cls(window)
@@ -190,7 +189,7 @@ class MetaContext:
         """
         self.__context_set.add(context)
 
-    def _remove_context(self, context):
+    def remove_context(self, context):
         """
         release context from tracking
 
@@ -201,7 +200,7 @@ class MetaContext:
             raise ValueError('context not insdie this metacontext')
         self.__context_set.remove(context)
 
-    def _destroy(self):
+    def destroy(self):
         """
         release resource for gc
 
@@ -213,39 +212,43 @@ class MetaContext:
 
 class ContextManager:
     """
-    Class combination of GLFWContext and OpenGLContext.
-
-    !
-    naming seems to be off the point viewing from `ContextTree` object as leaf has a name of 'Manager' but is
-    appropriate viewing from `Window` object
-    !
+    Container class of GLFWContex and OpenGLContext.
+    ! this is a node class of the context tree rooting from `ContextMaster`.
     """
 
-    def __init__(self, width, height, title, monitor, share, window):  # kwargs for some setting non default options
+    def __init__(self, width, height, title, monitor, share, window):
         """
-        Context manager manages two contexts; glfw and renderer. Currently on OpenglRenderer is supported.
+        Each render window(window area created by glfw) has to have its own context manager.
+        Context manager holds arguments related to render context.
 
-        Context manager has to handle consistency among shared windows.
-        Shared windows mean shared renderer_context(at least in case of opengl).
-        Context here means state machine(in GPU) that maintains certain state.
-        But be carefull as not every aspect of Opengl entity is shared among shared windows, those are set to be shared
-        by creating glfw window.
-        Shared windows share renderer_context but to not share glfw context as every context has its own glfw property
-        like own window name, position, size etc.
+        Arguments can be grouped into two:
+        1. arguments for binding render context
+        'binding render context' means declaration that has to be made before calling rendering functions.
+        Declaration has two perpose, a) to actually gain access to the render context,
+        otherwise `OpenGL` library(or actual hardware?) will deny render call and through error.
+        b) to record currently bound context so user can use a global shortcut provided by `GlobalOGLContextStack`
+        User has to use python context management context with `glfw` and `gl` argument for the access declaration
+        and currency recording.
 
-        To check shareness, window has to see through this cls registry and grasp renderer of shared parend window.
-        below is args needed creating glfw context
+        2. arguments for routing into context tree
+        The instance is returned when user asks current context to `GlobalOGLContextStack`.
+        As an access point to the main window structure, arguments as `window`, `gl`, `glfw` etc.
+        are here to be used by the user.
+
         :param width:
         :param height:
         :param title:
         :param monitor:
         :param share: Window, mother
         """
-        ContextMaster.checkinit_context()
-        self.__meta_context = MetaContext._checkbuild_meta(self, share)
         self.__window = weakref.ref(window)
+        # for singular `glfw` initiation
+        ContextMaster.checkinit_context()
+        # have a meta node grouping shared contexts
+        self.__meta_context = MetaContext.checkbuild_meta(self, share)
         if share:
             share = share.context.glfw_window
+        # store `glfw`'s window object for `glfw.make_context_current()`
         self.__glfw_context = GLFWContext(width, height, title, monitor, share)
         self.__renderer_context = OGLSubContext(self)
 
@@ -266,8 +269,6 @@ class ContextManager:
     def glfw(self):
         return self.__glfw_context
 
-    raw_glfw = raw_glfw
-
     @property
     def glfw_window(self):
         return self.__glfw_context._window
@@ -284,7 +285,7 @@ class ContextManager:
     def window(self):
         return self.__window()
 
-    def _destroy(self):
+    def destroy(self):
         """
         releas resources for gc
 

@@ -1,7 +1,6 @@
 from wkernel import Window
 from mkernel import AModeler
 from mkernel.global_id_provider import GIDP
-import gkernel.color as clr
 import gkernel.dtype.geometric as gt
 import time
 

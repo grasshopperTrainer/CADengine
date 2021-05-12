@@ -1,8 +1,5 @@
 from wkernel import Window
-from mkernel import AModeler
-from mkernel import AController
-import gkernel.color as clr
-import time
+from mkernel import AModeler, AController
 
 
 class MyWindow(Window):
@@ -40,6 +37,8 @@ class MyWindow(Window):
                                       self.coord_picker,
                                       self.devices.cameras[0],
                                       self.devices.cursors[0])
+
+        print("Press 'd' to remove selected point")
 
     def draw(self):
         with self.devices.frames[0] as rf:
