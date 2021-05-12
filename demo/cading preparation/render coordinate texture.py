@@ -5,7 +5,7 @@ from mkernel import AModeler
 class MyWindow(Window):
     def __init__(self):
         super().__init__(500, 800, 'mywindow', None, None)
-        self.framerate = 10
+        self.fps = 5
         # set camera
         camera = self.devices.cameras[0]
         camera.tripod.lookat(eye=(100, 100, 100),
@@ -59,8 +59,9 @@ class MyWindow(Window):
                     df.clear_depth()
                     self.modeler.render()
 
-                    p = df.pick_pixels(2, self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
-                    print(p)
+                    coord, _ = df.pick_pixels(2, self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
+                    print(coord[0][0])
+
         df.render_pane_space_depth(aid=0)
 
 

@@ -87,8 +87,9 @@ class MainWindow(Window):
             self.devices.frames[1].render_pane_space_depth(0, (0, 1, 0, 1), (-1, 1, -1, 1))
             with self.devices.frames[1] as deff:
                 # pos = p.cursor_pos(parameterize=True)
-                goid = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))[0][0]
-                e = GIDP().get_registered_byvalue(int(goid) >> 2)
+                goid, bitpattern = deff.pick_pixels(aid=1, pos=(.5, .5), size=(1, 1))
+                goid = goid[0][0]
+                e = GIDP().get_registered_byvalue(goid, bitpattern)
                 if e:
                     print(goid, e)
 

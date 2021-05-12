@@ -19,7 +19,7 @@ class MyWindow(Window):
         # creeat frame
         ff = self.devices.frames.factory
         ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA, aid=0)
-        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGB.RGB, aid=1)
+        ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGB10_A2, aid=1)
         ff.append_color_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.CLR_FRMT.RGBA.RGBA32F, aid=2)
         ff.append_depth_texture(ff.TXTR.TRGT.TWO_D, ff.TXTR.DEPTH_FRMT.DEPTH_COMPONENT)
         ff.set_size(500, 880)
@@ -51,9 +51,9 @@ class MyWindow(Window):
                 # extract coordinate texture value
                 # print(self.devices.cursors[1].pos_local, self.devices.cursors[1].pos_global)
                 pos = self.devices.cursors[1].pos_local * self.devices.frames[1].size
-                v = f.pick_pixels(aid=2, pos=pos.astype(int), size=(1, 1))
-                coord = clr.ClrRGBA(*v[0][0]).rgb
-                if coord != (0, 0, 0):
+                coord, _ = f.pick_pixels(aid=2, pos=pos.astype(int), size=(1, 1))
+                coord = coord[0][0][:3].tolist()
+                if coord != [0, 0, 0]:
                     self.cad_dolly.set_ref_point(*coord)
 
             with self.devices.panes[1]:
