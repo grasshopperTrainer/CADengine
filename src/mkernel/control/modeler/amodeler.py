@@ -14,7 +14,7 @@ class AModeler:
         self.__viewer = Viewer(self)
 
     def add_model(self, parent):
-        return self.add_shape(parent, (self,), AModel)
+        return self.__add_shape(parent, (self,), AModel)
 
     def add_raw(self, parent, raw):
         """
@@ -25,23 +25,23 @@ class AModeler:
         :return:
         """
         if isinstance(raw, gt.Pnt):
-            return self.add_shape(parent, args=(raw,), shape_type=st.Pnt)
+            return self.__add_shape(parent, args=(raw,), shape_type=st.Pnt)
         elif isinstance(raw, gt.Lin):
-            return self.add_shape(parent, args=(raw,), shape_type=st.Lin)
+            return self.__add_shape(parent, args=(raw,), shape_type=st.Lin)
         elif isinstance(raw, gt.Tgl):
-            return self.add_shape(parent, args=(raw,), shape_type=st.Tgl)
+            return self.__add_shape(parent, args=(raw,), shape_type=st.Tgl)
         elif isinstance(raw, gt.Pgon):
-            return self.add_shape(parent, args=(raw,), shape_type=st.Pgon)
+            return self.__add_shape(parent, args=(raw,), shape_type=st.Pgon)
         elif isinstance(raw, gt.Plin):
-            return self.add_shape(parent, args=(raw,), shape_type=st.Plin)
+            return self.__add_shape(parent, args=(raw,), shape_type=st.Plin)
         elif isinstance(raw, gt.Brep):
-            return self.add_shape(parent, args=(raw,), shape_type=st.Brep)
+            return self.__add_shape(parent, args=(raw,), shape_type=st.Brep)
         elif isinstance(raw, gt.Pln):
-            return self.add_shape(parent, args=(raw,), shape_type=st.Pln)
+            return self.__add_shape(parent, args=(raw,), shape_type=st.Pln)
         else:
             raise NotImplementedError
 
-    def add_shape(self, parent, args, shape_type):
+    def __add_shape(self, parent, args, shape_type):
         """
         helper for adding geometric shapes like Point, Vector
 
@@ -85,7 +85,7 @@ class AModeler:
         :param z: Number, coordinate z
         :return: Pnt shape
         """
-        return self.add_shape(model, args=(gt.Pnt(x, y, z),), shape_type=st.Pnt)
+        return self.__add_shape(model, args=(gt.Pnt(x, y, z),), shape_type=st.Pnt)
 
     def add_lin(self, model, start, end) -> st.Lin:
         """
@@ -95,7 +95,7 @@ class AModeler:
         :param end: (x, y, z), vertex end
         :return: Lin shape
         """
-        return self.add_shape(model, args=(gt.Lin(start, end),), shape_type=st.Lin)
+        return self.__add_shape(model, args=(gt.Lin(start, end),), shape_type=st.Lin)
 
     def add_tgl(self, model, v0, v1, v2) -> st.Tgl:
         """
@@ -106,7 +106,7 @@ class AModeler:
         :param v2: (x, y, z), vertex 2
         :return:
         """
-        return self.add_shape(model, args=(gt.Tgl(v0, v1, v2),), shape_type=st.Tgl)
+        return self.__add_shape(model, args=(gt.Tgl(v0, v1, v2),), shape_type=st.Tgl)
 
     def add_plin(self, model, *vs) -> st.Plin:
         """
@@ -114,7 +114,7 @@ class AModeler:
         :param vs:
         :return:
         """
-        return self.add_shape(model, args=(gt.Plin(*vs),), shape_type=st.Plin)
+        return self.__add_shape(model, args=(gt.Plin(*vs),), shape_type=st.Plin)
 
     def add_pgon(self, model, *vs) -> st.Pgon:
         """
@@ -123,14 +123,14 @@ class AModeler:
         :param vs: vertices
         :return:
         """
-        return self.add_shape(model, args=(gt.Pgon(*vs),), shape_type=st.Pgon)
+        return self.__add_shape(model, args=(gt.Pgon(*vs),), shape_type=st.Pgon)
 
     def add_brep(self):
         """
 
         :return:
         """
-        return self.add_shape(model, args=(gt.Brep(), self), shape_type=st.Brep)
+        return self.__add_shape(model, args=(gt.Brep(), self), shape_type=st.Brep)
 
     def add_pln(self, model, o, x, y, z):
         """
@@ -142,7 +142,7 @@ class AModeler:
         :param z: (x, y, z), z axis
         :return:
         """
-        return self.add_shape(model, args=(gt.Pln(o, x, y, z),), shape_type=st.Pln)
+        return self.__add_shape(model, args=(gt.Pln(o, x, y, z),), shape_type=st.Pln)
 
     def add_ground(self, model, color):
         """
@@ -150,7 +150,7 @@ class AModeler:
         :param color: (r, g, b, a)
         :return:
         """
-        return self.add_shape(model, args=(color,), shape_type=st.Ground)
+        return self.__add_shape(model, args=(color,), shape_type=st.Ground)
 
     def render(self):
         self.__viewer.render()

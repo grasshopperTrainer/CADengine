@@ -26,9 +26,9 @@ class AxisPicker:
         return iter(self.__axes)
 
     def append_axis(self, ray: gt.Ray):
-        self.__axes.append(self.__model.add_shape(args=(ray,),
-                                                  shape_type=Axis,
-                                                  renderer_type=AxisRenderer))
+        self.__axes.append(self.__model.__add_shape(args=(ray,),
+                                                    shape_type=Axis,
+                                                    renderer_type=AxisRenderer))
 
     def pick_threshold(self):
         """
