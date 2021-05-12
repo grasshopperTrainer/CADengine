@@ -9,7 +9,7 @@ from global_tools.lazy import lazyProp
 class Clr(ArrayLikeData):
 
     def as_ubyte(self):
-        return tuple((self * 255).astype(np.uint8).tolist())
+        return (self * 255).astype(np.uint8)
 
     def __str__(self):
         return f"<{self.__class__.__name__}: {[round(v, 3) for v in self.view(np.ndarray)]}>"

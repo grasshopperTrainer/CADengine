@@ -36,6 +36,7 @@ class MetaPrgrm(OGLMetaEntity):
         frame = get_current_ogl().entity_stacker[MetaFrameBffr].peek_if()
         if frame:
             self.draw_bffr.bind()
+        return self
 
     @lazyProp
     def vrtx_attr_schema(self) -> VrtxAttrSchema:

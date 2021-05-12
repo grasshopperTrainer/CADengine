@@ -20,9 +20,6 @@ class ArrayLikeData(np.ndarray, metaclass=abc.ABCMeta):
         """
         return self.view(np.ndarray)[item]
 
-    def __len__(self):
-        return self.shape[1]
-
     def __eq__(self, other):
         """
         logical equation within absolute tolerance

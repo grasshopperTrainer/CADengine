@@ -1,4 +1,4 @@
-from global_tools.enum import enum
+from global_tools.enum import enum, EnumAttr
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 
 
@@ -12,86 +12,88 @@ class TextureTargets:
     THREE_D = gl.GL_TEXTURE_3D
 
 @enum
-class DrawTargetFormats:
+class TextureFormats:
     @enum
     class COLOR:
         @enum
         class RED:
-            RED = gl.GL_RED
-            R8 = gl.GL_R8
-            R8 = gl.GL_R8
-            R8_SNORM = gl.GL_R8_SNORM
-            R16 = gl.GL_R16
-            R16F = gl.GL_R16F
-            R32F = gl.GL_R32F
-            R8I = gl.GL_R8I
-            R8UI = gl.GL_R8UI
-            R16I = gl.GL_R16I
-            R16UI = gl.GL_R16UI
-            R32I = gl.GL_R32I
-            R32UI = gl.GL_R32UI
+            RED = EnumAttr(rep_val=gl.GL_RED, bitpattern=(8,))
+            R8 = EnumAttr(rep_val=gl.GL_R8, bitpattern=(8,))
+            R8_SNORM = EnumAttr(rep_val=gl.GL_R8_SNORM, bitpattern=(8, ))
+            R16 = EnumAttr(rep_val=gl.GL_R16, bitpattern=(16, ))
+            R16F = EnumAttr(rep_val=gl.GL_R16F, bitpattern=(16, ))
+            R32F = EnumAttr(rep_val=gl.GL_R32F, bitpattern=(16, ))
+            R8I = EnumAttr(rep_val=gl.GL_R8I, bitpattern=(8, ))
+            R8UI = EnumAttr(rep_val=gl.GL_R8UI, bitpattern=(8, ))
+            R16I = EnumAttr(rep_val=gl.GL_R16I, bitpattern=(16, ))
+            R16UI = EnumAttr(rep_val=gl.GL_R16UI, bitpattern=(16, ))
+            R32I = EnumAttr(rep_val=gl.GL_R32I, bitpattern=(32, ))
+            R32UI = EnumAttr(rep_val=gl.GL_R32UI, bitpattern=(32, ))
 
         @enum
         class RG:
-            RG = gl.GL_RG
-            R16_SNORM = gl.GL_R16_SNORM
-            RG8 = gl.GL_RG8
-            RG8_SNORM = gl.GL_RG8_SNORM
-            RG16 = gl.GL_RG16
-            RG16_SNORM = gl.GL_RG16_SNORM
-            RG16F = gl.GL_RG16F
-            RG32F = gl.GL_RG32F
-            RG8I = gl.GL_RG8I
-            RG8UI = gl.GL_RG8UI
-            RG16I = gl.GL_RG16I
-            RG16UI = gl.GL_RG16UI
-            RG32I = gl.GL_RG32I
-            RG32UI = gl.GL_RG32UI
+            RG = EnumAttr(rep_val=gl.GL_RG, bitpattern=(8, 8))
+            R16_SNORM = EnumAttr(rep_val=gl.GL_R16_SNORM, bitpattern=(16, 16))
+            RG8 = EnumAttr(rep_val=gl.GL_RG8, bitpattern=(8, 8))
+            RG8_SNORM = EnumAttr(rep_val=gl.GL_RG8_SNORM, bitpattern=(8, 8))
+            RG16 = EnumAttr(rep_val=gl.GL_RG16, bitpattern=(16, 16))
+            RG16_SNORM = EnumAttr(rep_val=gl.GL_RG16_SNORM, bitpattern=(16, 16))
+            RG16F = EnumAttr(rep_val=gl.GL_RG16F, bitpattern=(16, 16))
+            RG32F = EnumAttr(rep_val=gl.GL_RG32F, bitpattern=(32, 32))
+            RG8I = EnumAttr(rep_val=gl.GL_RG8I, bitpattern=(8, 8))
+            RG8UI = EnumAttr(rep_val=gl.GL_RG8UI, bitpattern=(8, 8))
+            RG16I = EnumAttr(rep_val=gl.GL_RG16I, bitpattern=(16, 16))
+            RG16UI = EnumAttr(rep_val=gl.GL_RG16UI, bitpattern=(16, 16))
+            RG32I = EnumAttr(rep_val=gl.GL_RG32I, bitpattern=(32, 32))
+            RG32UI = EnumAttr(rep_val=gl.GL_RG32UI, bitpattern=(32, 32))
+
 
         @enum
         class RGB:
-            RGB = gl.GL_RGB
-            R3_G3_B2 = gl.GL_R3_G3_B2
-            RGB4 = gl.GL_RGB4
-            RGB5 = gl.GL_RGB5
-            RGB8 = gl.GL_RGB8
-            RGB8_SNORM = gl.GL_RGB8_SNORM
-            RGB10 = gl.GL_RGB10
-            RGB12 = gl.GL_RGB12
-            RGB16_SNORM = gl.GL_RGB16_SNORM
-            RGBA2 = gl.GL_RGBA2
-            RGBA4 = gl.GL_RGBA4
-            SRGB8 = gl.GL_SRGB8
-            RGB16F = gl.GL_RGB16F
-            RGB32F = gl.GL_RGB32F
-            R11F_G11F_B10F = gl.GL_R11F_G11F_B10F
-            RGB9_E5 = gl.GL_RGB9_E5
-            RGB8I = gl.GL_RGB8I
-            RGB8UI = gl.GL_RGB8UI
-            RGB16I = gl.GL_RGB16I
-            RGB16UI = gl.GL_RGB16UI
-            RGB32I = gl.GL_RGB32I
-            RGB32UI = gl.GL_RGB32UI
+            RGB = EnumAttr(rep_val=gl.GL_RGB, bitpattern=(8, 8, 8))
+            R3_G3_B2 = EnumAttr(rep_val=gl.GL_R3_G3_B2, bitpattern=(3, 3, 2))
+            RGB4 = EnumAttr(rep_val=gl.GL_RGB4, bitpattern=(4, 4, 4))
+            RGB5 = EnumAttr(rep_val=gl.GL_RGB5, bitpattern=(5, 5, 5))
+            RGB8 = EnumAttr(rep_val=gl.GL_RGB8, bitpattern=(8, 8, 8))
+            RGB8_SNORM = EnumAttr(rep_val=gl.GL_RGB8_SNORM, bitpattern=(8, 8, 8))
+            RGB10 = EnumAttr(rep_val=gl.GL_RGB10, bitpattern=(10, 10, 10))
+            RGB12 = EnumAttr(rep_val=gl.GL_RGB12, bitpattern=(12, 12, 12))
+            RGB16_SNORM = EnumAttr(rep_val=gl.GL_RGB16_SNORM, bitpattern=(16, 16, 16))
+            RGBA2 = EnumAttr(rep_val=gl.GL_RGBA2, bitpattern=(2, 2, 2))
+            RGBA4 = EnumAttr(rep_val=gl.GL_RGBA4, bitpattern=(4, 4, 4))
+            SRGB8 = EnumAttr(rep_val=gl.GL_SRGB8, bitpattern=(8, 8, 8))
+            RGB16F = EnumAttr(rep_val=gl.GL_RGB16F, bitpattern=(16, 16, 16))
+            RGB32F = EnumAttr(rep_val=gl.GL_RGB32F, bitpattern=(32, 32, 32))
+            R11F_G11F_B10F = EnumAttr(rep_val=gl.GL_R11F_G11F_B10F, bitpattern=(11, 11, 10))
+            RGB9_E5 = EnumAttr(rep_val=gl.GL_RGB9_E5, bitpattern=(9, 9, 9, 5))
+            RGB8I = EnumAttr(rep_val=gl.GL_RGB8I, bitpattern=(8, 8, 8))
+            RGB8UI = EnumAttr(rep_val=gl.GL_RGB8UI, bitpattern=(8, 8, 8))
+            RGB16I = EnumAttr(rep_val=gl.GL_RGB16I, bitpattern=(16, 16, 16))
+            RGB16UI = EnumAttr(rep_val=gl.GL_RGB16UI, bitpattern=(16, 16, 16))
+            RGB32I = EnumAttr(rep_val=gl.GL_RGB32I, bitpattern=(32, 32, 32))
+            RGB32UI = EnumAttr(rep_val=gl.GL_RGB32UI, bitpattern=(32, 32, 32))
+
 
         @enum
         class RGBA:
-            RGBA = gl.GL_RGBA
-            RGB5_A1 = gl.GL_RGB5_A1
-            RGBA8 = gl.GL_RGBA8
-            RGBA8_SNORM = gl.GL_RGBA8_SNORM
-            RGB10_A2 = gl.GL_RGB10_A2
-            RGB10_A2UI = gl.GL_RGB10_A2UI
-            RGBA12 = gl.GL_RGBA12
-            RGBA16 = gl.GL_RGBA16
-            SRGB8_ALPHA8 = gl.GL_SRGB8_ALPHA8
-            RGBA16F = gl.GL_RGBA16F
-            RGBA32F = gl.GL_RGBA32F
-            RGBA8I = gl.GL_RGBA8I
-            RGBA8UI = gl.GL_RGBA8UI
-            RGBA16I = gl.GL_RGBA16I
-            RGBA16UI = gl.GL_RGBA16UI
-            RGBA32I = gl.GL_RGBA32I
-            RGBA32UI = gl.GL_RGBA32UI
+            RGBA = EnumAttr(rep_val=gl.GL_RGBA, bitpattern=(8, 8, 8, 8))
+            RGB5_A1 = EnumAttr(rep_val=gl.GL_RGB5_A1, bitpattern=(5, 5, 5, 1))
+            RGBA8 = EnumAttr(rep_val=gl.GL_RGBA8, bitpattern=(8, 8, 8, 8))
+            RGBA8_SNORM = EnumAttr(rep_val=gl.GL_RGBA8_SNORM, bitpattern=(8, 8, 8, 8))
+            RGB10_A2 = EnumAttr(rep_val=gl.GL_RGB10_A2, bitpattern=(10, 10, 10, 2))
+            RGB10_A2UI = EnumAttr(rep_val=gl.GL_RGB10_A2UI, bitpattern=(10, 10, 10, 2))
+            RGBA12 = EnumAttr(rep_val=gl.GL_RGBA12, bitpattern=(12, 12, 12, 12))
+            RGBA16 = EnumAttr(rep_val=gl.GL_RGBA16, bitpattern=(16, 16, 16, 16))
+            SRGB8_ALPHA8 = EnumAttr(rep_val=gl.GL_SRGB8_ALPHA8, bitpattern=(8, 8, 8, 8))
+            RGBA16F = EnumAttr(rep_val=gl.GL_RGBA16F, bitpattern=(16, 16, 16, 16))
+            RGBA32F = EnumAttr(rep_val=gl.GL_RGBA32F, bitpattern=(32, 32, 32, 32))
+            RGBA8I = EnumAttr(rep_val=gl.GL_RGBA8I, bitpattern=(8, 8, 8, 8))
+            RGBA8UI = EnumAttr(rep_val=gl.GL_RGBA8UI, bitpattern=(8, 8, 8, 8))
+            RGBA16I = EnumAttr(rep_val=gl.GL_RGBA16I, bitpattern=(16, 16, 16, 16))
+            RGBA16UI = EnumAttr(rep_val=gl.GL_RGBA16UI, bitpattern=(16, 16, 16, 16))
+            RGBA32I = EnumAttr(rep_val=gl.GL_RGBA32I, bitpattern=(32, 32, 32, 32))
+            RGBA32UI = EnumAttr(rep_val=gl.GL_RGBA32UI, bitpattern=(32, 32, 32, 32))
+
     @enum
     class NONECOLOR:
         @enum

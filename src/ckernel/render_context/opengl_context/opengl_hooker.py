@@ -4,7 +4,7 @@ import numpy as np
 import OpenGL.GL as gl
 from OpenGL.GL import *
 from ckernel.render_context.opengl_context.entities.ogl_entities import OGLEntity, _Prgrm, _Bffr, _Shdr, _VrtxArry, _FrameBffr, _Texture, _RenderBffr
-from global_tools.enum import EnumVal
+from global_tools.enum import EnumAttr
 
 # _context = []
 # _context.append(getattr(importlib.import_module('ckernel.render_context.opengl_context.context_stack'),
@@ -22,8 +22,8 @@ def _hook(obj):
         for arg in args:
             if isinstance(arg, OGLEntity):
                 iargs.append(arg.id)
-            elif isinstance(arg, EnumVal):
-                iargs.append(arg.v)
+            elif isinstance(arg, EnumAttr):
+                iargs.append(arg.val)
             else:
                 iargs.append(arg)
 
@@ -31,8 +31,8 @@ def _hook(obj):
         for k, arg in kwargs.items():
             if isinstance(arg, OGLEntity):
                 ikwargs[k] = arg
-            elif isinstance(arg, EnumVal):
-                ikwargs[k] = arg.v
+            elif isinstance(arg, EnumAttr):
+                ikwargs[k] = arg.val
             else:
                 ikwargs[k] = arg
         return obj(*iargs, **ikwargs)

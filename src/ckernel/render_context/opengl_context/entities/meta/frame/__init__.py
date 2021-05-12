@@ -1,2 +1,2 @@
-from .base import MetaFrameBffr
+from .base import MetaFrameBffr, MetaRenderBffr
 from .default import DefaultFrameBffr

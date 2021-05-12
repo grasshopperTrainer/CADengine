@@ -11,6 +11,11 @@ class FramePixelPicker:
         self.__aid = attachment_id
 
     def pick(self, pos, size):
+        """
+        :param pos:
+        :param size:
+        :return:
+        """
         f = self.__frame()
         if f is not None:
             with f:

@@ -1,6 +1,6 @@
 import numpy as np
 from ckernel.render_context.opengl_context.entities.meta.base import OGLMetaEntity
-from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
+from ckernel.render_context.opengl_context.constant_enum import TextureFormats as DTF
 from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from global_tools.enum import enum
@@ -12,8 +12,9 @@ class MetaTexture(OGLMetaEntity):
     def __init__(self, target, iformat, width, height, name=None):
         self.__target = target
         self.__iformat = iformat
-        self.__format = self.__iformat_to_format()
+        self.__format = self.__parse_format(iformat)
         self.__size = width, height
+        self.__type = self.__parse_type(iformat)
         self.__name = name
 
     def __str__(self):
@@ -26,6 +27,14 @@ class MetaTexture(OGLMetaEntity):
     @property
     def target(self):
         return self.__target
+
+    @property
+    def format(self):
+        return self.__format
+
+    @property
+    def type(self):
+        return self.__type
 
     @property
     def size(self):
@@ -58,22 +67,44 @@ class MetaTexture(OGLMetaEntity):
                                 self.__size[1],  # height
                                 0,  # border
                                 self.__format,  # format
-                                gl.GL_UNSIGNED_BYTE,  # type
+                                self.__type,  # type
                                 None)  # data
             else:
                 raise NotImplementedError
         return texture
 
-    def __iformat_to_format(self):
+    @staticmethod
+    def __parse_format(iformat):
         """
         translate internal format to desired texture input format
 
         :return:
         """
         for _, base in (*DTF.COLOR, *DTF.NONECOLOR):
-            if self.__iformat in base:
-                return base[0].v
-        raise NotImplementedError
+            if iformat in base:
+                base = base[0]
+                break
+
+        if 'I' in str(iformat):
+            return eval(f"gl.{str(base).split(' ')[0]}_INTEGER")
+        return base
+
+    @staticmethod
+    def __parse_type(iformat):
+        # special cases
+        if iformat.val == gl.GL_RGB10_A2UI:
+            return gl.GL_UNSIGNED_INT_10_10_10_2
+        elif iformat.val == gl.GL_RGB10_A2:
+            return gl.GL_UNSIGNED_INT_10_10_10_2
+
+        if 'UI' in str(iformat):
+            return gl.GL_UNSIGNED_INT
+        elif 'I' in str(iformat):
+            return gl.GL_INT
+        elif 'F' in str(iformat):
+            return gl.GL_FLOAT
+        else:
+            return gl.GL_UNSIGNED_BYTE
 
     def as_unit(self, unit):
         """

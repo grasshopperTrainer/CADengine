@@ -5,7 +5,7 @@ import glfw
 from numbers import Number
 
 from wkernel.devices.bits import DrawInterface
-from ckernel.context_nodes import ContextManager
+from ckernel.context_tree import ContextManager
 from .glyph import GlyphNode, GlyphInterface
 from .devices.master import DeviceMaster
 from global_tools.callback_registry import callbackRegistry
@@ -37,13 +37,11 @@ class Window(DrawInterface, GlyphInterface):
 
             gl.glEnable(gl.GL_PRIMITIVE_RESTART_FIXED_INDEX)
 
-
-            # glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
-            glfw.window_hint(glfw.CONTEXT_RELEASE_BEHAVIOR, glfw.RELEASE_BEHAVIOR_NONE)
             # glfw.swap_interval(1)
 
         with self.__context.glfw as glfw_window:
             glfw.set_window_close_callback(glfw_window, self.__close_window)
+            glfw.set_input_mode(self.context.glfw_window, glfw.STICKY_MOUSE_BUTTONS, glfw.TRUE)
 
         # make view object
         self.__glyph = GlyphNode(0, 0, width, height, None, None, None, None)
@@ -63,30 +61,8 @@ class Window(DrawInterface, GlyphInterface):
 
         self.__flag_indraw = False
 
-        # simply synchronizer for rendering
-        # self.__sync_lock = threading.Lock()
-        # self.__sync_count = 0
-
     def __str__(self):
         return f"<Window: {self.__name}>"
-    #
-    # def __enter__(self):
-    #     """
-    #     use it to synchronize rendering
-    #
-    #     calling render function under 'with window:' will guarantee
-    #     window wait for that calling thread to return before swap
-    #     :return:
-    #     """
-    #     with self.__sync_lock:
-    #         while self.__flag_indraw:
-    #             continue
-    #         self.__sync_count += 1
-    #
-    # def __exit__(self, exc_type, exc_val, exc_tb):
-    #     with self.__sync_lock:
-    #         self.__sync_count -= 1
-
     @property
     def glyph(self) -> GlyphNode:
         """
@@ -153,7 +129,6 @@ class Window(DrawInterface, GlyphInterface):
             while not glfw.window_should_close(glfw_window):
                 if self.__frame_count == self.__num_draw_frame:
                     break  # if number of drawn frame is targeted number of frame drawn
-
                 with self.__timer:  # __exit__ of timer will hold thread by time.sleep()
                     with self.__context.gl:
                         self.call_predraw_callback()

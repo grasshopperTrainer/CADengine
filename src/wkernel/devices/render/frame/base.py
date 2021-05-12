@@ -14,7 +14,7 @@ import gkernel.dtype.nongeometric.matrix as mx
 import gkernel.color as clr
 
 from wkernel.devices.render._base import RenderDevice, RenderDeviceManager
-from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF, TextureTargets as TT
+from ckernel.render_context.opengl_context.constant_enum import TextureFormats as TF, TextureTargets as TT
 from .FramePixelPicker import FramePixelPicker
 
 
@@ -213,7 +213,7 @@ class Frame(RenderDevice):
         texture = self.__frame_bffr.get_attachment(aid)
         self.__renderer.render_world_space(texture, quad_pos, tdomain_x, tdomain_y)
 
-    def pick_pixels(self, aid, pos, size) -> clr.Clr:
+    def pick_pixels(self, aid, pos, size):
         """
         pick texture pixel of a given attachment id, position
 
@@ -224,7 +224,7 @@ class Frame(RenderDevice):
         :param size: (width, height) picking area
                     int   - absolute pixel area
                     float - parameterized relative to texture size
-        :return:
+        :return: (pixel_val, bitpattern) peripheral if to help decode returned value
         """
         aid = self.frame_bffr.get_autonym(aid)
         # parse pos expression
@@ -248,21 +248,8 @@ class Frame(RenderDevice):
         else:
             raise
 
-        # get format
-        if DTF.COLOR.RG.has_member(texture.iformat):
-            frmt = gl.GL_RED
-        elif DTF.COLOR.RG.has_member(texture.iformat):
-            frmt = gl.GL_RG
-        elif DTF.COLOR.RGB.has_member(texture.iformat):
-            frmt = gl.GL_RGB
-        elif DTF.COLOR.RGBA.has_member(texture.iformat):
-            frmt = gl.GL_RGBA
-        else:
-            raise NotImplementedError
-
         gl.glReadBuffer(src)
-        # is returning raw array okay?
-        return gl.glReadPixels(x, y, w, h, frmt, gl.GL_FLOAT)
+        return gl.glReadPixels(x, y, w, h, texture.format, texture.type), texture.iformat.bitpattern
 
     def clear(self, r=0, g=0, b=0, a=1):
         """
@@ -292,8 +279,20 @@ class Frame(RenderDevice):
         :return:
         """
         texture = self.frame_bffr.get_attachment(id)
-        color = np.array((r, g, b, a), dtype=np.float32)
-        gl.glClearTexImage(texture.get_concrete(), 0, texture.iformat, gl.GL_FLOAT, color)
+        if texture.type == gl.GL_FLOAT:
+            dtype = 'float'
+        elif texture.type == gl.GL_UNSIGNED_INT:
+            dtype = 'uint'
+        elif texture.type == gl.GL_UNSIGNED_INT_10_10_10_2:
+            dtype = 'uint'
+        elif texture.type == gl.GL_UNSIGNED_BYTE:
+            dtype = 'ubyte'
+        elif texture.type == gl.GL_INT:
+            dtype = 'int'
+        else:
+            raise NotImplementedError
+        color = np.array((r, g, b, a), dtype=dtype)
+        gl.glClearTexImage(texture.get_concrete(), 0, texture.format, texture.type, color)
 
     def clear_depth(self):
         """
@@ -359,13 +358,13 @@ class FrameFactory:
     @enum
     class TXTR:
         TRGT = TT
-        CLR_FRMT = DTF.COLOR
-        DEPTH_FRMT = DTF.NONECOLOR.DEPTH
+        CLR_FRMT = TF.COLOR
+        DEPTH_FRMT = TF.NONECOLOR.DEPTH
 
     @enum
     class RNDR:
-        DEPTH = DTF.NONECOLOR.DEPTH
-        DEPTH_STENCIL = DTF.NONECOLOR.DEPTH_STENCIL
+        DEPTH = TF.NONECOLOR.DEPTH
+        DEPTH_STENCIL = TF.NONECOLOR.DEPTH_STENCIL
 
     # TODO: fix color attachment allocation
     def __init__(self, manager):
@@ -420,7 +419,7 @@ class FrameFactory:
         :param iformat: internal format
         :return:
         """
-        if iformat not in DTF.NONECOLOR.DEPTH:
+        if iformat not in TF.NONECOLOR.DEPTH:
             raise TypeError
 
         # check uniqueness

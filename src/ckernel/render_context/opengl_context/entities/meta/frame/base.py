@@ -1,7 +1,7 @@
 from ckernel.render_context.opengl_context.entities.meta.base import OGLMetaEntity
 import ckernel.render_context.opengl_context.opengl_hooker as gl
 from ckernel.render_context.opengl_context.entities.meta.txtr.body import MetaTexture
-from ckernel.render_context.opengl_context.constant_enum import DrawTargetFormats as DTF
+from ckernel.render_context.opengl_context.constant_enum import TextureFormats as DTF
 from ckernel.render_context.opengl_context.constant_enum import TextureTargets as TT
 from ckernel.render_context.opengl_context.entities.draw_bffr import DrawBffr
 

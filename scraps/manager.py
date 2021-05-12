@@ -72,4 +72,4 @@ if __name__ == '__main__':
         pool.close()
         pool.join()
         print(shared_obj.get_count(), f'elapse: {time.time() - st}')
-        print(shared_obj.get_custom_arg().v, shared_obj.get())
+        print(shared_obj.get_custom_arg().val, shared_obj.get())
