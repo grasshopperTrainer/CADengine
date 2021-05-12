@@ -54,10 +54,7 @@ class Window(DrawInterface, GlyphInterface):
         self.__num_draw_frame = None
         self.__frame_count = 0
 
-        # default camera
-        # FIXME: this is bad bad
         self.__device_manager = DeviceMaster(self)
-        # self.devices.cameras[0].body.builder.in3_aspect_ratio = self.devices.panes[0].glyph.aspect_ratio
 
         self.__flag_indraw = False
 
