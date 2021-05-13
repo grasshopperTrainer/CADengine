@@ -22,7 +22,11 @@ class _MetaShape(type):
         """
         if bases:
             if '__dataset_size__' not in dic:
-                raise AttributeError(f"<{name}> must provide method '__dataset_size__'")
+                for base in bases:
+                    if '__dataset_size__' in base.__dict__:
+                        break
+                else:
+                    raise AttributeError(f"<{name}> must provide method '__dataset_size__'")
 
         my_type = super().__new__(cls, name, bases, dic)
         # add hidden property
@@ -31,12 +35,12 @@ class _MetaShape(type):
 
         my_type.__parent = None
         my_type.parent = property(fget=cls.parent)
-
         my_type.__children = set()
         my_type.children = property(fget=cls.children)
         my_type.add_child = cls.add_child
         my_type.remove_child = cls.remove_child
 
+        my_type.viewer = property(fget=cls.viewer)
         # not yet allowed
         # need to develop when resetting parent is open th the user
         # or maybe tree editing has to go through modeler, thus real functions invisible
@@ -57,12 +61,14 @@ class _MetaShape(type):
         obj.__goid = GIDP().register_entity(obj)
 
         # hijack kwarg, parenting
-        if '__parent' not in kwargs:
+        if '__parent' not in kwargs or '__viewer' not in kwargs:
             raise AttributeError
         parent = kwargs.pop('__parent')
         if parent is not None:
             obj.__parent = wr.ref(parent)
             parent.add_child(obj)
+        viewer =kwargs.pop('__viewer')
+        obj.__viewer = wr.ref(viewer)
 
         obj.__init__(*args, **kwargs)
         return obj
@@ -96,6 +102,14 @@ class _MetaShape(type):
     @staticmethod
     def remove_child(self, child):
         self.__children.remove(child)
+
+    @staticmethod
+    def viewer(self):
+        v = self.__viewer()
+        if not v:
+            self.___viewer = None
+            return None
+        return v
 
 
 class Shape(metaclass=_MetaShape):

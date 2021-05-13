@@ -1,16 +1,12 @@
-from mkernel.model.shapes.base import _MetaShape
+from mkernel.model.shapes.base import Shape
 from mkernel.global_id_provider import GIDP
 
 
-class Axis(_MetaShape):
-    def __init__(self, geo, renderer):
-        vb = renderer.vbo.cache.request_block(size=1)
-        ib = renderer.ibo.cache.request_block(size=1)
-        ib['idx'] = vb.indices
-        goid = vb['oid'] = GIDP().register_entity(self).as_rgba_float()
-        super().__init__(goid, (vb, ), (ib, ))
+class Axis(Shape):
+    def __init__(self, geo):
+        self.viewer.update_cache(self, 'goid', self.goid.as_rgb_float())
 
-        self.geo = geo
+        self._geo = self.geo = geo
         self._thk = self.thk = 16  # pixel thickness
 
     @property
@@ -20,8 +16,8 @@ class Axis(_MetaShape):
     @geo.setter
     def geo(self, ray):
         self._geo = ray
-        self.vrtx_block['ori'] = ray.origin.T
-        self.vrtx_block['dir'] = ray.as_vec().T
+        self.viewer.update_cache(self, 'ori', ray.origin.T)
+        self.viewer.update_cache(self, 'dir', ray.as_vec().T)
 
     @property
     def thk(self):
@@ -30,4 +26,7 @@ class Axis(_MetaShape):
     @thk.setter
     def thk(self, v):
         self._thk = v
-        self.vrtx_block['thk'] = v
+        self.viewer.update_cache(self, 'thk', v)
+
+    def __dataset_size__(self):
+        return 1

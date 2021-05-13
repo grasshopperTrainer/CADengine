@@ -10,11 +10,13 @@ class AxisPicker:
     sketchup style axis picker
     """
 
-    def __init__(self, model, id_picker, coord_picker, cursor):
+    def __init__(self, modeler, model, id_picker, coord_picker, camera, cursor):
+        self.__modeler = modeler
         self.__model = model
 
         self.__id_picker = id_picker
         self.__coord_picker = coord_picker
+        self.__camera = camera
         self.__cursor = cursor
 
         self.__axes = []
@@ -26,43 +28,54 @@ class AxisPicker:
         return iter(self.__axes)
 
     def append_axis(self, ray: gt.Ray):
-        self.__axes.append(self.__model.__add_shape(args=(ray,),
-                                                    shape_type=Axis,
-                                                    renderer_type=AxisRenderer))
+        """
+        add axis shape to the model
+
+        :param ray:
+        :return:
+        """
+        if not self.__modeler.is_shape_known(Axis):
+            self.__modeler.register_renderer(Axis, AxisRenderer)
+
+        axis = self.__modeler._add_shape(parent=None,
+                                         args=(ray,),
+                                         shape_type=Axis)
+        self.__axes.append(axis)
 
     def pick_threshold(self):
         """
+        Pick adequate axis if distance between frustum ray and axis is under threshold.
+
         pick using texture pixel picking
         :return: picked, is picked an axis, closest point on the axis
         """
         # pick goid
-        goid = self.__id_picker.pick(pos=self.__cursor.pos_local, size=(1, 1))[0][0]
-        goid = ClrRGBA(*goid).as_ubyte()[:3]
-        entity = GIDP().get_registered(goid)
-        idx = None
+        goid, bitpattern = self.__id_picker.pick(pos=self.__cursor.pos_local, size=(1, 1))
+        entity = GIDP().get_registered_byvalue(goid[0][0], bitpattern)
+
+        # if picking axis
         for i, axis in enumerate(self.__axes):
             if entity == axis:
-                idx = i
-                break
+                # pick closest point on axis
+                coord = self.__coord_picker.pick(self.__cursor.pos_local, size=(1, 1))[0][0][0]
+                return i, gt.Pnt(*coord[:3])
+        return None, None
 
-        coord = self.__coord_picker.pick(self.__cursor.pos_global.astype(int), size=(1, 1))[0][0]
-
-        return idx, gt.Pnt(*coord[:3])
-
-    def pick_closest(self, pick_ray: gt.Ray):
+    def pick_closest(self):
         """
         pick closest axis
         :return:
         """
+        ray = self.__camera.frusrum_ray(*self.__cursor.pos_local.xy)
+
         distances = []
         for idx, axis in enumerate(self.__axes):
-
             ao = axis.geo.origin
             av = axis.geo.as_vec()
-            ro = pick_ray.origin
-            rv = pick_ray.as_vec()
+            ro = ray.origin
+            rv = ray.as_vec()
 
-            cv = pick_ray.origin - ao
+            cv = ray.origin - ao
             v0 = gt.Vec.cross(av, rv)
             v1 = gt.Vec.cross(cv, rv)
             # intersection points
@@ -78,8 +91,11 @@ class AxisPicker:
     def is_axis(self, entity):
         return entity in self.__axes
 
-    def delete(self):
+    def release_axes(self):
+        """
+
+        :return:
+        """
         for axis in self.__axes:
-            self.__model.remove_shape(axis)
+            self.__modeler.remove_shape(axis)
         self.__axes.clear()
-        self.__model = None

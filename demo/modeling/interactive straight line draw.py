@@ -1,4 +1,6 @@
-from mkernel import AModel, BModeler
+from mkernel import BModeler
+from mkernel.control.jcontroller import JController
+
 from wkernel import Window
 import gkernel.color as clr
 import gkernel.dtype.geometric as gt
@@ -18,7 +20,7 @@ class MyWindow(Window):
                                 aid=0,
                                 name='albedo')
         ff.append_color_texture(target=ff.TXTR.TRGT.TWO_D,
-                                iformat=ff.TXTR.CLR_FRMT.RGB.RGB,
+                                iformat=ff.TXTR.CLR_FRMT.RGBA.RGB10_A2,
                                 aid=1,
                                 name='id')
         ff.append_color_texture(target=ff.TXTR.TRGT.TWO_D,
@@ -34,29 +36,26 @@ class MyWindow(Window):
         self.coord_picker = draw_frame.create_pixel_picker('coord')
         self.id_picker = draw_frame.create_pixel_picker('id')
 
-        # create model
-        model = AModel()
-        self.model = model
-        self.model.add_ground((.3, .3, .3, .3))
-        self.model.add_pln((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        # setup model
+        self.modeler = BModeler()
+        self.model = self.modeler.add_model(parent=None)  # root model
+        self.controller = JController(self,
+                                      self.modeler,
+                                      self.model,
+                                      self.id_picker,
+                                      self.coord_picker,
+                                      self.devices.cameras[0],
+                                      self.devices.cursors[0])
 
-        self.modeler = BModeler(self.model.add_brep())
-        # b = self.model.add_brep()  # set root?
+        # setup model
+        self.modeler.add_ground(self.model, (.3, .3, .3, .3))
+        self.modeler.add_pln(self.model, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
 
+        print('Press lshift to force snapping')
     def draw(self, frame_count=None):
         # update cam
-        coord = self.coord_picker.pick(pos=self.devices.cursors[0].pos_global.astype(int), size=(1, 1))
-        coord = clr.ClrRGBA(*coord[0][0]).rgb
-        self.cad_dolly.set_ref_point(*coord)
-
-        # do modeling
-        self.modeler.listen(self.model,
-                            self,
-                            self.devices.mouse,
-                            self.devices.cameras[0],
-                            self.devices.cursors[0],
-                            self.id_picker,
-                            self.coord_picker)
+        coord = self.coord_picker.pick(pos=self.devices.cursors[0].pos_local, size=(1, 1))[0][0][0]
+        self.cad_dolly.set_ref_point(*coord[:3])
 
         # draw on draw frame
         with self.devices.frames[1] as df:
@@ -65,7 +64,7 @@ class MyWindow(Window):
                     df.clear_texture(1, 0, 0, 0, 1)
                     df.clear(0, 0, 0, 1)
                     df.clear_depth()
-                    self.model.render()
+                    self.modeler.render()
 
         # draw on render frame
         with self.devices.frames[0] as rf:
@@ -77,7 +76,7 @@ class MyWindow(Window):
 class DebuggerWindow(Window):
     def __init__(self, mother):
         super().__init__(400, 1000, 'sub window', shared=mother)
-        self.framerate = 60
+        self.fps = 60
         self.ma = mother
 
         self.devices.panes.appendnew_pane(0, 0, 0.5, 0.5, self)

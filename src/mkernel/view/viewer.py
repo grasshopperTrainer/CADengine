@@ -1,6 +1,6 @@
 import mkernel.model.shapes as st
 import mkernel.view.renderers as rend
-from mkernel.model.amodel import AModel
+from mkernel.model import AModel, BModel
 
 
 class RendererDict(dict):
@@ -13,6 +13,7 @@ class RendererDict(dict):
         st.Brep: rend.BrepRenderer,
         st.Pln: rend.PlaneRenderer,
         AModel: rend.ModelRenderer,
+        BModel: rend.ModelRenderer,
         st.Ground: rend.GroundRenderer}
 
     def __getitem__(self, item):
@@ -25,27 +26,58 @@ class RendererDict(dict):
             self[item] = self.__class__.__known_renderers[item]()
         return super().__getitem__(item)
 
+    def register(self, shape_type, renderer_type):
+        self.__class__.__known_renderers[shape_type] = renderer_type
+
+    def is_shape_known(self, shape):
+        return shape in self.__class__.__known_renderers
+
 
 class Viewer:
     def __init__(self, modeler):
         self.__modeler = modeler
         self.__renderers = RendererDict()
 
-    @property
-    def renderers(self):
-        return self.__renderers
+    # @property
+    # def renderers(self):
+    #     return self.__renderers
 
     def render(self):
-        for renderer in self.renderers.values():
+        for renderer in self.__renderers.values():
             renderer.render()
 
     def malloc_shape(self, shape):
-        self.renderers[shape.__class__].malloc_shape(shape)
+        """
+
+        :param shape:
+        :param renderer_type:
+        :return:
+        """
+        self.__renderers[shape.__class__].malloc_shape(shape)
 
     def free_shape(self, shape):
-        self.renderers[shape.__class__].free_shape(shape)
+        self.__renderers[shape.__class__].free_shape(shape)
 
     def update_cache(self, shape, arg_name, value):
         # lazy mallocing
         self.malloc_shape(shape)
-        self.renderers[shape.__class__].update_cache(shape, arg_name, value)
+        self.__renderers[shape.__class__].update_cache(shape, arg_name, value)
+
+    def is_shape_known(self, shape):
+        """
+        check if shape and renderer is known
+
+        :param shape:
+        :return:
+        """
+        return self.__renderers.is_shape_known(shape)
+
+    def register_renderer(self, shape_type, renderer_type):
+        """
+        make use of renderer dynamically
+
+        :param shape_type:
+        :param renderer_type:
+        :return:
+        """
+        self.__renderers.register(shape_type, renderer_type)

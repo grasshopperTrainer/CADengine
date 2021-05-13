@@ -1,6 +1,6 @@
 #version 450 core
 
-layout (location=1) out vec4 oid;
+layout (location=1) out vec4 goid;
 layout (location=2) out vec4 coord;
 
 layout (location=0) uniform mat4 PM;
@@ -14,9 +14,9 @@ in gsAttr {
     vec3 ori;
     vec3 dir;
     float thk;
-    vec4 oid;
+    vec3 goid;
 
-// ndc coordinat, frustum near, far plane coord
+    // ndc coordinat, frustum near, far plane coord
     vec3 ndc_coord;
     vec3 fn_coord;
     vec3 ff_coord;
@@ -90,7 +90,7 @@ void main() {
 
     // render result
     if (d < ht) {
-        oid = fs_in.oid;
+        goid = vec4(fs_in.goid, 1);
         vec3 cam_ray = normalize(fs_in.ff_coord - fs_in.fn_coord);
         vec3 k = intx_ray_ray(fs_in.ori, fs_in.dir, cam_ori.xyz, cam_ray);
         coord = vec4(k, 1);

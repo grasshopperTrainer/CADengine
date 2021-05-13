@@ -1,2 +1,2 @@
 from .amodel import AModel
-from .base import Model
+from .bmodel.base import BModel

@@ -16,14 +16,14 @@ in vsAttr {
     vec3 ori;
     vec3 dir;
     float thk;
-    vec4 oid;
+    vec3 goid;
 } gs_in[];
 
 out gsAttr {
     vec3 ori;
     vec3 dir;
     float thk;
-    vec4 oid;
+    vec3 goid;
 
     // ndc coordinat, frustum near, far plane coord
     vec3 ndc_coord;
@@ -44,7 +44,7 @@ void main() {
     gs_out.ori = gs_in[0].ori;
     gs_out.dir = gs_in[0].dir;
     gs_out.thk= gs_in[0].thk;
-    gs_out.oid = gs_in[0].oid;
+    gs_out.goid = gs_in[0].goid;
 
     for(int i=0; i<4; i++) {
         emit(i);

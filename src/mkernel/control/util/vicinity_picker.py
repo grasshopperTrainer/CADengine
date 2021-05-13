@@ -20,18 +20,19 @@ class VicinityPicker:
 
         :param camera:
         :param cursor:
-        :return:
+        :return: (axis idx, intersectpoint)
         """
 
         R = camera.frusrum_ray(*cursor.pos_local.xy).as_vec()
-        adequacy = sorted([(gt.Vec.cross(R, x).length, k) for k, x in zip(('x', 'y', 'z'), plane.axes)])
+        adequacy = sorted([(gt.Vec.cross(R, x).length, k) for k, x in zip(range(3), plane.axes)])
+
         # finding intersection
         # 0 origin, t amplifier, R, ray vector, P intersection point
         # O + t*R = P
         cam_pln = camera.tripod.plane
         O = cam_pln.origin
-        for _, key in adequacy:
-            Px, Ox, Rx = (getattr(i, key) for i in (plane.origin, O, R))
+        for _, idx in adequacy:
+            Px, Ox, Rx = (getattr(i, ('x', 'y', 'z')[idx]) for i in (plane.origin, O, R))
             t = (Px - Ox) / Rx
             P = O + t * R
 
@@ -39,7 +40,8 @@ class VicinityPicker:
                 if not l(comp):
                     break
             else:  # not broken - all limit passed
-                return 'xyz'.replace(key, ''), P
+                return idx, P
+        return None, None
 
     def pick_camera_relative(self, camera, cursor, offset):
         """

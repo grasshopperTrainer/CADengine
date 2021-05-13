@@ -18,18 +18,26 @@ class AxisRenderer(Renderer):
                              frgm_path=os.path.join(__this_dir, 'axis_frgm_shdr.glsl'))
 
     def __init__(self):
-        self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr()
+        super().__init__()
 
+        self.__vbo = self.__prgrm.vrtx_attr_schema.create_vrtx_bffr()
         self.__ibo = meta.MetaIndxBffr(dtype='uint')
         self.__vao = meta.MetaVrtxArry(self.__vbo, indx_bffr=self.__ibo)
 
-    @property
-    def vbo(self):
-        return self.__vbo
+    def create_dataset(self, size):
+        dataset = {'vrtx': self.__vbo.cache.request_block(size),
+                   'indx': self.__ibo.cache.request_block(size)}
+        dataset['indx']['idx'] = dataset['vrtx'].indices
+        return dataset
 
-    @property
-    def ibo(self):
-        return self.__ibo
+    def free_finalizer(self, dataset):
+        if dataset:
+            for v in dataset.values():
+                v.release()
+            dataset.clear()
+
+    def update_cache(self, shape, arg_name, value):
+        self.datasets[shape]['vrtx'][arg_name] = value
 
     def render(self):
         if not self.__ibo.cache.active_size:
